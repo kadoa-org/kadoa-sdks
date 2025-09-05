@@ -1,7 +1,7 @@
 {
-	"sdks/node": "0.1.1",
-	"sdks/python": "0.3.1",
-	"tools/codegen": "0.0.2",
+	"sdks/node": "0.1.2",
+	"sdks/python": "0.3.2",
+	"tools/codegen": "0.0.3",
 	"examples/node-examples": "0.0.2",
 	"examples/python-examples": "0.0.1"
 }
