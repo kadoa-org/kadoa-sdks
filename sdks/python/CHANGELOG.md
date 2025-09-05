@@ -1,5 +1,21 @@
 # Changelog
 
+## [0.5.0](https://github.com/kadoa-org/kadoa-sdks/compare/python-sdk-v0.4.0...python-sdk-v0.5.0) (2025-09-05)
+
+
+### ⚠ BREAKING CHANGES
+
+* The main entry point has been renamed from initializeApp() to KadoaSDK() in both Node.js and Python SDKs. Users will need to update their imports and initialization code.
+
+### Features
+
+* **python:** align extraction API with Node and improve typing\n\n- Introduce max_records (replace data_limit) and propagate through flow\n- Use typed CreateWorkflowOptions and openapi client models\n- Simplify HTTP error handling; add from error chaining\n- Clean imports, add lint targets, minor example/test fixes\n\nBREAKING CHANGE: ExtractionOptions now uses max_records instead of data_limit ([3068fcc](https://github.com/kadoa-org/kadoa-sdks/commit/3068fcce0d474c2e30fd824daba5205968e1e458))
+
+
+### Code Refactoring
+
+* rename initializeApp to KadoaSDK for better consistency ([8a18891](https://github.com/kadoa-org/kadoa-sdks/commit/8a18891ff0f7d23c7f453e935028820e2cfe460e))
+
 ## [0.4.0](https://github.com/kadoa-org/kadoa-sdks/compare/python-sdk-v0.3.2...python-sdk-v0.4.0) (2025-09-05)
 
 
