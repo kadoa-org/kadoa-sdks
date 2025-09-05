@@ -53,10 +53,10 @@ jobs:
         with:
           token: ${{ secrets.GITHUB_TOKEN }}
           commit-message: |
-            chore(ci): update OpenAPI spec
+            chore(spec): update OpenAPI spec
 
             This PR was created automatically by the daily fetch workflow.
-          title: "chore(ci): update OpenAPI spec"
+          title: "chore(spec): update OpenAPI spec"
           body: |
             This PR updates `specs/openapi.json` and `specs/openapi-metadata.json` with the latest version from `https://api.kadoa.com/openapi`.
 

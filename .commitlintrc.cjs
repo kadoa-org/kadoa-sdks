@@ -6,6 +6,7 @@ module.exports = {
 			2,
 			"always",
 			[
+				"spec", // OpenAPI spec updates
 				"node-sdk", // Node SDK changes
 				"python-sdk", // Python SDK changes
 				"codegen", // Code generation tooling
