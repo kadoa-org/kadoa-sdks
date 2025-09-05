@@ -2,9 +2,11 @@
 Type definitions for extraction module.
 """
 
-from dataclasses import dataclass, field
-from typing import List, Optional, Dict, Any, Literal
+from dataclasses import dataclass
 from enum import Enum
+from typing import Any, Dict, List, Optional
+
+from .constants import SUCCESSFUL_RUN_STATES, TERMINAL_RUN_STATES
 
 
 class NavigationMode(str, Enum):
@@ -117,7 +119,7 @@ class ExtractionOptions:
     location: Optional[Location] = None
     polling_interval: int = 5000  # milliseconds
     max_wait_time: int = 300000  # milliseconds (5 minutes)
-    data_limit: int = 100
+    max_records: int = 99999
 
 
 @dataclass
@@ -130,7 +132,7 @@ class ExtractionConfig:
     location: Location
     polling_interval: int
     max_wait_time: int
-    data_limit: int
+    max_records: int
 
     @classmethod
     def from_options(
@@ -152,7 +154,7 @@ class ExtractionConfig:
             location=location,
             polling_interval=options.polling_interval or defaults.get("polling_interval", 5000),
             max_wait_time=options.max_wait_time or defaults.get("max_wait_time", 300000),
-            data_limit=options.data_limit or defaults.get("data_limit", 100),
+            max_records=options.max_records or defaults.get("max_records", 99999),
         )
 
 
@@ -168,13 +170,11 @@ class WorkflowStatus:
 
     def is_terminal(self) -> bool:
         """Check if workflow is in a terminal state."""
-        from .constants import TERMINAL_RUN_STATES
 
         return self.run_state.upper() in TERMINAL_RUN_STATES if self.run_state else False
 
     def is_successful(self) -> bool:
         """Check if workflow completed successfully."""
-        from .constants import SUCCESSFUL_RUN_STATES
 
         return self.run_state.upper() in SUCCESSFUL_RUN_STATES if self.run_state else False
 
@@ -186,3 +186,15 @@ class ExtractionResult:
     workflow_id: str
     workflow: WorkflowStatus
     data: Optional[List[Dict[str, Any]]] = None
+
+
+@dataclass
+class CreateWorkflowOptions:
+    """Options for creating a workflow."""
+
+    urls: List[str]
+    navigation_mode: str
+    entity: str
+    fields: List[EntityField]
+    name: str
+    max_records: int

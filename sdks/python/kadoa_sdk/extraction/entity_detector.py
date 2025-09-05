@@ -5,10 +5,11 @@ Entity detection functionality for dynamic field extraction.
 from typing import Dict
 from urllib.parse import urljoin
 
-from kadoa_sdk.kadoa_sdk import KadoaSdk
-from kadoa_sdk.exceptions import KadoaSdkException, KadoaHttpException, KadoaErrorCode
+from kadoa_sdk.exceptions import KadoaErrorCode, KadoaHttpException, KadoaSdkException
 from kadoa_sdk.extraction.constants import DEFAULT_API_BASE_URL, ENTITY_API_ENDPOINT, ERROR_MESSAGES
 from kadoa_sdk.extraction.types import EntityPrediction, EntityRequestOptions, EntityResponse
+from kadoa_sdk.kadoa_sdk import KadoaSdk
+
 
 def _validate_entity_options(options: EntityRequestOptions) -> None:
     """Validate entity request options."""
@@ -65,11 +66,8 @@ def _handle_error_response(response, url: str, link: str) -> None:
     error_data = {}
     error_text = ""
 
-    try:
-        error_text = response.text
-        error_data = response.json() if error_text else {}
-    except Exception:
-        error_data = {"message": error_text or response.reason}
+    error_text = response.text
+    error_data = response.json() if error_text else {}
 
     base_error_options = {
         "http_status": response.status_code,
@@ -133,7 +131,7 @@ def fetch_entity_fields(sdk: KadoaSdk, options: EntityRequestOptions) -> EntityP
             code=KadoaErrorCode.NETWORK_ERROR,
             details={"url": url, "link": options.link},
             cause=error,
-        )
+        ) from error
 
     if not response.ok:
         _handle_error_response(response, url, options.link)
@@ -146,7 +144,7 @@ def fetch_entity_fields(sdk: KadoaSdk, options: EntityRequestOptions) -> EntityP
             code=KadoaErrorCode.INTERNAL_ERROR,
             details={"url": url, "link": options.link},
             cause=error,
-        )
+        ) from error
 
     entity_response = EntityResponse.from_dict(data)
 

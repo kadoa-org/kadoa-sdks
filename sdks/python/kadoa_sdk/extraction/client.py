@@ -2,16 +2,15 @@
 API client helper functions for Kadoa SDK.
 """
 
-from weakref import WeakKeyDictionary
 from typing import TYPE_CHECKING
+from weakref import WeakKeyDictionary
 
-from openapi_client import CrawlApi, WorkflowsApi, ApiClient
+from openapi_client import ApiClient, CrawlApi, WorkflowsApi
 
 if TYPE_CHECKING:
     from kadoa_sdk.kadoa_sdk import KadoaSdk
 
 
-# Use WeakKeyDictionary for automatic garbage collection
 _crawl_api_cache: WeakKeyDictionary["KadoaSdk", CrawlApi] = WeakKeyDictionary()
 _workflows_api_cache: WeakKeyDictionary["KadoaSdk", WorkflowsApi] = WeakKeyDictionary()
 

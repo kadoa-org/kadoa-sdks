@@ -2,11 +2,12 @@
 E2E tests for run_extraction functionality.
 """
 
-import os
 import logging
+import os
+
 import pytest
 
-from kadoa_sdk import initialize_sdk, KadoaSdkConfig, run_extraction, ExtractionOptions
+from kadoa_sdk import ExtractionOptions, KadoaSdkConfig, initialize_sdk, run_extraction
 
 
 @pytest.mark.e2e
@@ -19,7 +20,9 @@ class TestRunExtractionE2E:
         test_api_key = os.environ.get("KADOA_API_KEY", "39113751-1e7a-4cb2-9516-1e25d0085aa5")
         test_base_url = os.environ.get("KADOA_BASE_URL", "http://localhost:12380")
 
-        sdk = initialize_sdk(KadoaSdkConfig(api_key=test_api_key, base_url=test_base_url, timeout=30))
+        sdk = initialize_sdk(
+            KadoaSdkConfig(api_key=test_api_key, base_url=test_base_url, timeout=30)
+        )
         logger = logging.getLogger("kadoa_sdk.events")
         sdk.on_event(lambda event: logger.info("event: %s", event.to_dict()))
         return sdk
@@ -41,4 +44,3 @@ class TestRunExtractionE2E:
             assert result.workflow_id is not None, "Workflow ID should be defined"
             assert isinstance(result.workflow_id, str), "Workflow ID should be a string"
             assert len(result.workflow_id) > 0, "Workflow ID should not be empty"
-    

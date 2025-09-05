@@ -2,16 +2,16 @@
 Event system for Kadoa SDK.
 """
 
-from kadoa_sdk.events.emitter import KadoaEventEmitter, EventEmitter
+from kadoa_sdk.events.emitter import EventEmitter, KadoaEventEmitter
 from kadoa_sdk.events.event_types import (
-    KadoaEvent,
-    KadoaEventName,
     AnyKadoaEvent,
     EntityDetectedPayload,
+    ExtractionCompletedPayload,
+    ExtractionDataAvailablePayload,
     ExtractionStartedPayload,
     ExtractionStatusChangedPayload,
-    ExtractionDataAvailablePayload,
-    ExtractionCompletedPayload,
+    KadoaEvent,
+    KadoaEventName,
 )
 
 __all__ = [

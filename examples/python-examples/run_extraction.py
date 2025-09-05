@@ -1,7 +1,6 @@
 #!/usr/bin/env python3
 """
 Run extraction example for Kadoa SDK.
-Mirrors the structure of examples/node-examples/src/run-extraction.ts
 """
 
 import os

@@ -3,12 +3,13 @@ Kadoa SDK application initialization and configuration.
 """
 
 from dataclasses import dataclass
-from typing import Optional, Callable, Dict, Any
+from typing import Any, Callable, Dict, Optional
+
 import requests
 from requests.adapters import HTTPAdapter
 from urllib3.util.retry import Retry
 
-from kadoa_sdk.events import KadoaEventEmitter, AnyKadoaEvent
+from kadoa_sdk.events import AnyKadoaEvent, KadoaEventEmitter
 from openapi_client import Configuration
 
 
@@ -91,13 +92,10 @@ def initialize_sdk(config: KadoaSdkConfig) -> KadoaSdk:
         ...     api_key='your-api-key'
         ... ))
     """
-    # Create API configuration
     configuration = Configuration(host=config.base_url, api_key={"ApiKeyAuth": config.api_key})
 
-    # Create session with retry strategy
     session = requests.Session()
 
-    # Configure retries
     retry_strategy = Retry(
         total=3,
         backoff_factor=1,
@@ -107,10 +105,8 @@ def initialize_sdk(config: KadoaSdkConfig) -> KadoaSdk:
     session.mount("http://", adapter)
     session.mount("https://", adapter)
 
-    # Set timeout
     session.request = _wrap_request_with_timeout(session.request, config.timeout)
 
-    # Create event emitter
     events = KadoaEventEmitter()
 
     return KadoaSdk(
@@ -170,12 +166,8 @@ def dispose(sdk: KadoaSdk) -> None:
     if sdk and hasattr(sdk, "events"):
         sdk.events.remove_all_event_listeners()  # type: ignore
 
-    # Session cleanup happens automatically via garbage collection
-    # but we can close it explicitly if needed
     if sdk and hasattr(sdk, "session"):
         try:
             sdk.session.close()  # type: ignore
         except Exception:  # type: ignore
             pass  # Ignore errors during cleanup
-
-

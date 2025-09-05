@@ -2,8 +2,9 @@
 Kadoa SDK exceptions.
 """
 
-from typing import Optional, Dict, Any
 from enum import Enum
+from typing import Any, Dict, Optional
+
 import requests
 
 
@@ -22,7 +23,7 @@ class KadoaErrorCode(str, Enum):
     TIMEOUT = "TIMEOUT"
 
 
-class KadoaSdkException(Exception):
+class KadoaSdkException(Exception):  # noqa: N818
     """Base exception for Kadoa SDK errors."""
 
     def __init__(
@@ -100,27 +101,20 @@ class KadoaHttpException(KadoaSdkException):
         response = getattr(error, "response", None)
         status = response.status_code if response is not None else None
 
-        # Extract request ID from headers
         request_id = None
         if response is not None and response.headers:
             request_id = response.headers.get("x-request-id") or response.headers.get(
                 "x-amzn-requestid"
             )
 
-        # Extract method and URL
         request = getattr(error, "request", None)
         method = request.method.upper() if request and hasattr(request, "method") else None
         url = request.url if request and hasattr(request, "url") else None
 
-        # Extract response body
         response_body = None
         if response is not None:
-            try:
-                response_body = response.json()
-            except:
-                response_body = response.text if hasattr(response, "text") else None
+            response_body = response.json()
 
-        # Determine error code based on status
         code = cls._map_status_to_code(error, status)
 
         return cls(
@@ -139,10 +133,8 @@ class KadoaHttpException(KadoaSdkException):
     def _map_status_to_code(error: Exception, status: Optional[int]) -> KadoaErrorCode:
         """Map HTTP status code to KadoaErrorCode."""
         if not status:
-            # Check for timeout errors
             if isinstance(error, requests.Timeout):
                 return KadoaErrorCode.TIMEOUT
-            # Check for connection errors
             elif isinstance(error, requests.ConnectionError):
                 return KadoaErrorCode.NETWORK_ERROR
             return KadoaErrorCode.UNKNOWN
@@ -200,18 +192,15 @@ def wrap_kadoa_error(
     Returns:
         KadoaSdkException or KadoaHttpException wrapping the original error
     """
-    # Already a Kadoa exception, enhance with additional context
     if isinstance(error, KadoaSdkException):
         error.message = f"{message}: {error.message}"
         if details:
             error.details.update(details)
         return error
 
-    # Wrap requests exceptions in KadoaHttpException
     if isinstance(error, requests.RequestException):
         return KadoaHttpException.from_requests_error(error, message, details)
 
-    # Wrap in KadoaSdkException
     return KadoaSdkException(
         message=f"{message}: {str(error)}",
         code=KadoaErrorCode.INTERNAL_ERROR,

@@ -2,8 +2,7 @@
 Constants for extraction module.
 """
 
-from typing import Dict, Any
-
+from typing import Any, Dict
 
 DEFAULT_OPTIONS: Dict[str, Any] = {
     "polling_interval": 5000,  # milliseconds
@@ -11,10 +10,10 @@ DEFAULT_OPTIONS: Dict[str, Any] = {
     "navigation_mode": "single-page",
     "location": {"type": "auto"},
     "name": "Untitled Workflow",
-    "data_limit": 100,
+    "max_records": 99999,
+    "data_limit": 1000,
 }
 
-MAX_DATA_LIMIT = 99999
 
 TERMINAL_RUN_STATES = frozenset(
     [

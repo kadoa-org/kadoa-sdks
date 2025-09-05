@@ -2,13 +2,12 @@
 Event emitter implementation for Kadoa SDK.
 """
 
-import threading
-from typing import Callable, Dict, Optional, Any, List
-from collections import defaultdict
 import logging
+import threading
+from collections import defaultdict
+from typing import Any, Callable, Dict, List, Optional
 
-from kadoa_sdk.events.event_types import KadoaEvent, AnyKadoaEvent
-
+from kadoa_sdk.events.event_types import AnyKadoaEvent, KadoaEvent
 
 logger = logging.getLogger(__name__)
 

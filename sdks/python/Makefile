@@ -9,7 +9,7 @@ help:
 	@echo "  make test           Run all tests"
 	@echo "  make test-e2e       Run E2E tests only"
 	@echo "  make test-coverage  Run tests with coverage report"
-	@echo "  make lint           Run linting checks"
+	@echo "  make lint           Run all linting checks (ruff + pylint)"
 	@echo "  make format         Format code with black"
 	@echo "  make clean          Clean build artifacts"
 
@@ -30,6 +30,10 @@ test-coverage:
 
 lint:
 	ruff check kadoa_sdk tests
+
+lint-fix:
+	ruff check kadoa_sdk tests --fix
+	ruff format kadoa_sdk tests
 
 format:
 	black kadoa_sdk tests

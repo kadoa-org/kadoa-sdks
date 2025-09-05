@@ -2,13 +2,14 @@
 Data fetching functionality for extraction workflows.
 """
 
-from typing import List, Dict, Any, Optional
+from typing import Any, Dict, List, Optional
 
-from kadoa_sdk.kadoa_sdk import KadoaSdk
 from kadoa_sdk.exceptions import wrap_kadoa_error
 from kadoa_sdk.extraction.client import get_workflows_api
 from kadoa_sdk.extraction.constants import DEFAULT_OPTIONS, ERROR_MESSAGES
+from kadoa_sdk.kadoa_sdk import KadoaSdk
 from openapi_client import ApiException
+
 
 def fetch_workflow_data(
     sdk: KadoaSdk, workflow_id: str, limit: Optional[int] = None
@@ -37,7 +38,6 @@ def fetch_workflow_data(
             workflow_id=workflow_id, limit=limit
         )
 
-        # Extract data from response
         if hasattr(response, "data") and hasattr(response.data, "data"):
             data = response.data.data
         elif hasattr(response, "data"):
@@ -45,11 +45,9 @@ def fetch_workflow_data(
         else:
             data = []
 
-        # Convert to list of dicts if necessary
         if data is None:
             return []
 
-        # If data is a list of objects, convert to dicts
         result = []
         for item in data:
             if hasattr(item, "to_dict"):
@@ -57,19 +55,15 @@ def fetch_workflow_data(
             elif isinstance(item, dict):
                 result.append(item)
             else:
-                # Try to convert to dict
-                try:
-                    result.append(dict(item))
-                except Exception:
-                    result.append({"raw": str(item)})
+                result.append(dict(item))
 
         return result
 
     except ApiException as error:
         raise wrap_kadoa_error(
             error, ERROR_MESSAGES["DATA_FETCH_FAILED"], {"workflow_id": workflow_id, "limit": limit}
-        )
+        ) from error
     except Exception as error:
         raise wrap_kadoa_error(
             error, ERROR_MESSAGES["DATA_FETCH_FAILED"], {"workflow_id": workflow_id, "limit": limit}
-        )
+        ) from error

@@ -4,8 +4,8 @@ Event type definitions for Kadoa SDK.
 
 from dataclasses import dataclass, field
 from datetime import datetime
-from typing import TypedDict, Literal, Union, Optional, List, Dict, Any
 from enum import Enum
+from typing import Any, Dict, List, Literal, Optional, TypedDict, Union
 
 
 class EntityFieldDict(TypedDict, total=False):
