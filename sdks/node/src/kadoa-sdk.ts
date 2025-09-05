@@ -89,7 +89,7 @@ export function initializeSdk(config: KadoaConfig): KadoaSDK {
  * @example
  * ```typescript
  * const sdkInstance = initializeSdk({ apiKey, enableEvents: true });
- * // ... use the app
+ * // ... use the sdk
  * dispose(sdkInstance); // Clean up when done
  * ```
  */

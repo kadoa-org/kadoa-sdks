@@ -3,10 +3,9 @@ Workflow management for extraction operations.
 """
 
 import time
-import logging
-from typing import Dict, Any, List, Optional, Callable
+from typing import List, Optional
 
-from kadoa_sdk.app import KadoaSdk
+from kadoa_sdk.kadoa_sdk import KadoaSdk
 from kadoa_sdk.exceptions import KadoaSdkException, KadoaErrorCode, wrap_kadoa_error
 from kadoa_sdk.extraction.client import get_workflows_api
 from kadoa_sdk.extraction.constants import (
@@ -20,7 +19,6 @@ from kadoa_sdk.extraction.types import EntityField, WorkflowStatus
 from openapi_client import ApiException
 
 
-logger = logging.getLogger(__name__)
 
 
 def is_terminal_run_state(run_state: Optional[str]) -> bool:
@@ -38,7 +36,7 @@ def is_successful_run_state(run_state: Optional[str]) -> bool:
 
 
 def create_workflow(
-    app: KadoaSdk,
+    sdk: KadoaSdk,
     urls: List[str],
     navigation_mode: str,
     entity: str,
@@ -49,7 +47,7 @@ def create_workflow(
     Create a new workflow with the provided configuration.
 
     Args:
-        app: The KadoaSdk instance
+        sdk: The KadoaSdk instance
         urls: List of URLs to extract from
         navigation_mode: Navigation mode for the workflow
         entity: Entity type to extract
@@ -62,7 +60,7 @@ def create_workflow(
     Raises:
         KadoaSdkException: If workflow creation fails
     """
-    workflows_api = get_workflows_api(app)
+    workflows_api = get_workflows_api(sdk)
 
     # Convert fields to dict format for API
     fields_dict = [field.to_dict() for field in fields]
@@ -81,15 +79,15 @@ def create_workflow(
 
     # Make direct HTTP call to bypass pydantic validation issues
     try:
-        # Use the app's session directly
+        # Use the sdk's session directly
         import json
 
-        response = app.session.post(
-            f"{app.base_url}/v4/workflows",
+        response = sdk.session.post(
+            f"{sdk.base_url}/v4/workflows",
             json=workflow_dict,
             headers={
                 "Content-Type": "application/json",
-                "X-API-Key": app.configuration.api_key.get("ApiKeyAuth", ""),
+                "X-API-Key": sdk.configuration.api_key.get("ApiKeyAuth", ""),
             },
         )
 
@@ -120,12 +118,12 @@ def create_workflow(
         )
 
 
-def get_workflow_status(app: KadoaSdk, workflow_id: str) -> WorkflowStatus:
+def get_workflow_status(sdk: KadoaSdk, workflow_id: str) -> WorkflowStatus:
     """
     Get the current status of a workflow.
 
     Args:
-        app: The KadoaSdk instance
+        sdk: The KadoaSdk instance
         workflow_id: The workflow ID
 
     Returns:
@@ -138,11 +136,11 @@ def get_workflow_status(app: KadoaSdk, workflow_id: str) -> WorkflowStatus:
     try:
         import json
 
-        response = app.session.get(
-            f"{app.base_url}/v4/workflows/{workflow_id}",
+        response = sdk.session.get(
+            f"{sdk.base_url}/v4/workflows/{workflow_id}",
             headers={
                 "Content-Type": "application/json",
-                "X-API-Key": app.configuration.api_key.get("ApiKeyAuth", ""),
+                "X-API-Key": sdk.configuration.api_key.get("ApiKeyAuth", ""),
             },
         )
 
@@ -168,21 +166,19 @@ def get_workflow_status(app: KadoaSdk, workflow_id: str) -> WorkflowStatus:
 
 
 def wait_for_workflow_completion(
-    app: KadoaSdk,
+    sdk: KadoaSdk,
     workflow_id: str,
     polling_interval: int = 5000,
     max_wait_time: int = 300000,
-    on_status_change: Optional[Callable[[Dict[str, Any]], None]] = None,
 ) -> WorkflowStatus:
     """
     Poll workflow status until it reaches a terminal state.
 
     Args:
-        app: The KadoaSdk instance
+        sdk: The KadoaSdk instance
         workflow_id: The workflow ID to monitor
         polling_interval: Milliseconds between status checks
         max_wait_time: Maximum milliseconds to wait before timeout
-        on_status_change: Optional callback for status changes
 
     Returns:
         Final WorkflowStatus when completed
@@ -198,7 +194,7 @@ def wait_for_workflow_completion(
     previous_run_state = None
 
     while time.time() - start_time < max_wait_time_sec:
-        workflow_status = get_workflow_status(app, workflow_id)
+        workflow_status = get_workflow_status(sdk, workflow_id)
 
         # Check for status changes
         if (
@@ -214,13 +210,7 @@ def wait_for_workflow_completion(
                 "currentRunState": workflow_status.run_state,
             }
 
-            logger.info(f"Workflow {workflow_id} status changed: {status_change}")
-
-            # Emit status change event
-            app.emit("extraction:status_changed", status_change, "extraction")
-
-            if on_status_change:
-                on_status_change(status_change)
+            sdk.emit("extraction:status_changed", status_change, "extraction")
 
             previous_state = workflow_status.state
             previous_run_state = workflow_status.run_state

@@ -4,7 +4,11 @@ Official Python SDK for the Kadoa API, providing easy integration with Kadoa's w
 
 ## Installation
 
+We recommend using a virtual environment to avoid dependency conflicts (optional). Use your preferred tool (`venv`, `virtualenv`, `conda`, `poetry`, `uv`).
+
 ```bash
+python3 -m venv .venv
+source .venv/bin/activate
 pip install kadoa-sdk
 ```
 
@@ -19,21 +23,25 @@ pip install kadoa-sdk
 ### Quick Start
 
 ```python
-from kadoa_sdk import initialize_app, run_extraction, KadoaSdkConfig, ExtractionOptions
+import logging
+from kadoa_sdk import initialize_sdk, run_extraction, KadoaSdkConfig, ExtractionOptions
+
+logging.basicConfig(level=logging.INFO)
+logger = logging.getLogger("kadoa_sdk.examples")
 
 # Initialize the SDK
-app = initialize_app(KadoaSdkConfig(
+sdk = initialize_sdk(KadoaSdkConfig(
     api_key="your-api-key"
 ))
 
 # Run an extraction
-result = run_extraction(app, ExtractionOptions(
+result = run_extraction(sdk, ExtractionOptions(
     urls=["https://example.com"],
     name="My Extraction Workflow"
 ))
 
 if result:
-    print(f"Workflow created with ID: {result.workflow_id}")
+    logger.info("Workflow created with ID: %s", result.workflow_id)
 ```
 
 ## Configuration
@@ -41,7 +49,7 @@ if result:
 ### Basic Configuration
 
 ```python
-app = initialize_app(KadoaSdkConfig(
+sdk = initialize_sdk(KadoaSdkConfig(
     api_key="your-api-key",
     base_url="https://api.kadoa.com",  # optional
     timeout=30                         # optional, in seconds
@@ -59,11 +67,11 @@ KADOA_TIMEOUT=30
 ```python
 import os
 from dotenv import load_dotenv
-from kadoa_sdk import initialize_app, KadoaSdkConfig
+from kadoa_sdk import initialize_sdk, KadoaSdkConfig
 
 load_dotenv()
 
-app = initialize_app(KadoaSdkConfig(
+sdk = initialize_sdk(KadoaSdkConfig(
     api_key=os.environ["KADOA_API_KEY"],
     base_url=os.environ.get("KADOA_API_URL", "https://api.kadoa.com"),
     timeout=int(os.environ.get("KADOA_TIMEOUT", "30"))
@@ -73,17 +81,16 @@ app = initialize_app(KadoaSdkConfig(
 ## Event Handling
 
 ```python
-from kadoa_sdk import initialize_app, KadoaSdkConfig
+import logging
+from kadoa_sdk import initialize_sdk, KadoaSdkConfig
 
-app = initialize_app(KadoaSdkConfig(api_key="your-api-key"))
+logging.basicConfig(level=logging.INFO)
+logger = logging.getLogger("kadoa_sdk.examples")
 
-# Listen to events
-def on_event(event):
-    print(f"Event: {event.name} at {event.timestamp}")
-    if event.data:
-        print(f"Data: {event.data}")
+sdk = initialize_sdk(KadoaSdkConfig(api_key="your-api-key"))
 
-app.on_event(on_event)
+# Listen to events with a lambda and log output
+sdk.on_event(lambda e: logger.info("event: %s", e.to_dict()))
 
 # Event types:
 # - entity:detected
@@ -95,17 +102,20 @@ app.on_event(on_event)
 
 ## API Reference
 
-### initialize_app(config: KadoaSdkConfig)
+### initialize_sdk(config: KadoaSdkConfig)
 - `api_key` (required): Your Kadoa API key
 - `base_url` (optional): API base URL
 - `timeout` (optional): Request timeout in seconds
 
-Returns an app instance with configured API client.
+Returns an sdk instance with configured API client.
 
-### run_extraction(app, options: ExtractionOptions)
+### run_extraction(sdk, options: ExtractionOptions)
 - `urls`: List of URLs to extract from
 - `name`: Workflow name
 - Additional options available in API documentation
+
+### dispose(sdk: KadoaSdk)
+Releases resources and removes all event listeners.
 
 ## Examples
 

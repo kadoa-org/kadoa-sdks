@@ -139,18 +139,18 @@ async function handleErrorResponse(
  * This is a workaround implementation using native fetch since the endpoint
  * is not yet included in the OpenAPI specification.
  *
- * @param app The Kadoa app instance containing configuration
+ * @param sdk The Kadoa sdk instance containing configuration
  * @param options Request options including the link to analyze
  * @returns EntityPrediction containing the detected entity type and fields
  */
 export async function fetchEntityFields(
-	app: KadoaSDK,
+	sdk: KadoaSDK,
 	options: EntityRequestOptions,
 ): Promise<EntityPrediction> {
 	validateEntityOptions(options);
 
-	const url = new URL(ENTITY_API_ENDPOINT, app.baseUrl || DEFAULT_API_BASE_URL);
-	const headers = await buildRequestHeaders(app.configuration);
+	const url = new URL(ENTITY_API_ENDPOINT, sdk.baseUrl || DEFAULT_API_BASE_URL);
+	const headers = await buildRequestHeaders(sdk.configuration);
 
 	const requestBody: EntityRequestOptions = options;
 

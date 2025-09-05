@@ -4,8 +4,8 @@ Kadoa SDK for Python.
 A Python SDK for interacting with the Kadoa API.
 """
 
-from kadoa_sdk.app import (
-    initialize_app,
+from kadoa_sdk.kadoa_sdk import (
+    initialize_sdk,
     get_config,
     get_http_client,
     dispose,
@@ -35,7 +35,7 @@ __version__ = "0.4.0"
 
 __all__ = [
     # App functions
-    "initialize_app",
+    "initialize_sdk",
     "get_config",
     "get_http_client",
     "dispose",

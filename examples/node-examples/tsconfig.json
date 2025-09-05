@@ -12,13 +12,8 @@
 		"esModuleInterop": true,
 		"resolveJsonModule": true,
 		"types": ["bun", "node"],
-		"baseUrl": ".",
-		"paths": {
-			"@kadoa/sdk": ["../../sdks/node/src/index.ts"],
-			"@kadoa/sdk/*": ["../../sdks/node/src/*"]
-		}
+		"baseUrl": "."
 	},
 	"include": ["src/**/*"],
-	"exclude": ["node_modules", "dist"],
-	"references": [{ "path": "../../sdks/node" }]
+	"exclude": ["node_modules", "dist"]
 }

@@ -2,10 +2,9 @@
 Extraction functionality for Kadoa SDK.
 """
 
-import logging
 from typing import Optional, Dict, Any
 
-from kadoa_sdk.app import KadoaSdk
+from kadoa_sdk.kadoa_sdk import KadoaSdk
 from kadoa_sdk.exceptions import KadoaSdkException, KadoaErrorCode, wrap_kadoa_error
 from kadoa_sdk.extraction.constants import DEFAULT_OPTIONS, ERROR_MESSAGES, SUCCESSFUL_RUN_STATES
 from kadoa_sdk.extraction.types import (
@@ -23,8 +22,6 @@ from kadoa_sdk.extraction.workflow_manager import (
 from kadoa_sdk.extraction.data_fetcher import fetch_workflow_data
 
 
-logger = logging.getLogger(__name__)
-
 
 def _validate_extraction_options(options: ExtractionOptions) -> None:
     """Validate extraction options."""
@@ -37,12 +34,12 @@ def _is_extraction_successful(run_state: Optional[str]) -> bool:
     return run_state.upper() in SUCCESSFUL_RUN_STATES if run_state else False
 
 
-def run_extraction(app: KadoaSdk, options: ExtractionOptions) -> ExtractionResult:
+def run_extraction(sdk: KadoaSdk, options: ExtractionOptions) -> ExtractionResult:
     """
     Run extraction workflow using dynamic entity detection.
 
     Args:
-        app: The KadoaSdk instance
+        sdk: The KadoaSdk instance
         options: Extraction configuration options
 
     Returns:
@@ -52,12 +49,12 @@ def run_extraction(app: KadoaSdk, options: ExtractionOptions) -> ExtractionResul
         KadoaSdkException: If extraction fails
 
     Example:
-        >>> from kadoa_sdk import initialize_app, KadoaSdkConfig
+        >>> from kadoa_sdk import initialize_sdk, KadoaSdkConfig
         >>> from kadoa_sdk.extraction import run_extraction, ExtractionOptions
         >>>
-        >>> app = initialize_app(KadoaSdkConfig(api_key='your-api-key'))
+        >>> sdk = initialize_sdk(KadoaSdkConfig(api_key='your-api-key'))
         >>> result = run_extraction(
-        ...     app,
+        ...     sdk,
         ...     ExtractionOptions(
         ...         urls=['https://example.com'],
         ...         name='My Extraction'
@@ -73,20 +70,14 @@ def run_extraction(app: KadoaSdk, options: ExtractionOptions) -> ExtractionResul
 
     try:
         # Step 1: Detect entity fields
-        logger.info(f"Detecting entity fields for URL: {config.urls[0]}")
-
         entity_request = EntityRequestOptions(
             link=config.urls[0], location=config.location, navigation_mode=config.navigation_mode
         )
 
-        entity_prediction = fetch_entity_fields(app, entity_request)
-
-        logger.info(
-            f"Entity detected: {entity_prediction.entity} with {len(entity_prediction.fields)} fields"
-        )
+        entity_prediction = fetch_entity_fields(sdk, entity_request)
 
         # Emit entity:detected event
-        app.emit(
+        sdk.emit(
             "entity:detected",
             {
                 "entity": entity_prediction.entity,
@@ -101,10 +92,9 @@ def run_extraction(app: KadoaSdk, options: ExtractionOptions) -> ExtractionResul
         )
 
         # Step 2: Create workflow
-        logger.info("Creating extraction workflow...")
 
         workflow_id = create_workflow(
-            app=app,
+            sdk=sdk,
             urls=config.urls,
             navigation_mode=config.navigation_mode,
             entity=entity_prediction.entity,
@@ -112,30 +102,21 @@ def run_extraction(app: KadoaSdk, options: ExtractionOptions) -> ExtractionResul
             name=config.name,
         )
 
-        logger.info(f"Workflow created with ID: {workflow_id}")
 
         # Emit extraction:started event
-        app.emit(
+        sdk.emit(
             "extraction:started",
             {"workflowId": workflow_id, "name": config.name, "urls": config.urls},
             "extraction",
         )
 
         # Step 3: Wait for completion
-        logger.info("Waiting for extraction to complete...")
-
-        def on_status_change(change: Dict[str, Any]) -> None:
-            logger.debug(
-                f"Workflow {change['workflowId']} status: "
-                f"{change['currentState']}/{change['currentRunState']}"
-            )
 
         workflow_status = wait_for_workflow_completion(
-            app=app,
+            sdk=sdk,
             workflow_id=workflow_id,
             polling_interval=config.polling_interval,
             max_wait_time=config.max_wait_time,
-            on_status_change=on_status_change,
         )
 
         # Step 4: Fetch data if successful
@@ -143,23 +124,19 @@ def run_extraction(app: KadoaSdk, options: ExtractionOptions) -> ExtractionResul
         is_success = workflow_status.is_successful()
 
         if is_success:
-            logger.info(f"Extraction completed successfully. Fetching data...")
-            data = fetch_workflow_data(app, workflow_id, config.data_limit)
+            data = fetch_workflow_data(sdk, workflow_id, config.data_limit)
 
             if data:
-                logger.info(f"Retrieved {len(data)} records from workflow {workflow_id}")
 
                 # Emit extraction:data_available event
-                app.emit(
+                sdk.emit(
                     "extraction:data_available",
                     {"workflowId": workflow_id, "recordCount": len(data), "isPartial": False},
                     "extraction",
                 )
-            else:
-                logger.warning(f"No data retrieved from workflow {workflow_id}")
 
             # Emit extraction:completed event (success)
-            app.emit(
+            sdk.emit(
                 "extraction:completed",
                 {
                     "workflowId": workflow_id,
@@ -175,7 +152,7 @@ def run_extraction(app: KadoaSdk, options: ExtractionOptions) -> ExtractionResul
             logger.error(error_msg)
 
             # Emit extraction:completed event (failure)
-            app.emit(
+            sdk.emit(
                 "extraction:completed",
                 {
                     "workflowId": workflow_id,

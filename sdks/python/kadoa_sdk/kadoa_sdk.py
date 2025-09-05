@@ -22,7 +22,7 @@ class KadoaSdk:
     events: KadoaEventEmitter
 
     def __hash__(self):
-        """Make the app hashable using its object ID."""
+        """Make the sdk hashable using its object ID."""
         return hash(id(self))
 
     def emit(
@@ -74,20 +74,20 @@ class KadoaSdkConfig:
     timeout: int = 30
 
 
-def initialize_app(config: KadoaSdkConfig) -> KadoaSdk:
+def initialize_sdk(config: KadoaSdkConfig) -> KadoaSdk:
     """
-    Initialize a Kadoa app instance.
+    Initialize a Kadoa sdk instance.
 
     Args:
         config: Configuration options for the Kadoa SDK
 
     Returns:
-        Initialized KadoaApp instance
+        Initialized KadoaSdk instance
 
     Example:
-        >>> from kadoa_sdk import initialize_app
+        >>> from kadoa_sdk import initialize_sdk
         >>>
-        >>> app = initialize_app(KadoaSdkConfig(
+        >>> sdk = initialize_sdk(KadoaSdkConfig(
         ...     api_key='your-api-key'
         ... ))
     """
@@ -129,51 +129,53 @@ def _wrap_request_with_timeout(original_request, timeout):
     return request_with_timeout
 
 
-def get_config(app: KadoaSdk) -> Configuration:
+def get_config(sdk: KadoaSdk) -> Configuration:
     """
-    Get the configuration from an app instance.
+    Get the configuration from an sdk instance.
 
     Args:
-        app: The KadoaSdk instance
+        sdk: The KadoaSdk instance
 
     Returns:
         The Configuration object
     """
-    return app.configuration
+    return sdk.configuration
 
 
-def get_http_client(app: KadoaSdk) -> requests.Session:
+def get_http_client(sdk: KadoaSdk) -> requests.Session:
     """
-    Get the requests session from an app instance.
+        Get the requests session from an sdk instance.
 
     Args:
-        app: The KadoaSdk instance
+        sdk: The KadoaSdk instance
 
     Returns:
         The requests Session
     """
-    return app.session
+    return sdk.session
 
 
-def dispose(app: KadoaSdk) -> None:
+def dispose(sdk: KadoaSdk) -> None:
     """
     Dispose of a KadoaSdk instance and clean up resources.
 
     Args:
-        app: The KadoaSdk instance to dispose
+        sdk: The KadoaSdk instance to dispose
 
     Example:
-        >>> app = initialize_app(KadoaSdkConfig(api_key='key'))
-        >>> # ... use the app
-        >>> dispose(app)  # Clean up when done
+        >>> sdk = initialize_sdk(KadoaSdkConfig(api_key='key'))
+        >>> # ... use the sdk
+        >>> dispose(sdk)  # Clean up when done
     """
-    if app and hasattr(app, "events"):
-        app.events.remove_all_event_listeners()
+    if sdk and hasattr(sdk, "events"):
+        sdk.events.remove_all_event_listeners()  # type: ignore
 
     # Session cleanup happens automatically via garbage collection
     # but we can close it explicitly if needed
-    if app and hasattr(app, "session"):
+    if sdk and hasattr(sdk, "session"):
         try:
-            app.session.close()
-        except Exception:
+            sdk.session.close()  # type: ignore
+        except Exception:  # type: ignore
             pass  # Ignore errors during cleanup
+
+

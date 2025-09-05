@@ -98,6 +98,9 @@ Returns an SDK instance with:
 - `onEvent()`: Subscribe to events
 - `offEvent()`: Unsubscribe from events
 
+### dispose(sdk)
+Releases resources and removes all event listeners.
+
 ### runExtraction(sdk, options)
 - `urls`: Array of URLs to extract from
 - `name`: Workflow name
@@ -110,7 +113,6 @@ See [examples directory](https://github.com/kadoa-org/kadoa-sdks/tree/main/examp
 ## Requirements
 
 - Node.js 22+
-- TypeScript 5+ (for TypeScript projects)
 
 ## License
 

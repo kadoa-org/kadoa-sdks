@@ -2,27 +2,22 @@
 Data fetching functionality for extraction workflows.
 """
 
-import logging
 from typing import List, Dict, Any, Optional
 
-from kadoa_sdk.app import KadoaSdk
+from kadoa_sdk.kadoa_sdk import KadoaSdk
 from kadoa_sdk.exceptions import wrap_kadoa_error
 from kadoa_sdk.extraction.client import get_workflows_api
 from kadoa_sdk.extraction.constants import DEFAULT_OPTIONS, ERROR_MESSAGES
 from openapi_client import ApiException
 
-
-logger = logging.getLogger(__name__)
-
-
 def fetch_workflow_data(
-    app: KadoaSdk, workflow_id: str, limit: Optional[int] = None
+    sdk: KadoaSdk, workflow_id: str, limit: Optional[int] = None
 ) -> List[Dict[str, Any]]:
     """
     Fetch extracted data from a workflow.
 
     Args:
-        app: The KadoaSdk instance
+        sdk: The KadoaSdk instance
         workflow_id: The workflow ID to fetch data from
         limit: Maximum number of records to retrieve
 
@@ -32,7 +27,7 @@ def fetch_workflow_data(
     Raises:
         KadoaSdkException: If data fetch fails
     """
-    workflows_api = get_workflows_api(app)
+    workflows_api = get_workflows_api(sdk)
 
     if limit is None:
         limit = DEFAULT_OPTIONS["data_limit"]
@@ -66,7 +61,6 @@ def fetch_workflow_data(
                 try:
                     result.append(dict(item))
                 except Exception:
-                    logger.warning(f"Could not convert data item to dict: {type(item)}")
                     result.append({"raw": str(item)})
 
         return result

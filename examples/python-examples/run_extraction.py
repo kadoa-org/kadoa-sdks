@@ -17,7 +17,7 @@ sdk_path = Path(__file__).parent.parent.parent / "sdks" / "python"
 if sdk_path.exists():
     sys.path.insert(0, str(sdk_path))
 
-from kadoa_sdk import initialize_app, run_extraction, KadoaSdkConfig, ExtractionOptions
+from kadoa_sdk import initialize_sdk, run_extraction, KadoaSdkConfig, ExtractionOptions
 from dotenv import load_dotenv
 
 
@@ -32,14 +32,15 @@ def main():
     assert api_key, "KADOA_API_KEY is not set"
     assert api_url, "KADOA_API_URL is not set"
     
-    # Initialize the app
-    app = initialize_app(KadoaSdkConfig(
+    # Initialize the sdk
+    sdk = initialize_sdk(KadoaSdkConfig(
         api_key=api_key,
         base_url=api_url
     ))
+    sdk.on_event(lambda event: print(event))
     
     # Run extraction
-    result = run_extraction(app, ExtractionOptions(
+    result = run_extraction(sdk, ExtractionOptions(
         urls=["https://sandbox.kadoa.com/ecommerce"]
     ))
     

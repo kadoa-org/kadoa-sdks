@@ -2,18 +2,13 @@
 Entity detection functionality for dynamic field extraction.
 """
 
-import logging
 from typing import Dict
 from urllib.parse import urljoin
 
-from kadoa_sdk.app import KadoaSdk
+from kadoa_sdk.kadoa_sdk import KadoaSdk
 from kadoa_sdk.exceptions import KadoaSdkException, KadoaHttpException, KadoaErrorCode
 from kadoa_sdk.extraction.constants import DEFAULT_API_BASE_URL, ENTITY_API_ENDPOINT, ERROR_MESSAGES
 from kadoa_sdk.extraction.types import EntityPrediction, EntityRequestOptions, EntityResponse
-
-
-logger = logging.getLogger(__name__)
-
 
 def _validate_entity_options(options: EntityRequestOptions) -> None:
     """Validate entity request options."""
@@ -25,13 +20,13 @@ def _validate_entity_options(options: EntityRequestOptions) -> None:
         )
 
 
-def _build_request_headers(app: KadoaSdk) -> Dict[str, str]:
+def _build_request_headers(sdk: KadoaSdk) -> Dict[str, str]:
     """Build request headers including API key authentication."""
     headers = {"Content-Type": "application/json", "Accept": "application/json"}
 
     # Extract API key from configuration
-    if hasattr(app.configuration, "api_key") and app.configuration.api_key:
-        api_key_dict = app.configuration.api_key
+    if hasattr(sdk.configuration, "api_key") and sdk.configuration.api_key:
+        api_key_dict = sdk.configuration.api_key
         if isinstance(api_key_dict, dict) and "ApiKeyAuth" in api_key_dict:
             headers["X-API-Key"] = api_key_dict["ApiKeyAuth"]
         else:
@@ -44,7 +39,7 @@ def _build_request_headers(app: KadoaSdk) -> Dict[str, str]:
         raise KadoaSdkException(
             ERROR_MESSAGES["NO_API_KEY"],
             code=KadoaErrorCode.AUTH_ERROR,
-            details={"has_config": bool(app.configuration)},
+            details={"has_config": bool(sdk.configuration)},
         )
 
     return headers
@@ -106,7 +101,7 @@ def _handle_error_response(response, url: str, link: str) -> None:
     )
 
 
-def fetch_entity_fields(app: KadoaSdk, options: EntityRequestOptions) -> EntityPrediction:
+def fetch_entity_fields(sdk: KadoaSdk, options: EntityRequestOptions) -> EntityPrediction:
     """
     Fetch entity fields dynamically from the /v4/entity endpoint.
 
@@ -114,7 +109,7 @@ def fetch_entity_fields(app: KadoaSdk, options: EntityRequestOptions) -> EntityP
     is not yet included in the OpenAPI specification.
 
     Args:
-        app: The Kadoa app instance containing configuration
+        sdk: The Kadoa sdk instance containing configuration
         options: Request options including the link to analyze
 
     Returns:
@@ -126,12 +121,12 @@ def fetch_entity_fields(app: KadoaSdk, options: EntityRequestOptions) -> EntityP
     """
     _validate_entity_options(options)
 
-    url = urljoin(app.base_url or DEFAULT_API_BASE_URL, ENTITY_API_ENDPOINT)
-    headers = _build_request_headers(app)
+    url = urljoin(sdk.base_url or DEFAULT_API_BASE_URL, ENTITY_API_ENDPOINT)
+    headers = _build_request_headers(sdk)
     request_body = options.to_dict()
 
     try:
-        response = app.session.post(url, headers=headers, json=request_body)
+        response = sdk.session.post(url, headers=headers, json=request_body)
     except Exception as error:
         raise KadoaSdkException(
             ERROR_MESSAGES["NETWORK_ERROR"],
