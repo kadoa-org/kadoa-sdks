@@ -7,12 +7,8 @@ import type {
 	V4WorkflowsWorkflowIdGet200Response,
 } from "../generated";
 import type { KadoaSDK } from "../kadoa-sdk";
-import {
-	ERROR_MESSAGES,
-	MAX_DATA_LIMIT,
-	TERMINAL_RUN_STATES,
-} from "./constants";
-import type { EntityField } from "./types";
+import { ERROR_MESSAGES, TERMINAL_RUN_STATES } from "./constants";
+import type { EntityField, ExtractionConfig } from "./types";
 
 /**
  * Check if a workflow runState is terminal (finished processing)
@@ -27,12 +23,9 @@ export function isTerminalRunState(runState: string | undefined): boolean {
  */
 export async function createWorkflow(
 	sdkInstance: KadoaSDK,
-	config: {
-		urls: string[];
-		navigationMode: V4WorkflowsPostRequest["navigationMode"];
+	config: ExtractionConfig & {
 		entity: string;
 		fields: EntityField[];
-		name: string;
 	},
 ): Promise<string> {
 	const workflowsApi = getWorkflowsApi(sdkInstance);
@@ -44,7 +37,7 @@ export async function createWorkflow(
 		name: config.name,
 		fields: config.fields,
 		bypassPreview: true,
-		limit: MAX_DATA_LIMIT,
+		limit: config.maxRecords,
 		tags: ["sdk"],
 	};
 
@@ -66,7 +59,7 @@ export async function createWorkflow(
 	} catch (error) {
 		throw wrapKadoaError(error, {
 			message: "Failed to create workflow",
-			details: config,
+			details: config as Record<any, any>,
 		});
 	}
 }
@@ -99,7 +92,7 @@ export async function getWorkflowStatus(
 export async function waitForWorkflowCompletion(
 	sdkInstance: KadoaSDK,
 	workflowId: string,
-	options: {
+	options: ExtractionConfig & {
 		pollingInterval: number;
 		maxWaitTime: number;
 		onStatusChange?: (

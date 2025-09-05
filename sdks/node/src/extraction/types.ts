@@ -53,7 +53,6 @@ export interface EntityRequestOptions {
 	navigationMode?: string;
 }
 
-// Internal type with all required fields (after merge with defaults)
 export interface ExtractionConfig {
 	urls: string[];
 	navigationMode: NavigationMode;
@@ -63,9 +62,9 @@ export interface ExtractionConfig {
 	};
 	pollingInterval: number;
 	maxWaitTime: number;
+	maxRecords: number;
 }
 
-// Public API type with optional fields (before merge with defaults)
 export type ExtractionOptions = {
 	urls: string[];
 } & Partial<Omit<ExtractionConfig, "urls">>;

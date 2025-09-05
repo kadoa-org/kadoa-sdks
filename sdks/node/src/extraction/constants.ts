@@ -4,10 +4,8 @@ export const DEFAULT_OPTIONS = {
 	navigationMode: "single-page" as const,
 	location: { type: "auto" },
 	name: "Untitled Workflow",
-	dataLimit: 100,
+	maxRecords: 99999,
 } as const;
-
-export const MAX_DATA_LIMIT = 99999;
 
 export const TERMINAL_RUN_STATES = new Set([
 	"FINISHED",

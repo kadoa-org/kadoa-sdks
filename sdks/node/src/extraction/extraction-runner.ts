@@ -51,7 +51,6 @@ export async function runExtraction(
 ): Promise<ExtractionResult> {
 	validateExtractionOptions(options);
 
-	// Merge user options with defaults - result is now fully typed as ExtractionConfig
 	const config: ExtractionConfig = merge(
 		DEFAULT_OPTIONS,
 		options,
@@ -81,11 +80,9 @@ export async function runExtraction(
 
 		// Step 2: Create workflow
 		const workflowId = await createWorkflow(sdkInstance, {
-			urls: config.urls,
-			navigationMode: config.navigationMode,
 			entity: entityPrediction.entity,
 			fields: entityPrediction.fields,
-			name: config.name,
+			...config,
 		});
 
 		sdkInstance.emit(
@@ -100,6 +97,7 @@ export async function runExtraction(
 
 		// Step 3: Wait for completion
 		const workflow = await waitForWorkflowCompletion(sdkInstance, workflowId, {
+			...config,
 			pollingInterval: config.pollingInterval,
 			maxWaitTime: config.maxWaitTime,
 		});
