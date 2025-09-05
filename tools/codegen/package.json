@@ -1,0 +1,17 @@
+{
+	"name": "@kadoa/codegen",
+	"version": "0.0.2",
+	"private": true,
+	"type": "module",
+	"bin": {
+		"kadoa-codegen": "src/cli.ts"
+	},
+	"scripts": {},
+	"devDependencies": {
+		"@types/bun": "latest",
+		"@types/node": "^24.3.0"
+	},
+	"dependencies": {
+		"commander": "^14.0.0"
+	}
+}

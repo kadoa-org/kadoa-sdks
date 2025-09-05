@@ -1,0 +1,58 @@
+{
+	"name": "@kadoa/node-sdk",
+	"version": "0.1.1",
+	"description": "Kadoa SDK for Node.js",
+	"main": "./dist/index.js",
+	"module": "./dist/index.mjs",
+	"types": "./dist/index.d.ts",
+	"exports": {
+		".": {
+			"types": "./dist/index.d.ts",
+			"import": "./dist/index.mjs",
+			"require": "./dist/index.js"
+		}
+	},
+	"files": [
+		"dist",
+		"README.md"
+	],
+	"scripts": {
+		"build": "tsup",
+		"dev": "tsup --watch",
+		"dev:watch": "tsup --watch --onSuccess 'echo SDK build completed'",
+		"test": "bun test",
+		"test:e2e": "bun test test/e2e",
+		"test:watch": "bun test --watch",
+		"prepublishOnly": "bun run build"
+	},
+	"dependencies": {
+		"axios": "^1.11.0",
+		"es-toolkit": "^1.39.10"
+	},
+	"devDependencies": {
+		"@types/node": "latest",
+		"tsup": "latest",
+		"typescript": "latest"
+	},
+	"engines": {
+		"node": ">=20"
+	},
+	"repository": {
+		"type": "git",
+		"url": "https://github.com/kadoa/kadoa-sdks.git",
+		"directory": "sdks/node"
+	},
+	"publishConfig": {
+		"access": "public"
+	},
+	"keywords": [
+		"kadoa",
+		"api",
+		"sdk",
+		"client",
+		"typescript",
+		"node"
+	],
+	"author": "Kadoa",
+	"license": "MIT"
+}

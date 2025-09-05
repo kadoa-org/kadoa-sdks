@@ -1,0 +1,47 @@
+{
+	"$schema": "https://turborepo.com/schema.json",
+	"ui": "tui",
+	"tasks": {
+		"build": {
+			"dependsOn": ["^build"],
+			"inputs": ["$TURBO_DEFAULT$", ".env*"],
+			"outputs": [
+				"dist/**",
+				"lib/**",
+				"build/**",
+				"*.tgz",
+				"*.whl",
+				"*.egg-info/**"
+			]
+		},
+		"generate": {
+			"cache": false,
+			"outputs": ["src/generated/**", "kadoa_sdk/generated/**"]
+		},
+		"dev": {
+			"cache": false,
+			"persistent": true,
+			"dependsOn": ["^build"]
+		},
+		"start": {
+			"cache": false,
+			"dependsOn": ["^build"]
+		},
+		"setup": {
+			"cache": false
+		},
+		"//#format-and-lint": {},
+		"//#format-and-lint:fix": {
+			"cache": false
+		},
+		"//#generate": {
+			"cache": false
+		},
+		"//#generate:node": {
+			"cache": false
+		},
+		"//#generate:python": {
+			"cache": false
+		}
+	}
+}

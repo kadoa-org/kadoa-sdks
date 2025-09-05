@@ -1,0 +1,128 @@
+name: Manual Release
+
+on:
+  workflow_dispatch:
+    inputs:
+      sdk:
+        description: 'Which SDK to release'
+        required: true
+        type: choice
+        options:
+          - node
+          - python
+          - both
+      bump-type:
+        description: 'Version bump type'
+        required: true
+        type: choice
+        options:
+          - patch
+          - minor
+          - major
+      reason:
+        description: 'Reason for manual release (will be added to changelog)'
+        required: false
+        type: string
+
+permissions:
+  contents: write
+  pull-requests: write
+
+jobs:
+  create-release-pr:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          token: ${{ secrets.RELEASE_PLEASE_TOKEN || secrets.GITHUB_TOKEN }}
+
+      - name: Create Release PR for Node SDK
+        if: inputs.sdk == 'node' || inputs.sdk == 'both'
+        run: |
+          echo "Creating release PR for Node SDK with ${{ inputs.bump-type }} bump"
+          
+          # Configure git
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          
+          # Create a release marker file to ensure Release Please detects changes
+          echo "$(date -u +%Y-%m-%dT%H:%M:%SZ) - Manual ${{ inputs.bump-type }} release triggered" > sdks/node/.release-trigger
+          git add sdks/node/.release-trigger
+          
+          # Create commit with appropriate conventional commit type
+          COMMIT_TYPE=""
+          if [ "${{ inputs.bump-type }}" = "major" ]; then
+            COMMIT_TYPE="feat!"
+          elif [ "${{ inputs.bump-type }}" = "minor" ]; then
+            COMMIT_TYPE="feat"
+          else
+            COMMIT_TYPE="fix"
+          fi
+          
+          COMMIT_MSG="${COMMIT_TYPE}(sdks/node): trigger ${{ inputs.bump-type }} release"
+          if [ -n "${{ inputs.reason }}" ]; then
+            COMMIT_MSG="$COMMIT_MSG - ${{ inputs.reason }}"
+          fi
+          
+          # Add BREAKING CHANGE footer for major releases
+          if [ "${{ inputs.bump-type }}" = "major" ]; then
+            COMMIT_MSG="${COMMIT_MSG}"$'\n\n'"BREAKING CHANGE: Manual major version bump"
+          fi
+          
+          git commit -m "$COMMIT_MSG"
+          git push origin main
+
+      - name: Create Release PR for Python SDK
+        if: inputs.sdk == 'python' || inputs.sdk == 'both'
+        run: |
+          echo "Creating release PR for Python SDK with ${{ inputs.bump-type }} bump"
+          
+          # Pull latest changes to avoid conflicts
+          git pull origin main --rebase
+          
+          # Configure git
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          
+          # Create a release marker file to ensure Release Please detects changes
+          echo "$(date -u +%Y-%m-%dT%H:%M:%SZ) - Manual ${{ inputs.bump-type }} release triggered" > sdks/python/.release-trigger
+          git add sdks/python/.release-trigger
+          
+          # Create commit with appropriate conventional commit type
+          COMMIT_TYPE=""
+          if [ "${{ inputs.bump-type }}" = "major" ]; then
+            COMMIT_TYPE="feat!"
+          elif [ "${{ inputs.bump-type }}" = "minor" ]; then
+            COMMIT_TYPE="feat"
+          else
+            COMMIT_TYPE="fix"
+          fi
+          
+          COMMIT_MSG="${COMMIT_TYPE}(sdks/python): trigger ${{ inputs.bump-type }} release"
+          if [ -n "${{ inputs.reason }}" ]; then
+            COMMIT_MSG="$COMMIT_MSG - ${{ inputs.reason }}"
+          fi
+          
+          # Add BREAKING CHANGE footer for major releases
+          if [ "${{ inputs.bump-type }}" = "major" ]; then
+            COMMIT_MSG="${COMMIT_MSG}"$'\n\n'"BREAKING CHANGE: Manual major version bump"
+          fi
+          
+          git commit -m "$COMMIT_MSG"
+          git push origin main
+
+      - name: Summary
+        run: |
+          echo "## Manual Release Triggered" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "- **SDK(s):** ${{ inputs.sdk }}" >> $GITHUB_STEP_SUMMARY
+          echo "- **Bump Type:** ${{ inputs.bump-type }}" >> $GITHUB_STEP_SUMMARY
+          if [ -n "${{ inputs.reason }}" ]; then
+            echo "- **Reason:** ${{ inputs.reason }}" >> $GITHUB_STEP_SUMMARY
+          fi
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "Release Please will create a PR shortly. Once merged, it will:" >> $GITHUB_STEP_SUMMARY
+          echo "1. Create a GitHub release with the appropriate tag" >> $GITHUB_STEP_SUMMARY
+          echo "2. Trigger the publish workflow automatically" >> $GITHUB_STEP_SUMMARY

@@ -1,0 +1,75 @@
+[build-system]
+requires = ["setuptools>=61.0", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "kadoa_sdk"
+version = "0.4.0"
+description = "Official Kadoa SDK for Python - Web data extraction and automation"
+readme = "README.md"
+requires-python = ">=3.8"
+license = "MIT"
+authors = [
+    {name = "Kadoa", email = "support@kadoa.com"}
+]
+keywords = ["kadoa", "api", "sdk", "client", "python"]
+classifiers = [
+    "Development Status :: 4 - Beta",
+    "Intended Audience :: Developers",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.8",
+    "Programming Language :: Python :: 3.9",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+]
+dependencies = [
+    "urllib3>=1.26.0,<3.0.0",
+    "python-dateutil>=2.8.2",
+    "pydantic>=2.0.0",
+    "typing-extensions>=4.0.0",
+    "requests>=2.25.0",
+]
+
+[project.optional-dependencies]
+dev = [
+    "pytest>=7.0.0",
+    "pytest-cov>=4.0.0",
+    "pytest-timeout>=2.0.0",
+    "black>=23.0.0",
+    "mypy>=1.0.0",
+    "ruff>=0.1.0",
+]
+test = [
+    "pytest>=7.0.0",
+    "pytest-timeout>=2.0.0",
+    "python-dotenv>=1.0.0",
+]
+
+[project.urls]
+Homepage = "https://github.com/kadoa/kadoa-sdks"
+Repository = "https://github.com/kadoa/kadoa-sdks.git"
+Documentation = "https://docs.kadoa.com"
+
+[tool.setuptools.packages.find]
+where = ["."]
+include = ["kadoa_sdk*", "openapi_client*"]
+exclude = ["tests*", "kadoa_sdk.tests*"]
+
+[tool.setuptools.package-data]
+kadoa_sdk = ["py.typed"]
+
+[tool.black]
+line-length = 100
+target-version = ['py38']
+
+[tool.ruff]
+line-length = 100
+target-version = "py38"
+select = ["E", "F", "I", "N", "W"]
+
+[tool.mypy]
+python_version = "3.8"
+warn_return_any = true
+warn_unused_configs = true
+disallow_untyped_defs = true

@@ -1,0 +1,35 @@
+{
+	"name": "kadoa-sdks",
+	"private": true,
+	"scripts": {
+		"format-and-lint": "biome check .",
+		"format-and-lint:fix": "biome check . --write",
+		"build": "turbo run build",
+		"build:sdks": "turbo run build --filter='./sdks/*'",
+		"dev": "turbo run dev --parallel",
+		"dev:node": "turbo run dev --filter='@kadoa/node-sdk' --filter='@kadoa/node-examples' --parallel",
+		"dev:node-sdk": "cd sdks/node && bun run dev:watch",
+		"dev:node-examples": "cd examples/node-examples && bun run dev:hot",
+		"kadoa-codegen": "bun run ./tools/codegen/src/cli.ts",
+		"prepare": "husky"
+	},
+	"devDependencies": {
+		"@biomejs/biome": "2.2.2",
+		"@openapitools/openapi-generator-cli": "^2.23.1",
+		"@commitlint/cli": "^19.5.0",
+		"@commitlint/config-conventional": "^19.5.0",
+		"husky": "^9.1.6",
+		"turbo": "^2.5.6",
+		"typescript": "5.9.2"
+	},
+	"engines": {
+		"node": ">=20"
+	},
+	"packageManager": "bun@1.2.21",
+	"workspaces": [
+		"sdks/*",
+		"packages/*",
+		"examples/*",
+		"tools/*"
+	]
+}
