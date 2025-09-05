@@ -36,7 +36,7 @@ jobs:
         env:
           KADOA_OPENAPI_ENDPOINT: https://api.kadoa.com/openapi
         run: |
-          bun run kadoa-codegen fetch-spec -e "$KADOA_OPENAPI_ENDPOINT" --force
+          bun run kadoa-codegen fetch-spec -e "$KADOA_OPENAPI_ENDPOINT"
 
       - name: Detect changes
         id: diff
