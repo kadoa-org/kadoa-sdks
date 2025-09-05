@@ -110,7 +110,7 @@ See [examples directory](https://github.com/kadoa-org/kadoa-sdks/tree/main/examp
 
 ## Requirements
 
-- Node.js 18+
+- Node.js 22+
 - TypeScript 5+ (for TypeScript projects)
 
 ## License
