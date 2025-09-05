@@ -33,22 +33,19 @@
 			"release-type": "node",
 			"changelog-path": "CHANGELOG.md",
 			"package-name": "@kadoa/codegen",
-			"component": "codegen",
-			"skip-github-release": true
+			"component": "codegen"
 		},
 		"examples/node-examples": {
 			"release-type": "node",
 			"changelog-path": "CHANGELOG.md",
 			"package-name": "@kadoa/node-examples",
-			"component": "node-examples",
-			"skip-github-release": true
+			"component": "node-examples"
 		},
 		"examples/python-examples": {
 			"release-type": "python",
 			"changelog-path": "CHANGELOG.md",
 			"package-name": "@kadoa/python-examples",
-			"component": "python-examples",
-			"skip-github-release": true
+			"component": "python-examples"
 		}
 	}
 }
