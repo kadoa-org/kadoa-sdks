@@ -5,14 +5,13 @@ Official Node.js/TypeScript SDK for the Kadoa API, providing easy integration wi
 ## Installation
 
 ```bash
-npm install @kadoa/node-sdk axios
+npm install @kadoa/node-sdk
 # or
-yarn add @kadoa/node-sdk axios
+yarn add @kadoa/node-sdk
 # or
-pnpm add @kadoa/node-sdk axios
+pnpm add @kadoa/node-sdk
 ```
 
-**Note:** `axios` is required as a peer dependency.
 
 ## Quick Start
 
