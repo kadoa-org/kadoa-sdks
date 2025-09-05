@@ -28,7 +28,7 @@ from kadoa_sdk.kadoa_sdk import (
     initialize_sdk,
 )
 
-__version__ = "0.4.0"
+__version__ = "0.5.0"
 
 __all__ = [
     # App functions
