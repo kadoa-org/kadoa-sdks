@@ -1,5 +1,17 @@
 # Changelog
 
+## [0.4.0](https://github.com/kadoa-org/kadoa-sdks/compare/python-sdk-v0.3.2...python-sdk-v0.4.0) (2025-09-05)
+
+
+### Features
+
+* **spec:** update spec fingerprint ([e690fc1](https://github.com/kadoa-org/kadoa-sdks/commit/e690fc100a62612d540868ddcddf3872b4593833))
+
+
+### Miscellaneous Chores
+
+* add spec fingerprint files and workflow ([62bec84](https://github.com/kadoa-org/kadoa-sdks/commit/62bec8467582ac1110712a9be80dcdf2540587e8))
+
 ## [0.3.2](https://github.com/kadoa-org/kadoa-sdks/compare/python-sdk-v0.3.1...python-sdk-v0.3.2) (2025-09-05)
 
 

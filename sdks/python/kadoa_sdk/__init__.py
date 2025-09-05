@@ -31,7 +31,7 @@ from kadoa_sdk.events import (
     KadoaEventEmitter,
 )
 
-__version__ = "0.3.2"
+__version__ = "0.4.0"
 
 __all__ = [
     # App functions
