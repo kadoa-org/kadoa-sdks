@@ -1,8 +1,13 @@
 # Changelog
 
-## [0.4.0](https://github.com/kadoa/kadoa-sdks/compare/python-sdk-v0.3.1...python-sdk-v0.4.0) (2025-01-05)
-
+## 0.3.1 (2025-01-05)
 
 ### Features
 
-* **sdks/python:** rename KadoaApp to KadoaSdk and KadoaConfig to KadoaSdkConfig for consistency with Node.js SDK ([](https://github.com/kadoa/kadoa-sdks/commit/))
+* Initial release of kadoa-python-sdk
+* Core extraction functionality with workflow management  
+* Comprehensive type hints and dataclasses
+* Auto-generated OpenAPI client
+* Support for synchronous and asynchronous extraction modes
+* Built-in error handling and retry mechanisms
+* Full Python 3.8+ compatibility
