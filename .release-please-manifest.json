@@ -3,5 +3,5 @@
 	"sdks/python": "0.3.2",
 	"tools/codegen": "0.0.3",
 	"examples/node-examples": "0.0.2",
-	"examples/python-examples": "0.0.1"
+	"examples/python-examples": "0.0.2"
 }
