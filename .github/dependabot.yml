@@ -6,9 +6,8 @@ updates:
   - package-ecosystem: "npm"
     directory: "/"
     schedule:
-      interval: "weekly"
-      day: "monday"
-      time: "09:00"
+      interval: "daily"
+      time: "08:00"
       timezone: "UTC"
     labels:
       - "dependencies"
@@ -23,9 +22,8 @@ updates:
   - package-ecosystem: "npm"
     directory: "/sdks/node"
     schedule:
-      interval: "weekly"
-      day: "monday"
-      time: "09:00"
+      interval: "daily"
+      time: "08:00"
       timezone: "UTC"
     labels:
       - "dependencies"
@@ -40,9 +38,8 @@ updates:
   - package-ecosystem: "pip"
     directory: "/sdks/python"
     schedule:
-      interval: "weekly"
-      day: "monday"
-      time: "09:00"
+      interval: "daily"
+      time: "08:00"
       timezone: "UTC"
     labels:
       - "dependencies"
@@ -57,9 +54,8 @@ updates:
   - package-ecosystem: "npm"
     directory: "/examples/node-examples"
     schedule:
-      interval: "weekly"
-      day: "monday"
-      time: "09:00"
+      interval: "daily"
+      time: "08:00"
       timezone: "UTC"
     labels:
       - "dependencies"
@@ -75,9 +71,8 @@ updates:
   - package-ecosystem: "pip"
     directory: "/examples/python-examples"
     schedule:
-      interval: "weekly"
-      day: "monday"
-      time: "09:00"
+      interval: "daily"
+      time: "08:00"
       timezone: "UTC"
     labels:
       - "dependencies"
@@ -93,9 +88,8 @@ updates:
   - package-ecosystem: "npm"
     directory: "/tools/codegen"
     schedule:
-      interval: "weekly"
-      day: "monday"
-      time: "09:00"
+      interval: "daily"
+      time: "08:00"
       timezone: "UTC"
     labels:
       - "dependencies"
@@ -110,9 +104,8 @@ updates:
   - package-ecosystem: "github-actions"
     directory: "/"
     schedule:
-      interval: "weekly"
-      day: "monday"
-      time: "09:00"
+      interval: "daily"
+      time: "08:00"
       timezone: "UTC"
     labels:
       - "dependencies"
