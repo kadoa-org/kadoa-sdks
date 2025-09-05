@@ -1,0 +1,70 @@
+name: Daily fetch OpenAPI and open PR
+
+on:
+  schedule:
+    - cron: '17 7 * * *'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+  pull-requests: write
+
+concurrency:
+  group: daily-fetch-openapi-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  fetch-and-pr:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Setup Bun
+        uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: '1.2.21'
+
+      - name: Install deps (root)
+        run: bun install --frozen-lockfile
+
+      - name: Fetch latest OpenAPI spec
+        env:
+          KADOA_OPENAPI_ENDPOINT: https://api.kadoa.com/openapi
+        run: |
+          bun run kadoa-codegen fetch-spec -e "$KADOA_OPENAPI_ENDPOINT" --force
+
+      - name: Detect changes
+        id: diff
+        run: |
+          if git diff --quiet -- specs/openapi.json specs/openapi-metadata.json; then
+            echo "changed=false" >> "$GITHUB_OUTPUT"
+          else
+            echo "changed=true" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Create pull request
+        if: steps.diff.outputs.changed == 'true'
+        uses: peter-evans/create-pull-request@v6
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+          commit-message: |
+            chore(spec): update OpenAPI spec
+
+            This PR was created automatically by the daily fetch workflow.
+          title: "chore(spec): update OpenAPI spec"
+          body: |
+            This PR updates `specs/openapi.json` and `specs/openapi-metadata.json` with the latest version from `https://api.kadoa.com/openapi`.
+
+            If merged, the spec fingerprint workflow will trigger SDK releases if needed.
+          branch: ci/daily-openapi-update
+          delete-branch: true
+          labels: dependencies
+
+      - name: No changes
+        if: steps.diff.outputs.changed != 'true'
+        run: echo "OpenAPI spec unchanged; no PR created."
+
+
