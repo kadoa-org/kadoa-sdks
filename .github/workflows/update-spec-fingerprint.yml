@@ -5,9 +5,14 @@ on:
     paths:
       - 'specs/openapi.json'
       - '.github/workflows/update-spec-fingerprint.yml'
+  workflow_dispatch:
 
 permissions:
   contents: write
+
+concurrency:
+  group: update-spec-fingerprint-${{ github.ref }}
+  cancel-in-progress: true
 
 jobs:
   update-fingerprint:
