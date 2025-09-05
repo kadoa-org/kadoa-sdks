@@ -28,6 +28,8 @@ jobs:
           bun-version: '1.2.21'
 
       - name: Install deps (root)
+        env:
+          HUSKY: 0
         run: bun install --frozen-lockfile
 
       - name: Fetch latest OpenAPI spec
@@ -51,17 +53,17 @@ jobs:
         with:
           token: ${{ secrets.GITHUB_TOKEN }}
           commit-message: |
-            chore(spec): update OpenAPI spec
+            chore(ci): update OpenAPI spec
 
             This PR was created automatically by the daily fetch workflow.
-          title: "chore(spec): update OpenAPI spec"
+          title: "chore(ci): update OpenAPI spec"
           body: |
             This PR updates `specs/openapi.json` and `specs/openapi-metadata.json` with the latest version from `https://api.kadoa.com/openapi`.
 
             If merged, the spec fingerprint workflow will trigger SDK releases if needed.
           branch: ci/daily-openapi-update
           delete-branch: true
-          labels: dependencies
+          labels: ci
 
       - name: No changes
         if: steps.diff.outputs.changed != 'true'
