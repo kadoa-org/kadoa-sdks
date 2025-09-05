@@ -1,0 +1,43 @@
+name: Publish SDK on Release
+
+on:
+  release:
+    types: [published]
+
+jobs:
+  determine-sdk:
+    runs-on: ubuntu-latest
+    outputs:
+      sdk_type: ${{ steps.determine.outputs.sdk_type }}
+      should_publish: ${{ steps.determine.outputs.should_publish }}
+    steps:
+      - name: Determine SDK type from tag
+        id: determine
+        run: |
+          TAG_NAME="${{ github.event.release.tag_name }}"
+          echo "Release tag: $TAG_NAME"
+          
+          if [[ "$TAG_NAME" == node-sdk-v* ]]; then
+            echo "sdk_type=node" >> $GITHUB_OUTPUT
+            echo "should_publish=true" >> $GITHUB_OUTPUT
+            echo "Detected Node SDK release"
+          elif [[ "$TAG_NAME" == python-sdk-v* ]]; then
+            echo "sdk_type=python" >> $GITHUB_OUTPUT
+            echo "should_publish=true" >> $GITHUB_OUTPUT
+            echo "Detected Python SDK release"
+          else
+            echo "sdk_type=unknown" >> $GITHUB_OUTPUT
+            echo "should_publish=false" >> $GITHUB_OUTPUT
+            echo "Tag does not match any SDK pattern, skipping publish"
+          fi
+
+  publish:
+    needs: determine-sdk
+    if: needs.determine-sdk.outputs.should_publish == 'true'
+    uses: ./.github/workflows/publish-sdk.yml
+    with:
+      sdk_type: ${{ needs.determine-sdk.outputs.sdk_type }}
+      tag_name: ${{ github.event.release.tag_name }}
+    secrets:
+      NPM_TOKEN: ${{ secrets.NPM_TOKEN }}
+      PYPI_API_TOKEN: ${{ secrets.PYPI_API_TOKEN }}

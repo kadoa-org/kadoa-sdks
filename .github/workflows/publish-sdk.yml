@@ -1,0 +1,103 @@
+name: Publish SDK (Reusable)
+
+on:
+  workflow_call:
+    inputs:
+      sdk_type:
+        description: 'SDK type to publish (node or python)'
+        required: true
+        type: string
+      tag_name:
+        description: 'Release tag name'
+        required: true
+        type: string
+    secrets:
+      NPM_TOKEN:
+        required: false
+      PYPI_API_TOKEN:
+        required: false
+
+jobs:
+  publish-node:
+    if: inputs.sdk_type == 'node'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v5
+        with:
+          ref: ${{ inputs.tag_name }}
+          fetch-depth: 0
+
+      - name: Setup Bun
+        uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: 'latest'
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v5
+        with:
+          node-version: '22'
+          registry-url: 'https://registry.npmjs.org'
+
+      - name: Install dependencies
+        run: bun install
+
+      - name: Generate SDK code
+        run: bun kadoa-codegen generate -c node
+
+      - name: Build Node SDK
+        working-directory: sdks/node
+        run: bun run build
+
+      - name: Publish to npm
+        working-directory: sdks/node
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+        run: |
+          npm whoami || npm config set //registry.npmjs.org/:_authToken=${NODE_AUTH_TOKEN}
+          npm publish --access public
+
+  publish-python:
+    if: inputs.sdk_type == 'python'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v5
+        with:
+          ref: ${{ inputs.tag_name }}
+          fetch-depth: 0
+
+      - name: Setup Bun
+        uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: 'latest'
+
+      - name: Set up Python
+        uses: actions/setup-python@v6
+        with:
+          python-version: '3.11'
+
+      - name: Install dependencies
+        run: bun install
+
+      - name: Generate SDK code
+        run: bun kadoa-codegen generate -c python
+
+      - name: Install build tooling
+        working-directory: sdks/python
+        run: |
+          python -m pip install --upgrade pip
+          pip install build twine
+
+      - name: Build package
+        working-directory: sdks/python
+        run: |
+          python -m build
+
+      - name: Publish to PyPI
+        working-directory: sdks/python
+        env:
+          TWINE_USERNAME: __token__
+          TWINE_PASSWORD: ${{ secrets.PYPI_API_TOKEN }}
+        run: |
+          python -m twine upload dist/* --non-interactive
