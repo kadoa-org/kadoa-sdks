@@ -1,0 +1,123 @@
+# Dependabot configuration for Kadoa SDKs monorepo
+# Checks for updates to dependencies and creates PRs automatically
+version: 2
+updates:
+  # Root package (Bun/npm ecosystem)
+  - package-ecosystem: "npm"
+    directory: "/"
+    schedule:
+      interval: "weekly"
+      day: "monday"
+      time: "09:00"
+      timezone: "UTC"
+    labels:
+      - "dependencies"
+      - "root"
+    commit-message:
+      prefix: "chore"
+      prefix-development: "chore"
+      include: "scope"
+    open-pull-requests-limit: 5
+
+  # Node.js SDK
+  - package-ecosystem: "npm"
+    directory: "/sdks/node"
+    schedule:
+      interval: "weekly"
+      day: "monday"
+      time: "09:00"
+      timezone: "UTC"
+    labels:
+      - "dependencies"
+      - "node-sdk"
+    commit-message:
+      prefix: "chore"
+      prefix-development: "chore"
+      include: "scope"
+    open-pull-requests-limit: 5
+
+  # Python SDK
+  - package-ecosystem: "pip"
+    directory: "/sdks/python"
+    schedule:
+      interval: "weekly"
+      day: "monday"
+      time: "09:00"
+      timezone: "UTC"
+    labels:
+      - "dependencies"
+      - "python-sdk"
+    commit-message:
+      prefix: "chore"
+      prefix-development: "chore"
+      include: "scope"
+    open-pull-requests-limit: 5
+
+  # Node examples
+  - package-ecosystem: "npm"
+    directory: "/examples/node-examples"
+    schedule:
+      interval: "weekly"
+      day: "monday"
+      time: "09:00"
+      timezone: "UTC"
+    labels:
+      - "dependencies"
+      - "examples"
+      - "node"
+    commit-message:
+      prefix: "chore"
+      prefix-development: "chore"
+      include: "scope"
+    open-pull-requests-limit: 3
+
+  # Python examples
+  - package-ecosystem: "pip"
+    directory: "/examples/python-examples"
+    schedule:
+      interval: "weekly"
+      day: "monday"
+      time: "09:00"
+      timezone: "UTC"
+    labels:
+      - "dependencies"
+      - "examples"
+      - "python"
+    commit-message:
+      prefix: "chore"
+      prefix-development: "chore"
+      include: "scope"
+    open-pull-requests-limit: 3
+
+  # Codegen tool
+  - package-ecosystem: "npm"
+    directory: "/tools/codegen"
+    schedule:
+      interval: "weekly"
+      day: "monday"
+      time: "09:00"
+      timezone: "UTC"
+    labels:
+      - "dependencies"
+      - "tooling"
+    commit-message:
+      prefix: "chore"
+      prefix-development: "chore"
+      include: "scope"
+    open-pull-requests-limit: 3
+
+  # GitHub Actions
+  - package-ecosystem: "github-actions"
+    directory: "/"
+    schedule:
+      interval: "weekly"
+      day: "monday"
+      time: "09:00"
+      timezone: "UTC"
+    labels:
+      - "dependencies"
+      - "ci"
+    commit-message:
+      prefix: "ci"
+      include: "scope"
+    open-pull-requests-limit: 3
