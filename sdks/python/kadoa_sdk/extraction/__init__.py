@@ -1,25 +1,11 @@
-"""
-Extraction module for Kadoa SDK.
-"""
-
-from kadoa_sdk.extraction.extraction import (
-    run_extraction,
-)
-from kadoa_sdk.extraction.types import (
-    EntityField,
-    ExtractionOptions,
-    ExtractionResult,
-    Location,
-    NavigationMode,
-    WorkflowStatus,
-)
+from .extraction_module import ExtractionModule, run_extraction
+from .types import ExtractionOptions, ExtractionResult
 
 __all__ = [
-    "run_extraction",
+    "ExtractionModule",
     "ExtractionOptions",
     "ExtractionResult",
-    "NavigationMode",
-    "Location",
-    "EntityField",
-    "WorkflowStatus",
+    "run_extraction",
 ]
+
+
