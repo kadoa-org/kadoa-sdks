@@ -24,18 +24,18 @@ pip install kadoa-sdk
 
 ```python
 import logging
-from kadoa_sdk import initialize_sdk, run_extraction, KadoaSdkConfig, ExtractionOptions
+from kadoa_sdk import KadoaClient, KadoaClientConfig, ExtractionOptions
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger("kadoa_sdk.examples")
 
-# Initialize the SDK
-sdk = initialize_sdk(KadoaSdkConfig(
+# Initialize the client
+client = KadoaClient(KadoaClientConfig(
     api_key="your-api-key"
 ))
 
 # Run an extraction
-result = run_extraction(sdk, ExtractionOptions(
+result = await client.extraction.run(ExtractionOptions(
     urls=["https://example.com"],
     name="My Extraction Workflow"
 ))
@@ -49,7 +49,7 @@ if result:
 ### Basic Configuration
 
 ```python
-sdk = initialize_sdk(KadoaSdkConfig(
+client = KadoaClient(KadoaClientConfig(
     api_key="your-api-key",
     base_url="https://api.kadoa.com",  # optional
     timeout=30                         # optional, in seconds
@@ -67,11 +67,11 @@ KADOA_TIMEOUT=30
 ```python
 import os
 from dotenv import load_dotenv
-from kadoa_sdk import initialize_sdk, KadoaSdkConfig
+from kadoa_sdk import KadoaClient, KadoaClientConfig
 
 load_dotenv()
 
-sdk = initialize_sdk(KadoaSdkConfig(
+client = KadoaClient(KadoaClientConfig(
     api_key=os.environ["KADOA_API_KEY"],
     base_url=os.environ.get("KADOA_API_URL", "https://api.kadoa.com"),
     timeout=int(os.environ.get("KADOA_TIMEOUT", "30"))
@@ -82,15 +82,15 @@ sdk = initialize_sdk(KadoaSdkConfig(
 
 ```python
 import logging
-from kadoa_sdk import initialize_sdk, KadoaSdkConfig
+from kadoa_sdk import KadoaClient, KadoaClientConfig
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger("kadoa_sdk.examples")
 
-sdk = initialize_sdk(KadoaSdkConfig(api_key="your-api-key"))
+client = KadoaClient(KadoaClientConfig(api_key="your-api-key"))
 
 # Listen to events with a lambda and log output
-sdk.on_event(lambda e: logger.info("event: %s", e.to_dict()))
+client.on_event(lambda e: logger.info("event: %s", e.to_dict()))
 
 # Event types:
 # - entity:detected
@@ -102,20 +102,21 @@ sdk.on_event(lambda e: logger.info("event: %s", e.to_dict()))
 
 ## API Reference
 
-### initialize_sdk(config: KadoaSdkConfig)
+### KadoaClient(config: KadoaClientConfig)
 - `api_key` (required): Your Kadoa API key
-- `base_url` (optional): API base URL
-- `timeout` (optional): Request timeout in seconds
+- `base_url` (optional): API base URL (default: 'https://api.kadoa.com')
+- `timeout` (optional): Request timeout in seconds (default: 30)
 
-Returns an sdk instance with configured API client.
+Returns a client instance with:
+- `extraction`: Extraction module with `run()` method
+- `on_event()`: Subscribe to events
+- `off_event()`: Unsubscribe from events
+- `dispose()`: Releases resources and removes all event listeners
 
-### run_extraction(sdk, options: ExtractionOptions)
+### client.extraction.run(options: ExtractionOptions)
 - `urls`: List of URLs to extract from
 - `name`: Workflow name
 - Additional options available in API documentation
-
-### dispose(sdk: KadoaSdk)
-Releases resources and removes all event listeners.
 
 ## Examples
 

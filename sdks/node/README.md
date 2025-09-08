@@ -16,15 +16,15 @@ pnpm add @kadoa/node-sdk
 ## Quick Start
 
 ```typescript
-import { initializeSdk, runExtraction } from '@kadoa/node-sdk';
+import { KadoaClient } from '@kadoa/node-sdk';
 
-// Initialize the SDK
-const sdk = initializeSdk({
+// Initialize the client
+const client = new KadoaClient({
   apiKey: 'your-api-key'
 });
 
 // Run an extraction
-const result = await runExtraction(sdk, {
+const result = await client.extraction.run({
   urls: ['https://example.com'],
   name: 'My Extraction Workflow'
 });
@@ -39,7 +39,7 @@ if (result) {
 ### Basic Configuration
 
 ```typescript
-const sdk = initializeSdk({
+const client = new KadoaClient({
   apiKey: 'your-api-key',
   baseUrl: 'https://api.kadoa.com', // optional
   timeout: 30000                    // optional, in ms
@@ -55,12 +55,12 @@ KADOA_TIMEOUT=30000
 ```
 
 ```typescript
-import { initializeSdk } from '@kadoa/node-sdk';
+import { KadoaClient } from '@kadoa/node-sdk';
 import { config } from 'dotenv';
 
 config();
 
-const sdk = initializeSdk({
+const client = new KadoaClient({
   apiKey: process.env.KADOA_API_KEY!,
   baseUrl: process.env.KADOA_API_URL,
   timeout: parseInt(process.env.KADOA_TIMEOUT || '30000')
@@ -70,10 +70,10 @@ const sdk = initializeSdk({
 ## Event Handling
 
 ```typescript
-const sdk = initializeSdk({ apiKey: 'your-api-key' });
+const client = new KadoaClient({ apiKey: 'your-api-key' });
 
 // Listen to events
-sdk.onEvent((event) => {
+client.onEvent((event) => {
   console.log('Event:', event);
 });
 
@@ -87,21 +87,18 @@ sdk.onEvent((event) => {
 
 ## API Reference
 
-### initializeSdk(config)
+### new KadoaClient(config)
 - `apiKey` (required): Your Kadoa API key
-- `baseUrl` (optional): API base URL
-- `timeout` (optional): Request timeout in milliseconds
+- `baseUrl` (optional): API base URL (default: 'https://api.kadoa.com')
+- `timeout` (optional): Request timeout in milliseconds (default: 30000)
 
-Returns an SDK instance with:
-- `configuration`: Current configuration
-- `axiosInstance`: Configured HTTP client
+Returns a client instance with:
+- `extraction`: Extraction module with `run()` method
 - `onEvent()`: Subscribe to events
 - `offEvent()`: Unsubscribe from events
+- `dispose()`: Releases resources and removes all event listeners
 
-### dispose(sdk)
-Releases resources and removes all event listeners.
-
-### runExtraction(sdk, options)
+### client.extraction.run(options)
 - `urls`: Array of URLs to extract from
 - `name`: Workflow name
 - Additional options available in API documentation
