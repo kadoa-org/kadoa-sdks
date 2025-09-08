@@ -11,5 +11,3 @@ class Command(ABC, Generic[TResult, TParams]):
     @abstractmethod
     def execute(self, params: TParams) -> TResult:  # pragma: no cover - interface
         raise NotImplementedError
-
-

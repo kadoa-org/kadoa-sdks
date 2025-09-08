@@ -18,5 +18,3 @@ class ExtractionModule:
 
 def run_extraction(client: "KadoaClient", options: ExtractionOptions) -> ExtractionResult:
     return client.extraction.run(options)
-
-

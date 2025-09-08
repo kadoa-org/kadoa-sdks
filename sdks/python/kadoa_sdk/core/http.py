@@ -29,5 +29,3 @@ def get_workflows_api(client: "KadoaClient") -> WorkflowsApi:
         api = WorkflowsApi(ApiClient(client.configuration))
         _workflows_cache[key] = api
     return api
-
-

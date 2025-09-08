@@ -126,5 +126,3 @@ class KadoaEventEmitter:
     def remove_all_event_listeners(self) -> None:
         with self._lock:
             self._listeners.clear()
-
-

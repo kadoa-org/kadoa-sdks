@@ -16,9 +16,7 @@ class DataFetcherService:
     def fetch_workflow_data(self, workflow_id: str, limit: int) -> List[dict]:
         api = get_workflows_api(self.client)
         try:
-            resp = api.v4_workflows_workflow_id_data_get(
-                workflow_id=workflow_id, limit=limit
-            )
+            resp = api.v4_workflows_workflow_id_data_get(workflow_id=workflow_id, limit=limit)
             container = getattr(resp, "data", resp)
             # If container is list
             if isinstance(container, list):
@@ -52,5 +50,3 @@ class DataFetcherService:
                 message=KadoaSdkException.ERROR_MESSAGES["DATA_FETCH_FAILED"],
                 details={"workflowId": workflow_id, "limit": limit},
             )
-
-

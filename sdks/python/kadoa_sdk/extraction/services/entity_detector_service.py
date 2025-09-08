@@ -71,5 +71,3 @@ class EntityDetectorService:
                 details={"hasApiKey": bool(api_key)},
             )
         return {"x-api-key": api_key}
-
-

@@ -63,14 +63,14 @@ class WorkflowManagerService:
         try:
             wrapper = V4WorkflowsPostRequest(inner)
             resp = api.v4_workflows_post(v4_workflows_post_request=wrapper)
-            workflow_id = getattr(resp, "workflow_id", None) or getattr(
-                resp, "workflowId", None
-            )
+            workflow_id = getattr(resp, "workflow_id", None) or getattr(resp, "workflowId", None)
             if not workflow_id:
                 raise KadoaSdkException(
                     KadoaSdkException.ERROR_MESSAGES["NO_WORKFLOW_ID"],
                     code="INTERNAL_ERROR",
-                    details={"response": resp.model_dump() if hasattr(resp, "model_dump") else resp},
+                    details={
+                        "response": resp.model_dump() if hasattr(resp, "model_dump") else resp
+                    },
                 )
             return workflow_id
         except Exception as error:
@@ -151,8 +151,12 @@ class WorkflowManagerService:
                     "extraction:status_changed",
                     {
                         "workflowId": workflow_id,
-                        "previousState": getattr(last_status, "state", None) if last_status else None,
-                        "previousRunState": getattr(last_status, "run_state", None) if last_status else None,
+                        "previousState": (
+                            getattr(last_status, "state", None) if last_status else None
+                        ),
+                        "previousRunState": (
+                            getattr(last_status, "run_state", None) if last_status else None
+                        ),
                         "currentState": current.state,
                         "currentRunState": current.run_state,
                     },
@@ -181,5 +185,3 @@ class WorkflowManagerService:
             code="TIMEOUT",
             details={"workflowId": workflow_id, "maxWaitTime": max_wait_time},
         )
-
-

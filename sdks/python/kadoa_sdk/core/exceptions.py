@@ -52,7 +52,9 @@ class KadoaSdkException(Exception):
     ) -> "KadoaSdkException":
         if isinstance(error, KadoaSdkException):
             return error
-        return KadoaSdkException(message or str(error), code="UNKNOWN", details=details, cause=error)
+        return KadoaSdkException(
+            message or str(error), code="UNKNOWN", details=details, cause=error
+        )
 
 
 class KadoaHttpException(KadoaSdkException):
@@ -77,7 +79,12 @@ class KadoaHttpException(KadoaSdkException):
         self.response_body = response_body
 
     @staticmethod
-    def from_api_exception(error: ApiException, *, message: Optional[str] = None, details: Optional[Dict[str, Any]] = None) -> "KadoaHttpException":
+    def from_api_exception(
+        error: ApiException,
+        *,
+        message: Optional[str] = None,
+        details: Optional[Dict[str, Any]] = None,
+    ) -> "KadoaHttpException":
         status = getattr(error, "status", None)
         response_body = getattr(error, "data", None) or getattr(error, "body", None)
         return KadoaHttpException(
@@ -90,7 +97,9 @@ class KadoaHttpException(KadoaSdkException):
         )
 
     @staticmethod
-    def wrap(error: Exception, *, message: Optional[str] = None, details: Optional[Dict[str, Any]] = None) -> "KadoaSdkException":
+    def wrap(
+        error: Exception, *, message: Optional[str] = None, details: Optional[Dict[str, Any]] = None
+    ) -> "KadoaSdkException":
         if isinstance(error, KadoaHttpException):
             return error
         if isinstance(error, KadoaSdkException):
@@ -116,5 +125,3 @@ class KadoaHttpException(KadoaSdkException):
         if status >= 500:
             return "HTTP_ERROR"
         return "UNKNOWN"
-
-

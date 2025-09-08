@@ -7,5 +7,3 @@ __all__ = [
     "ExtractionResult",
     "run_extraction",
 ]
-
-

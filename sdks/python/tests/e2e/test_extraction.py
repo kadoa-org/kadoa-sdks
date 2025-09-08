@@ -25,9 +25,7 @@ class TestExtraction:
         test_base_url = os.environ.get("KADOA_BASE_URL", "http://localhost:12380")
 
         sdk = KadoaClient(
-            KadoaClientConfig(
-                api_key=test_api_key, base_url=test_base_url, timeout=30
-            )
+            KadoaClientConfig(api_key=test_api_key, base_url=test_base_url, timeout=30)
         )
         logger = logging.getLogger("kadoa_sdk.events")
         sdk.on_event(lambda event: logger.info("event: %r", event))

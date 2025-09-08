@@ -33,8 +33,7 @@ class RunExtractionCommand(Command[ExtractionResult, ExtractionOptions]):
             max_wait_time=options.max_wait_time or DEFAULTS["max_wait_time"],
             name=options.name or DEFAULTS["name"],
             navigation_mode=options.navigation_mode or DEFAULTS["navigation_mode"],
-            polling_interval=options.polling_interval
-            or DEFAULTS["polling_interval"],
+            polling_interval=options.polling_interval or DEFAULTS["polling_interval"],
         )
 
         try:
@@ -111,8 +110,7 @@ class RunExtractionCommand(Command[ExtractionResult, ExtractionOptions]):
                     "extraction:completed",
                     {
                         "error": (
-                            "Extraction completed with unexpected status: "
-                            f"{workflow.run_state}"
+                            "Extraction completed with unexpected status: " f"{workflow.run_state}"
                         ),
                         "finalRunState": workflow.run_state,
                         "finalState": workflow.state,
@@ -132,9 +130,7 @@ class RunExtractionCommand(Command[ExtractionResult, ExtractionOptions]):
                     },
                 )
 
-            return ExtractionResult(
-                workflow_id=workflow_id, workflow=workflow, data=data
-            )
+            return ExtractionResult(workflow_id=workflow_id, workflow=workflow, data=data)
         except Exception as error:
             raise KadoaHttpException.wrap(
                 error,
@@ -147,5 +143,3 @@ class RunExtractionCommand(Command[ExtractionResult, ExtractionOptions]):
             raise KadoaSdkException(
                 KadoaSdkException.ERROR_MESSAGES["NO_URLS"], code="VALIDATION_ERROR"
             )
-
-
