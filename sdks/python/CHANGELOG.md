@@ -1,5 +1,47 @@
 # Changelog
 
+## [0.6.0](https://github.com/kadoa-org/kadoa-sdks/compare/python-sdk-v0.5.0...python-sdk-v0.6.0) (2025-09-08)
+
+
+### ⚠ BREAKING CHANGES
+
+* **python-sdk:** Complete API redesign - migrated from functional to OO pattern
+    - Replace initialize_sdk() with new KadoaClient() class instantiation
+    - Move run_extraction() to client.extraction.run() method
+    - Reorganize file structure into core/ and extraction/services/ directories
+    - Consolidate exceptions, events, and utilities under core/
+    - Extract business logic into service classes
+    - Align architecture with Node SDK refactoring for consistency
+
+### Features
+
+* add SDK identification headers to all API requests ([19ba4d4](https://github.com/kadoa-org/kadoa-sdks/commit/19ba4d4b42e76b70bc3d1f37a5fc677a59458132))
+
+
+### Bug Fixes
+
+* **python-examples:** remove unnecessary asyncio usage ([21a84f9](https://github.com/kadoa-org/kadoa-sdks/commit/21a84f96c264b6a17972a70433961373f8b9af5e))
+
+
+### Code Refactoring
+
+* **python-sdk:** migrate from functional to object-oriented architecture ([0dd0108](https://github.com/kadoa-org/kadoa-sdks/commit/0dd01085cbe05534a36b1df44b9acb7e80e8245a))
+
+
+### Documentation
+
+* update SDK READMEs to reflect new OO API ([35996a0](https://github.com/kadoa-org/kadoa-sdks/commit/35996a07e903d0486480f6e305d4714beeb4ae07))
+
+
+### Tests
+
+* restructure test directories and improve test documentation ([3add243](https://github.com/kadoa-org/kadoa-sdks/commit/3add24317e1ed55049a88a998986a0144e30ce12))
+
+
+### Styles
+
+* apply Python formatter (Black) to all Python SDK files ([14a3ef2](https://github.com/kadoa-org/kadoa-sdks/commit/14a3ef29a1a393d16ad95bebdc9d6f90198ec635))
+
 ## [0.5.0](https://github.com/kadoa-org/kadoa-sdks/compare/python-sdk-v0.4.0...python-sdk-v0.5.0) (2025-09-05)
 
 
