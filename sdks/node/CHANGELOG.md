@@ -1,5 +1,36 @@
 # Changelog
 
+## [0.4.0](https://github.com/kadoa-org/kadoa-sdks/compare/node-sdk-v0.3.0...node-sdk-v0.4.0) (2025-09-08)
+
+
+### ⚠ BREAKING CHANGES
+
+* **node-sdk:** Complete API redesign - migrated from functional to OO pattern
+    - Replace initializeSdk() with new KadoaClient() class instantiation
+    - Move runExtraction() to client.extraction.run() method
+    - Reorganize file structure into core/ and modules/ directories
+    - Consolidate exceptions, events, and utilities under core/
+    - Extract business logic into dedicated modules (extraction)
+
+### Features
+
+* add SDK identification headers to all API requests ([19ba4d4](https://github.com/kadoa-org/kadoa-sdks/commit/19ba4d4b42e76b70bc3d1f37a5fc677a59458132))
+
+
+### Code Refactoring
+
+* **node-sdk:** migrate from functional to object-oriented architecture ([e98815f](https://github.com/kadoa-org/kadoa-sdks/commit/e98815f03bf7b8dd41c99e36cf9614ed856a014c))
+
+
+### Documentation
+
+* update SDK READMEs to reflect new OO API ([35996a0](https://github.com/kadoa-org/kadoa-sdks/commit/35996a07e903d0486480f6e305d4714beeb4ae07))
+
+
+### Tests
+
+* restructure test directories and improve test documentation ([3add243](https://github.com/kadoa-org/kadoa-sdks/commit/3add24317e1ed55049a88a998986a0144e30ce12))
+
 ## [0.3.0](https://github.com/kadoa-org/kadoa-sdks/compare/node-sdk-v0.2.0...node-sdk-v0.3.0) (2025-09-05)
 
 
