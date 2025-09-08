@@ -2,7 +2,7 @@ import { beforeAll, describe, expect, test } from "bun:test";
 import type { KadoaSDK } from "../../src";
 import { dispose, initializeSdk, runExtraction } from "../../src";
 
-describe("runExtraction E2E Tests", () => {
+describe("Extraction", () => {
 	let sdkInstance: KadoaSDK;
 	const TEST_API_KEY =
 		process.env.KADOA_API_KEY || "39113751-1e7a-4cb2-9516-1e25d0085aa5";
@@ -21,19 +21,17 @@ describe("runExtraction E2E Tests", () => {
 		});
 	});
 
-	describe("Integration Tests", () => {
-		test(
-			"should run real extraction against a test website",
-			async () => {
-				const result = await runExtraction(sdkInstance, {
-					urls: ["https://sandbox.kadoa.com/careers"],
-				});
+	test(
+		"extracts data from valid URL",
+		async () => {
+			const result = await runExtraction(sdkInstance, {
+				urls: ["https://sandbox.kadoa.com/careers"],
+			});
 
-				expect(result).toBeDefined();
-				expect(result?.workflowId).toBeDefined();
-				expect(result?.data?.length).toBeGreaterThan(0);
-			},
-			{ timeout: 7000000 },
-		);
-	});
+			expect(result).toBeDefined();
+			expect(result?.workflowId).toBeDefined();
+			expect(result?.data?.length).toBeGreaterThan(0);
+		},
+		{ timeout: 7000000 },
+	);
 });

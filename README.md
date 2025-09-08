@@ -10,16 +10,8 @@ Monorepo for Kadoa's official SDKs for Node.js and Python, providing easy integr
 
 ## Changelogs
 
-### Public SDKs
 - [Node SDK Changelog](./sdks/node/CHANGELOG.md) - Public releases
 - [Python SDK Changelog](./sdks/python/CHANGELOG.md) - Public releases
-
-### Internal Tools (Contributors Only)
-- [Codegen Tool Changelog](./tools/codegen/CHANGELOG.md) - Code generation tooling
-- [Node Examples Changelog](./examples/node-examples/CHANGELOG.md) - Example updates
-- [Python Examples Changelog](./examples/python-examples/CHANGELOG.md) - Example updates
-
-Note: Internal tools are tracked for developer experience but do not create public releases.
 
 ## Release Process
 
