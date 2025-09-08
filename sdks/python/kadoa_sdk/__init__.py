@@ -7,6 +7,7 @@ from .extraction import (
     ExtractionResult,
     run_extraction,
 )
+from .version import __version__
 
 
 class KadoaSdkConfig(KadoaClientConfig):
@@ -30,6 +31,5 @@ __all__ = [
     "ExtractionOptions",
     "ExtractionResult",
     "run_extraction",
+    "__version__",
 ]
-
-

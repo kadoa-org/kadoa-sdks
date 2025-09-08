@@ -12,6 +12,7 @@ from .core.events import (
     KadoaEventName,
 )
 from .extraction import ExtractionModule
+from .version import __version__, SDK_NAME, SDK_LANGUAGE
 
 
 @dataclass
@@ -32,6 +33,12 @@ class KadoaClient:
 
         self._configuration = configuration
         self._api_client = ApiClient(self._configuration)
+
+        # Set SDK identification headers
+        self._api_client.default_headers["User-Agent"] = f"{SDK_NAME}/{__version__}"
+        self._api_client.default_headers["X-SDK-Version"] = __version__
+        self._api_client.default_headers["X-SDK-Language"] = SDK_LANGUAGE
+
         self._events = KadoaEventEmitter()
 
         self.extraction = ExtractionModule(self)
@@ -69,4 +76,3 @@ class KadoaClient:
 
     def dispose(self) -> None:
         self._events.remove_all_event_listeners()
-

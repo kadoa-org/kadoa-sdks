@@ -8,6 +8,7 @@ import {
 } from "./core/events";
 import { Configuration, type ConfigurationParameters } from "./generated";
 import { ExtractionModule } from "./modules/extraction";
+import { SDK_LANGUAGE, SDK_NAME, SDK_VERSION } from "./version";
 
 export interface KadoaClientConfig {
 	apiKey: string;
@@ -48,11 +49,23 @@ export class KadoaClient {
 		const configParams: ConfigurationParameters = {
 			apiKey: config.apiKey,
 			basePath: this._baseUrl,
+			baseOptions: {
+				headers: {
+					"User-Agent": `${SDK_NAME}/${SDK_VERSION}`,
+					"X-SDK-Version": SDK_VERSION,
+					"X-SDK-Language": SDK_LANGUAGE,
+				},
+			},
 		};
 
 		this._configuration = new Configuration(configParams);
 		this._axiosInstance = axios.create({
 			timeout: this._timeout,
+			headers: {
+				"User-Agent": `${SDK_NAME}/${SDK_VERSION}`,
+				"X-SDK-Version": SDK_VERSION,
+				"X-SDK-Language": SDK_LANGUAGE,
+			},
 		});
 		this._events = new KadoaEventEmitter();
 		this.extraction = new ExtractionModule(this);

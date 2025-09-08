@@ -21,14 +21,15 @@
 			"release-type": "node",
 			"changelog-path": "CHANGELOG.md",
 			"package-name": "@kadoa/node-sdk",
-			"component": "node-sdk"
+			"component": "node-sdk",
+			"extra-files": ["src/version.ts"]
 		},
 		"sdks/python": {
 			"release-type": "python",
 			"changelog-path": "CHANGELOG.md",
 			"package-name": "kadoa-python-sdk",
 			"component": "python-sdk",
-			"extra-files": ["kadoa_sdk/__init__.py"]
+			"extra-files": ["kadoa_sdk/__init__.py", "kadoa_sdk/version.py"]
 		}
 	}
 }
