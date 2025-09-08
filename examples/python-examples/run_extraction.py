@@ -18,10 +18,9 @@ if sdk_path.exists():
 
 from kadoa_sdk import KadoaClient, KadoaClientConfig, ExtractionOptions
 from dotenv import load_dotenv
-import asyncio
 
 
-async def main():
+def main():
     # Load environment variables
     load_dotenv(Path(__file__).parent / ".env")
     
@@ -40,7 +39,7 @@ async def main():
     client.on_event(lambda event: print(event))
     
     # Run extraction
-    result = await client.extraction.run(ExtractionOptions(
+    result = client.extraction.run(ExtractionOptions(
         urls=["https://sandbox.kadoa.com/ecommerce"]
     ))
     
@@ -49,7 +48,7 @@ async def main():
 
 if __name__ == "__main__":
     try:
-        asyncio.run(main())
+        main()
     except AssertionError as e:
         print(f"Error: {e}", file=sys.stderr)
         sys.exit(1)

@@ -35,7 +35,7 @@ client = KadoaClient(KadoaClientConfig(
 ))
 
 # Run an extraction
-result = await client.extraction.run(ExtractionOptions(
+result = client.extraction.run(ExtractionOptions(
     urls=["https://example.com"],
     name="My Extraction Workflow"
 ))
