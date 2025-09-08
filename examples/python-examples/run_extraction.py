@@ -16,11 +16,12 @@ sdk_path = Path(__file__).parent.parent.parent / "sdks" / "python"
 if sdk_path.exists():
     sys.path.insert(0, str(sdk_path))
 
-from kadoa_sdk import initialize_sdk, run_extraction, KadoaSdkConfig, ExtractionOptions
+from kadoa_sdk import KadoaClient, KadoaClientConfig, ExtractionOptions
 from dotenv import load_dotenv
+import asyncio
 
 
-def main():
+async def main():
     # Load environment variables
     load_dotenv(Path(__file__).parent / ".env")
     
@@ -31,15 +32,15 @@ def main():
     assert api_key, "KADOA_API_KEY is not set"
     assert api_url, "KADOA_API_URL is not set"
     
-    # Initialize the sdk
-    sdk = initialize_sdk(KadoaSdkConfig(
+    # Initialize the client
+    client = KadoaClient(KadoaClientConfig(
         api_key=api_key,
         base_url=api_url
     ))
-    sdk.on_event(lambda event: print(event))
+    client.on_event(lambda event: print(event))
     
     # Run extraction
-    result = run_extraction(sdk, ExtractionOptions(
+    result = await client.extraction.run(ExtractionOptions(
         urls=["https://sandbox.kadoa.com/ecommerce"]
     ))
     
@@ -48,7 +49,7 @@ def main():
 
 if __name__ == "__main__":
     try:
-        main()
+        asyncio.run(main())
     except AssertionError as e:
         print(f"Error: {e}", file=sys.stderr)
         sys.exit(1)
