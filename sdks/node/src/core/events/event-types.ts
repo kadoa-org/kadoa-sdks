@@ -1,3 +1,6 @@
+/**
+ * Event payload definitions for entity detection
+ */
 export type EntityEventPayloads = {
 	"entity:detected": {
 		/** Name of the detected entity type (e.g., "Product", "Article", "Job Listing") */
@@ -15,6 +18,9 @@ export type EntityEventPayloads = {
 	};
 };
 
+/**
+ * Event payload definitions for extraction workflow
+ */
 export type ExtractionEventPayloads = {
 	"extraction:started": {
 		/** Unique ID of the extraction process */
@@ -60,4 +66,7 @@ export type ExtractionEventPayloads = {
 	};
 };
 
+/**
+ * Combined event payload map for all SDK events
+ */
 export type EventPayloadMap = EntityEventPayloads & ExtractionEventPayloads;

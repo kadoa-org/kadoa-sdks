@@ -1,5 +1,5 @@
-import type { AxiosError } from "axios";
-import { type KadoaErrorCode, KadoaSdkException } from "./kadoa-sdk.exception";
+import { type AxiosError, isAxiosError } from "axios";
+import { type KadoaErrorCode, KadoaSdkException } from "./base.exception";
 
 export type KadoaHttpExceptionOptions = {
 	httpStatus?: number;
@@ -67,12 +67,54 @@ export class KadoaHttpException extends KadoaSdkException {
 		};
 	}
 
-	private static mapStatusToCode(error: AxiosError): KadoaErrorCode {
-		const status = error.response?.status;
+	toDetailedString(): string {
+		const parts = [`${this.name}: ${this.message}`, `Code: ${this.code}`];
+		if (this.httpStatus) {
+			parts.push(`HTTP Status: ${this.httpStatus}`);
+		}
+		if (this.method && this.endpoint) {
+			parts.push(`Request: ${this.method} ${this.endpoint}`);
+		}
+		if (this.requestId) {
+			parts.push(`Request ID: ${this.requestId}`);
+		}
+		if (this.responseBody) {
+			parts.push(
+				`Response Body: ${JSON.stringify(this.responseBody, null, 2)}`,
+			);
+		}
+		if (this.details && Object.keys(this.details).length > 0) {
+			parts.push(`Details: ${JSON.stringify(this.details, null, 2)}`);
+		}
+		if (this.cause) {
+			parts.push(`Cause: ${this.cause}`);
+		}
+		return parts.join("\n");
+	}
+
+	static wrap(
+		error: unknown,
+		extra?: { message?: string; details?: Record<string, unknown> },
+	): KadoaSdkException | KadoaHttpException {
+		if (error instanceof KadoaHttpException) return error;
+		if (error instanceof KadoaSdkException) return error;
+		if (isAxiosError(error)) {
+			return KadoaHttpException.fromAxiosError(error, extra);
+		}
+		return KadoaSdkException.wrap(error, extra);
+	}
+
+	static mapStatusToCode(errorOrStatus: AxiosError | number): KadoaErrorCode {
+		const status =
+			typeof errorOrStatus === "number"
+				? errorOrStatus
+				: errorOrStatus.response?.status;
+
 		if (!status) {
-			return error.code === "ECONNABORTED"
+			if (typeof errorOrStatus === "number") return "UNKNOWN";
+			return errorOrStatus.code === "ECONNABORTED"
 				? "TIMEOUT"
-				: error.request
+				: errorOrStatus.request
 					? "NETWORK_ERROR"
 					: "UNKNOWN";
 		}

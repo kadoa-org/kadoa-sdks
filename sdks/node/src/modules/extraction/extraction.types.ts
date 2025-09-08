@@ -1,9 +1,9 @@
-import type { V4WorkflowsWorkflowIdGet200Response } from "../generated";
+import type { V4WorkflowsWorkflowIdGet200Response } from "../../generated";
 import {
 	V4WorkflowsWorkflowIdGet200ResponseDisplayStateEnum as WorkflowDisplayStateEnum,
 	V4WorkflowsWorkflowIdGet200ResponseStateEnum as WorkflowStateEnum,
-} from "../generated/models/v4-workflows-workflow-id-get200-response";
-import type { WorkflowWithExistingSchemaNavigationModeEnum } from "../generated/models/workflow-with-existing-schema";
+} from "../../generated/models/v4-workflows-workflow-id-get200-response";
+import type { WorkflowWithExistingSchemaNavigationModeEnum } from "../../generated/models/workflow-with-existing-schema";
 
 export { WorkflowDisplayStateEnum, WorkflowStateEnum };
 export type NavigationMode =

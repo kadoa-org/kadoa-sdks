@@ -68,19 +68,19 @@ export function postProcessPythonClient(outputDir: string): void {
 	// Move openapi_client from temporary directory to Python SDK root
 	const tempOpenapiClientDir = path.join(outputDir, "openapi_client");
 	const targetOpenapiClientDir = path.join(outputDir, "..", "openapi_client");
-	
+
 	if (fs.existsSync(tempOpenapiClientDir)) {
 		// Remove existing openapi_client in target if it exists
 		if (fs.existsSync(targetOpenapiClientDir)) {
 			fs.rmSync(targetOpenapiClientDir, { recursive: true, force: true });
 		}
-		
+
 		// Move the generated openapi_client to SDK root
 		fs.renameSync(tempOpenapiClientDir, targetOpenapiClientDir);
-		
+
 		// Clean up the temporary directory
 		fs.rmSync(outputDir, { recursive: true, force: true });
-		
+
 		console.log(`✅ Moved openapi_client to Python SDK root`);
 	}
 }

@@ -1,26 +1,19 @@
 export {
 	type KadoaEvent,
 	KadoaEventEmitter,
-} from "./events";
-export {
-	KadoaHttpException,
-} from "./exceptions/http.exception";
+} from "./core/events";
+
 export {
 	type KadoaErrorCode,
+	KadoaHttpException,
 	KadoaSdkException,
-} from "./exceptions/kadoa-sdk.exception";
+} from "./core/exceptions";
+export { ERROR_MESSAGES } from "./core/exceptions/base.exception";
 export {
-	isKadoaHttpException,
-	isKadoaSdkException,
-} from "./exceptions/utils";
-export {
-	type ExtractionOptions,
-	type ExtractionResult,
-	runExtraction,
-} from "./extraction";
-export {
-	dispose,
-	initializeSdk,
-	type KadoaConfig,
-	type KadoaSDK,
-} from "./kadoa-sdk";
+	KadoaClient,
+	type KadoaClientConfig,
+} from "./kadoa-client";
+export type {
+	ExtractionOptions,
+	ExtractionResult,
+} from "./modules/extraction";
