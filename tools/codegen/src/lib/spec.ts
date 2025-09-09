@@ -110,10 +110,6 @@ export async function fetchOpenAPISpec(
 		maxRetries: DEFAULT_MAX_RETRIES,
 	},
 ): Promise<void> {
-	if (!force && isCacheValid()) {
-		console.debug("OpenAPI spec is up to date");
-		return;
-	}
 	if (!endpoint) {
 		throw new Error("KADOA_OPENAPI_ENDPOINT is not set");
 	}
@@ -154,25 +150,32 @@ export async function fetchOpenAPISpec(
 
 		const PREVIOUS_SPEC_PATH = path.join(SPECS_DIR, "openapi.previous.json");
 
-		if (fs.existsSync(METADATA_PATH) && fs.existsSync(OPENAPI_SPEC_PATH)) {
+		if (fs.existsSync(METADATA_PATH)) {
 			try {
 				const oldMetadata: SpecMetadata = JSON.parse(
 					fs.readFileSync(METADATA_PATH, "utf-8"),
 				);
 
 				if (oldMetadata.checksum === checksum && !force) {
-					console.debug("OpenAPI spec unchanged; updating metadata timestamp");
-					
-					// Still write the spec to disk in case the file is missing or corrupted
-					console.log("Writing OpenAPI spec to", OPENAPI_SPEC_PATH);
-					fs.writeFileSync(OPENAPI_SPEC_PATH, JSON.stringify(spec, null, 2));
+					// Check if spec file exists
+					if (!fs.existsSync(OPENAPI_SPEC_PATH)) {
+						console.log("OpenAPI spec file missing, restoring from remote");
+						console.log("Writing OpenAPI spec to", OPENAPI_SPEC_PATH);
+						fs.writeFileSync(OPENAPI_SPEC_PATH, JSON.stringify(spec, null, 2));
+					} else {
+						console.log("OpenAPI spec is up to date (no changes detected)");
+					}
 					
 					oldMetadata.fetchedAt = new Date().toISOString();
 					fs.writeFileSync(METADATA_PATH, JSON.stringify(oldMetadata, null, 2));
 					return;
 				}
 
-				fs.copyFileSync(OPENAPI_SPEC_PATH, PREVIOUS_SPEC_PATH);
+				// Copy existing spec to previous if it exists
+				if (fs.existsSync(OPENAPI_SPEC_PATH)) {
+					console.log("OpenAPI spec changes detected");
+					fs.copyFileSync(OPENAPI_SPEC_PATH, PREVIOUS_SPEC_PATH);
+				}
 			} catch {}
 		}
 
