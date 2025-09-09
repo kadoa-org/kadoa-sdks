@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.6.1](https://github.com/kadoa-org/kadoa-sdks/compare/python-sdk-v0.6.0...python-sdk-v0.6.1) (2025-09-09)
+
+
+### Miscellaneous Chores
+
+* **spec:** update OpenAPI spec ([#22](https://github.com/kadoa-org/kadoa-sdks/issues/22)) ([7146e40](https://github.com/kadoa-org/kadoa-sdks/commit/7146e40b8c6f4cb9055d09593f56db4c2533ca5b))
+
 ## [0.6.0](https://github.com/kadoa-org/kadoa-sdks/compare/python-sdk-v0.5.0...python-sdk-v0.6.0) (2025-09-08)
 
 

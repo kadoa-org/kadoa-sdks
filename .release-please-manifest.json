@@ -1,4 +1,4 @@
 {
-	"sdks/python": "0.6.0",
 	"sdks/node": "0.5.1"
+	"sdks/python": "0.6.1",
 }
