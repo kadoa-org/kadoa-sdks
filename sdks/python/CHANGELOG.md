@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.7.0](https://github.com/kadoa-org/kadoa-sdks/compare/python-sdk-v0.6.1...python-sdk-v0.7.0) (2025-09-09)
+
+
+### Features
+
+* add automated dependency security auditing ([1b633ed](https://github.com/kadoa-org/kadoa-sdks/commit/1b633ed8af3b56e6815e72d959cda9c540f99a17))
+
 ## [0.6.1](https://github.com/kadoa-org/kadoa-sdks/compare/python-sdk-v0.6.0...python-sdk-v0.6.1) (2025-09-09)
 
 
