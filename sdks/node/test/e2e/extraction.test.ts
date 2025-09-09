@@ -1,16 +1,15 @@
 import { afterAll, beforeAll, describe, expect, test } from "bun:test";
 import { KadoaClient } from "../../src";
+import { getE2ETestEnv } from "../utils/env";
 
 describe("Extraction", () => {
 	let client: KadoaClient;
-	const TEST_API_KEY =
-		process.env.KADOA_API_KEY || "39113751-1e7a-4cb2-9516-1e25d0085aa5";
-	const TEST_BASE_URL = process.env.KADOA_BASE_URL || "http://localhost:12380";
+	const env = getE2ETestEnv();
 
 	beforeAll(() => {
 		client = new KadoaClient({
-			apiKey: TEST_API_KEY,
-			baseUrl: TEST_BASE_URL,
+			apiKey: env.TEST_USER_API_KEY,
+			baseUrl: env.KADOA_BASE_URL,
 			timeout: 30000,
 		});
 		client.onEvent((event) => {

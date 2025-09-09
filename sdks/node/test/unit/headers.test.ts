@@ -1,6 +1,6 @@
 import { describe, expect, test } from "bun:test";
-import { KadoaClient } from "../src/kadoa-client";
-import { SDK_LANGUAGE, SDK_NAME, SDK_VERSION } from "../src/version";
+import { KadoaClient } from "../../src/kadoa-client";
+import { SDK_LANGUAGE, SDK_NAME, SDK_VERSION } from "../../src/version";
 
 describe("SDK Headers", () => {
 	test("should set SDK identification headers in configuration", () => {

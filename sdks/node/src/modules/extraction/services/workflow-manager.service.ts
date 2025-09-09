@@ -4,7 +4,7 @@ import {
 	KadoaSdkException,
 } from "../../../core/exceptions";
 import { ERROR_MESSAGES } from "../../../core/exceptions/base.exception";
-import { getWorkflowsApi } from "../../../core/http";
+import type { ApiProvider } from "../../../core/http/api-provider";
 import type {
 	V4WorkflowsPostRequest,
 	V4WorkflowsWorkflowIdGet200Response,
@@ -28,7 +28,7 @@ export const TERMINAL_RUN_STATES = new Set([
  * Service for managing extraction workflows
  */
 export class WorkflowManagerService {
-	constructor(private readonly client: KadoaClient) {}
+	constructor(private readonly client: KadoaClient & ApiProvider) {}
 
 	/**
 	 * Check if a workflow runState is terminal (finished processing)
@@ -47,8 +47,6 @@ export class WorkflowManagerService {
 			fields: EntityField[];
 		},
 	): Promise<string> {
-		const workflowsApi = getWorkflowsApi(this.client);
-
 		const request: V4WorkflowsPostRequest = {
 			urls: config.urls,
 			navigationMode: config.navigationMode,
@@ -56,12 +54,11 @@ export class WorkflowManagerService {
 			name: config.name,
 			fields: config.fields,
 			bypassPreview: true,
-			limit: config.maxRecords,
 			tags: ["sdk"],
 		};
 
 		try {
-			const response = await workflowsApi.v4WorkflowsPost({
+			const response = await this.client.workflows.v4WorkflowsPost({
 				v4WorkflowsPostRequest: request,
 			});
 
@@ -89,10 +86,8 @@ export class WorkflowManagerService {
 	async getWorkflowStatus(
 		workflowId: string,
 	): Promise<V4WorkflowsWorkflowIdGet200Response> {
-		const workflowsApi = getWorkflowsApi(this.client);
-
 		try {
-			const response = await workflowsApi.v4WorkflowsWorkflowIdGet({
+			const response = await this.client.workflows.v4WorkflowsWorkflowIdGet({
 				workflowId,
 			});
 			return response.data;

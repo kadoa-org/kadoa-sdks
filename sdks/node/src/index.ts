@@ -14,6 +14,11 @@ export {
 	type KadoaClientConfig,
 } from "./kadoa-client";
 export type {
+	DataPagination,
+	DataSortOrder,
 	ExtractionOptions,
 	ExtractionResult,
+	FetchDataOptions,
+	FetchDataResult,
+	WorkflowDataResponse,
 } from "./modules/extraction";

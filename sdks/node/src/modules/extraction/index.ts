@@ -3,3 +3,10 @@ export type {
 	ExtractionOptions,
 	ExtractionResult,
 } from "./extraction.types";
+export type {
+	DataPagination,
+	DataSortOrder,
+	FetchDataOptions,
+	FetchDataResult,
+	WorkflowDataResponse,
+} from "./queries";

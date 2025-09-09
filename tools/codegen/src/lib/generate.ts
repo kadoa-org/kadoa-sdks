@@ -62,7 +62,7 @@ export function generateClient(name: string, config: GeneratorConfig): void {
 	}
 }
 
-export function postProcessNodeClient(outputDir: string): void {}
+export function postProcessNodeClient(_outputDir: string): void {}
 
 export function postProcessPythonClient(outputDir: string): void {
 	// Move openapi_client from temporary directory to Python SDK root

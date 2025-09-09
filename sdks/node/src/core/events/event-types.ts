@@ -49,6 +49,8 @@ export type ExtractionEventPayloads = {
 		recordCount: number;
 		/** Whether this is a partial data set */
 		isPartial: boolean;
+		/** Total count of all records (if known) */
+		totalCount?: number;
 	};
 	"extraction:completed": {
 		/** Unique ID of the extraction process */

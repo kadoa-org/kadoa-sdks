@@ -1,9 +1,9 @@
-import { merge } from "es-toolkit/object";
 import {
 	KadoaHttpException,
 	KadoaSdkException,
 } from "../../../core/exceptions";
 import { ERROR_MESSAGES } from "../../../core/exceptions/base.exception";
+import type { PageInfo } from "../../../core/pagination";
 import { Command } from "../../../core/patterns";
 import type { KadoaClient } from "../../../kadoa-client";
 import type {
@@ -11,7 +11,7 @@ import type {
 	ExtractionOptions,
 	ExtractionResult,
 } from "../extraction.types";
-import { DataFetcherService } from "../services/data-fetcher.service";
+import { FetchDataQuery } from "../queries/fetch-data.query";
 import { EntityDetectorService } from "../services/entity-detector.service";
 import { WorkflowManagerService } from "../services/workflow-manager.service";
 
@@ -23,7 +23,6 @@ export const DEFAULT_OPTIONS: Omit<ExtractionConfig, "urls"> = {
 	navigationMode: "single-page" as const,
 	location: { type: "auto" },
 	name: "Untitled Workflow",
-	maxRecords: 1000,
 } as const;
 
 /**
@@ -33,13 +32,13 @@ export class RunExtractionCommand extends Command<
 	ExtractionResult,
 	ExtractionOptions
 > {
-	private readonly dataFetcher: DataFetcherService;
+	private readonly fetchDataQuery: FetchDataQuery;
 	private readonly entityDetector: EntityDetectorService;
 	private readonly workflowManager: WorkflowManagerService;
 
 	constructor(private readonly client: KadoaClient) {
 		super();
-		this.dataFetcher = new DataFetcherService(client);
+		this.fetchDataQuery = new FetchDataQuery(client);
 		this.entityDetector = new EntityDetectorService(client);
 		this.workflowManager = new WorkflowManagerService(client);
 	}
@@ -50,10 +49,11 @@ export class RunExtractionCommand extends Command<
 	async execute(options: ExtractionOptions): Promise<ExtractionResult> {
 		this.validateOptions(options);
 
-		const config: ExtractionConfig = merge(
-			DEFAULT_OPTIONS,
-			options,
-		) as ExtractionConfig;
+		// Use spread to avoid mutation of DEFAULT_OPTIONS
+		const config: ExtractionConfig = {
+			...DEFAULT_OPTIONS,
+			...options,
+		} as ExtractionConfig;
 
 		try {
 			// Step 1: Detect entity fields
@@ -101,23 +101,26 @@ export class RunExtractionCommand extends Command<
 				config.maxWaitTime,
 			);
 
-			// Step 4: Fetch data if successful
+			// Step 4: Fetch first page of data if successful
 			let data: Array<object> | undefined;
+			let pagination: PageInfo | undefined;
 			const isSuccess = this.isExtractionSuccessful(workflow.runState);
 
 			if (isSuccess) {
-				data = await this.dataFetcher.fetchWorkflowData(
-					workflowId,
-					config.maxRecords,
-				);
+				const dataPage = await this.fetchDataQuery.execute({ workflowId });
+				data = dataPage.data;
+				pagination = dataPage.pagination;
 
 				if (data) {
+					const isPartial =
+						pagination?.totalCount && data.length < pagination.totalCount;
 					this.client.emit(
 						"extraction:data_available",
 						{
 							workflowId,
 							recordCount: data.length,
-							isPartial: false,
+							isPartial: !!isPartial,
+							totalCount: pagination?.totalCount,
 						},
 						"extraction",
 					);
@@ -164,6 +167,7 @@ export class RunExtractionCommand extends Command<
 				workflowId,
 				workflow,
 				data,
+				pagination,
 			};
 		} catch (error) {
 			throw KadoaHttpException.wrap(error, {

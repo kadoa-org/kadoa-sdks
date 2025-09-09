@@ -6,7 +6,15 @@ import {
 	KadoaEventEmitter,
 	type KadoaEventName,
 } from "./core/events";
-import { Configuration, type ConfigurationParameters } from "./generated";
+import type { ApiProvider } from "./core/http/api-provider";
+import {
+	Configuration,
+	type ConfigurationParameters,
+	CrawlApi,
+	type CrawlApiInterface,
+	WorkflowsApi,
+	type WorkflowsApiInterface,
+} from "./generated";
 import { ExtractionModule } from "./modules/extraction";
 import { SDK_LANGUAGE, SDK_NAME, SDK_VERSION } from "./version";
 
@@ -14,6 +22,10 @@ export interface KadoaClientConfig {
 	apiKey: string;
 	baseUrl?: string;
 	timeout?: number;
+	/**
+	 * Optional API overrides for testing
+	 */
+	apiOverrides?: Partial<ApiProvider>;
 }
 
 /**
@@ -33,12 +45,14 @@ export interface KadoaClientConfig {
  * });
  * ```
  */
-export class KadoaClient {
+export class KadoaClient implements ApiProvider {
 	private readonly _configuration: Configuration;
 	private readonly _axiosInstance: AxiosInstance;
 	private readonly _baseUrl: string;
 	private readonly _timeout: number;
 	private readonly _events: KadoaEventEmitter;
+	private readonly _workflowsApi: WorkflowsApiInterface;
+	private readonly _crawlApi: CrawlApiInterface;
 
 	public readonly extraction: ExtractionModule;
 
@@ -68,6 +82,15 @@ export class KadoaClient {
 			},
 		});
 		this._events = new KadoaEventEmitter();
+
+		// Initialize API clients (allow injection for testing)
+		this._workflowsApi =
+			config.apiOverrides?.workflows ||
+			new WorkflowsApi(this._configuration, this._baseUrl, this._axiosInstance);
+		this._crawlApi =
+			config.apiOverrides?.crawl ||
+			new CrawlApi(this._configuration, this._baseUrl, this._axiosInstance);
+
 		this.extraction = new ExtractionModule(this);
 	}
 
@@ -151,6 +174,20 @@ export class KadoaClient {
 	 */
 	get events(): KadoaEventEmitter {
 		return this._events;
+	}
+
+	/**
+	 * Get the workflows API
+	 */
+	get workflows(): WorkflowsApiInterface {
+		return this._workflowsApi;
+	}
+
+	/**
+	 * Get the crawl API
+	 */
+	get crawl(): CrawlApiInterface {
+		return this._crawlApi;
 	}
 
 	/**

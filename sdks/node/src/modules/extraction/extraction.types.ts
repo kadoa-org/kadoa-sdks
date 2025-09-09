@@ -1,3 +1,4 @@
+import type { PageInfo } from "../../core/pagination";
 import type { V4WorkflowsWorkflowIdGet200Response } from "../../generated";
 import {
 	V4WorkflowsWorkflowIdGet200ResponseDisplayStateEnum as WorkflowDisplayStateEnum,
@@ -62,7 +63,6 @@ export interface ExtractionConfig {
 	};
 	pollingInterval: number;
 	maxWaitTime: number;
-	maxRecords: number;
 }
 
 export type ExtractionOptions = {
@@ -73,4 +73,5 @@ export interface ExtractionResult {
 	workflowId: string | undefined;
 	workflow?: V4WorkflowsWorkflowIdGet200Response;
 	data?: Array<object>;
+	pagination?: PageInfo;
 }
