@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.6.0](https://github.com/kadoa-org/kadoa-sdks/compare/node-sdk-v0.5.1...node-sdk-v0.6.0) (2025-09-09)
+
+
+### Features
+
+* add automated dependency security auditing ([1b633ed](https://github.com/kadoa-org/kadoa-sdks/commit/1b633ed8af3b56e6815e72d959cda9c540f99a17))
+
 ## [0.5.1](https://github.com/kadoa-org/kadoa-sdks/compare/node-sdk-v0.5.0...node-sdk-v0.5.1) (2025-09-09)
 
 
