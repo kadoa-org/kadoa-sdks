@@ -1,4 +1,4 @@
-import type { PagedResponse, PageInfo, PageOptions } from "./types";
+import type { PagedResponse, PageOptions } from "./types";
 
 /**
  * Simple async paginator for page-based pagination

@@ -1,6 +1,10 @@
 # Dependabot configuration for Kadoa SDKs monorepo
 # Checks for updates to dependencies and creates PRs automatically
 version: 2
+
+# Enable security updates for all ecosystems
+enable-beta-ecosystems: true
+
 updates:
   # Root package (Bun/npm ecosystem)
   - package-ecosystem: "npm"
@@ -9,7 +13,6 @@ updates:
       interval: "weekly"
       day: "monday"
       time: "09:00"
-      timezone: "UTC"
     labels:
       - "dependencies"
       - "root"
@@ -23,35 +26,46 @@ updates:
   - package-ecosystem: "npm"
     directory: "/sdks/node"
     schedule:
-      interval: "weekly"
-      day: "monday"
-      time: "09:00"
-      timezone: "UTC"
+      interval: "daily"
+      time: "03:00"
     labels:
       - "dependencies"
       - "node-sdk"
+      - "security"
     commit-message:
       prefix: "chore"
       prefix-development: "chore"
       include: "scope"
     open-pull-requests-limit: 5
+    # Group updates to reduce PR noise
+    groups:
+      production:
+        dependency-type: "production"
+      development:
+        dependency-type: "development"
 
   # Python SDK
   - package-ecosystem: "pip"
     directory: "/sdks/python"
     schedule:
-      interval: "weekly"
-      day: "monday"
-      time: "09:00"
+      interval: "daily"
+      time: "03:00"
       timezone: "UTC"
     labels:
       - "dependencies"
       - "python-sdk"
+      - "security"
     commit-message:
       prefix: "chore"
       prefix-development: "chore"
       include: "scope"
     open-pull-requests-limit: 5
+    # Group updates to reduce PR noise
+    groups:
+      production:
+        dependency-type: "production"
+      development:
+        dependency-type: "development"
 
   # Node examples
   - package-ecosystem: "npm"
@@ -60,7 +74,6 @@ updates:
       interval: "weekly"
       day: "monday"
       time: "09:00"
-      timezone: "UTC"
     labels:
       - "dependencies"
       - "examples"
@@ -78,7 +91,6 @@ updates:
       interval: "weekly"
       day: "monday"
       time: "09:00"
-      timezone: "UTC"
     labels:
       - "dependencies"
       - "examples"
@@ -96,7 +108,6 @@ updates:
       interval: "weekly"
       day: "monday"
       time: "09:00"
-      timezone: "UTC"
     labels:
       - "dependencies"
       - "tooling"
@@ -113,7 +124,6 @@ updates:
       interval: "weekly"
       day: "monday"
       time: "09:00"
-      timezone: "UTC"
     labels:
       - "dependencies"
       - "ci"

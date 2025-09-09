@@ -11,6 +11,8 @@
 		"dev:node-sdk": "cd sdks/node && bun run dev:watch",
 		"dev:node-examples": "cd examples/node-examples && bun run dev:hot",
 		"kadoa-codegen": "bun run ./tools/codegen/src/cli.ts",
+		"audit": "turbo run audit",
+		"audit:fix": "turbo run audit:fix",
 		"prepare": "husky"
 	},
 	"devDependencies": {

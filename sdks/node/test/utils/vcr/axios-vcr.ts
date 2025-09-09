@@ -138,11 +138,11 @@ export class AxiosVCR {
 			const headers = { ...sanitized.headers };
 			// Remove sensitive headers
 			delete headers["x-api-key"];
-			delete headers["authorization"];
-			delete headers["cookie"];
+			delete headers.authorization;
+			delete headers.cookie;
 			delete headers["set-cookie"];
 			// Normalize dynamic headers
-			headers["date"] = "NORMALIZED_DATE";
+			headers.date = "NORMALIZED_DATE";
 			headers["x-request-id"] = "NORMALIZED_REQUEST_ID";
 			sanitized.headers = headers;
 		}

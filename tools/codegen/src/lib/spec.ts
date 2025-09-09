@@ -27,24 +27,6 @@ function calculateChecksum(content: string): string {
 	return crypto.createHash("sha256").update(content).digest("hex");
 }
 
-function isCacheValid(): boolean {
-	if (!fs.existsSync(METADATA_PATH) || !fs.existsSync(OPENAPI_SPEC_PATH)) {
-		return false;
-	}
-
-	try {
-		const metadata: SpecMetadata = JSON.parse(
-			fs.readFileSync(METADATA_PATH, "utf-8"),
-		);
-		const fetchedAt = new Date(metadata.fetchedAt).getTime();
-		const now = Date.now();
-
-		return now - fetchedAt < CACHE_TTL;
-	} catch {
-		return false;
-	}
-}
-
 async function fetchWithRetry(
 	url: string,
 	options: RequestInit,
@@ -165,7 +147,7 @@ export async function fetchOpenAPISpec(
 					} else {
 						console.log("OpenAPI spec is up to date (no changes detected)");
 					}
-					
+
 					oldMetadata.fetchedAt = new Date().toISOString();
 					fs.writeFileSync(METADATA_PATH, JSON.stringify(oldMetadata, null, 2));
 					return;

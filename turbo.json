@@ -42,6 +42,12 @@
 		},
 		"//#generate:python": {
 			"cache": false
+		},
+		"audit": {
+			"cache": false
+		},
+		"audit:fix": {
+			"cache": false
 		}
 	}
 }

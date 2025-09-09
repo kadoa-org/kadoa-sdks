@@ -24,6 +24,8 @@
 		"test:e2e": "bun test test/e2e",
 		"test:integration": "bun test test/integration",
 		"test:watch": "bun test --watch",
+		"audit": "npm audit --production",
+		"audit:fix": "npm audit fix --production",
 		"prepublishOnly": "bun run build"
 	},
 	"dependencies": {

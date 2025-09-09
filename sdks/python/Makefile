@@ -1,6 +1,6 @@
 # Makefile for Kadoa Python SDK
 
-.PHONY: help install test test-e2e test-coverage clean lint format
+.PHONY: help install test test-e2e test-coverage clean lint format audit audit-fix
 
 help:
 	@echo "Available commands:"
@@ -11,6 +11,8 @@ help:
 	@echo "  make test-coverage  Run tests with coverage report"
 	@echo "  make lint           Run all linting checks (ruff + pylint)"
 	@echo "  make format         Format code with black"
+	@echo "  make audit          Check for security vulnerabilities in dependencies"
+	@echo "  make audit-fix      Attempt to fix security vulnerabilities"
 	@echo "  make clean          Clean build artifacts"
 
 install:
@@ -37,6 +39,12 @@ lint-fix:
 
 format:
 	black kadoa_sdk tests
+
+audit:
+	pip-audit --desc
+
+audit-fix:
+	pip-audit --fix --desc
 
 clean:
 	rm -rf build dist *.egg-info .pytest_cache .coverage htmlcov
