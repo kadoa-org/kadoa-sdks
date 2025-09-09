@@ -162,6 +162,11 @@ export async function fetchOpenAPISpec(
 
 				if (oldMetadata.checksum === checksum && !force) {
 					console.debug("OpenAPI spec unchanged; updating metadata timestamp");
+					
+					// Still write the spec to disk in case the file is missing or corrupted
+					console.log("Writing OpenAPI spec to", OPENAPI_SPEC_PATH);
+					fs.writeFileSync(OPENAPI_SPEC_PATH, JSON.stringify(spec, null, 2));
+					
 					oldMetadata.fetchedAt = new Date().toISOString();
 					fs.writeFileSync(METADATA_PATH, JSON.stringify(oldMetadata, null, 2));
 					return;
