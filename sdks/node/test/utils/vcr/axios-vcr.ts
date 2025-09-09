@@ -329,7 +329,7 @@ export class AxiosVCR {
 				return response;
 			},
 			async (error: AxiosError) => {
-				const cacheKey = error.config?.__vcrCacheKey;
+				const cacheKey = (error.config as any)?.__vcrCacheKey;
 
 				// In record or auto mode, save error responses
 				if (

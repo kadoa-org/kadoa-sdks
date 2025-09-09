@@ -98,16 +98,17 @@ kadoa-sdks/
 │   ├── node/           # Node.js/TypeScript SDK
 │   │   ├── src/
 │   │   │   ├── index.ts           # Public API exports
-│   │   │   ├── app.ts             # Application initialization
-│   │   │   ├── extraction/        # Core extraction features
+│   │   │   ├── kadoa-client.ts    # Main client implementation
+│   │   │   ├── core/              # Core utilities
+│   │   │   ├── modules/           # Feature modules
 │   │   │   └── generated/         # OpenAPI-generated client
 │   │   └── test/
 │   └── python/         # Python SDK
 │       ├── kadoa_sdk/
 │       │   ├── __init__.py        # Public API exports
-│       │   ├── app.py             # Application initialization
-│       │   ├── extraction/        # Core extraction features
-│       │   └── generated/         # OpenAPI-generated client
+│       │   ├── client.py          # Main client implementation
+│       │   ├── core/              # Core utilities
+│       │   └── extraction/        # Extraction features
 │       └── tests/
 ├── examples/
 │   ├── node-examples/
@@ -119,9 +120,9 @@ kadoa-sdks/
 
 ### Key Technical Patterns
 
-1. **SDK Initialization Pattern**: Both SDKs use an `initializeApp()` function that returns an app instance containing the configured API client
+1. **SDK Initialization Pattern**: Both SDKs use a client initialization pattern that returns configured API clients
 2. **Generated Code**: API clients are auto-generated from OpenAPI specs and placed in `generated/` directories
-3. **Extraction Module**: Core business logic for the extraction feature is implemented on top of the generated clients
+3. **Feature Modules**: Core business logic is implemented in feature-specific modules on top of generated clients
 4. **Monorepo Tasks**: Turbo is used for task orchestration with caching for builds
 
 ## Development Workflow
@@ -130,8 +131,8 @@ kadoa-sdks/
 
 1. Update the OpenAPI spec if adding new API endpoints
 2. Run code generation to update the generated clients
-3. Implement the feature in the extraction module or create a new module
-4. Add tests in the appropriate test directory
+3. Implement the feature in the appropriate module
+4. Add tests in the test directory
 5. Update examples if the feature affects the public API
 
 ### Code Style
@@ -148,9 +149,35 @@ kadoa-sdks/
 - Python SDK: Uses pytest with coverage reporting
 - Both SDKs have E2E tests that require `KADOA_API_KEY` environment variable
 
+## Release Process
+
+Uses [Release Please](https://github.com/googleapis/release-please) for automated versioning:
+
+### Conventional Commits
+
+The repository enforces conventional commits with these scopes:
+- `spec` - OpenAPI spec updates
+- `node-sdk` - Node SDK changes
+- `python-sdk` - Python SDK changes
+- `codegen` - Code generation tooling
+- `node-examples` - Node example code
+- `python-examples` - Python example code
+- `ci` - CI/CD changes
+- `deps` - Dependency updates
+- `release` - Release configuration
+- `docs` - Documentation
+
+Commit types that trigger releases:
+- `feat:` - New features (minor version bump)
+- `fix:` - Bug fixes (patch version bump)
+- `feat!:` or `fix!:` - Breaking changes (major version bump)
+
+Example: `git commit -m "feat(node-sdk): add retry logic to API client"`
+
 ## Important Notes
 
 - The repository uses Husky for Git hooks with commitlint for conventional commits
 - Release management is handled by release-please with separate releases for each SDK
 - Both SDKs follow similar architectural patterns for consistency
 - Generated code should never be manually edited - always regenerate from specs
+- Production builds use committed specs only (never use `--fetch-latest` in CI)
