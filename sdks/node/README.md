@@ -93,15 +93,28 @@ client.onEvent((event) => {
 - `timeout` (optional): Request timeout in milliseconds (default: 30000)
 
 Returns a client instance with:
-- `extraction`: Extraction module with `run()` method
+- `extraction`: Extraction module with `run()`, `submit()`, `fetchData()` methods
+- `workflow`: Workflow module with `get()`, `submit()`, `cancel()`, `wait()` methods
 - `onEvent()`: Subscribe to events
 - `offEvent()`: Unsubscribe from events
 - `dispose()`: Releases resources and removes all event listeners
 
 ### client.extraction.run(options)
+Runs extraction and waits for completion.
 - `urls`: Array of URLs to extract from
 - `name`: Workflow name
 - Additional options available in API documentation
+
+### client.extraction.submit(options)
+Submits extraction without waiting for completion.
+- `urls`: Array of URLs to extract from
+- `name`: Workflow name
+- Returns: `{ workflowId: string }`
+
+### client.workflow.get(workflowId)
+Gets the current status of a workflow.
+- `workflowId`: The workflow ID to query
+- Returns: Workflow status object
 
 ## Examples
 

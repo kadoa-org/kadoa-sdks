@@ -99,8 +99,10 @@ kadoa-sdks/
 │   │   ├── src/
 │   │   │   ├── index.ts           # Public API exports
 │   │   │   ├── kadoa-client.ts    # Main client implementation
-│   │   │   ├── core/              # Core utilities
-│   │   │   ├── modules/           # Feature modules
+│   │   │   ├── internal/
+│   │   │   │   ├── runtime/       # Cross-cutting infra (http, events, pagination, exceptions)
+│   │   │   │   └── domains/       # Domain-specific internals (orchestrators, services)
+│   │   │   ├── modules/           # Public facades (commands, services, types)
 │   │   │   └── generated/         # OpenAPI-generated client
 │   │   └── test/
 │   └── python/         # Python SDK
@@ -122,7 +124,7 @@ kadoa-sdks/
 
 1. **SDK Initialization Pattern**: Both SDKs use a client initialization pattern that returns configured API clients
 2. **Generated Code**: API clients are auto-generated from OpenAPI specs and placed in `generated/` directories
-3. **Feature Modules**: Core business logic is implemented in feature-specific modules on top of generated clients
+3. **Modules & Internals**: Public modules compose `internal/domains` and `internal/runtime` on top of `generated` clients
 4. **Monorepo Tasks**: Turbo is used for task orchestration with caching for builds
 
 ## Development Workflow
@@ -137,10 +139,12 @@ kadoa-sdks/
 
 ### Code Style
 
-- **JavaScript/TypeScript**: Uses Biome for formatting and linting
-  - Tab indentation
-  - Double quotes for strings
-  - Automatic import organization
+- Follow `sdks/node/STYLEGUIDE.md` for Node SDK structure, boundaries, imports, events and errors.
+- **JavaScript/TypeScript** (Node SDK): Biome for formatting/linting; imports must respect boundaries:
+  - `modules/**` must not import from `internal/domains/**`.
+  - `internal/runtime/**` must not import from `modules/**` or `internal/domains/**`.
+  - `internal/domains/**` must not import from `modules/**`.
+  - Never edit `generated/**` by hand.
 - **Python**: Uses Black (100 char line length) and Ruff for formatting/linting
 
 ### Testing Strategy

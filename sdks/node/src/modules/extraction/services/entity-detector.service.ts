@@ -1,10 +1,10 @@
 import type { AxiosResponse } from "axios";
-import { DEFAULT_API_BASE_URL } from "../../../core/config";
+import { DEFAULT_API_BASE_URL } from "../../../internal/runtime/config";
 import {
 	KadoaHttpException,
 	KadoaSdkException,
-} from "../../../core/exceptions";
-import { ERROR_MESSAGES } from "../../../core/exceptions/base.exception";
+} from "../../../internal/runtime/exceptions";
+import { ERROR_MESSAGES } from "../../../internal/runtime/exceptions/base.exception";
 import type { KadoaClient } from "../../../kadoa-client";
 import type {
 	EntityPrediction,

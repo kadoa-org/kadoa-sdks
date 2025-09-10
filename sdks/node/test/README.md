@@ -12,7 +12,8 @@ test/
 │   └── extraction.test.ts  # Real API extraction workflow tests
 │
 ├── integration/            # Integration tests
-│   └── fetch-data-vcr.test.ts  # Pagination tests with VCR
+│   ├── fetch-data.test.ts      # Pagination tests with VCR
+│   └── submit-extraction.test.ts # Submit workflow tests with VCR
 │
 ├── unit/                   # Unit tests (currently empty)
 │

@@ -31,7 +31,7 @@ import {
 
 const CACHE_DIR = "test/fixtures/vcr-cache/fetch-data";
 
-describe("FetchDataQuery with VCR", () => {
+describe("FetchDataQuery", () => {
 	let client: VCRKadoaClient;
 	let query: FetchDataQuery;
 	const env = getVCRTestEnv();

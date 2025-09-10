@@ -1,6 +1,10 @@
 import type { KadoaClient } from "../../kadoa-client";
 import { RunExtractionCommand } from "./commands/run-extraction.command";
-import type { ExtractionOptions, ExtractionResult } from "./extraction.types";
+import type {
+	ExtractionOptions,
+	ExtractionResult,
+	SubmitExtractionResult,
+} from "./extraction.types";
 import {
 	type FetchDataOptions,
 	FetchDataQuery,
@@ -34,7 +38,11 @@ export class ExtractionModule {
 	 * ```
 	 */
 	async run(options: ExtractionOptions): Promise<ExtractionResult> {
-		return this.runExtractionCommand.execute(options);
+		return this.runExtractionCommand.execute({ ...options, mode: "run" });
+	}
+
+	async submit(options: ExtractionOptions): Promise<SubmitExtractionResult> {
+		return this.runExtractionCommand.execute({ ...options, mode: "submit" });
 	}
 
 	/**

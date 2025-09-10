@@ -1,15 +1,17 @@
+import { merge } from "es-toolkit";
 import {
 	KadoaHttpException,
 	KadoaSdkException,
-} from "../../../core/exceptions";
-import { ERROR_MESSAGES } from "../../../core/exceptions/base.exception";
-import type { PageInfo } from "../../../core/pagination";
-import { Command } from "../../../core/patterns";
+} from "../../../internal/runtime/exceptions";
+import { ERROR_MESSAGES } from "../../../internal/runtime/exceptions/base.exception";
+import type { PageInfo } from "../../../internal/runtime/pagination";
+import { Command } from "../../../internal/runtime/patterns";
 import type { KadoaClient } from "../../../kadoa-client";
 import type {
 	ExtractionConfig,
 	ExtractionOptions,
 	ExtractionResult,
+	SubmitExtractionResult,
 } from "../extraction.types";
 import { FetchDataQuery } from "../queries/fetch-data.query";
 import { EntityDetectorService } from "../services/entity-detector.service";
@@ -25,12 +27,16 @@ export const DEFAULT_OPTIONS: Omit<ExtractionConfig, "urls"> = {
 	name: "Untitled Workflow",
 } as const;
 
+export interface RunExtractionCommandOptions extends ExtractionOptions {
+	mode: "run" | "submit";
+}
+
 /**
  * Command to run the extraction workflow
  */
 export class RunExtractionCommand extends Command<
 	ExtractionResult,
-	ExtractionOptions
+	RunExtractionCommandOptions
 > {
 	private readonly fetchDataQuery: FetchDataQuery;
 	private readonly entityDetector: EntityDetectorService;
@@ -46,14 +52,12 @@ export class RunExtractionCommand extends Command<
 	/**
 	 * Execute the extraction workflow
 	 */
-	async execute(options: ExtractionOptions): Promise<ExtractionResult> {
+	async execute(
+		options: RunExtractionCommandOptions,
+	): Promise<ExtractionResult | SubmitExtractionResult> {
 		this.validateOptions(options);
 
-		// Use spread to avoid mutation of DEFAULT_OPTIONS
-		const config: ExtractionConfig = {
-			...DEFAULT_OPTIONS,
-			...options,
-		} as ExtractionConfig;
+		const config = merge(DEFAULT_OPTIONS, options);
 
 		try {
 			// Step 1: Detect entity fields
@@ -93,6 +97,11 @@ export class RunExtractionCommand extends Command<
 				},
 				"extraction",
 			);
+			if (options.mode === "submit") {
+				return {
+					workflowId,
+				};
+			}
 
 			// Step 3: Wait for completion
 			const workflow = await this.workflowManager.waitForWorkflowCompletion(

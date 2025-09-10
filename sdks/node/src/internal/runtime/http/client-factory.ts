@@ -1,5 +1,5 @@
-import { CrawlApi, WorkflowsApi } from "../../generated";
-import type { KadoaClient } from "../../kadoa-client";
+import { CrawlApi, WorkflowsApi } from "../../../generated";
+import type { KadoaClient } from "../../../kadoa-client";
 
 const crawlApiCache = new WeakMap<KadoaClient, CrawlApi>();
 const workflowsApiCache = new WeakMap<KadoaClient, WorkflowsApi>();

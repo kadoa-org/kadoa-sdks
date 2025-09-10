@@ -1,14 +1,14 @@
-import type { EventPayloadMap } from "../../../core/events";
-import {
-	KadoaHttpException,
-	KadoaSdkException,
-} from "../../../core/exceptions";
-import { ERROR_MESSAGES } from "../../../core/exceptions/base.exception";
-import type { ApiProvider } from "../../../core/http/api-provider";
 import type {
 	V4WorkflowsPostRequest,
 	V4WorkflowsWorkflowIdGet200Response,
 } from "../../../generated";
+import type { EventPayloadMap } from "../../../internal/runtime/events";
+import {
+	KadoaHttpException,
+	KadoaSdkException,
+} from "../../../internal/runtime/exceptions";
+import { ERROR_MESSAGES } from "../../../internal/runtime/exceptions/base.exception";
+import type { ApiProvider } from "../../../internal/runtime/http/api-provider";
 import type { KadoaClient } from "../../../kadoa-client";
 import type { EntityField, ExtractionConfig } from "../extraction.types";
 

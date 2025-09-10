@@ -1,10 +1,10 @@
-import type { PageInfo } from "../../core/pagination";
 import type { V4WorkflowsWorkflowIdGet200Response } from "../../generated";
 import {
 	V4WorkflowsWorkflowIdGet200ResponseDisplayStateEnum as WorkflowDisplayStateEnum,
 	V4WorkflowsWorkflowIdGet200ResponseStateEnum as WorkflowStateEnum,
 } from "../../generated/models/v4-workflows-workflow-id-get200-response";
 import type { WorkflowWithExistingSchemaNavigationModeEnum } from "../../generated/models/workflow-with-existing-schema";
+import type { PageInfo } from "../../internal/runtime/pagination";
 
 export { WorkflowDisplayStateEnum, WorkflowStateEnum };
 export type NavigationMode =
@@ -70,8 +70,12 @@ export type ExtractionOptions = {
 } & Partial<Omit<ExtractionConfig, "urls">>;
 
 export interface ExtractionResult {
-	workflowId: string | undefined;
+	workflowId: string;
 	workflow?: V4WorkflowsWorkflowIdGet200Response;
 	data?: Array<object>;
 	pagination?: PageInfo;
+}
+
+export interface SubmitExtractionResult {
+	workflowId: string;
 }

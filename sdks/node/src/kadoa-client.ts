@@ -1,13 +1,6 @@
 import type { AxiosInstance } from "axios";
 import axios from "axios";
 import {
-	type AnyKadoaEvent,
-	type EventPayloadMap,
-	KadoaEventEmitter,
-	type KadoaEventName,
-} from "./core/events";
-import type { ApiProvider } from "./core/http/api-provider";
-import {
 	Configuration,
 	type ConfigurationParameters,
 	CrawlApi,
@@ -15,7 +8,15 @@ import {
 	WorkflowsApi,
 	type WorkflowsApiInterface,
 } from "./generated";
+import {
+	type AnyKadoaEvent,
+	type EventPayloadMap,
+	KadoaEventEmitter,
+	type KadoaEventName,
+} from "./internal/runtime/events";
+import type { ApiProvider } from "./internal/runtime/http/api-provider";
 import { ExtractionModule } from "./modules/extraction";
+import { WorkflowsModule } from "./modules/workflows/workflows.module";
 import { SDK_LANGUAGE, SDK_NAME, SDK_VERSION } from "./version";
 
 export interface KadoaClientConfig {
@@ -55,6 +56,7 @@ export class KadoaClient implements ApiProvider {
 	private readonly _crawlApi: CrawlApiInterface;
 
 	public readonly extraction: ExtractionModule;
+	public readonly workflow: WorkflowsModule;
 
 	constructor(config: KadoaClientConfig) {
 		this._baseUrl = config.baseUrl || "https://api.kadoa.com";
@@ -92,6 +94,7 @@ export class KadoaClient implements ApiProvider {
 			new CrawlApi(this._configuration, this._baseUrl, this._axiosInstance);
 
 		this.extraction = new ExtractionModule(this);
+		this.workflow = new WorkflowsModule(this);
 	}
 
 	/**

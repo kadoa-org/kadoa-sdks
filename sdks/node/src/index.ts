@@ -1,14 +1,14 @@
 export {
 	type KadoaEvent,
 	KadoaEventEmitter,
-} from "./core/events";
+} from "./internal/runtime/events";
 
 export {
 	type KadoaErrorCode,
 	KadoaHttpException,
 	KadoaSdkException,
-} from "./core/exceptions";
-export { ERROR_MESSAGES } from "./core/exceptions/base.exception";
+} from "./internal/runtime/exceptions";
+export { ERROR_MESSAGES } from "./internal/runtime/exceptions/base.exception";
 export {
 	KadoaClient,
 	type KadoaClientConfig,

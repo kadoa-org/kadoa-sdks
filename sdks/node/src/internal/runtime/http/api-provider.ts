@@ -1,4 +1,7 @@
-import type { CrawlApiInterface, WorkflowsApiInterface } from "../../generated";
+import type {
+	CrawlApiInterface,
+	WorkflowsApiInterface,
+} from "../../../generated";
 
 /**
  * Interface for providing access to all API clients

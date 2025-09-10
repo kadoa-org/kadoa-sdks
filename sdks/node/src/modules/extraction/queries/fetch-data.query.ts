@@ -1,13 +1,16 @@
-import { KadoaHttpException } from "../../../core/exceptions";
-import { ERROR_MESSAGES } from "../../../core/exceptions/base.exception";
-import type { ApiProvider } from "../../../core/http/api-provider";
-import { PagedIterator, type PagedResponse } from "../../../core/pagination";
 import type {
 	V4WorkflowsWorkflowIdDataGet200Response,
 	V4WorkflowsWorkflowIdDataGet200ResponsePagination,
 	V4WorkflowsWorkflowIdDataGetOrderEnum,
 	WorkflowsApiV4WorkflowsWorkflowIdDataGetRequest,
 } from "../../../generated";
+import { KadoaHttpException } from "../../../internal/runtime/exceptions";
+import { ERROR_MESSAGES } from "../../../internal/runtime/exceptions/base.exception";
+import type { ApiProvider } from "../../../internal/runtime/http/api-provider";
+import {
+	PagedIterator,
+	type PagedResponse,
+} from "../../../internal/runtime/pagination";
 
 // Re-export generated types with cleaner names
 export type DataPagination = V4WorkflowsWorkflowIdDataGet200ResponsePagination;
