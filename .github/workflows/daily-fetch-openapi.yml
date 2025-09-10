@@ -41,7 +41,7 @@ jobs:
       - name: Detect changes
         id: diff
         run: |
-          if git diff --quiet -- specs/openapi.json specs/openapi-metadata.json; then
+          if git diff --quiet -- specs/openapi.json; then
             echo "changed=false" >> "$GITHUB_OUTPUT"
           else
             echo "changed=true" >> "$GITHUB_OUTPUT"
