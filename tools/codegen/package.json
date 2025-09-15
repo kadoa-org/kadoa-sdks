@@ -12,6 +12,6 @@
 		"@types/node": "^24.3.1"
 	},
 	"dependencies": {
-		"commander": "^14.0.0"
+		"commander": "^14.0.1"
 	}
 }
