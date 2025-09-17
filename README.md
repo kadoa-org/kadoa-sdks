@@ -8,6 +8,47 @@ Monorepo for Kadoa's official SDKs for Node.js and Python, providing easy integr
 - [Node.js SDK Documentation](./sdks/node/README.md) - Installation and usage
 - [Python SDK Documentation](./sdks/python/README.md) - Installation and usage
 
+## Environment Setup
+
+This repository uses [direnv](https://direnv.net/) for automatic environment variable management.
+
+### Installing direnv
+
+**macOS:**
+```bash
+brew install direnv
+echo 'eval "$(direnv hook zsh)"' >> ~/.zshrc  # for zsh
+# OR
+echo 'eval "$(direnv hook bash)"' >> ~/.bashrc  # for bash
+```
+
+**Linux:**
+```bash
+curl -sfL https://direnv.net/install.sh | bash
+echo 'eval "$(direnv hook bash)"' >> ~/.bashrc
+```
+
+### Setting Up Environment Variables
+
+1. Copy the example environment file:
+   ```bash
+   cp .env.example .env
+   ```
+
+2. Edit `.env` with your API credentials:
+   ```bash
+   # Required for tests
+   KADOA_API_KEY=your-api-key-here
+   TEST_USER_API_KEY=your-api-key-here  # Same as KADOA_API_KEY for Node SDK tests
+   ```
+
+3. Allow direnv to load the environment:
+   ```bash
+   direnv allow
+   ```
+
+Now environment variables will be automatically loaded when you enter any project directory!
+
 ## Changelogs
 
 - [Node SDK Changelog](./sdks/node/CHANGELOG.md) - Public releases

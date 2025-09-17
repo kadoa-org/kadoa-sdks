@@ -18,6 +18,7 @@ import type { ApiProvider } from "./internal/runtime/http/api-provider";
 import { ExtractionModule } from "./modules/extraction";
 import { WorkflowsModule } from "./modules/workflows/workflows.module";
 import { SDK_LANGUAGE, SDK_NAME, SDK_VERSION } from "./version";
+import { randomUUID } from "node:crypto";
 
 export interface KadoaClientConfig {
 	apiKey: string;
@@ -62,30 +63,30 @@ export class KadoaClient implements ApiProvider {
 		this._baseUrl = config.baseUrl || "https://api.kadoa.com";
 		this._timeout = config.timeout || 30000;
 
+		const headers = {
+			"User-Agent": `${SDK_NAME}/${SDK_VERSION}`,
+			"X-SDK-Version": SDK_VERSION,
+			"X-SDK-Language": SDK_LANGUAGE,
+		};
 		const configParams: ConfigurationParameters = {
 			apiKey: config.apiKey,
 			basePath: this._baseUrl,
 			baseOptions: {
-				headers: {
-					"User-Agent": `${SDK_NAME}/${SDK_VERSION}`,
-					"X-SDK-Version": SDK_VERSION,
-					"X-SDK-Language": SDK_LANGUAGE,
-				},
+				headers,
 			},
 		};
 
 		this._configuration = new Configuration(configParams);
 		this._axiosInstance = axios.create({
 			timeout: this._timeout,
-			headers: {
-				"User-Agent": `${SDK_NAME}/${SDK_VERSION}`,
-				"X-SDK-Version": SDK_VERSION,
-				"X-SDK-Language": SDK_LANGUAGE,
-			},
+			headers,
+		});
+		this._axiosInstance.interceptors.request.use((config) => {
+			config.headers["x-request-id"] = randomUUID();
+			return config;
 		});
 		this._events = new KadoaEventEmitter();
 
-		// Initialize API clients (allow injection for testing)
 		this._workflowsApi =
 			config.apiOverrides?.workflows ||
 			new WorkflowsApi(this._configuration, this._baseUrl, this._axiosInstance);
