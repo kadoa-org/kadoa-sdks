@@ -8477,16 +8477,14 @@
             }
           },
           {
-            "name": "isEnabled",
+            "name": "status",
             "in": "query",
             "schema": {
-              "oneOf": [
-                {
-                  "type": "boolean"
-                },
-                {
-                  "type": "string"
-                }
+              "type": "string",
+              "enum": [
+                "preview",
+                "enabled",
+                "disabled"
               ]
             }
           },
@@ -9088,7 +9086,7 @@
     },
     "/v4/data-validation/rules/actions/generate": {
       "post": {
-        "description": "Generate a validation rule using AI",
+        "description": "Generate a validation rule",
         "tags": [
           "Rules Library"
         ],
@@ -9180,7 +9178,7 @@
     },
     "/v4/data-validation/rules/actions/generate-rules": {
       "post": {
-        "description": "Generate multiple validation rules using AI",
+        "description": "Generate multiple validation rules",
         "tags": [
           "Rules Library"
         ],
@@ -9190,7 +9188,7 @@
           "content": {
             "application/json": {
               "schema": {
-                "$ref": "#/components/schemas/SuggestRules"
+                "$ref": "#/components/schemas/GenerateRules"
               }
             }
           }
@@ -9302,6 +9300,190 @@
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/DeleteAllRulesResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized - Authentication required or failed",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "error": {
+                      "type": "boolean",
+                      "description": "Indicates an error occurred",
+                      "example": true
+                    },
+                    "message": {
+                      "type": "string",
+                      "description": "Error message",
+                      "example": "Authentication required"
+                    }
+                  },
+                  "required": [
+                    "error",
+                    "message"
+                  ]
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal Server Error - Unexpected system error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "error": {
+                      "type": "boolean",
+                      "description": "Indicates an error occurred",
+                      "example": true
+                    },
+                    "message": {
+                      "type": "string",
+                      "description": "Error message",
+                      "example": "Internal server error"
+                    },
+                    "details": {
+                      "type": "object",
+                      "description": "Additional error details"
+                    }
+                  },
+                  "required": [
+                    "error",
+                    "message"
+                  ]
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "ApiKeyAuth": []
+          }
+        ]
+      }
+    },
+    "/v4/data-validation/rules/actions/bulk-approve": {
+      "post": {
+        "description": "Bulk approve preview rules for a workflow",
+        "tags": [
+          "Rules Library"
+        ],
+        "parameters": [],
+        "requestBody": {
+          "description": "Body",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/BulkApproveRules"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "200",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/BulkApproveRulesResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized - Authentication required or failed",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "error": {
+                      "type": "boolean",
+                      "description": "Indicates an error occurred",
+                      "example": true
+                    },
+                    "message": {
+                      "type": "string",
+                      "description": "Error message",
+                      "example": "Authentication required"
+                    }
+                  },
+                  "required": [
+                    "error",
+                    "message"
+                  ]
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal Server Error - Unexpected system error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "error": {
+                      "type": "boolean",
+                      "description": "Indicates an error occurred",
+                      "example": true
+                    },
+                    "message": {
+                      "type": "string",
+                      "description": "Error message",
+                      "example": "Internal server error"
+                    },
+                    "details": {
+                      "type": "object",
+                      "description": "Additional error details"
+                    }
+                  },
+                  "required": [
+                    "error",
+                    "message"
+                  ]
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "ApiKeyAuth": []
+          }
+        ]
+      }
+    },
+    "/v4/data-validation/rules/actions/bulk-delete": {
+      "post": {
+        "description": "Bulk delete rules for a workflow",
+        "tags": [
+          "Rules Library"
+        ],
+        "parameters": [],
+        "requestBody": {
+          "description": "Body",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/BulkDeleteRules"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "200",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/BulkDeleteRulesResponse"
                 }
               }
             }
@@ -9748,142 +9930,6 @@
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/DataValidationReport"
-                }
-              }
-            }
-          },
-          "401": {
-            "description": "Unauthorized - Authentication required or failed",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "type": "object",
-                  "properties": {
-                    "error": {
-                      "type": "boolean",
-                      "description": "Indicates an error occurred",
-                      "example": true
-                    },
-                    "message": {
-                      "type": "string",
-                      "description": "Error message",
-                      "example": "Authentication required"
-                    }
-                  },
-                  "required": [
-                    "error",
-                    "message"
-                  ]
-                }
-              }
-            }
-          },
-          "500": {
-            "description": "Internal Server Error - Unexpected system error",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "type": "object",
-                  "properties": {
-                    "error": {
-                      "type": "boolean",
-                      "description": "Indicates an error occurred",
-                      "example": true
-                    },
-                    "message": {
-                      "type": "string",
-                      "description": "Error message",
-                      "example": "Internal server error"
-                    },
-                    "details": {
-                      "type": "object",
-                      "description": "Additional error details"
-                    }
-                  },
-                  "required": [
-                    "error",
-                    "message"
-                  ]
-                }
-              }
-            }
-          }
-        },
-        "security": [
-          {
-            "ApiKeyAuth": []
-          }
-        ]
-      }
-    },
-    "/v4/data-validation/workflows/{workflowId}/jobs/{jobId}/validations/suggest": {
-      "post": {
-        "description": "Suggest validation rules using AI",
-        "summary": "Suggest validation rules",
-        "tags": [
-          "Data Validation Report"
-        ],
-        "parameters": [
-          {
-            "name": "workflowId",
-            "in": "path",
-            "required": true,
-            "schema": {
-              "type": "string"
-            }
-          },
-          {
-            "name": "jobId",
-            "in": "path",
-            "required": true,
-            "schema": {
-              "type": "string"
-            }
-          }
-        ],
-        "requestBody": {
-          "description": "Body",
-          "content": {
-            "application/json": {
-              "schema": {
-                "type": "object",
-                "properties": {
-                  "prompt": {
-                    "type": "string",
-                    "minLength": 5,
-                    "maxLength": 2000
-                  },
-                  "includeExamples": {
-                    "default": true,
-                    "type": "boolean"
-                  },
-                  "maxRules": {
-                    "default": 5,
-                    "type": "integer",
-                    "minimum": 1,
-                    "maximum": 10
-                  },
-                  "selectedColumns": {
-                    "type": "array",
-                    "items": {
-                      "type": "string"
-                    }
-                  }
-                },
-                "required": [
-                  "prompt"
-                ]
-              }
-            }
-          }
-        },
-        "responses": {
-          "200": {
-            "description": "200",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/SuggestionsResponse"
                 }
               }
             }
@@ -11034,8 +11080,14 @@
               "sql"
             ]
           },
-          "isEnabled": {
-            "type": "boolean"
+          "status": {
+            "default": "enabled",
+            "type": "string",
+            "enum": [
+              "preview",
+              "enabled",
+              "disabled"
+            ]
           },
           "disabledReason": {
             "type": "string",
@@ -11183,6 +11235,15 @@
               }
             }
           },
+          "status": {
+            "default": "enabled",
+            "type": "string",
+            "enum": [
+              "preview",
+              "enabled",
+              "disabled"
+            ]
+          },
           "metadata": {
             "type": "object",
             "additionalProperties": {
@@ -11273,8 +11334,13 @@
               }
             }
           },
-          "isEnabled": {
-            "type": "boolean"
+          "status": {
+            "type": "string",
+            "enum": [
+              "preview",
+              "enabled",
+              "disabled"
+            ]
           },
           "disabledReason": {
             "type": "string",
@@ -11390,8 +11456,7 @@
         "type": "object",
         "properties": {
           "jobId": {
-            "type": "string",
-            "minLength": 1
+            "type": "string"
           },
           "userPrompt": {
             "type": "string",
@@ -11405,13 +11470,17 @@
           },
           "workflowId": {
             "type": "string"
+          },
+          "isPreviewRun": {
+            "type": "boolean"
           }
         },
         "required": [
-          "userPrompt"
+          "userPrompt",
+          "workflowId"
         ],
         "title": "GenerateRule",
-        "description": "AI rule generation request with user prompt"
+        "description": "Rule generation request with user description"
       },
       "GenerateRuleResponse": {
         "type": "object",
@@ -11436,9 +11505,6 @@
               },
               "schemaFieldsCount": {
                 "type": "number"
-              },
-              "totalCost": {
-                "type": "number"
               }
             }
           }
@@ -11451,12 +11517,11 @@
         "title": "GenerateRuleResponse",
         "description": "AI-generated rule with creation metadata"
       },
-      "SuggestRules": {
+      "GenerateRules": {
         "type": "object",
         "properties": {
           "jobId": {
-            "type": "string",
-            "minLength": 1
+            "type": "string"
           },
           "maxRules": {
             "default": 5,
@@ -11464,16 +11529,21 @@
             "minimum": 1,
             "maximum": 10
           },
-          "includeExamples": {
-            "default": true,
+          "workflowId": {
+            "type": "string"
+          },
+          "isPreviewRun": {
             "type": "boolean"
           },
-          "workflowId": {
+          "prompt": {
             "type": "string"
           }
         },
-        "title": "SuggestRules",
-        "description": "Request for AI-suggested validation rules based on data analysis"
+        "required": [
+          "workflowId"
+        ],
+        "title": "GenerateRules",
+        "description": "Request for validation rules based on data analysis"
       },
       "GenerateRulesResponse": {
         "type": "object",
@@ -11500,9 +11570,6 @@
                 "type": "number"
               },
               "schemaFieldsCount": {
-                "type": "number"
-              },
-              "totalCost": {
                 "type": "number"
               }
             }
@@ -11551,6 +11618,150 @@
         "title": "DeleteAllRulesResponse",
         "description": "Summary of bulk rule deletion operation"
       },
+      "BulkApproveRules": {
+        "type": "object",
+        "properties": {
+          "workflowId": {
+            "type": "string"
+          },
+          "ruleIds": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "minItems": 1
+          }
+        },
+        "required": [
+          "workflowId",
+          "ruleIds"
+        ],
+        "title": "BulkApproveRules",
+        "description": "Request to bulk approve specific preview rules for a workflow"
+      },
+      "BulkApproveRulesResponse": {
+        "type": "object",
+        "properties": {
+          "error": {
+            "type": "boolean",
+            "enum": [
+              false
+            ]
+          },
+          "message": {
+            "type": "string"
+          },
+          "data": {
+            "type": "object",
+            "properties": {
+              "approvedCount": {
+                "type": "number"
+              },
+              "skippedCount": {
+                "type": "number"
+              },
+              "workflowId": {
+                "type": "string"
+              },
+              "approvedRuleIds": {
+                "type": "array",
+                "items": {
+                  "type": "string"
+                }
+              },
+              "skippedRuleIds": {
+                "type": "array",
+                "items": {
+                  "type": "string"
+                }
+              }
+            },
+            "required": [
+              "approvedCount",
+              "skippedCount",
+              "workflowId",
+              "approvedRuleIds",
+              "skippedRuleIds"
+            ]
+          }
+        },
+        "required": [
+          "error",
+          "message",
+          "data"
+        ],
+        "title": "BulkApproveRulesResponse",
+        "description": "Summary of bulk rule approval operation with detailed results"
+      },
+      "BulkDeleteRules": {
+        "type": "object",
+        "properties": {
+          "workflowId": {
+            "type": "string"
+          },
+          "ruleIds": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "minItems": 1
+          },
+          "reason": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 500
+          }
+        },
+        "required": [
+          "workflowId",
+          "ruleIds"
+        ],
+        "title": "BulkDeleteRules",
+        "description": "Request to bulk delete specific rules for a workflow"
+      },
+      "BulkDeleteRulesResponse": {
+        "type": "object",
+        "properties": {
+          "error": {
+            "type": "boolean",
+            "enum": [
+              false
+            ]
+          },
+          "message": {
+            "type": "string"
+          },
+          "data": {
+            "type": "object",
+            "properties": {
+              "deletedCount": {
+                "type": "number"
+              },
+              "workflowId": {
+                "type": "string"
+              },
+              "deletedRuleIds": {
+                "type": "array",
+                "items": {
+                  "type": "string"
+                }
+              }
+            },
+            "required": [
+              "deletedCount",
+              "workflowId",
+              "deletedRuleIds"
+            ]
+          }
+        },
+        "required": [
+          "error",
+          "message",
+          "data"
+        ],
+        "title": "BulkDeleteRulesResponse",
+        "description": "Summary of bulk rule deletion operation with detailed results"
+      },
       "DynamicRuleConfig": {
         "type": "object",
         "properties": {
@@ -11579,23 +11790,8 @@
           "parameters": {
             "type": "object",
             "properties": {
-              "pattern": {
-                "type": "string"
-              },
-              "flags": {
-                "type": "string"
-              },
               "sql": {
                 "type": "string"
-              },
-              "prompt": {
-                "type": "string"
-              },
-              "params": {
-                "type": "array",
-                "items": {
-                  "nullable": true
-                }
               }
             },
             "description": "Optional parameters for the rule execution"
@@ -12097,59 +12293,6 @@
         ],
         "title": "DataValidationReport",
         "description": "Complete validation report including summary fields, anomaly details by rule, dataset location details, CDC summary, and execution strategy"
-      },
-      "SuggestionsResponse": {
-        "type": "object",
-        "properties": {
-          "suggestedRules": {
-            "type": "array",
-            "items": {
-              "$ref": "#/components/schemas/DynamicRuleConfig"
-            }
-          },
-          "metadata": {
-            "type": "object",
-            "properties": {
-              "sampleDataCount": {
-                "type": "number"
-              },
-              "schemaFieldsCount": {
-                "type": "number"
-              },
-              "totalGenerated": {
-                "type": "number"
-              },
-              "totalValid": {
-                "type": "number"
-              },
-              "totalInvalid": {
-                "type": "number"
-              },
-              "totalFixed": {
-                "type": "number"
-              },
-              "totalCost": {
-                "type": "number"
-              },
-              "processingTime": {
-                "type": "number"
-              }
-            },
-            "required": [
-              "sampleDataCount",
-              "schemaFieldsCount",
-              "totalGenerated",
-              "totalValid",
-              "totalInvalid"
-            ]
-          }
-        },
-        "required": [
-          "suggestedRules",
-          "metadata"
-        ],
-        "title": "SuggestionsResponse",
-        "description": "AI-suggested validation rules based on data analysis"
       },
       "AnomaliesByRuleResponse": {
         "type": "object",
