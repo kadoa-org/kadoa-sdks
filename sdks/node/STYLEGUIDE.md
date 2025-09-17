@@ -5,7 +5,7 @@ This guide applies to `sdks/node/src`. Keep it practical and minimal.
 ### Project structure
 - `internal/runtime/`: Cross‑cutting infrastructure (config, http, events, pagination, exceptions, utils). No domain knowledge.
 - `internal/domains/`: Domain‑specific internals (orchestrators, services, mappers). Not public.
-- `modules/`: Public, consumer‑facing facades (commands, services, types). Thin wrappers that compose internals.
+- `modules/`: Public, consumer‑facing facades ( services, types). Thin wrappers that compose internals.
 - `generated/`: OpenAPI client and models. Do not edit.
 - `index.ts`: Top‑level public exports only.
 

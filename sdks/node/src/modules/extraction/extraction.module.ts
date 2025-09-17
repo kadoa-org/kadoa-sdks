@@ -1,26 +1,23 @@
 import type { KadoaClient } from "../../kadoa-client";
-import { RunExtractionCommand } from "./commands/run-extraction.command";
 import type {
 	ExtractionOptions,
 	ExtractionResult,
 	SubmitExtractionResult,
 } from "./extraction.types";
 import {
+	ExtractionService,
 	type FetchDataOptions,
-	FetchDataQuery,
 	type FetchDataResult,
-} from "./queries";
+} from "./services/extraction.service";
 
 /**
  * ExtractionModule provides extraction-related functionality
  */
 export class ExtractionModule {
-	private readonly runExtractionCommand: RunExtractionCommand;
-	private readonly fetchDataQuery: FetchDataQuery;
+	private readonly extractionService: ExtractionService;
 
 	constructor(client: KadoaClient) {
-		this.runExtractionCommand = new RunExtractionCommand(client);
-		this.fetchDataQuery = new FetchDataQuery(client);
+		this.extractionService = new ExtractionService(client);
 	}
 
 	/**
@@ -38,11 +35,11 @@ export class ExtractionModule {
 	 * ```
 	 */
 	async run(options: ExtractionOptions): Promise<ExtractionResult> {
-		return this.runExtractionCommand.execute({ ...options, mode: "run" });
+		return this.extractionService.run(options);
 	}
 
 	async submit(options: ExtractionOptions): Promise<SubmitExtractionResult> {
-		return this.runExtractionCommand.execute({ ...options, mode: "submit" });
+		return this.extractionService.submit(options);
 	}
 
 	/**
@@ -67,7 +64,7 @@ export class ExtractionModule {
 	 * ```
 	 */
 	async fetchData(options: FetchDataOptions): Promise<FetchDataResult> {
-		return this.fetchDataQuery.execute(options);
+		return this.extractionService.fetchData(options);
 	}
 
 	/**
@@ -84,7 +81,7 @@ export class ExtractionModule {
 	 * ```
 	 */
 	async fetchAllData(options: FetchDataOptions): Promise<Array<object>> {
-		return this.fetchDataQuery.fetchAll(options);
+		return this.extractionService.fetchAllData(options);
 	}
 
 	/**
@@ -103,6 +100,6 @@ export class ExtractionModule {
 	fetchDataPages(
 		options: FetchDataOptions,
 	): AsyncGenerator<FetchDataResult, void, unknown> {
-		return this.fetchDataQuery.pages(options);
+		return this.extractionService.fetchDataPages(options);
 	}
 }

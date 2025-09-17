@@ -9,4 +9,4 @@ export type {
 	FetchDataOptions,
 	FetchDataResult,
 	WorkflowDataResponse,
-} from "./queries";
+} from "./services/extraction.service";

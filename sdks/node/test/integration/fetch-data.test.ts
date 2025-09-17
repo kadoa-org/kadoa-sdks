@@ -1,5 +1,5 @@
 import { afterAll, beforeAll, describe, expect, test } from "bun:test";
-import { FetchDataQuery } from "../../src/modules/extraction/queries/fetch-data.query";
+import { ExtractionService } from "../../src/modules/extraction/services/extraction.service";
 import { getVCRTestEnv } from "../utils/env";
 import {
 	createVCRClient,
@@ -33,7 +33,7 @@ const CACHE_DIR = "test/fixtures/vcr-cache/fetch-data";
 
 describe("FetchDataQuery", () => {
 	let client: VCRKadoaClient;
-	let query: FetchDataQuery;
+	let service: ExtractionService;
 	const env = getVCRTestEnv();
 
 	beforeAll(() => {
@@ -52,7 +52,7 @@ describe("FetchDataQuery", () => {
 			},
 		);
 
-		query = new FetchDataQuery(client);
+		service = new ExtractionService(client);
 
 		console.log(`[VCR] Running in ${client.getVCR().getMode()} mode`);
 	});
@@ -69,7 +69,7 @@ describe("FetchDataQuery", () => {
 	test(
 		"fetches first page of workflow data",
 		async () => {
-			const result = await query.execute({
+			const result = await service.fetchData({
 				workflowId: env.TEST_WORKFLOW_ID,
 				page: 1,
 				limit: 10,
@@ -94,13 +94,13 @@ describe("FetchDataQuery", () => {
 	test(
 		"fetches multiple pages",
 		async () => {
-			const page1 = await query.execute({
+			const page1 = await service.fetchData({
 				workflowId: env.TEST_WORKFLOW_ID,
 				page: 1,
 				limit: 5,
 			});
 
-			const page2 = await query.execute({
+			const page2 = await service.fetchData({
 				workflowId: env.TEST_WORKFLOW_ID,
 				page: 2,
 				limit: 5,
@@ -123,14 +123,14 @@ describe("FetchDataQuery", () => {
 	test(
 		"handles different query parameters",
 		async () => {
-			const ascResult = await query.execute({
+			const ascResult = await service.fetchData({
 				workflowId: env.TEST_WORKFLOW_ID,
 				page: 1,
 				limit: 5,
 				order: "asc",
 			});
 
-			const descResult = await query.execute({
+			const descResult = await service.fetchData({
 				workflowId: env.TEST_WORKFLOW_ID,
 				page: 1,
 				limit: 5,

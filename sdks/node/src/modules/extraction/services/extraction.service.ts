@@ -1,11 +1,20 @@
 import { merge } from "es-toolkit";
+import type {
+	V4WorkflowsWorkflowIdDataGet200Response,
+	V4WorkflowsWorkflowIdDataGet200ResponsePagination,
+	V4WorkflowsWorkflowIdDataGetOrderEnum,
+	WorkflowsApiV4WorkflowsWorkflowIdDataGetRequest,
+} from "../../../generated";
 import {
 	KadoaHttpException,
 	KadoaSdkException,
 } from "../../../internal/runtime/exceptions";
 import { ERROR_MESSAGES } from "../../../internal/runtime/exceptions/base.exception";
-import type { PageInfo } from "../../../internal/runtime/pagination";
-import { Command } from "../../../internal/runtime/patterns";
+import {
+	PagedIterator,
+	type PagedResponse,
+	type PageInfo,
+} from "../../../internal/runtime/pagination";
 import type { KadoaClient } from "../../../kadoa-client";
 import type {
 	ExtractionConfig,
@@ -13,9 +22,33 @@ import type {
 	ExtractionResult,
 	SubmitExtractionResult,
 } from "../extraction.types";
-import { FetchDataQuery } from "../queries/fetch-data.query";
-import { EntityDetectorService } from "../services/entity-detector.service";
-import { WorkflowManagerService } from "../services/workflow-manager.service";
+import { EntityDetectorService } from "./entity-detector.service";
+import { WorkflowManagerService } from "./workflow-manager.service";
+
+export type DataPagination = V4WorkflowsWorkflowIdDataGet200ResponsePagination;
+export type WorkflowDataResponse = V4WorkflowsWorkflowIdDataGet200Response;
+export type DataSortOrder = V4WorkflowsWorkflowIdDataGetOrderEnum;
+
+export type FetchDataOptions = Partial<
+	Pick<
+		WorkflowsApiV4WorkflowsWorkflowIdDataGetRequest,
+		| "runId"
+		| "sortBy"
+		| "order"
+		| "filters"
+		| "page"
+		| "limit"
+		| "includeAnomalies"
+	>
+> & {
+	workflowId: string;
+};
+
+export interface FetchDataResult extends PagedResponse<object> {
+	workflowId: string;
+	runId?: string | null;
+	executedAt?: string | null;
+}
 
 export const SUCCESSFUL_RUN_STATES = new Set(["FINISHED", "SUCCESS"]);
 
@@ -27,33 +60,89 @@ export const DEFAULT_OPTIONS: Omit<ExtractionConfig, "urls"> = {
 	name: "Untitled Workflow",
 } as const;
 
-export interface RunExtractionCommandOptions extends ExtractionOptions {
-	mode: "run" | "submit";
-}
-
 /**
- * Command to run the extraction workflow
+ * Service for managing extraction workflows and data fetching
  */
-export class RunExtractionCommand extends Command<
-	ExtractionResult,
-	RunExtractionCommandOptions
-> {
-	private readonly fetchDataQuery: FetchDataQuery;
+export class ExtractionService {
 	private readonly entityDetector: EntityDetectorService;
 	private readonly workflowManager: WorkflowManagerService;
+	private readonly defaultLimit = 100;
 
 	constructor(private readonly client: KadoaClient) {
-		super();
-		this.fetchDataQuery = new FetchDataQuery(client);
 		this.entityDetector = new EntityDetectorService(client);
 		this.workflowManager = new WorkflowManagerService(client);
 	}
 
 	/**
-	 * Execute the extraction workflow
+	 * Run extraction workflow using dynamic entity detection
 	 */
-	async execute(
-		options: RunExtractionCommandOptions,
+	async run(options: ExtractionOptions): Promise<ExtractionResult> {
+		return this.executeExtraction({ ...options, mode: "run" });
+	}
+
+	/**
+	 * Submit extraction workflow for asynchronous processing
+	 */
+	async submit(options: ExtractionOptions): Promise<SubmitExtractionResult> {
+		return this.executeExtraction({ ...options, mode: "submit" });
+	}
+
+	/**
+	 * Fetch a page of workflow data
+	 */
+	async fetchData(options: FetchDataOptions): Promise<FetchDataResult> {
+		try {
+			const response = await this.client.workflows.v4WorkflowsWorkflowIdDataGet(
+				{
+					...options,
+					page: options.page ?? 1,
+					limit: options.limit ?? this.defaultLimit,
+				},
+			);
+
+			const result = response.data;
+			return result;
+		} catch (error) {
+			throw KadoaHttpException.wrap(error, {
+				message: ERROR_MESSAGES.DATA_FETCH_FAILED,
+				details: { workflowId: options.workflowId, page: options.page },
+			});
+		}
+	}
+
+	/**
+	 * Fetch all pages of workflow data
+	 */
+	async fetchAllData(options: FetchDataOptions): Promise<object[]> {
+		const iterator = new PagedIterator((pageOptions) =>
+			this.fetchData({ ...options, ...pageOptions }),
+		);
+
+		return iterator.fetchAll({ limit: options.limit ?? this.defaultLimit });
+	}
+
+	/**
+	 * Create an async iterator for paginated data fetching
+	 */
+	async *fetchDataPages(
+		options: FetchDataOptions,
+	): AsyncGenerator<FetchDataResult, void, unknown> {
+		const iterator = new PagedIterator((pageOptions) =>
+			this.fetchData({ ...options, ...pageOptions }),
+		);
+
+		for await (const page of iterator.pages({
+			limit: options.limit ?? this.defaultLimit,
+		})) {
+			yield page as FetchDataResult;
+		}
+	}
+
+	/**
+	 * Internal method to execute extraction workflow
+	 */
+	private async executeExtraction(
+		options: ExtractionOptions & { mode: "run" | "submit" },
 	): Promise<ExtractionResult | SubmitExtractionResult> {
 		this.validateOptions(options);
 
@@ -97,6 +186,7 @@ export class RunExtractionCommand extends Command<
 				},
 				"extraction",
 			);
+
 			if (options.mode === "submit") {
 				return {
 					workflowId,
@@ -116,7 +206,7 @@ export class RunExtractionCommand extends Command<
 			const isSuccess = this.isExtractionSuccessful(workflow.runState);
 
 			if (isSuccess) {
-				const dataPage = await this.fetchDataQuery.execute({ workflowId });
+				const dataPage = await this.fetchData({ workflowId });
 				data = dataPage.data;
 				pagination = dataPage.pagination;
 
@@ -188,7 +278,6 @@ export class RunExtractionCommand extends Command<
 
 	/**
 	 * Validates extraction options
-	 * @private
 	 */
 	private validateOptions(options: ExtractionOptions): void {
 		if (!options.urls || options.urls.length === 0) {
@@ -200,7 +289,6 @@ export class RunExtractionCommand extends Command<
 
 	/**
 	 * Checks if extraction was successful
-	 * @private
 	 */
 	private isExtractionSuccessful(runState: string | undefined): boolean {
 		return runState ? SUCCESSFUL_RUN_STATES.has(runState.toUpperCase()) : false;
