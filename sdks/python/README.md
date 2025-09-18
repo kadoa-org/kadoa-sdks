@@ -60,7 +60,7 @@ client = KadoaClient(KadoaClientConfig(
 
 ```env
 KADOA_API_KEY=your-api-key
-KADOA_API_URL=https://api.kadoa.com
+KADOA_PUBLIC_API_URI=https://api.kadoa.com
 KADOA_TIMEOUT=30
 ```
 
@@ -73,7 +73,7 @@ load_dotenv()
 
 client = KadoaClient(KadoaClientConfig(
     api_key=os.environ["KADOA_API_KEY"],
-    base_url=os.environ.get("KADOA_API_URL", "https://api.kadoa.com"),
+    base_url=os.environ.get("KADOA_PUBLIC_API_URI", "https://api.kadoa.com"),
     timeout=int(os.environ.get("KADOA_TIMEOUT", "30"))
 ))
 ```

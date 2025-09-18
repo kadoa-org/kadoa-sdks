@@ -113,7 +113,7 @@ TIMEOUT_SECONDS = 30
 Use defaults for local development:
 ```python
 api_key = os.environ.get("KADOA_API_KEY", "default-test-key")
-base_url = os.environ.get("KADOA_BASE_URL", "http://localhost:12380")
+base_url = os.environ.get("KADOA_PUBLIC_API_URI", "http://localhost:12380")
 ```
 
 ## Running Tests

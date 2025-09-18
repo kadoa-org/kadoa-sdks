@@ -22,7 +22,7 @@ class TestExtraction:
     def sdk(self):
         """Initialize sdk for all tests in this class."""
         test_api_key = os.environ.get("KADOA_API_KEY", "39113751-1e7a-4cb2-9516-1e25d0085aa5")
-        test_base_url = os.environ.get("KADOA_BASE_URL", "http://localhost:12380")
+        test_base_url = os.environ.get("KADOA_PUBLIC_API_URI", "http://localhost:12380")
 
         sdk = KadoaClient(
             KadoaClientConfig(api_key=test_api_key, base_url=test_base_url, timeout=30)
