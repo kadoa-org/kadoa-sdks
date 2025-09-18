@@ -6,15 +6,10 @@ config({ path: ".env" });
 
 async function main() {
 	assert(process.env.KADOA_API_KEY, "KADOA_API_KEY is not set");
-	assert(process.env.KADOA_API_URL, "KADOA_API_URL is not set");
+	assert(process.env.KADOA_PUBLIC_API_URI, "KADOA_PUBLIC_API_URI is not set");
 
 	const client = new KadoaClient({
 		apiKey: process.env.KADOA_API_KEY,
-		baseUrl: process.env.KADOA_API_URL,
-	});
-	client.onEvent((event) => {
-		console.log(event);
-		console.log("--------------------------------");
 	});
 
 	const result = await client.extraction.run({

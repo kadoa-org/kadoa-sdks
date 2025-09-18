@@ -26,10 +26,10 @@ def main():
     
     # Check required environment variables
     api_key = os.environ.get("KADOA_API_KEY")
-    api_url = os.environ.get("KADOA_API_URL")
+    api_url = os.environ.get("KADOA_PUBLIC_API_URI")
     
     assert api_key, "KADOA_API_KEY is not set"
-    assert api_url, "KADOA_API_URL is not set"
+    assert api_url, "KADOA_PUBLIC_API_URI is not set"
     
     # Initialize the client
     client = KadoaClient(KadoaClientConfig(

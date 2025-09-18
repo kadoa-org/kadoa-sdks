@@ -46,12 +46,30 @@ const client = new KadoaClient({
 });
 ```
 
+### Realtime Configuration
+
+To enable WebSocket connections for realtime events, use a team API key (starting with `tk-`):
+
+```typescript
+const client = new KadoaClient({
+  apiKey: 'tk-your-team-api-key',  // Must be a team API key
+  enableRealtime: true,
+  realtimeConfig: {
+    autoConnect: true,      // optional, default: true
+    reconnectDelay: 5000,   // optional, default: 5000ms
+    heartbeatInterval: 10000 // optional, default: 10000ms
+  }
+});
+```
+
 ### Using Environment Variables
 
 ```env
 KADOA_API_KEY=your-api-key
-KADOA_API_URL=https://api.kadoa.com
+KADOA_TEAM_API_KEY=tk-your-team-api-key  # For realtime features (optional)
+KADOA_PUBLIC_API_URI=https://api.kadoa.com
 KADOA_TIMEOUT=30000
+DEBUG=kadoa:*  # Enable all SDK debug logs (optional)
 ```
 
 ```typescript
@@ -62,7 +80,7 @@ config();
 
 const client = new KadoaClient({
   apiKey: process.env.KADOA_API_KEY!,
-  baseUrl: process.env.KADOA_API_URL,
+  baseUrl: process.env.KADOA_PUBLIC_API_URI,
   timeout: parseInt(process.env.KADOA_TIMEOUT || '30000')
 });
 ```
@@ -83,6 +101,59 @@ client.onEvent((event) => {
 // - extraction:status_changed
 // - extraction:data_available
 // - extraction:completed
+// - realtime:connected (when WebSocket enabled)
+// - realtime:disconnected
+// - realtime:event
+// - realtime:heartbeat
+// - realtime:error
+```
+
+### Realtime Events
+
+When realtime is enabled with a team API key:
+
+```typescript
+const client = new KadoaClient({
+  apiKey: 'tk-your-team-api-key',
+  enableRealtime: true
+});
+
+// Listen to realtime events
+client.onEvent((event) => {
+  if (event.type === 'realtime:event') {
+    console.log('Received realtime data:', event.payload.data);
+  }
+});
+
+// Manual connection control
+const realtime = client.connectRealtime();
+
+// Check connection status
+if (client.isRealtimeConnected()) {
+  console.log('Connected to realtime server');
+}
+
+// Disconnect when done
+client.disconnectRealtime();
+```
+
+## Debug Logging
+
+The SDK uses the [debug](https://www.npmjs.com/package/debug) package for logging, which is disabled by default. Enable debug logs using the `DEBUG` environment variable:
+
+```bash
+# Enable all Kadoa SDK logs
+DEBUG=kadoa:* node app.js
+
+# Enable specific modules
+DEBUG=kadoa:client node app.js          # Client operations only
+DEBUG=kadoa:wss node app.js             # WebSocket logs only
+DEBUG=kadoa:extraction node app.js      # Extraction module logs
+DEBUG=kadoa:http node app.js            # HTTP request/response logs
+DEBUG=kadoa:workflow node app.js        # Workflow operations
+
+# Enable multiple modules
+DEBUG=kadoa:client,kadoa:extraction node app.js
 ```
 
 ## Examples

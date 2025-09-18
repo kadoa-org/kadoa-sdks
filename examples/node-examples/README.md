@@ -47,7 +47,7 @@ This eliminates the need to rebuild the SDK after every change during developmen
 1. Create a `.env` file with your API credentials:
 ```env
 KADOA_API_KEY=your_api_key
-KADOA_API_URL=your_api_url
+KADOA_PUBLIC_API_URI=your_api_url
 ```
 
 2. Run the extraction example:
