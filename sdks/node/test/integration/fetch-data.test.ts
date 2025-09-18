@@ -41,8 +41,7 @@ describe("FetchDataQuery", () => {
 
 		client = createVCRClient(
 			{
-				apiKey: env.TEST_USER_API_KEY,
-				baseUrl: env.KADOA_BASE_URL,
+				apiKey: env.KADOA_API_KEY,
 				timeout: 30000,
 			},
 			{

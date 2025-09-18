@@ -69,6 +69,46 @@ export type ExtractionEventPayloads = {
 };
 
 /**
+ * Event payload definitions for realtime/WebSocket events
+ */
+export type RealtimeEventPayloads = {
+	"realtime:connected": {
+		/** Team ID that was connected */
+		teamId?: string;
+		/** Connection timestamp */
+		connectedAt: Date;
+	};
+	"realtime:disconnected": {
+		/** Reason for disconnection */
+		reason?: string;
+		/** Whether reconnection will be attempted */
+		willReconnect: boolean;
+	};
+	"realtime:event": {
+		/** The raw event data received from WebSocket */
+		data: unknown;
+		/** Event ID if available */
+		id?: string;
+		/** Event type if available */
+		type?: string;
+	};
+	"realtime:heartbeat": {
+		/** Timestamp of the heartbeat */
+		timestamp: Date;
+	};
+	"realtime:error": {
+		/** Error message */
+		message: string;
+		/** Error code if available */
+		code?: string;
+		/** Additional error details */
+		details?: unknown;
+	};
+};
+
+/**
  * Combined event payload map for all SDK events
  */
-export type EventPayloadMap = EntityEventPayloads & ExtractionEventPayloads;
+export type EventPayloadMap = EntityEventPayloads &
+	ExtractionEventPayloads &
+	RealtimeEventPayloads;

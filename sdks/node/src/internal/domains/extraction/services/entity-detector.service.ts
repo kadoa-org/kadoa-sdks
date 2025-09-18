@@ -1,16 +1,43 @@
 import type { AxiosResponse } from "axios";
-import { DEFAULT_API_BASE_URL } from "../../../internal/runtime/config";
 import {
 	KadoaHttpException,
 	KadoaSdkException,
-} from "../../../internal/runtime/exceptions";
-import { ERROR_MESSAGES } from "../../../internal/runtime/exceptions/base.exception";
-import type { KadoaClient } from "../../../kadoa-client";
-import type {
-	EntityPrediction,
-	EntityRequestOptions,
-	EntityResponse,
-} from "../extraction.types";
+} from "../../../runtime/exceptions";
+import { ERROR_MESSAGES } from "../../../runtime/exceptions/base.exception";
+import type { KadoaClient } from "../../../../kadoa-client";
+import type { EntityFieldDataType } from "../extraction.types";
+
+export interface EntityField {
+	name: string;
+	description: string;
+	example: string;
+	dataType: EntityFieldDataType;
+	isPrimaryKey?: boolean;
+}
+
+export interface EntityPrediction {
+	entity: string;
+	fields: EntityField[];
+	primaryKeyField?: string;
+	expectedResults?: string;
+}
+
+export interface EntityResponse {
+	success: boolean;
+	entityPrediction: EntityPrediction[];
+	screenshots?: string[];
+	location?: {
+		type: string;
+	};
+}
+
+export interface EntityRequestOptions {
+	link: string;
+	location?: {
+		type: string;
+	};
+	navigationMode?: string;
+}
 
 export const ENTITY_API_ENDPOINT = "/v4/entity";
 
@@ -37,7 +64,7 @@ export class EntityDetectorService {
 	): Promise<EntityPrediction> {
 		this.validateEntityOptions(options);
 
-		const url = `${this.client.baseUrl || DEFAULT_API_BASE_URL}${ENTITY_API_ENDPOINT}`;
+		const url = `${this.client.baseUrl}${ENTITY_API_ENDPOINT}`;
 		const headers = await this.buildRequestHeaders();
 		const requestBody: EntityRequestOptions = options;
 

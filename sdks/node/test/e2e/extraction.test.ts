@@ -8,13 +8,8 @@ describe("Extraction", () => {
 
 	beforeAll(() => {
 		client = new KadoaClient({
-			apiKey: env.TEST_USER_API_KEY,
-			baseUrl: env.KADOA_BASE_URL,
+			apiKey: env.KADOA_API_KEY,
 			timeout: 30000,
-		});
-		client.onEvent((event) => {
-			console.log(event);
-			console.log("--------------------------------");
 		});
 	});
 

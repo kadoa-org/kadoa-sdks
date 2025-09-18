@@ -1,7 +1,7 @@
-import type { V4WorkflowsWorkflowIdGet200Response } from "../../generated";
-import type { CreateWorkflowInput } from "../../internal/domains/workflows/types";
-import { WorkflowsCoreService } from "../../internal/domains/workflows/workflows-core.service";
-import type { KadoaClient } from "../../kadoa-client";
+import type { V4WorkflowsWorkflowIdGet200Response } from "../generated";
+import type { CreateWorkflowInput } from "../internal/domains/workflows/types";
+import { WorkflowsCoreService } from "../internal/domains/workflows/workflows-core.service";
+import type { KadoaClient } from "../kadoa-client";
 
 export interface SubmitOptions {
 	idempotencyKey?: string;
@@ -19,11 +19,8 @@ export class WorkflowsModule {
 		this.core = new WorkflowsCoreService(client);
 	}
 
-	async submit(
-		input: CreateWorkflowInput,
-		options?: SubmitOptions,
-	): Promise<{ workflowId: string }> {
-		const { id } = await this.core.create(input, options?.idempotencyKey);
+	async submit(input: CreateWorkflowInput): Promise<{ workflowId: string }> {
+		const { id } = await this.core.create(input);
 		return { workflowId: id };
 	}
 

@@ -40,7 +40,7 @@ test/
 ```bash
 # Required for all tests
 TEST_USER_API_KEY=your-api-key
-KADOA_BASE_URL=http://localhost:12380
+KADOA_PUBLIC_API_URI=http://localhost:12380
 
 # Optional
 VCR_MODE=auto          # Options: record, replay, auto
@@ -53,7 +53,7 @@ TEST_WORKFLOW_ID=xxx   # Specific workflow for integration tests
 ```bash
 # Set required variables
 export TEST_USER_API_KEY=your-api-key
-export KADOA_BASE_URL=http://localhost:12380
+export KADOA_PUBLIC_API_URI=http://localhost:12380
 
 # Run tests
 bun test

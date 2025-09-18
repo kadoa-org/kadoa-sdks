@@ -1,23 +1,25 @@
-import type { KadoaClient } from "../../kadoa-client";
-import type {
-	ExtractionOptions,
-	ExtractionResult,
-	SubmitExtractionResult,
-} from "./extraction.types";
 import {
-	ExtractionService,
+	DataFetcherService,
 	type FetchDataOptions,
 	type FetchDataResult,
-} from "./services/extraction.service";
+} from "../internal/domains/extraction/services/data-fetcher.service";
+import {
+	type ExtractionOptions,
+	type ExtractionResult,
+	ExtractionService,
+	type SubmitExtractionResult,
+} from "../internal/domains/extraction/services/extraction.service";
+import type { KadoaClient } from "../kadoa-client";
 
 /**
  * ExtractionModule provides extraction-related functionality
  */
 export class ExtractionModule {
 	private readonly extractionService: ExtractionService;
-
+	private readonly dataFetcherService: DataFetcherService;
 	constructor(client: KadoaClient) {
 		this.extractionService = new ExtractionService(client);
+		this.dataFetcherService = new DataFetcherService(client);
 	}
 
 	/**
@@ -35,11 +37,17 @@ export class ExtractionModule {
 	 * ```
 	 */
 	async run(options: ExtractionOptions): Promise<ExtractionResult> {
-		return this.extractionService.run(options);
+		return this.extractionService.executeExtraction({
+			...options,
+			mode: "run",
+		});
 	}
 
 	async submit(options: ExtractionOptions): Promise<SubmitExtractionResult> {
-		return this.extractionService.submit(options);
+		return this.extractionService.executeExtraction({
+			...options,
+			mode: "submit",
+		});
 	}
 
 	/**
@@ -64,7 +72,7 @@ export class ExtractionModule {
 	 * ```
 	 */
 	async fetchData(options: FetchDataOptions): Promise<FetchDataResult> {
-		return this.extractionService.fetchData(options);
+		return this.dataFetcherService.fetchData(options);
 	}
 
 	/**
@@ -81,7 +89,7 @@ export class ExtractionModule {
 	 * ```
 	 */
 	async fetchAllData(options: FetchDataOptions): Promise<Array<object>> {
-		return this.extractionService.fetchAllData(options);
+		return this.dataFetcherService.fetchAllData(options);
 	}
 
 	/**
@@ -100,6 +108,6 @@ export class ExtractionModule {
 	fetchDataPages(
 		options: FetchDataOptions,
 	): AsyncGenerator<FetchDataResult, void, unknown> {
-		return this.extractionService.fetchDataPages(options);
+		return this.dataFetcherService.fetchDataPages(options);
 	}
 }

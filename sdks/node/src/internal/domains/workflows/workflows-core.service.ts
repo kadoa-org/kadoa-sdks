@@ -28,33 +28,31 @@ const TERMINAL_RUN_STATES = new Set([
 export class WorkflowsCoreService implements WorkflowsCoreServiceInterface {
 	constructor(private readonly client: ApiProvider) {}
 
-	async create(
-		input: CreateWorkflowInput,
-		_idempotencyKey?: string,
-	): Promise<{ id: WorkflowId }> {
+	async create(input: CreateWorkflowInput): Promise<{ id: WorkflowId }> {
 		const request: V4WorkflowsPostRequest = {
 			urls: input.urls,
-			navigationMode: input.navigationMode as unknown as any,
+			navigationMode: input.navigationMode,
 			entity: input.entity,
 			name: input.name,
-			fields:
-				input.fields as unknown as Array<WorkflowWithCustomSchemaFieldsInner>,
+			fields: input.fields,
 			bypassPreview: true,
 			tags: input.tags ?? ["sdk"],
+			interval: input.interval,
+			monitoring: input.monitoring,
+			location: input.location,
 		};
 
 		try {
 			const response = await this.client.workflows.v4WorkflowsPost({
 				v4WorkflowsPostRequest: request,
 			});
-			const workflowId = (
-				response as unknown as { data?: { workflowId?: string } }
-			).data?.workflowId;
+			const workflowId = response.data?.workflowId;
+
 			if (!workflowId) {
 				throw new KadoaSdkException(ERROR_MESSAGES.NO_WORKFLOW_ID, {
 					code: "INTERNAL_ERROR",
 					details: {
-						response: (response as unknown as { data?: unknown }).data,
+						response: response.data,
 					},
 				});
 			}
@@ -62,7 +60,6 @@ export class WorkflowsCoreService implements WorkflowsCoreServiceInterface {
 		} catch (error) {
 			throw KadoaHttpException.wrap(error, {
 				message: ERROR_MESSAGES.WORKFLOW_CREATE_FAILED,
-				details: request as unknown as Record<string, unknown>,
 			});
 		}
 	}
