@@ -1,5 +1,4 @@
 import { afterAll, beforeAll, describe, expect, test } from "bun:test";
-import { ExtractionService } from "../../src/modules/extraction/services/extraction.service";
 import { getVCRTestEnv } from "../utils/env";
 import {
 	createVCRClient,
@@ -7,6 +6,7 @@ import {
 	type VCRKadoaClient,
 	VCRUtils,
 } from "../utils/vcr";
+import { ExtractionService } from "../../src/internal/domains/extraction/services/extraction.service";
 
 /**
  * Integration test using VCR for real API calls with caching
