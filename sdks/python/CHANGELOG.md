@@ -1,5 +1,18 @@
 # Changelog
 
+## [0.8.0](https://github.com/kadoa-org/kadoa-sdks/compare/python-sdk-v0.7.0...python-sdk-v0.8.0) (2025-09-19)
+
+
+### Features
+
+* **spec:** update spec fingerprint ([c7fd61d](https://github.com/kadoa-org/kadoa-sdks/commit/c7fd61d173aa8c25bac52999a15259089c20f2b9))
+
+
+### Miscellaneous Chores
+
+* **python-sdk:** update documentation and test references ([d30858f](https://github.com/kadoa-org/kadoa-sdks/commit/d30858f4f3fe43e10f9478902cc1a2a0f88ac6a4))
+* **spec:** update OpenAPI spec ([#34](https://github.com/kadoa-org/kadoa-sdks/issues/34)) ([76b0093](https://github.com/kadoa-org/kadoa-sdks/commit/76b009372a2a163533cbae2624e44c3ba85cdedb))
+
 ## [0.7.0](https://github.com/kadoa-org/kadoa-sdks/compare/python-sdk-v0.6.1...python-sdk-v0.7.0) (2025-09-09)
 
 
