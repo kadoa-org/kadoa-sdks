@@ -3962,6 +3962,24 @@
                         "enabled": {
                           "type": "boolean",
                           "description": "Whether data validation is enabled"
+                        },
+                        "ruleCounts": {
+                          "type": "object",
+                          "description": "Counts of validation rules by status",
+                          "properties": {
+                            "enabled": {
+                              "type": "integer",
+                              "description": "Number of enabled validation rules"
+                            },
+                            "disabled": {
+                              "type": "integer",
+                              "description": "Number of disabled validation rules"
+                            },
+                            "preview": {
+                              "type": "integer",
+                              "description": "Number of preview validation rules"
+                            }
+                          }
                         }
                       }
                     },
@@ -10714,6 +10732,32 @@
                             "description": "User alerting configuration"
                           }
                         }
+                      },
+                      "ruleCounts": {
+                        "type": "object",
+                        "properties": {
+                          "enabled": {
+                            "type": "integer",
+                            "minimum": 0,
+                            "description": "Number of enabled validation rules"
+                          },
+                          "disabled": {
+                            "type": "integer",
+                            "minimum": 0,
+                            "description": "Number of disabled validation rules"
+                          },
+                          "preview": {
+                            "type": "integer",
+                            "minimum": 0,
+                            "description": "Number of preview validation rules"
+                          },
+                          "error": {
+                            "type": "boolean",
+                            "description": "Whether an error occurred while fetching counts"
+                          }
+                        },
+                        "title": "ValidationRuleCounts",
+                        "description": "Counts of validation rules by status"
                       }
                     },
                     "required": [
@@ -12481,6 +12525,32 @@
         "title": "ScheduleValidationResponse",
         "description": "Confirmation details after successfully scheduling a validation job"
       },
+      "ValidationRuleCounts": {
+        "type": "object",
+        "properties": {
+          "enabled": {
+            "type": "integer",
+            "minimum": 0,
+            "description": "Number of enabled validation rules"
+          },
+          "disabled": {
+            "type": "integer",
+            "minimum": 0,
+            "description": "Number of disabled validation rules"
+          },
+          "preview": {
+            "type": "integer",
+            "minimum": 0,
+            "description": "Number of preview validation rules"
+          },
+          "error": {
+            "type": "boolean",
+            "description": "Whether an error occurred while fetching counts"
+          }
+        },
+        "title": "ValidationRuleCounts",
+        "description": "Counts of validation rules by status"
+      },
       "DataValidationConfig": {
         "type": "object",
         "properties": {
@@ -12523,6 +12593,9 @@
                 "description": "User alerting configuration"
               }
             }
+          },
+          "ruleCounts": {
+            "$ref": "#/components/schemas/ValidationRuleCounts"
           }
         },
         "required": [
