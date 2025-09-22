@@ -39,7 +39,7 @@
 		"@types/node": "latest",
 		"tsup": "latest",
 		"typescript": "latest",
-		"zod": "^4.1.8"
+		"zod": "^4.1.11"
 	},
 	"engines": {
 		"node": ">=22"
