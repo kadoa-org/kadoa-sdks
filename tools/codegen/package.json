@@ -9,7 +9,7 @@
 	"scripts": {},
 	"devDependencies": {
 		"@types/bun": "latest",
-		"@types/node": "^24.4.0"
+		"@types/node": "^24.5.2"
 	},
 	"dependencies": {
 		"commander": "^14.0.1"
