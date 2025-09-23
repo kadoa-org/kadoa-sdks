@@ -4,10 +4,8 @@ import type {
 	V4WorkflowsWorkflowIdDataGetOrderEnum,
 	WorkflowsApiV4WorkflowsWorkflowIdDataGetRequest,
 } from "../../../../generated";
-import { KadoaHttpException } from "../../../runtime/exceptions";
-import { ERROR_MESSAGES } from "../../../runtime/exceptions/base.exception";
-import { PagedIterator, type PagedResponse } from "../../../runtime/pagination";
 import type { KadoaClient } from "../../../../kadoa-client";
+import { PagedIterator, type PagedResponse } from "../../../runtime/pagination";
 
 export type DataPagination = V4WorkflowsWorkflowIdDataGet200ResponsePagination;
 export type WorkflowDataResponse = V4WorkflowsWorkflowIdDataGet200Response;
@@ -46,23 +44,14 @@ export class DataFetcherService {
 	 * Fetch a page of workflow data
 	 */
 	async fetchData(options: FetchDataOptions): Promise<FetchDataResult> {
-		try {
-			const response = await this.client.workflows.v4WorkflowsWorkflowIdDataGet(
-				{
-					...options,
-					page: options.page ?? 1,
-					limit: options.limit ?? this.defaultLimit,
-				},
-			);
+		const response = await this.client.workflows.v4WorkflowsWorkflowIdDataGet({
+			...options,
+			page: options.page ?? 1,
+			limit: options.limit ?? this.defaultLimit,
+		});
 
-			const result = response.data;
-			return result;
-		} catch (error) {
-			throw KadoaHttpException.wrap(error, {
-				message: ERROR_MESSAGES.DATA_FETCH_FAILED,
-				details: { workflowId: options.workflowId, page: options.page },
-			});
-		}
+		const result = response.data;
+		return result;
 	}
 
 	/**

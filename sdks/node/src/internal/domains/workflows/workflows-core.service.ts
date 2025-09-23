@@ -1,22 +1,21 @@
 import type {
+	V4WorkflowsGet200ResponseWorkflowsInner,
 	V4WorkflowsPostRequest,
 	V4WorkflowsWorkflowIdGet200Response,
 } from "../../../generated";
-import type { WorkflowWithCustomSchemaFieldsInner } from "../../../generated/models/workflow-with-custom-schema-fields-inner";
-import {
-	KadoaHttpException,
-	KadoaSdkException,
-} from "../../runtime/exceptions";
+import { KadoaSdkException } from "../../runtime/exceptions";
 import { ERROR_MESSAGES } from "../../runtime/exceptions/base.exception";
 import type { ApiProvider } from "../../runtime/http/api-provider";
 import type {
 	CreateWorkflowInput,
 	WaitOptions,
+	WorkflowState,
 	WorkflowId,
 	WorkflowsCoreServiceInterface,
 } from "./types";
+import { logger } from "../../runtime/logger";
 
-const TERMINAL_RUN_STATES = new Set([
+const TERMINAL_RUN_STATES: Set<WorkflowState> = new Set([
 	"FINISHED",
 	"SUCCESS",
 	"FAILED",
@@ -24,6 +23,8 @@ const TERMINAL_RUN_STATES = new Set([
 	"STOPPED",
 	"CANCELLED",
 ]);
+
+const debug = logger.workflow;
 
 export class WorkflowsCoreService implements WorkflowsCoreServiceInterface {
 	constructor(private readonly client: ApiProvider) {}
@@ -35,62 +36,60 @@ export class WorkflowsCoreService implements WorkflowsCoreServiceInterface {
 			entity: input.entity,
 			name: input.name,
 			fields: input.fields,
-			bypassPreview: true,
-			tags: input.tags ?? ["sdk"],
+			bypassPreview: input.bypassPreview ?? true,
+			tags: input.tags,
 			interval: input.interval,
 			monitoring: input.monitoring,
 			location: input.location,
 		};
 
-		try {
-			const response = await this.client.workflows.v4WorkflowsPost({
-				v4WorkflowsPostRequest: request,
-			});
-			const workflowId = response.data?.workflowId;
+		const response = await this.client.workflows.v4WorkflowsPost({
+			v4WorkflowsPostRequest: request,
+		});
+		const workflowId = response.data?.workflowId;
 
-			if (!workflowId) {
-				throw new KadoaSdkException(ERROR_MESSAGES.NO_WORKFLOW_ID, {
-					code: "INTERNAL_ERROR",
-					details: {
-						response: response.data,
-					},
-				});
-			}
-			return { id: workflowId };
-		} catch (error) {
-			throw KadoaHttpException.wrap(error, {
-				message: ERROR_MESSAGES.WORKFLOW_CREATE_FAILED,
+		if (!workflowId) {
+			throw new KadoaSdkException(ERROR_MESSAGES.NO_WORKFLOW_ID, {
+				code: "INTERNAL_ERROR",
+				details: {
+					response: response.data,
+				},
 			});
 		}
+		return { id: workflowId };
 	}
 
 	async get(id: WorkflowId): Promise<V4WorkflowsWorkflowIdGet200Response> {
-		try {
-			const response = await this.client.workflows.v4WorkflowsWorkflowIdGet({
-				workflowId: id,
-			});
-			return response.data;
-		} catch (error) {
-			throw KadoaHttpException.wrap(error, {
-				message: ERROR_MESSAGES.PROGRESS_CHECK_FAILED,
-				details: { workflowId: id },
-			});
-		}
+		const response = await this.client.workflows.v4WorkflowsWorkflowIdGet({
+			workflowId: id,
+		});
+		return response.data;
+	}
+
+	async getByName(
+		name: string,
+	): Promise<V4WorkflowsGet200ResponseWorkflowsInner | undefined> {
+		const response = await this.client.workflows.v4WorkflowsGet({
+			search: name,
+		});
+		return response.data?.workflows?.[0];
 	}
 
 	async cancel(id: WorkflowId): Promise<void> {
-		try {
-			await this.client.workflows.v4WorkflowsWorkflowIdDelete({
-				workflowId: id,
-			});
-		} catch (error) {
-			throw KadoaHttpException.wrap(error, {
-				message: ERROR_MESSAGES.WORKFLOW_CREATE_FAILED,
-				details: { workflowId: id },
-			});
-		}
+		await this.client.workflows.v4WorkflowsWorkflowIdDelete({
+			workflowId: id,
+		});
 	}
 
+	async resume(id: WorkflowId): Promise<void> {
+		await this.client.workflows.v4WorkflowsWorkflowIdResumePut({
+			workflowId: id,
+		});
+	}
+
+	/**
+	 * Wait for a workflow to reach the target state or a terminal state if no target state is provided
+	 */
 	async wait(
 		id: WorkflowId,
 		options?: WaitOptions,
@@ -102,7 +101,9 @@ export class WorkflowsCoreService implements WorkflowsCoreServiceInterface {
 
 		while (Date.now() - start < timeoutMs) {
 			if (options?.abortSignal?.aborted) {
-				throw new KadoaSdkException("Aborted");
+				throw new KadoaSdkException(ERROR_MESSAGES.ABORTED, {
+					code: "ABORTED",
+				});
 			}
 
 			const current = await this.get(id);
@@ -110,11 +111,22 @@ export class WorkflowsCoreService implements WorkflowsCoreServiceInterface {
 				last?.state !== current.state ||
 				last?.runState !== current.runState
 			) {
-				// Internal: we could emit an event via client if needed in the future
+				debug(
+					"workflow %s state: [workflowState: %s, jobState: %s]",
+					id,
+					current.state,
+					current.runState,
+				);
 			}
+
+			if (options?.targetState && current.state === options.targetState) {
+				return current;
+			}
+
 			if (
 				current.runState &&
-				TERMINAL_RUN_STATES.has(current.runState.toUpperCase())
+				TERMINAL_RUN_STATES.has(current.runState.toUpperCase()) &&
+				current.state !== "QUEUED"
 			) {
 				return current;
 			}
@@ -128,6 +140,7 @@ export class WorkflowsCoreService implements WorkflowsCoreServiceInterface {
 				lastState: last?.state,
 				lastRunState: last?.runState,
 				timeoutMs,
+				targetState: options?.targetState,
 			},
 		});
 	}

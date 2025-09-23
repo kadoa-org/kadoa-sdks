@@ -12,7 +12,7 @@ export type VCRMode = "record" | "replay" | "auto";
 
 export interface VCROptions {
 	mode?: VCRMode;
-	cacheDir?: string;
+	cacheDir: string;
 	sanitize?: boolean;
 	debug?: boolean;
 }
@@ -41,11 +41,10 @@ export class AxiosVCR {
 
 	constructor(
 		private axiosInstance: AxiosInstance,
-		options: VCROptions = {},
+		options: VCROptions,
 	) {
 		this.mode = options.mode || (process.env.VCR_MODE as VCRMode) || "auto";
-		this.cacheDir =
-			options.cacheDir || path.join(process.cwd(), "test/fixtures/vcr-cache");
+		this.cacheDir = options.cacheDir;
 		this.sanitize = options.sanitize ?? true;
 		this.debug = options.debug ?? false;
 
@@ -320,7 +319,8 @@ export class AxiosVCR {
 				// In record or auto mode, save the response
 				if (cacheKey && (this.mode === "record" || this.mode === "auto")) {
 					// Only save if this was a real request (not replayed)
-					if (!response.config.adapter || this.mode === "record") {
+					const isReplayedResponse = (response.config as any).__vcrReplayed;
+					if (!isReplayedResponse) {
 						await this.ensureCacheDir();
 						await this.saveResponse(cacheKey, response, false);
 					}
@@ -338,7 +338,8 @@ export class AxiosVCR {
 					(this.mode === "record" || this.mode === "auto")
 				) {
 					// Only save if this was a real request (not replayed)
-					if (!error.config?.adapter || this.mode === "record") {
+					const isReplayedResponse = (error.config as any)?.__vcrReplayed;
+					if (!isReplayedResponse) {
 						await this.ensureCacheDir();
 						await this.saveResponse(cacheKey, error.response, true);
 					}

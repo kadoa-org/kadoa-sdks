@@ -1,0 +1,28 @@
+{
+  "status": 200,
+  "statusText": "OK",
+  "headers": {
+    "date": "Tue, 23 Sep 2025 18:24:32 GMT",
+    "content-type": "application/json",
+    "content-length": "341",
+    "connection": "keep-alive",
+    "server": "gunicorn/19.9.0",
+    "access-control-allow-origin": "*",
+    "access-control-allow-credentials": "true"
+  },
+  "data": {
+    "args": {},
+    "headers": {
+      "Accept": "application/json, text/plain, */*",
+      "Accept-Encoding": "gzip, compress, deflate, br",
+      "Host": "httpbin.org",
+      "User-Agent": "axios/1.12.2",
+      "X-Amzn-Trace-Id": "Root=1-68d2e5df-52c8ce453d36ce157f47949b"
+    },
+    "origin": "91.221.112.68",
+    "url": "https://httpbin.org/get"
+  },
+  "recordedAt": "2025-09-23T18:24:35.392Z",
+  "requestHash": "f206cb37ed49d97e0beaf0c24e0dafac",
+  "isError": false
+}

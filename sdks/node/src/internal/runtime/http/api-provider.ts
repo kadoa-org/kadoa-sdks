@@ -1,6 +1,8 @@
 import type {
-	CrawlApiInterface,
+	CrawlerApiInterface,
+	NotificationsApiInterface,
 	WorkflowsApiInterface,
+	WorkspacesApiInterface,
 } from "../../../generated";
 
 /**
@@ -16,5 +18,15 @@ export interface ApiProvider {
 	/**
 	 * Crawl API for crawling operations
 	 */
-	readonly crawl: CrawlApiInterface;
+	readonly crawl: CrawlerApiInterface;
+
+	/**
+	 * Notifications API for managing notification channels and settings
+	 */
+	readonly notifications: NotificationsApiInterface;
+
+	/**
+	 * Workspaces API for managing workspaces, users, teams, and organizations
+	 */
+	readonly workspaces: WorkspacesApiInterface;
 }

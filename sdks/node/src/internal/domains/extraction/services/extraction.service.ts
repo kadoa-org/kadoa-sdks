@@ -3,58 +3,32 @@ import type {
 	V4WorkflowsWorkflowIdGet200Response,
 	WorkflowWithCustomSchemaLocationTypeEnum,
 } from "../../../../generated";
-import { WorkflowsCoreService } from "../../workflows/workflows-core.service";
-import {
-	KadoaHttpException,
-	KadoaSdkException,
-} from "../../../runtime/exceptions";
+import type { KadoaClient } from "../../../../kadoa-client";
+import { KadoaSdkException } from "../../../runtime/exceptions";
 import { ERROR_MESSAGES } from "../../../runtime/exceptions/base.exception";
 import type { PageInfo } from "../../../runtime/pagination";
-import type { KadoaClient } from "../../../../kadoa-client";
+import { WorkflowsCoreService } from "../../workflows/workflows-core.service";
 import type {
-	EntityFieldDataType,
+	MonitoringConfig,
 	NavigationMode,
 	WorkflowInterval,
-	MonitoringConfig,
 } from "../extraction.types";
 import { DataFetcherService } from "./data-fetcher.service";
-import type { EntityField } from "./entity-detector.service";
-import { EntityDetectorService } from "./entity-detector.service";
+import {
+	EntityResolverService,
+	type EntityConfig,
+} from "./entity-resolver.service";
+import {
+	NotificationSetupService,
+	type NotificationOptions,
+} from "../../notifications/notification-setup.service";
+import { NotificationChannelsService } from "../../notifications/notification-channels.service";
+import { NotificationSettingsService } from "../../notifications/notification-settings.service";
+import { logger } from "../../../runtime/logger";
 
-const TRANSIENT_WORKFLOW_SCHEMA: EntityField[] = [
-	{
-		name: "url",
-		description: "link",
-		example: "url",
-		dataType: "PASS" as EntityFieldDataType,
-	},
-	{
-		name: "screenshotUrl",
-		description: "launchSummary.screenshotLink",
-		example: "url",
-		dataType: "PASS" as EntityFieldDataType,
-	},
-	{
-		name: "markdown",
-		description: "allExtracts.fullMarkdown",
-		example: "url",
-		dataType: "PASS" as EntityFieldDataType,
-	},
-	{
-		name: "metadata",
-		description: "allExtracts.metadata",
-		example: "url",
-		dataType: "PASS" as EntityFieldDataType,
-	},
-	{
-		name: "html",
-		description: "allExtracts.fullHtml",
-		example: "url",
-		dataType: "PASS" as EntityFieldDataType,
-	},
-];
+const debug = logger.extraction;
 
-export interface ExtractionConfig {
+export interface ExtractionOptionsInternal {
 	urls: string[];
 	prompt?: string;
 	mode: "run" | "submit";
@@ -63,18 +37,19 @@ export interface ExtractionConfig {
 	location: {
 		type: WorkflowWithCustomSchemaLocationTypeEnum;
 	};
+	bypassPreview?: boolean;
 	pollingInterval: number;
 	maxWaitTime: number;
-	entity: string;
-	fields: EntityField[];
+	entity: EntityConfig;
 	interval?: WorkflowInterval;
 	monitoring?: MonitoringConfig;
 	tags?: string[];
+	notifications?: NotificationOptions;
 }
 
 export type ExtractionOptions = {
 	urls: string[];
-} & Partial<Omit<ExtractionConfig, "urls">>;
+} & Partial<Omit<ExtractionOptionsInternal, "urls">>;
 
 export interface ExtractionResult {
 	workflowId: string;
@@ -85,33 +60,41 @@ export interface ExtractionResult {
 
 export interface SubmitExtractionResult {
 	workflowId: string;
+	needsNotificationSetup?: boolean;
 }
 
 // Use TERMINAL_RUN_STATES from WorkflowsCoreService for consistency
 const SUCCESSFUL_RUN_STATES = new Set(["FINISHED", "SUCCESS"]);
 
-export const DEFAULT_OPTIONS: Omit<ExtractionConfig, "urls"> = {
+export const DEFAULT_OPTIONS: Omit<
+	ExtractionOptionsInternal,
+	"urls" | "entity" | "fields"
+> = {
 	mode: "run",
 	pollingInterval: 5000,
 	maxWaitTime: 300000,
 	navigationMode: "single-page" as const,
 	location: { type: "auto" },
 	name: "Untitled Workflow",
-	entity: "page extraction",
-	fields: TRANSIENT_WORKFLOW_SCHEMA,
+	bypassPreview: true,
 } as const;
 /**
  * Service for managing extraction workflows and data fetching
  */
 export class ExtractionService {
-	private readonly entityDetector: EntityDetectorService;
+	private readonly entityResolver: EntityResolverService;
 	private readonly workflowsCoreService: WorkflowsCoreService;
 	private readonly dataFetcher: DataFetcherService;
+	private readonly notificationSetupService: NotificationSetupService;
 
 	constructor(client: KadoaClient) {
-		this.entityDetector = new EntityDetectorService(client);
+		this.entityResolver = new EntityResolverService(client);
 		this.workflowsCoreService = new WorkflowsCoreService(client);
 		this.dataFetcher = new DataFetcherService(client);
+		this.notificationSetupService = new NotificationSetupService(
+			new NotificationChannelsService(client, client.user.service),
+			new NotificationSettingsService(client),
+		);
 	}
 
 	/**
@@ -122,92 +105,91 @@ export class ExtractionService {
 	): Promise<ExtractionResult | SubmitExtractionResult> {
 		this.validateOptions(options);
 
-		const config: ExtractionConfig = merge(DEFAULT_OPTIONS, options);
+		const config: Omit<ExtractionOptionsInternal, "entity" | "fields"> = merge(
+			DEFAULT_OPTIONS,
+			options,
+		);
 
-		try {
-			let workflowId: string;
-			if (options.mode === "run") {
-				const result = await this.workflowsCoreService.create({
-					...config,
-					entity: "page extraction",
-					fields: TRANSIENT_WORKFLOW_SCHEMA,
-					interval: config.interval,
-					monitoring: config.monitoring,
-					location: config.location,
-				});
-				workflowId = result.id;
-			} else {
-				// Step 1: Detect entity fields
-				const entityPrediction = await this.entityDetector.fetchEntityFields({
-					link: config.urls[0],
-					location: config.location,
-					navigationMode: config.navigationMode,
-				});
+		let workflowId: string;
 
-				// Step 2: Create workflow
-				const result = await this.workflowsCoreService.create({
-					...config,
-					entity: entityPrediction.entity,
-					fields: entityPrediction.fields,
-					interval: config.interval,
-					monitoring: config.monitoring,
-					location: config.location,
-				});
-				workflowId = result.id;
-			}
+		const resolvedEntity = await this.entityResolver.resolveEntity(
+			options.entity || "ai-detection",
+			{
+				link: config.urls[0],
+				location: config.location,
+				navigationMode: config.navigationMode,
+			},
+		);
 
-			if (options.mode === "submit") {
-				return {
-					workflowId,
-				};
-			}
+		const hasNotifications = !!config.notifications;
 
-			// Step 3: Wait for completion
-			const workflow = await this.workflowsCoreService.wait(workflowId, {
-				pollIntervalMs: config.pollingInterval,
-				timeoutMs: config.maxWaitTime,
+		const result = await this.workflowsCoreService.create({
+			...config,
+			entity: resolvedEntity.entity,
+			fields: resolvedEntity.fields.map((field) => ({
+				name: field.name,
+				description: field.description,
+				example: field.example,
+				// todo: there is missmatch in kadoa-api so we need to cast
+				dataType: field.dataType,
+			})),
+		});
+		workflowId = result.id;
+
+		if (hasNotifications) {
+			//note: for now we rely on the fact that notifcations will be setup faster than first event is emitted
+			// in few days, we should be able to create workflow without starting it immediately so we will be 100%
+			//  sure that notifications are setup before first event is emitted
+			const result = await this.notificationSetupService.setup({
+				workflowId,
+				events: config.notifications?.events,
+				channels: config.notifications?.channels,
 			});
+			debug(
+				"Notifications setup: %O",
+				result.map((r) => ({ id: r.id, eventType: r.eventType })),
+			);
+		}
 
-			// Step 4: Fetch first page of data if successful
-			let data: Array<object> | undefined;
-			let pagination: PageInfo | undefined;
-			const isSuccess = this.isExtractionSuccessful(workflow.runState);
-
-			if (isSuccess) {
-				const dataPage = await this.dataFetcher.fetchData({ workflowId });
-				data = dataPage.data;
-				pagination = dataPage.pagination;
-
-				if (data) {
-					const isPartial =
-						pagination?.totalCount && data.length < pagination.totalCount;
-				}
-			} else {
-				throw new KadoaSdkException(
-					`${ERROR_MESSAGES.WORKFLOW_UNEXPECTED_STATUS}: ${workflow.runState}`,
-					{
-						code: "INTERNAL_ERROR",
-						details: {
-							workflowId,
-							runState: workflow.runState,
-							state: workflow.state,
-						},
-					},
-				);
-			}
-
+		if (config.mode === "submit") {
 			return {
 				workflowId,
-				workflow,
-				data,
-				pagination,
 			};
-		} catch (error) {
-			throw KadoaHttpException.wrap(error, {
-				message: ERROR_MESSAGES.EXTRACTION_FAILED,
-				details: { urls: options.urls },
-			});
 		}
+
+		const workflow = await this.workflowsCoreService.wait(workflowId, {
+			pollIntervalMs: config.pollingInterval,
+			timeoutMs: config.maxWaitTime,
+		});
+
+		let data: Array<object> | undefined;
+		let pagination: PageInfo | undefined;
+		const isSuccess = this.isExtractionSuccessful(workflow.runState);
+
+		if (isSuccess) {
+			const dataPage = await this.dataFetcher.fetchData({ workflowId });
+			data = dataPage.data;
+			pagination = dataPage.pagination;
+		} else {
+			throw new KadoaSdkException(
+				`${ERROR_MESSAGES.WORKFLOW_UNEXPECTED_STATUS}: ${workflow.runState}`,
+				{
+					code: "INTERNAL_ERROR",
+					details: {
+						workflowId,
+						runState: workflow.runState,
+						state: workflow.state,
+					},
+				},
+			);
+		}
+
+		return {
+			workflowId,
+			workflow,
+			data,
+			pagination,
+		};
 	}
 
 	/**
@@ -219,6 +201,47 @@ export class ExtractionService {
 				code: "VALIDATION_ERROR",
 			});
 		}
+	}
+
+	/**
+	 * Resume a workflow after notification setup
+	 */
+	async resumeWorkflow(workflowId: string): Promise<ExtractionResult> {
+		await this.workflowsCoreService.resume(workflowId);
+
+		const workflow = await this.workflowsCoreService.wait(workflowId, {
+			pollIntervalMs: DEFAULT_OPTIONS.pollingInterval,
+			timeoutMs: DEFAULT_OPTIONS.maxWaitTime,
+		});
+
+		let data: Array<object> | undefined;
+		let pagination: PageInfo | undefined;
+		const isSuccess = this.isExtractionSuccessful(workflow.runState);
+
+		if (isSuccess) {
+			const dataPage = await this.dataFetcher.fetchData({ workflowId });
+			data = dataPage.data;
+			pagination = dataPage.pagination;
+		} else {
+			throw new KadoaSdkException(
+				`${ERROR_MESSAGES.WORKFLOW_UNEXPECTED_STATUS}: ${workflow.runState}`,
+				{
+					code: "INTERNAL_ERROR",
+					details: {
+						workflowId,
+						runState: workflow.runState,
+						state: workflow.state,
+					},
+				},
+			);
+		}
+
+		return {
+			workflowId,
+			workflow,
+			data,
+			pagination,
+		};
 	}
 
 	/**

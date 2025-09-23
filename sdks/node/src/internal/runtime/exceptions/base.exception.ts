@@ -1,14 +1,20 @@
+export const KadoaErrorCode = {
+	UNKNOWN: "UNKNOWN",
+	CONFIG_ERROR: "CONFIG_ERROR",
+	AUTH_ERROR: "AUTH_ERROR",
+	VALIDATION_ERROR: "VALIDATION_ERROR",
+	BAD_REQUEST: "BAD_REQUEST",
+	NOT_FOUND: "NOT_FOUND",
+	RATE_LIMITED: "RATE_LIMITED",
+	ABORTED: "ABORTED",
+	TIMEOUT: "TIMEOUT",
+	NETWORK_ERROR: "NETWORK_ERROR",
+	HTTP_ERROR: "HTTP_ERROR",
+	INTERNAL_ERROR: "INTERNAL_ERROR",
+} as const satisfies Record<string, string>;
+
 export type KadoaErrorCode =
-	| "UNKNOWN"
-	| "CONFIG_ERROR"
-	| "AUTH_ERROR"
-	| "VALIDATION_ERROR"
-	| "NOT_FOUND"
-	| "RATE_LIMITED"
-	| "TIMEOUT"
-	| "NETWORK_ERROR"
-	| "HTTP_ERROR"
-	| "INTERNAL_ERROR";
+	(typeof KadoaErrorCode)[keyof typeof KadoaErrorCode];
 
 export type KadoaSdkExceptionOptions = {
 	code?: KadoaErrorCode;
@@ -29,6 +35,9 @@ export class KadoaSdkException extends Error {
 		NETWORK_ERROR: "Network error occurred",
 		SERVER_ERROR: "Server error occurred",
 		PARSE_ERROR: "Failed to parse response",
+		BAD_REQUEST: "Bad request",
+		ABORTED: "Aborted",
+		NOT_FOUND: "Not found",
 
 		// Workflow specific errors
 		NO_WORKFLOW_ID: "Failed to start extraction process - no ID received",
@@ -45,6 +54,12 @@ export class KadoaSdkException extends Error {
 		NO_PREDICTIONS: "No entity predictions returned from the API",
 		EXTRACTION_FAILED: "Data extraction failed for the provided URLs",
 		ENTITY_FETCH_FAILED: "Failed to fetch entity fields",
+		ENTITY_INVARIANT_VIOLATION: "No valid entity provided",
+
+		// Schema specific errors
+		SCHEMA_NOT_FOUND: "Schema not found",
+		SCHEMA_FETCH_ERROR: "Failed to fetch schema",
+		SCHEMAS_FETCH_ERROR: "Failed to fetch schemas",
 	} as const;
 
 	constructor(message: string, options?: KadoaSdkExceptionOptions) {

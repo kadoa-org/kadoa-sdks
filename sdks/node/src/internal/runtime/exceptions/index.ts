@@ -1,5 +1,5 @@
 export {
-	type KadoaErrorCode,
+	KadoaErrorCode,
 	KadoaSdkException,
 	type KadoaSdkExceptionOptions,
 } from "./base.exception";

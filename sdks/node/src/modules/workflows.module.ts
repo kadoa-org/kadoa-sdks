@@ -1,4 +1,7 @@
-import type { V4WorkflowsWorkflowIdGet200Response } from "../generated";
+import type {
+	V4WorkflowsGet200ResponseWorkflowsInner,
+	V4WorkflowsWorkflowIdGet200Response,
+} from "../generated";
 import type { CreateWorkflowInput } from "../internal/domains/workflows/types";
 import { WorkflowsCoreService } from "../internal/domains/workflows/workflows-core.service";
 import type { KadoaClient } from "../kadoa-client";
@@ -28,8 +31,22 @@ export class WorkflowsModule {
 		return this.core.get(workflowId);
 	}
 
+	async getByName(
+		name: string,
+	): Promise<V4WorkflowsGet200ResponseWorkflowsInner | undefined> {
+		return this.core.getByName(name);
+	}
+
 	async cancel(workflowId: string): Promise<void> {
 		return this.core.cancel(workflowId);
+	}
+
+	async approve(workflowId: string): Promise<void> {
+		return this.core.resume(workflowId);
+	}
+
+	async resume(workflowId: string): Promise<void> {
+		return this.core.resume(workflowId);
 	}
 
 	async wait(

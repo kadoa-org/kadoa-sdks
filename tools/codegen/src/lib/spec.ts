@@ -19,7 +19,7 @@ export interface FetchSpecOptions {
 }
 
 const METADATA_PATH = path.join(SPECS_DIR, "openapi-metadata.json");
-const CACHE_TTL = 24 * 60 * 60 * 1000;
+const _CACHE_TTL = 24 * 60 * 60 * 1000;
 const DEFAULT_TIMEOUT = 30000;
 const DEFAULT_MAX_RETRIES = 3;
 

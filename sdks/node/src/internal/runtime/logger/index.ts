@@ -1,6 +1,7 @@
 import createDebug from "debug";
 
-export const createLogger = (namespace: string) => createDebug(`kadoa:${namespace}`);
+export const createLogger = (namespace: string) =>
+	createDebug(`kadoa:${namespace}`);
 
 export const logger = {
 	client: createLogger("client"),
@@ -9,4 +10,6 @@ export const logger = {
 	http: createLogger("http"),
 	workflow: createLogger("workflow"),
 	crawl: createLogger("crawl"),
+	notifications: createLogger("notifications"),
+	schemas: createLogger("schemas"),
 };

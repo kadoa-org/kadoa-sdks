@@ -8,7 +8,7 @@ import { AxiosVCR, type VCROptions } from "./axios-vcr";
 export class VCRKadoaClient extends KadoaClient {
 	private vcr: AxiosVCR;
 
-	constructor(config: KadoaClientConfig, vcrOptions: VCROptions = {}) {
+	constructor(config: KadoaClientConfig, vcrOptions: VCROptions) {
 		super(config);
 
 		// Initialize VCR with the client's axios instance
@@ -48,7 +48,7 @@ export class VCRKadoaClient extends KadoaClient {
  */
 export function createVCRClient(
 	config: KadoaClientConfig,
-	vcrOptions: VCROptions = {},
+	vcrOptions: VCROptions,
 ): VCRKadoaClient {
 	return new VCRKadoaClient(config, vcrOptions);
 }

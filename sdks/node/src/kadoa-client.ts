@@ -1,19 +1,37 @@
 import { randomUUID } from "node:crypto";
 import type { AxiosInstance } from "axios";
-import axios from "axios";
+import axios, { AxiosError } from "axios";
 import {
 	Configuration,
-	CrawlApi,
-	type CrawlApiInterface,
+	CrawlerApi,
+	type CrawlerApiInterface,
+	NotificationsApi,
+	type NotificationsApiInterface,
 	WorkflowsApi,
 	type WorkflowsApiInterface,
+	WorkspacesApi,
+	type WorkspacesApiInterface,
 } from "./generated";
-import type { ApiProvider } from "./internal/runtime/http/api-provider";
 import { Realtime } from "./internal/domains/realtime/realtime";
+import type { KadoaUser } from "./internal/domains/user/user.service";
+import { PUBLIC_API_URI } from "./internal/runtime/config";
+import {
+	KadoaErrorCode,
+	KadoaHttpException,
+} from "./internal/runtime/exceptions";
+import type { ApiProvider } from "./internal/runtime/http/api-provider";
+import { ExtractionModule } from "./modules/extraction.module";
+import { NotificationsModule } from "./modules/notifications.module";
+import { SchemasModule } from "./modules/schemas.module";
+import { UserModule } from "./modules/user.module";
 import { WorkflowsModule } from "./modules/workflows.module";
 import { SDK_LANGUAGE, SDK_NAME, SDK_VERSION } from "./version";
-import { PUBLIC_API_URI } from "./internal/runtime/config";
-import { ExtractionModule } from "./modules/extraction.module";
+
+export interface KadoaClientStatus {
+	baseUrl: string;
+	user: KadoaUser;
+	realtimeConnected: boolean;
+}
 
 export interface KadoaClientConfig {
 	apiKey: string;
@@ -64,10 +82,15 @@ export class KadoaClient implements ApiProvider {
 	private readonly _apiKey: string;
 
 	private readonly _workflowsApi: WorkflowsApiInterface;
-	private readonly _crawlApi: CrawlApiInterface;
+	private readonly _crawlApi: CrawlerApiInterface;
+	private readonly _notificationsApi: NotificationsApiInterface;
+	private readonly _workspacesApi: WorkspacesApiInterface;
 	private _realtime?: Realtime;
 	public readonly extraction: ExtractionModule;
 	public readonly workflow: WorkflowsModule;
+	public readonly notification: NotificationsModule;
+	public readonly schemas: SchemasModule;
+	public readonly user: UserModule;
 
 	constructor(config: KadoaClientConfig) {
 		this._baseUrl = PUBLIC_API_URI;
@@ -98,15 +121,55 @@ export class KadoaClient implements ApiProvider {
 			return config;
 		});
 
+		this._axiosInstance.interceptors.response.use(
+			(response) => {
+				if (response.status === 401) {
+					throw new KadoaHttpException("Unauthorized", {
+						code: KadoaErrorCode.AUTH_ERROR,
+						httpStatus: 401,
+					});
+				}
+
+				return response;
+			},
+			(error) => {
+				if (error instanceof AxiosError) {
+					const status = error.response?.status;
+					if (status === 400) {
+						throw KadoaHttpException.wrap(error);
+					}
+				}
+
+				throw KadoaHttpException.wrap(error);
+			},
+		);
+
 		this._workflowsApi =
 			config.apiOverrides?.workflows ||
 			new WorkflowsApi(this._configuration, this._baseUrl, this._axiosInstance);
 		this._crawlApi =
 			config.apiOverrides?.crawl ||
-			new CrawlApi(this._configuration, this._baseUrl, this._axiosInstance);
-
+			new CrawlerApi(this._configuration, this._baseUrl, this._axiosInstance);
+		this._notificationsApi =
+			config.apiOverrides?.notifications ||
+			new NotificationsApi(
+				this._configuration,
+				this._baseUrl,
+				this._axiosInstance,
+			);
+		this._workspacesApi =
+			config.apiOverrides?.workspaces ||
+			new WorkspacesApi(
+				this._configuration,
+				this._baseUrl,
+				this._axiosInstance,
+			);
+		//todo: use proper DI container, until then, make sure that user module  as first module
+		this.user = new UserModule(this);
 		this.extraction = new ExtractionModule(this);
 		this.workflow = new WorkflowsModule(this);
+		this.schemas = new SchemasModule(this);
+		this.notification = new NotificationsModule(this);
 
 		if (config.enableRealtime && config.realtimeConfig?.autoConnect !== false) {
 			this.connectRealtime();
@@ -141,6 +204,15 @@ export class KadoaClient implements ApiProvider {
 	}
 
 	/**
+	 * Get the API key
+	 *
+	 * @returns The API key
+	 */
+	get apiKey(): string {
+		return this._apiKey;
+	}
+
+	/**
 	 * Get the timeout value
 	 *
 	 * @returns The timeout in milliseconds
@@ -159,8 +231,22 @@ export class KadoaClient implements ApiProvider {
 	/**
 	 * Get the crawl API
 	 */
-	get crawl(): CrawlApiInterface {
+	get crawl(): CrawlerApiInterface {
 		return this._crawlApi;
+	}
+
+	/**
+	 * Get the notifications API
+	 */
+	get notifications(): NotificationsApiInterface {
+		return this._notificationsApi;
+	}
+
+	/**
+	 * Get the workspaces API
+	 */
+	get workspaces(): WorkspacesApiInterface {
+		return this._workspacesApi;
 	}
 
 	/**
@@ -201,6 +287,19 @@ export class KadoaClient implements ApiProvider {
 	 */
 	isRealtimeConnected(): boolean {
 		return this._realtime?.isConnected() ?? false;
+	}
+
+	/**
+	 * Get the status of the client
+	 *
+	 * @returns The status of the client
+	 */
+	async status(): Promise<KadoaClientStatus> {
+		return {
+			baseUrl: this._baseUrl,
+			user: await this.user.getCurrentUser(),
+			realtimeConnected: this.isRealtimeConnected(),
+		};
 	}
 
 	/**
