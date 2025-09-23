@@ -768,40 +768,24 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/SchemasListResponse"
-                }
-              }
-            }
-          },
-          "400": {
-            "description": "Bad request",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ErrorResponse"
+                  "type": "object",
+                  "properties": {
+                    "data": {
+                      "type": "array",
+                      "items": {
+                        "type": "object"
+                      }
+                    }
+                  }
                 }
               }
             }
           },
           "401": {
-            "description": "Unauthorized",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ErrorResponse"
-                }
-              }
-            }
+            "description": "Unauthorized"
           },
           "500": {
-            "description": "Internal server error",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ErrorResponse"
-                }
-              }
-            }
+            "description": "Internal server error"
           }
         }
       },
@@ -853,7 +837,44 @@
                   "fields": {
                     "type": "array",
                     "items": {
-                      "$ref": "#/components/schemas/SchemaField"
+                      "type": "object",
+                      "required": [
+                        "name",
+                        "description",
+                        "example",
+                        "dataType"
+                      ],
+                      "properties": {
+                        "name": {
+                          "type": "string",
+                          "description": "Field name"
+                        },
+                        "description": {
+                          "type": "string",
+                          "description": "Field description"
+                        },
+                        "example": {
+                          "type": "string",
+                          "description": "Example value for the field"
+                        },
+                        "dataType": {
+                          "type": "string",
+                          "enum": [
+                            "STRING",
+                            "NUMBER",
+                            "BOOLEAN",
+                            "DATE",
+                            "DATETIME",
+                            "CURRENCY",
+                            "MONEY",
+                            "IMAGE",
+                            "LINK",
+                            "OBJECT",
+                            "ARRAY"
+                          ],
+                          "description": "Data type of the field"
+                        }
+                      }
                     }
                   }
                 }
@@ -875,50 +896,33 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/CreateSchemaResponse"
+                  "type": "object",
+                  "properties": {
+                    "success": {
+                      "type": "boolean"
+                    },
+                    "schemaId": {
+                      "type": "string"
+                    },
+                    "message": {
+                      "type": "string"
+                    }
+                  }
                 }
               }
             }
           },
           "400": {
-            "description": "Invalid request data",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ErrorResponse"
-                }
-              }
-            }
+            "description": "Invalid request data"
           },
           "401": {
-            "description": "Unauthorized",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ErrorResponse"
-                }
-              }
-            }
+            "description": "Unauthorized"
           },
           "409": {
-            "description": "Schema with this name already exists",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ErrorResponse"
-                }
-              }
-            }
+            "description": "Schema with this name already exists"
           },
           "500": {
-            "description": "Internal server error",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ErrorResponse"
-                }
-              }
-            }
+            "description": "Internal server error"
           }
         }
       }
@@ -972,50 +976,22 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/SingleSchemaResponse"
+                  "type": "object"
                 }
               }
             }
           },
           "400": {
-            "description": "Invalid schema ID",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ErrorResponse"
-                }
-              }
-            }
+            "description": "Invalid schema ID"
           },
           "401": {
-            "description": "Unauthorized",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ErrorResponse"
-                }
-              }
-            }
+            "description": "Unauthorized"
           },
           "404": {
-            "description": "Schema not found",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ErrorResponse"
-                }
-              }
-            }
+            "description": "Schema not found"
           },
           "500": {
-            "description": "Internal server error",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ErrorResponse"
-                }
-              }
-            }
+            "description": "Internal server error"
           }
         }
       },
@@ -1071,7 +1047,47 @@
                   "fields": {
                     "type": "array",
                     "items": {
-                      "$ref": "#/components/schemas/SchemaField"
+                      "type": "object",
+                      "required": [
+                        "name",
+                        "description",
+                        "example",
+                        "dataType"
+                      ],
+                      "properties": {
+                        "name": {
+                          "type": "string",
+                          "description": "Field name"
+                        },
+                        "description": {
+                          "type": "string",
+                          "description": "Field description"
+                        },
+                        "example": {
+                          "type": "string",
+                          "description": "Example value for the field"
+                        },
+                        "dataType": {
+                          "type": "string",
+                          "enum": [
+                            "STRING",
+                            "NUMBER",
+                            "BOOLEAN",
+                            "DATE",
+                            "DATETIME",
+                            "CURRENCY",
+                            "MONEY",
+                            "LOCATION",
+                            "HTML",
+                            "MARKDOWN",
+                            "IMAGE",
+                            "LINK",
+                            "OBJECT",
+                            "ARRAY"
+                          ],
+                          "description": "Data type of the field"
+                        }
+                      }
                     }
                   }
                 }
@@ -1093,60 +1109,33 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/SuccessResponse"
+                  "type": "object",
+                  "properties": {
+                    "success": {
+                      "type": "boolean"
+                    },
+                    "message": {
+                      "type": "string"
+                    }
+                  }
                 }
               }
             }
           },
           "400": {
-            "description": "Invalid request data or schema ID",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ErrorResponse"
-                }
-              }
-            }
+            "description": "Invalid request data or schema ID"
           },
           "401": {
-            "description": "Unauthorized",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ErrorResponse"
-                }
-              }
-            }
+            "description": "Unauthorized"
           },
           "404": {
-            "description": "Schema not found",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ErrorResponse"
-                }
-              }
-            }
+            "description": "Schema not found"
           },
           "409": {
-            "description": "Schema with this name already exists",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ErrorResponse"
-                }
-              }
-            }
+            "description": "Schema with this name already exists"
           },
           "500": {
-            "description": "Internal server error",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ErrorResponse"
-                }
-              }
-            }
+            "description": "Internal server error"
           }
         }
       },
@@ -1198,50 +1187,30 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/SuccessResponse"
+                  "type": "object",
+                  "properties": {
+                    "success": {
+                      "type": "boolean"
+                    },
+                    "message": {
+                      "type": "string"
+                    }
+                  }
                 }
               }
             }
           },
           "400": {
-            "description": "Invalid schema ID",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ErrorResponse"
-                }
-              }
-            }
+            "description": "Invalid schema ID"
           },
           "401": {
-            "description": "Unauthorized",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ErrorResponse"
-                }
-              }
-            }
+            "description": "Unauthorized"
           },
           "404": {
-            "description": "Schema not found",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ErrorResponse"
-                }
-              }
-            }
+            "description": "Schema not found"
           },
           "500": {
-            "description": "Internal server error",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ErrorResponse"
-                }
-              }
-            }
+            "description": "Internal server error"
           }
         }
       }
@@ -1849,7 +1818,38 @@
                       "fields": {
                         "type": "array",
                         "items": {
-                          "$ref": "#/components/schemas/SchemaField"
+                          "type": "object",
+                          "properties": {
+                            "name": {
+                              "type": "string",
+                              "description": "Name of the field to extract"
+                            },
+                            "dataType": {
+                              "type": "string",
+                              "enum": [
+                                "STRING",
+                                "NUMBER",
+                                "BOOLEAN",
+                                "DATE",
+                                "DATETIME",
+                                "CURRENCY",
+                                "MONEY",
+                                "IMAGE",
+                                "LINK",
+                                "OBJECT",
+                                "ARRAY"
+                              ],
+                              "description": "Data type of the field"
+                            },
+                            "description": {
+                              "type": "string",
+                              "description": "Description of what this field represents"
+                            },
+                            "example": {
+                              "type": "string",
+                              "description": "Example value for this field"
+                            }
+                          }
                         },
                         "description": "Schema fields for extraction (required unless using agentic-navigation mode)"
                       },
@@ -2567,7 +2567,43 @@
                           "schema": {
                             "type": "array",
                             "items": {
-                              "$ref": "#/components/schemas/SchemaField"
+                              "type": "object",
+                              "properties": {
+                                "name": {
+                                  "type": "string"
+                                },
+                                "description": {
+                                  "type": "string"
+                                },
+                                "example": {
+                                  "type": "string"
+                                },
+                                "dataType": {
+                                  "type": "string",
+                                  "enum": [
+                                    "STRING",
+                                    "NUMBER",
+                                    "BOOLEAN",
+                                    "DATE",
+                                    "DATETIME",
+                                    "CURRENCY",
+                                    "MONEY",
+                                    "IMAGE",
+                                    "LINK",
+                                    "OBJECT",
+                                    "ARRAY"
+                                  ]
+                                },
+                                "isPrimaryKey": {
+                                  "type": "boolean"
+                                },
+                                "isRequired": {
+                                  "type": "boolean"
+                                },
+                                "isUnique": {
+                                  "type": "boolean"
+                                }
+                              }
                             },
                             "description": "Extraction schema fields"
                           },
@@ -3099,7 +3135,43 @@
                     "schema": {
                       "type": "array",
                       "items": {
-                        "$ref": "#/components/schemas/SchemaField"
+                        "type": "object",
+                        "properties": {
+                          "name": {
+                            "type": "string"
+                          },
+                          "description": {
+                            "type": "string"
+                          },
+                          "example": {
+                            "type": "string"
+                          },
+                          "dataType": {
+                            "type": "string",
+                            "enum": [
+                              "STRING",
+                              "NUMBER",
+                              "BOOLEAN",
+                              "DATE",
+                              "DATETIME",
+                              "CURRENCY",
+                              "MONEY",
+                              "IMAGE",
+                              "LINK",
+                              "OBJECT",
+                              "ARRAY"
+                            ]
+                          },
+                          "isPrimaryKey": {
+                            "type": "boolean"
+                          },
+                          "isRequired": {
+                            "type": "boolean"
+                          },
+                          "isUnique": {
+                            "type": "boolean"
+                          }
+                        }
                       },
                       "description": "Extraction schema fields"
                     },
@@ -11398,7 +11470,8 @@
             "in": "query",
             "description": "Current page number for pagination",
             "schema": {
-              "type": "number"
+              "type": "number",
+              "minimum": 1
             }
           },
           {
@@ -11406,7 +11479,8 @@
             "in": "query",
             "description": "Number of items per page for pagination",
             "schema": {
-              "type": "number"
+              "type": "number",
+              "minimum": 1
             }
           }
         ],
