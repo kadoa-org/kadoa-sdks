@@ -1,5 +1,43 @@
 # Changelog
 
+## [0.8.0](https://github.com/kadoa-org/kadoa-sdks/compare/node-sdk-v0.7.0...node-sdk-v0.8.0) (2025-09-23)
+
+
+### ⚠ BREAKING CHANGES
+
+* **node-sdk:** CrawlApi renamed to CrawlerApi in generated client
+* **node-sdk:** Module imports have been reorganized. External imports from modules/extraction and modules/workflows may need to be updated.
+
+### Features
+
+* **node-sdk:** add logger module to runtime infrastructure ([5dfd685](https://github.com/kadoa-org/kadoa-sdks/commit/5dfd68538d3b7cb73059c1d705f65cbe027f91da))
+* **node-sdk:** add notifications, schemas, and user modules with improved error handling ([6791b13](https://github.com/kadoa-org/kadoa-sdks/commit/6791b13056daa3302d55ac7127d2f0817f124e3a))
+* **node-sdk:** add realtime demo examples ([24ad917](https://github.com/kadoa-org/kadoa-sdks/commit/24ad917f3b64a23f2906ac9a10b989d7e8ac8a1c))
+* **node-sdk:** add realtime WebSocket support for live data streaming ([5366b40](https://github.com/kadoa-org/kadoa-sdks/commit/5366b40089c04d541932227d8c2fb0fe0231a592))
+* **node-sdk:** add request ID tracking and improve documentation ([aa4afde](https://github.com/kadoa-org/kadoa-sdks/commit/aa4afde99bd165e1e740394ba0b84c6ce384d328))
+* **spec:** update spec fingerprint ([ce5813f](https://github.com/kadoa-org/kadoa-sdks/commit/ce5813f26347cea91c38ab0aabab83ad2f4e0b28))
+* **spec:** update spec fingerprint ([c7fd61d](https://github.com/kadoa-org/kadoa-sdks/commit/c7fd61d173aa8c25bac52999a15259089c20f2b9))
+
+
+### Bug Fixes
+
+* **node-sdk:** update test imports after refactoring ([03f79a6](https://github.com/kadoa-org/kadoa-sdks/commit/03f79a6493f2534532cff1d2adc50c8cb166d2c2))
+
+
+### Miscellaneous Chores
+
+* **deps-dev:** bump zod from 4.1.5 to 4.1.8 ([#39](https://github.com/kadoa-org/kadoa-sdks/issues/39)) ([6f60c05](https://github.com/kadoa-org/kadoa-sdks/commit/6f60c055fdaf8f50dbf91468b81994dc4c6ec9f3))
+* **deps-dev:** bump zod from 4.1.8 to 4.1.11 ([#48](https://github.com/kadoa-org/kadoa-sdks/issues/48)) ([d14cc75](https://github.com/kadoa-org/kadoa-sdks/commit/d14cc759b79997cea1fd5e8db66c45cf930a3c01))
+* **deps:** bump axios from 1.11.0 to 1.12.2 ([#35](https://github.com/kadoa-org/kadoa-sdks/issues/35)) ([59ce617](https://github.com/kadoa-org/kadoa-sdks/commit/59ce617cddd713e1fee5a43e4d4174986368158b))
+* **spec:** update OpenAPI spec ([#34](https://github.com/kadoa-org/kadoa-sdks/issues/34)) ([76b0093](https://github.com/kadoa-org/kadoa-sdks/commit/76b009372a2a163533cbae2624e44c3ba85cdedb))
+* **spec:** update OpenAPI spec ([#51](https://github.com/kadoa-org/kadoa-sdks/issues/51)) ([eec722e](https://github.com/kadoa-org/kadoa-sdks/commit/eec722e747c265cb5d5538185626c4b02b2a782f))
+
+
+### Code Refactoring
+
+* **node-sdk:** migrate from command/query pattern to service pattern ([134b0dd](https://github.com/kadoa-org/kadoa-sdks/commit/134b0dd7e79502d443b7ee73a4d87945bd7c51b3))
+* **node-sdk:** migrate from modules to internal/domains architecture ([636176e](https://github.com/kadoa-org/kadoa-sdks/commit/636176e08dc0048da715af2ce5d2ebf7cad94b07))
+
 ## [0.7.0](https://github.com/kadoa-org/kadoa-sdks/compare/node-sdk-v0.6.0...node-sdk-v0.7.0) (2025-09-10)
 
 
