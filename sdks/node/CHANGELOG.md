@@ -1,5 +1,17 @@
 # Changelog
 
+## [0.9.0](https://github.com/kadoa-org/kadoa-sdks/compare/node-sdk-v0.8.0...node-sdk-v0.9.0) (2025-09-24)
+
+
+### Features
+
+* **spec:** update spec fingerprint ([a1ef20f](https://github.com/kadoa-org/kadoa-sdks/commit/a1ef20f05bfe82230403a3f8aaa10b9443580bfc))
+
+
+### Bug Fixes
+
+* **node-sdk:** resolve build issues with schemas service and update OpenAPI specs ([da19ba9](https://github.com/kadoa-org/kadoa-sdks/commit/da19ba9fa95aae839aefa3403b9fd747b5b554ce))
+
 ## [0.8.0](https://github.com/kadoa-org/kadoa-sdks/compare/node-sdk-v0.7.0...node-sdk-v0.8.0) (2025-09-23)
 
 
