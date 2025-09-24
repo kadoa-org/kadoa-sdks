@@ -1,6 +1,6 @@
-import { randomUUID } from "node:crypto";
 import type { AxiosInstance } from "axios";
 import axios, { AxiosError } from "axios";
+import { v4 } from "uuid";
 import {
 	Configuration,
 	CrawlerApi,
@@ -117,7 +117,7 @@ export class KadoaClient implements ApiProvider {
 		});
 
 		this._axiosInstance.interceptors.request.use((config) => {
-			config.headers["x-request-id"] = randomUUID();
+			config.headers["x-request-id"] = v4();
 			return config;
 		});
 

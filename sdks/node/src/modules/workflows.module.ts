@@ -3,7 +3,10 @@ import type {
 	V4WorkflowsWorkflowIdGet200Response,
 } from "../generated";
 import type { CreateWorkflowInput } from "../internal/domains/workflows/types";
-import { WorkflowsCoreService } from "../internal/domains/workflows/workflows-core.service";
+import {
+	type ListWorkflowsOptions,
+	WorkflowsCoreService,
+} from "../internal/domains/workflows/workflows-core.service";
 import type { KadoaClient } from "../kadoa-client";
 
 export interface SubmitOptions {
@@ -29,6 +32,12 @@ export class WorkflowsModule {
 
 	async get(workflowId: string): Promise<V4WorkflowsWorkflowIdGet200Response> {
 		return this.core.get(workflowId);
+	}
+
+	async list(
+		filters?: ListWorkflowsOptions,
+	): Promise<V4WorkflowsGet200ResponseWorkflowsInner[]> {
+		return this.core.list(filters);
 	}
 
 	async getByName(

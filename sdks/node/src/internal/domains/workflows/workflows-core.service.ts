@@ -2,6 +2,7 @@ import type {
 	V4WorkflowsGet200ResponseWorkflowsInner,
 	V4WorkflowsPostRequest,
 	V4WorkflowsWorkflowIdGet200Response,
+	WorkflowsApiV4WorkflowsGetRequest,
 } from "../../../generated";
 import { KadoaSdkException } from "../../runtime/exceptions";
 import { ERROR_MESSAGES } from "../../runtime/exceptions/base.exception";
@@ -14,6 +15,8 @@ import type {
 	WorkflowsCoreServiceInterface,
 } from "./types";
 import { logger } from "../../runtime/logger";
+
+export type ListWorkflowsOptions = WorkflowsApiV4WorkflowsGetRequest;
 
 const TERMINAL_RUN_STATES: Set<WorkflowState> = new Set([
 	"FINISHED",
@@ -35,7 +38,7 @@ export class WorkflowsCoreService implements WorkflowsCoreServiceInterface {
 			navigationMode: input.navigationMode,
 			entity: input.entity,
 			name: input.name,
-			fields: input.fields,
+			fields: input.fields as any,
 			bypassPreview: input.bypassPreview ?? true,
 			tags: input.tags,
 			interval: input.interval,
@@ -64,6 +67,13 @@ export class WorkflowsCoreService implements WorkflowsCoreServiceInterface {
 			workflowId: id,
 		});
 		return response.data;
+	}
+
+	async list(
+		filters?: ListWorkflowsOptions,
+	): Promise<V4WorkflowsGet200ResponseWorkflowsInner[]> {
+		const response = await this.client.workflows.v4WorkflowsGet(filters);
+		return response.data?.workflows ?? [];
 	}
 
 	async getByName(

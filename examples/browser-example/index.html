@@ -1,0 +1,207 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Kadoa SDK Browser Example</title>
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            max-width: 600px;
+            margin: 50px auto;
+            padding: 20px;
+            background: #f5f5f5;
+        }
+        .container {
+            background: white;
+            padding: 30px;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        h1 {
+            color: #333;
+            margin-bottom: 20px;
+        }
+        .form-group {
+            margin-bottom: 20px;
+        }
+        label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: 600;
+        }
+        input {
+            width: 100%;
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            font-size: 16px;
+        }
+        button {
+            background: #007bff;
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 4px;
+            font-size: 16px;
+            cursor: pointer;
+            width: 100%;
+        }
+        button:hover {
+            background: #0056b3;
+        }
+        button:disabled {
+            background: #ccc;
+            cursor: not-allowed;
+        }
+        .result {
+            margin-top: 20px;
+            padding: 15px;
+            border-radius: 4px;
+            display: none;
+        }
+        .success {
+            background: #d4edda;
+            border: 1px solid #c3e6cb;
+            color: #155724;
+        }
+        .error {
+            background: #f8d7da;
+            border: 1px solid #f5c6cb;
+            color: #721c24;
+        }
+        .loading {
+            text-align: center;
+            margin: 20px 0;
+            display: none;
+        }
+        code {
+            background: #f8f9fa;
+            padding: 2px 4px;
+            border-radius: 3px;
+            font-family: 'Monaco', 'Menlo', 'Ubuntu Mono', monospace;
+            font-size: 14px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Kadoa SDK Browser Example</h1>
+        <p>Enter your API key to fetch user information and workflows:</p>
+        
+        <form id="apiForm">
+            <div class="form-group">
+                <label for="apiKey">API Key:</label>
+                <input type="password" id="apiKey" placeholder="Enter your Kadoa API key" required>
+            </div>
+            <button type="submit" id="submitBtn">Fetch User Info & Workflows</button>
+        </form>
+
+        <div class="loading" id="loading">Loading...</div>
+        <div class="result" id="result"></div>
+    </div>
+
+    <!-- Load the Kadoa SDK -->
+    <script src="/sdks/node/dist/browser/index.global.js" onload="console.log('SDK script loaded')" onerror="console.error('Failed to load SDK script')"></script>
+    
+    <script>
+        // Check if SDK is available
+        function checkSDK() {
+            const sdkScript = document.querySelector('script[src*="index.global.js"]');
+            if (!sdkScript) {
+                showError('SDK script not found. Please ensure the SDK is built.');
+                return false;
+            }
+            return true;
+        }
+
+        // Show error message
+        function showError(message) {
+            const result = document.getElementById('result');
+            result.innerHTML = `<h3>❌ Setup Error</h3><p>${message}</p>`;
+            result.className = 'result error';
+            result.style.display = 'block';
+        }
+
+        // Check SDK on page load
+        window.addEventListener('load', function() {
+            console.log('Page loaded, checking for KadoaSDK...');
+            console.log('typeof KadoaSDK:', typeof KadoaSDK);
+            console.log('KadoaSDK object:', KadoaSDK);
+            
+            if (typeof KadoaSDK === 'undefined') {
+                showError('Kadoa SDK not loaded. Please run: <code>cd ../../sdks/node && npm run build</code>');
+            } else {
+                console.log('✅ KadoaSDK loaded successfully!');
+            }
+        });
+
+        document.getElementById('apiForm').addEventListener('submit', async function(e) {
+            e.preventDefault();
+            
+            const apiKey = document.getElementById('apiKey').value.trim();
+            const submitBtn = document.getElementById('submitBtn');
+            const loading = document.getElementById('loading');
+            const result = document.getElementById('result');
+
+            if (!apiKey) {
+                alert('Please enter your API key');
+                return;
+            }
+
+            // Show loading state
+            submitBtn.disabled = true;
+            loading.style.display = 'block';
+            result.style.display = 'none';
+
+            try {
+                // Check if SDK is available
+                if (typeof KadoaSDK === 'undefined') {
+                    throw new Error('Kadoa SDK not loaded. Please run: cd ../../sdks/node && npm run build');
+                }
+                
+                // Initialize the Kadoa client
+                const client = new KadoaSDK.KadoaClient({
+                    apiKey: apiKey
+                });
+
+                // Fetch user information
+                const user = await client.user.getCurrentUser();
+                
+                // Fetch workflows
+                const workflows = await client.workflow.list();
+                
+                // Display the result
+                result.innerHTML = `
+                    <h3>✅ User Information Retrieved</h3>
+                    <p><strong>User ID:</strong> ${user.userId}</p>
+                    <p><strong>Email:</strong> ${user.email}</p>
+                    ${user.featureFlags && user.featureFlags.length > 0 ? 
+                        `<p><strong>Feature Flags:</strong> ${user.featureFlags.join(', ')}</p>` : ''}
+                    <hr style="margin: 20px 0;">
+                    <h4>📋 Workflows (${workflows.length})</h4>
+                    ${workflows.length > 0 ? 
+                        `<ul>${workflows.map(w => `<li><strong>${w.name || 'Unnamed'}</strong> (ID: ${w.id})</li>`).join('')}</ul>` : 
+                        '<p>No workflows found</p>'}
+                `;
+                result.className = 'result success';
+                result.style.display = 'block';
+
+            } catch (error) {
+                console.error('Error:', error);
+                
+                result.innerHTML = `
+                    <h3>❌ Error</h3>
+                    <p><strong>Error:</strong> ${error.message}</p>
+                `;
+                result.className = 'result error';
+                result.style.display = 'block';
+            } finally {
+                // Hide loading state
+                submitBtn.disabled = false;
+                loading.style.display = 'none';
+            }
+        });
+    </script>
+</body>
+</html>

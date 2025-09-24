@@ -32,11 +32,14 @@
 		"axios": "^1.12.2",
 		"debug": "^4.4.3",
 		"es-toolkit": "^1.39.10",
+		"uuid": "^13.0.0",
 		"ws": "^8.18.3"
 	},
 	"devDependencies": {
 		"@types/debug": "^4.1.12",
 		"@types/node": "latest",
+		"@types/uuid": "^11.0.0",
+		"glob": "^11.0.3",
 		"tsup": "latest",
 		"typescript": "latest",
 		"zod": "^4.1.11"
