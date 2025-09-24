@@ -7808,12 +7808,7 @@
             "name": "status",
             "in": "query",
             "schema": {
-              "type": "string",
-              "enum": [
-                "preview",
-                "enabled",
-                "disabled"
-              ]
+              "$ref": "#/components/schemas/ValidationRuleStatus"
             }
           },
           {
@@ -12125,6 +12120,15 @@
           }
         }
       },
+      "ValidationRuleStatus": {
+        "type": "string",
+        "enum": [
+          "preview",
+          "enabled",
+          "disabled"
+        ],
+        "description": "Status of a validation rule"
+      },
       "SlackChannelConfig": {
         "type": "object",
         "required": [
@@ -12276,12 +12280,7 @@
           },
           "status": {
             "default": "enabled",
-            "type": "string",
-            "enum": [
-              "preview",
-              "enabled",
-              "disabled"
-            ]
+            "$ref": "#/components/schemas/ValidationRuleStatus"
           },
           "disabledReason": {
             "type": "string",
@@ -12431,12 +12430,7 @@
           },
           "status": {
             "default": "enabled",
-            "type": "string",
-            "enum": [
-              "preview",
-              "enabled",
-              "disabled"
-            ]
+            "$ref": "#/components/schemas/ValidationRuleStatus"
           },
           "metadata": {
             "type": "object",

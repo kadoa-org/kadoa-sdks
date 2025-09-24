@@ -38,7 +38,7 @@ export class SchemasService {
 			schemaId,
 		});
 
-		const schemaData = response.data.data;
+		const schemaData = (response.data as any).data;
 
 		if (!schemaData) {
 			throw new KadoaSdkException(
