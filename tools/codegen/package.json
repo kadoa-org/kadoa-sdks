@@ -12,6 +12,7 @@
 		"@types/node": "^24.5.2"
 	},
 	"dependencies": {
+		"@openapitools/openapi-generator-cli": "^2.23.4",
 		"commander": "^14.0.1"
 	}
 }

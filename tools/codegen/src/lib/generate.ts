@@ -52,14 +52,10 @@ export function generateClient(name: string, config: GeneratorConfig): void {
 
 	const command = `bunx openapi-generator-cli ${args.join(" ")}`;
 
-	try {
-		execSync(command, {
-			stdio: "inherit",
-			cwd: process.cwd(),
-		});
-	} catch (error) {
-		throw new Error(`Failed to generate ${name} client: ${String(error)}`);
-	}
+	execSync(command, {
+		stdio: "inherit",
+		cwd: process.cwd(),
+	});
 }
 
 export function postProcessNodeClient(_outputDir: string): void {}
