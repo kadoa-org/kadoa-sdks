@@ -18,6 +18,7 @@ import {
 	type AnomaliesByRuleResponse,
 	type ToggleResponse,
 	ValidationCoreService,
+	type WaitUntilCompletedOptions,
 } from "../internal/domains/validation/validation-core.service";
 import type {
 	AnomalyRulePageResponse,
@@ -84,6 +85,13 @@ export class ValidationModule {
 		jobId: string,
 	): Promise<ScheduleValidationResponse> {
 		return this.coreService.scheduleValidation(workflowId, jobId);
+	}
+
+	waitUntilCompleted(
+		validationId: string,
+		options?: WaitUntilCompletedOptions,
+	): Promise<DataValidationReport> {
+		return this.coreService.waitUntilCompleted(validationId, options);
 	}
 
 	getValidationDetails(validationId: string): Promise<DataValidationReport> {

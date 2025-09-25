@@ -10,13 +10,19 @@ import {
 	type AnomalyRulePageResponse,
 } from "../../../generated";
 import type { KadoaClient } from "../../../kadoa-client";
-import { KadoaHttpException } from "../../runtime/exceptions";
+import {
+	KadoaHttpException,
+	KadoaSdkException,
+} from "../../runtime/exceptions";
+import { pollUntil, type PollingOptions } from "../../runtime/utils";
 
 type ToggleResponse =
 	V4DataValidationWorkflowsWorkflowIdValidationTogglePut200Response;
 
 type ListWorkflowValidationsOptions =
 	DataValidationApiV4DataValidationWorkflowsWorkflowIdJobsJobIdValidationsGetRequest;
+
+type WaitUntilCompletedOptions = PollingOptions;
 
 export type {
 	ToggleResponse,
@@ -26,6 +32,7 @@ export type {
 	ScheduleValidationResponse,
 	AnomaliesByRuleResponse,
 	AnomalyRulePageResponse,
+	WaitUntilCompletedOptions,
 };
 
 export class ValidationCoreService {
@@ -179,5 +186,30 @@ export class ValidationCoreService {
 		}
 
 		return response.data;
+	}
+
+	async waitUntilCompleted(
+		validationId: string,
+		options?: WaitUntilCompletedOptions,
+	): Promise<DataValidationReport> {
+		const result = await pollUntil(
+			async () => {
+				const current = await this.getValidationDetails(validationId);
+
+				// Check if validation has an error
+				if (current.error) {
+					throw new KadoaSdkException(`Validation failed: ${current.error}`, {
+						code: "VALIDATION_ERROR",
+						details: { validationId, error: current.error },
+					});
+				}
+
+				return current;
+			},
+			(result) => result.completedAt != null,
+			options,
+		);
+
+		return result.result;
 	}
 }

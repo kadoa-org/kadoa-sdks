@@ -10,6 +10,7 @@ import type {
 	NavigationMode,
 	WorkflowInterval,
 } from "../extraction/extraction.types";
+import type { PollingOptions } from "../../runtime/utils";
 
 export type LocationConfig = WorkflowWithCustomSchemaLocation;
 export type WorkflowId = string;
@@ -23,10 +24,7 @@ export type WorkflowDisplayStateEnum =
 export type WorkflowDisplayState =
 	WorkflowDisplayStateEnum[keyof WorkflowDisplayStateEnum];
 
-export interface WaitOptions {
-	pollIntervalMs?: number;
-	timeoutMs?: number;
-	abortSignal?: AbortSignal;
+export interface WaitOptions extends PollingOptions {
 	targetState?: WorkflowState;
 }
 

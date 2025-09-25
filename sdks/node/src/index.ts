@@ -16,3 +16,5 @@ export type {
 } from "./internal/domains/schemas/schemas.service";
 export { ValidationModule } from "./modules/validation.module";
 export type { ListRulesOptions } from "./internal/domains/validation/validation-rules.service";
+
+export { pollUntil, type PollingOptions } from "./internal/runtime/utils";

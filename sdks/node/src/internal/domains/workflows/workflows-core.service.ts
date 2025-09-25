@@ -7,6 +7,7 @@ import type {
 import { KadoaSdkException } from "../../runtime/exceptions";
 import { ERROR_MESSAGES } from "../../runtime/exceptions/base.exception";
 import type { ApiProvider } from "../../runtime/http/api-provider";
+import { pollUntil } from "../../runtime/utils";
 import type {
 	CreateWorkflowInput,
 	WaitOptions,
@@ -104,54 +105,48 @@ export class WorkflowsCoreService implements WorkflowsCoreServiceInterface {
 		id: WorkflowId,
 		options?: WaitOptions,
 	): Promise<V4WorkflowsWorkflowIdGet200Response> {
-		const pollInterval = Math.max(250, options?.pollIntervalMs ?? 1000);
-		const timeoutMs = options?.timeoutMs ?? 5 * 60 * 1000;
-		const start = Date.now();
 		let last: V4WorkflowsWorkflowIdGet200Response | undefined;
 
-		while (Date.now() - start < timeoutMs) {
-			if (options?.abortSignal?.aborted) {
-				throw new KadoaSdkException(ERROR_MESSAGES.ABORTED, {
-					code: "ABORTED",
-				});
-			}
+		const result = await pollUntil(
+			async () => {
+				const current = await this.get(id);
 
-			const current = await this.get(id);
-			if (
-				last?.state !== current.state ||
-				last?.runState !== current.runState
-			) {
-				debug(
-					"workflow %s state: [workflowState: %s, jobState: %s]",
-					id,
-					current.state,
-					current.runState,
-				);
-			}
+				// Log state changes
+				if (
+					last?.state !== current.state ||
+					last?.runState !== current.runState
+				) {
+					debug(
+						"workflow %s state: [workflowState: %s, jobState: %s]",
+						id,
+						current.state,
+						current.runState,
+					);
+				}
 
-			if (options?.targetState && current.state === options.targetState) {
+				last = current;
 				return current;
-			}
-
-			if (
-				current.runState &&
-				TERMINAL_RUN_STATES.has(current.runState.toUpperCase()) &&
-				current.state !== "QUEUED"
-			) {
-				return current;
-			}
-			last = current;
-			await new Promise((r) => setTimeout(r, pollInterval));
-		}
-
-		throw new KadoaSdkException(ERROR_MESSAGES.WORKFLOW_TIMEOUT, {
-			details: {
-				workflowId: id,
-				lastState: last?.state,
-				lastRunState: last?.runState,
-				timeoutMs,
-				targetState: options?.targetState,
 			},
-		});
+			(current) => {
+				// Check for target state if specified
+				if (options?.targetState && current.state === options.targetState) {
+					return true;
+				}
+
+				// Check for terminal states
+				if (
+					current.runState &&
+					TERMINAL_RUN_STATES.has(current.runState.toUpperCase()) &&
+					current.state !== "QUEUED"
+				) {
+					return true;
+				}
+
+				return false;
+			},
+			options,
+		);
+
+		return result.result;
 	}
 }
