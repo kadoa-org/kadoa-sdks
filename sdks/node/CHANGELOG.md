@@ -1,5 +1,14 @@
 # Changelog
 
+## [0.10.0](https://github.com/kadoa-org/kadoa-sdks/compare/node-sdk-v0.9.0...node-sdk-v0.10.0) (2025-09-25)
+
+
+### Features
+
+* **node-sdk:** add browser support and list workflows endpoint ([263703a](https://github.com/kadoa-org/kadoa-sdks/commit/263703a1c215647186553018f6c7dd6f74b24147))
+* **node-sdk:** add validation module with rules and anomaly detection ([960f1d2](https://github.com/kadoa-org/kadoa-sdks/commit/960f1d2f2ba640afe8b9f18efac06a0b3baaa6c1))
+* **node-sdk:** enhance SDK with comprehensive examples and improved API features ([7aa9b87](https://github.com/kadoa-org/kadoa-sdks/commit/7aa9b87165f3cd82466d8ddb52b8e2e2340177b1))
+
 ## [0.9.0](https://github.com/kadoa-org/kadoa-sdks/compare/node-sdk-v0.8.0...node-sdk-v0.9.0) (2025-09-24)
 
 
