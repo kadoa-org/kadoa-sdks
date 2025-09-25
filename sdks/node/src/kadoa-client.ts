@@ -24,6 +24,7 @@ import { ExtractionModule } from "./modules/extraction.module";
 import { NotificationsModule } from "./modules/notifications.module";
 import { SchemasModule } from "./modules/schemas.module";
 import { UserModule } from "./modules/user.module";
+import { ValidationModule } from "./modules/validation.module";
 import { WorkflowsModule } from "./modules/workflows.module";
 import { SDK_LANGUAGE, SDK_NAME, SDK_VERSION } from "./version";
 
@@ -91,6 +92,7 @@ export class KadoaClient implements ApiProvider {
 	public readonly notification: NotificationsModule;
 	public readonly schemas: SchemasModule;
 	public readonly user: UserModule;
+	public readonly validation: ValidationModule;
 
 	constructor(config: KadoaClientConfig) {
 		this._baseUrl = PUBLIC_API_URI;
@@ -170,6 +172,7 @@ export class KadoaClient implements ApiProvider {
 		this.workflow = new WorkflowsModule(this);
 		this.schemas = new SchemasModule(this);
 		this.notification = new NotificationsModule(this);
+		this.validation = new ValidationModule(this);
 
 		if (config.enableRealtime && config.realtimeConfig?.autoConnect !== false) {
 			this.connectRealtime();

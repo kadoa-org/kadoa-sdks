@@ -38,7 +38,7 @@ export class WorkflowsCoreService implements WorkflowsCoreServiceInterface {
 			navigationMode: input.navigationMode,
 			entity: input.entity,
 			name: input.name,
-			fields: input.fields as any,
+			fields: input.fields as any, //todo: fix this
 			bypassPreview: input.bypassPreview ?? true,
 			tags: input.tags,
 			interval: input.interval,

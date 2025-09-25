@@ -12,4 +12,5 @@ export const logger = {
 	crawl: createLogger("crawl"),
 	notifications: createLogger("notifications"),
 	schemas: createLogger("schemas"),
+	validation: createLogger("validation"),
 };

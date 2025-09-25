@@ -14,3 +14,5 @@ export type {
 	Schema,
 	SchemaField,
 } from "./internal/domains/schemas/schemas.service";
+export { ValidationModule } from "./modules/validation.module";
+export type { ListRulesOptions } from "./internal/domains/validation/validation-rules.service";
