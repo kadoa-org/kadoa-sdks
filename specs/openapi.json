@@ -1618,6 +1618,9 @@
                   },
                   "schema": {
                     "type": "array",
+                    "items": {
+                      "type": "object"
+                    },
                     "description": "Schema fields"
                   },
                   "name": {
@@ -1747,6 +1750,9 @@
                 "properties": {
                   "schema": {
                     "type": "array",
+                    "items": {
+                      "type": "object"
+                    },
                     "description": "Updated schema fields"
                   },
                   "rebuildExisting": {
@@ -2594,7 +2600,7 @@
                                     "ARRAY"
                                   ]
                                 },
-                                "isPrimaryKey": {
+                                "isKey": {
                                   "type": "boolean"
                                 },
                                 "isRequired": {
@@ -3162,7 +3168,7 @@
                               "ARRAY"
                             ]
                           },
-                          "isPrimaryKey": {
+                          "isKey": {
                             "type": "boolean"
                           },
                           "isRequired": {
@@ -3905,6 +3911,9 @@
                         },
                         "linkingColumns": {
                           "type": "array",
+                          "items": {
+                            "type": "string"
+                          },
                           "example": []
                         }
                       }
@@ -4554,6 +4563,53 @@
                       }
                     }
                   },
+                  "entity": {
+                    "type": "string",
+                    "description": "The new entity for the workflow",
+                    "example": "job_posting"
+                  },
+                  "schema": {
+                    "type": "array",
+                    "description": "The new extraction schema for the workflow",
+                    "items": {
+                      "type": "object",
+                      "properties": {
+                        "name": {
+                          "type": "string"
+                        },
+                        "description": {
+                          "type": "string"
+                        },
+                        "example": {
+                          "type": "string"
+                        },
+                        "dataType": {
+                          "type": "string",
+                          "enum": [
+                            "STRING",
+                            "NUMBER",
+                            "BOOLEAN",
+                            "DATE",
+                            "DATETIME",
+                            "MONEY",
+                            "IMAGE",
+                            "LINK",
+                            "OBJECT",
+                            "ARRAY"
+                          ]
+                        },
+                        "isPrimaryKey": {
+                          "type": "boolean"
+                        },
+                        "isRequired": {
+                          "type": "boolean"
+                        },
+                        "isUnique": {
+                          "type": "boolean"
+                        }
+                      }
+                    }
+                  },
                   "dataLinking": {
                     "type": "object",
                     "description": "Data linking configuration for the workflow",
@@ -4801,220 +4857,6 @@
                 }
               }
             }
-          }
-        }
-      }
-    },
-    "/v4/workflows/setup": {
-      "post": {
-        "summary": "Set up a new workflow",
-        "tags": [
-          "Workflows"
-        ],
-        "requestBody": {
-          "description": "Required information to set up a new workflow",
-          "required": true,
-          "content": {
-            "application/json": {
-              "schema": {
-                "type": "object",
-                "properties": {
-                  "link": {
-                    "type": "string",
-                    "description": "The link for the workflow",
-                    "example": "https://example.com"
-                  },
-                  "entity": {
-                    "type": "string",
-                    "description": "The entity type for the workflow",
-                    "example": "data"
-                  },
-                  "jobId": {
-                    "type": "string",
-                    "description": "The job identifier",
-                    "example": "12345"
-                  },
-                  "interval": {
-                    "type": "string",
-                    "description": "The interval for the workflow",
-                    "example": "daily"
-                  },
-                  "tags": {
-                    "type": "array",
-                    "items": {
-                      "type": "string"
-                    },
-                    "description": "The tags for the workflow",
-                    "example": [
-                      "tag1",
-                      "tag2"
-                    ]
-                  },
-                  "schedules": {
-                    "type": "array",
-                    "items": {
-                      "type": "string"
-                    },
-                    "description": "The schedules for the workflow",
-                    "example": [
-                      "2023-10-01T10:00:00.000Z"
-                    ]
-                  },
-                  "location": {
-                    "type": "object",
-                    "description": "The location for the workflow",
-                    "properties": {
-                      "type": {
-                        "type": "string",
-                        "example": "auto",
-                        "description": "The type of location for the workflow",
-                        "enum": [
-                          "auto",
-                          "manual"
-                        ]
-                      },
-                      "isoCode": {
-                        "type": "string",
-                        "description": "The ISO code for the location that can be fetched from the location object",
-                        "example": "DE"
-                      }
-                    }
-                  },
-                  "monitoring": {
-                    "type": "object",
-                    "description": "Monitoring configuration for the workflow",
-                    "properties": {
-                      "enabled": {
-                        "type": "boolean",
-                        "description": "Whether monitoring is enabled",
-                        "example": true
-                      }
-                    }
-                  },
-                  "limit": {
-                    "type": "integer",
-                    "description": "The limit on the number of records",
-                    "example": 100
-                  }
-                }
-              }
-            }
-          }
-        },
-        "security": [
-          {
-            "ApiKeyAuth": []
-          }
-        ],
-        "responses": {
-          "201": {
-            "description": "Workflow successfully created and scheduled",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "type": "object",
-                  "properties": {
-                    "success": {
-                      "type": "boolean",
-                      "example": true
-                    },
-                    "workflowId": {
-                      "type": "string",
-                      "example": "605b5f5f1c4ae40b8d59f1f7"
-                    },
-                    "info": {
-                      "type": "string",
-                      "example": "Your scraper has been acknowledged and will be installed within the next 5 minutes"
-                    }
-                  }
-                }
-              }
-            }
-          },
-          "400": {
-            "description": "Invalid input or missing required fields"
-          },
-          "401": {
-            "description": "Unauthorized"
-          },
-          "404": {
-            "description": "Workflow not found"
-          }
-        }
-      }
-    },
-    "/v4/workflows/setup/edit": {
-      "post": {
-        "summary": "Edit an existing workflow",
-        "tags": [
-          "Workflows"
-        ],
-        "requestBody": {
-          "description": "Updated information to edit an existing workflow",
-          "required": true,
-          "content": {
-            "application/json": {
-              "schema": {
-                "type": "object",
-                "properties": {
-                  "schema": {
-                    "type": "string",
-                    "description": "The updated schema for the workflow",
-                    "example": "{\"field1\": \"type1\", \"field2\": \"type2\"}"
-                  },
-                  "workflowId": {
-                    "type": "string",
-                    "description": "The workflow ID to edit",
-                    "example": "605b5f5f1c4ae40b8d59f1f7"
-                  },
-                  "jobId": {
-                    "type": "string",
-                    "description": "The job identifier",
-                    "example": "12345"
-                  }
-                }
-              }
-            }
-          }
-        },
-        "security": [
-          {
-            "ApiKeyAuth": []
-          }
-        ],
-        "responses": {
-          "201": {
-            "description": "Workflow successfully updated",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "type": "object",
-                  "properties": {
-                    "success": {
-                      "type": "boolean",
-                      "example": true
-                    },
-                    "workflowId": {
-                      "type": "string",
-                      "example": "605b5f5f1c4ae40b8d59f1f7"
-                    },
-                    "info": {
-                      "type": "string",
-                      "example": "Your workflow change has been acknowledged and will be updated within the next 5 minutes"
-                    }
-                  }
-                }
-              }
-            }
-          },
-          "400": {
-            "description": "Invalid input or missing required fields"
-          },
-          "401": {
-            "description": "Unauthorized"
-          },
-          "404": {
-            "description": "Workflow not found"
           }
         }
       }
@@ -7808,7 +7650,12 @@
             "name": "status",
             "in": "query",
             "schema": {
-              "$ref": "#/components/schemas/ValidationRuleStatus"
+              "type": "string",
+              "enum": [
+                "preview",
+                "enabled",
+                "disabled"
+              ]
             }
           },
           {
@@ -8605,15 +8452,7 @@
           "Data Validation",
           "Rules Library"
         ],
-        "parameters": [
-          {
-            "name": "workflowId",
-            "in": "query",
-            "schema": {
-              "type": "string"
-            }
-          }
-        ],
+        "parameters": [],
         "requestBody": {
           "description": "Body",
           "content": {
@@ -12120,15 +11959,6 @@
           }
         }
       },
-      "ValidationRuleStatus": {
-        "type": "string",
-        "enum": [
-          "preview",
-          "enabled",
-          "disabled"
-        ],
-        "description": "Status of a validation rule"
-      },
       "SlackChannelConfig": {
         "type": "object",
         "required": [
@@ -12280,7 +12110,12 @@
           },
           "status": {
             "default": "enabled",
-            "$ref": "#/components/schemas/ValidationRuleStatus"
+            "type": "string",
+            "enum": [
+              "preview",
+              "enabled",
+              "disabled"
+            ]
           },
           "disabledReason": {
             "type": "string",
@@ -12430,7 +12265,12 @@
           },
           "status": {
             "default": "enabled",
-            "$ref": "#/components/schemas/ValidationRuleStatus"
+            "type": "string",
+            "enum": [
+              "preview",
+              "enabled",
+              "disabled"
+            ]
           },
           "metadata": {
             "type": "object",
@@ -12611,12 +12451,18 @@
       "DeleteRuleWithReason": {
         "type": "object",
         "properties": {
+          "workflowId": {
+            "type": "string"
+          },
           "reason": {
             "type": "string",
             "minLength": 1,
             "maxLength": 500
           }
         },
+        "required": [
+          "workflowId"
+        ],
         "title": "DeleteRuleWithReason",
         "description": "Soft delete request with optional reason for audit trail"
       },
