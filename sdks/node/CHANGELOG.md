@@ -1,5 +1,18 @@
 # Changelog
 
+## [0.11.0](https://github.com/kadoa-org/kadoa-sdks/compare/node-sdk-v0.10.0...node-sdk-v0.11.0) (2025-09-29)
+
+
+### Features
+
+* **node-sdk:** add extraction builder service and parallel workflow example ([a2ef3d9](https://github.com/kadoa-org/kadoa-sdks/commit/a2ef3d91fbb01166fe08997ef3da78d8d7910111))
+* **spec:** update spec fingerprint ([100820b](https://github.com/kadoa-org/kadoa-sdks/commit/100820b1d0f3280c63776eca00508b061d8c5076))
+
+
+### Miscellaneous Chores
+
+* **spec:** update OpenAPI spec ([#54](https://github.com/kadoa-org/kadoa-sdks/issues/54)) ([6e1a6a8](https://github.com/kadoa-org/kadoa-sdks/commit/6e1a6a8910c77ce1f5171e151957b89938ebbedc))
+
 ## [0.10.0](https://github.com/kadoa-org/kadoa-sdks/compare/node-sdk-v0.9.0...node-sdk-v0.10.0) (2025-09-25)
 
 
