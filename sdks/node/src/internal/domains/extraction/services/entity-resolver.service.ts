@@ -3,6 +3,7 @@ import type { KadoaClient } from "../../../../kadoa-client";
 import { KadoaSdkException } from "../../../runtime/exceptions";
 import { ERROR_MESSAGES } from "../../../runtime/exceptions/base.exception";
 import { SchemasService } from "../../schemas/schemas.service";
+import type { LocationConfig } from "../extraction.types";
 // import type { SchemaField } from "../../../../generated";
 
 // export type EntityField = SchemaField;
@@ -69,9 +70,7 @@ export interface EntityResponse {
 
 export interface EntityRequestOptions {
 	link: string;
-	location?: {
-		type: string;
-	};
+	location?: LocationConfig;
 	navigationMode?: string;
 }
 
@@ -112,7 +111,7 @@ export class EntityResolverService {
 		entityConfig: EntityConfig,
 		options?: {
 			link?: string;
-			location?: { type: string };
+			location?: LocationConfig;
 			navigationMode?: string;
 		},
 	): Promise<ResolvedEntity> {

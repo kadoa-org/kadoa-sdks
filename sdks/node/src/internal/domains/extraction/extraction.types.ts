@@ -1,13 +1,12 @@
 import type {
-	WorkflowWithCustomSchemaFieldsInnerDataTypeEnum,
-	WorkflowWithCustomSchemaIntervalEnum,
-} from "../../../generated";
-import type { V4WorkflowsWorkflowIdMetadataPutRequestMonitoring } from "../../../generated/models/v4-workflows-workflow-id-metadata-put-request-monitoring";
-import type {
+	V4WorkflowsWorkflowIdMetadataPutRequestMonitoring,
 	V4WorkflowsWorkflowIdMetadataPutRequestMonitoringFieldsInner,
 	V4WorkflowsWorkflowIdMetadataPutRequestMonitoringFieldsInnerOperatorEnum,
-} from "../../../generated/models/v4-workflows-workflow-id-metadata-put-request-monitoring-fields-inner";
-import type { WorkflowWithExistingSchemaNavigationModeEnum } from "../../../generated/models/workflow-with-existing-schema";
+	WorkflowWithCustomSchemaFieldsInnerDataTypeEnum,
+	WorkflowWithCustomSchemaIntervalEnum,
+	WorkflowWithCustomSchemaLocation,
+	WorkflowWithExistingSchemaNavigationModeEnum,
+} from "../../../generated";
 
 export type NavigationMode =
 	(typeof WorkflowWithExistingSchemaNavigationModeEnum)[keyof typeof WorkflowWithExistingSchemaNavigationModeEnum];
@@ -30,3 +29,5 @@ export type MonitoringConfig =
 	V4WorkflowsWorkflowIdMetadataPutRequestMonitoring & {
 		channels?: Array<unknown>;
 	};
+
+export type LocationConfig = WorkflowWithCustomSchemaLocation;

@@ -34,6 +34,9 @@ export function generateClient(name: string, config: GeneratorConfig): void {
 		"-o",
 		config.outputDir,
 		"--skip-validate-spec",
+		// Keep only the first tag in operations to avoid duplicate API generation
+		"--openapi-normalizer",
+		"KEEP_ONLY_FIRST_TAG_IN_OPERATION=true",
 	];
 
 	if (config.additionalProperties) {

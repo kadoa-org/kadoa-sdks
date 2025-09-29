@@ -1,6 +1,5 @@
 import type { KadoaUser } from "../internal/domains/user/user.service";
-import { UserService } from "../internal/domains/user/user.service";
-import type { KadoaClient } from "../kadoa-client";
+import type { UserService } from "../internal/domains/user/user.service";
 
 /**
  * UserModule provides user management functionality
@@ -18,11 +17,7 @@ import type { KadoaClient } from "../kadoa-client";
  * ```
  */
 export class UserModule {
-	private readonly userService: UserService;
-
-	constructor(client: KadoaClient) {
-		this.userService = new UserService(client);
-	}
+	constructor(private readonly userService: UserService) {}
 
 	/**
 	 * Get the underlying UserService instance

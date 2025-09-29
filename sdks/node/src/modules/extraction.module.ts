@@ -1,36 +1,31 @@
-import {
+import type {
 	DataFetcherService,
-	type FetchDataOptions,
-	type FetchDataResult,
+	FetchDataOptions,
+	FetchDataResult,
 } from "../internal/domains/extraction/services/data-fetcher.service";
-import {
-	type ExtractionOptions,
-	type ExtractionResult,
+import type {
 	ExtractionService,
-	type SubmitExtractionResult,
+	ExtractionOptions,
+	ExtractionResult,
+	SubmitExtractionResult,
 } from "../internal/domains/extraction/services/extraction.service";
-import { NotificationSettingsService } from "../internal/domains/notifications/notification-settings.service";
-import { NotificationChannelsService } from "../internal/domains/notifications/notification-channels.service";
-import type { KadoaClient } from "../kadoa-client";
+import type { NotificationChannelsService } from "../internal/domains/notifications/notification-channels.service";
+import type { NotificationSettingsService } from "../internal/domains/notifications/notification-settings.service";
+import type {
+	RunWorkflowInput,
+	StartedJob,
+	FinishedJob,
+} from "../internal/domains/workflows/types";
+import type { WorkflowsCoreService } from "../internal/domains/workflows/workflows-core.service";
 
-/**
- * ExtractionModule provides extraction-related functionality
- */
 export class ExtractionModule {
-	private readonly extractionService: ExtractionService;
-	private readonly dataFetcherService: DataFetcherService;
-	private readonly channelsService: NotificationChannelsService;
-	private readonly settingsService: NotificationSettingsService;
-
-	constructor(client: KadoaClient) {
-		this.extractionService = new ExtractionService(client);
-		this.dataFetcherService = new DataFetcherService(client);
-		this.channelsService = new NotificationChannelsService(
-			client,
-			client.user.service,
-		);
-		this.settingsService = new NotificationSettingsService(client);
-	}
+	constructor(
+		private readonly extractionService: ExtractionService,
+		private readonly dataFetcherService: DataFetcherService,
+		private readonly channelsService: NotificationChannelsService,
+		private readonly settingsService: NotificationSettingsService,
+		private readonly workflowsCoreService: WorkflowsCoreService,
+	) {}
 
 	/**
 	 * Run extraction workflow using dynamic entity detection
@@ -87,6 +82,32 @@ export class ExtractionModule {
 		});
 	}
 
+	/**
+	 * Run a workflow with variables and optional limit
+	 */
+	async runJob(
+		workflowId: string,
+		input: RunWorkflowInput,
+	): Promise<StartedJob> {
+		return this.workflowsCoreService.runWorkflow(workflowId, input);
+	}
+
+	/**
+	 * Run a workflow and wait for it to complete
+	 */
+	async runJobAndWait(
+		workflowId: string,
+		input: RunWorkflowInput,
+	): Promise<FinishedJob> {
+		const result = await this.workflowsCoreService.runWorkflow(
+			workflowId,
+			input,
+		);
+		return this.workflowsCoreService.waitForJobCompletion(
+			workflowId,
+			result.jobId,
+		);
+	}
 	/**
 	 * Fetch paginated data from a workflow
 	 *

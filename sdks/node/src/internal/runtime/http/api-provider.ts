@@ -13,20 +13,20 @@ export interface ApiProvider {
 	/**
 	 * Workflows API for managing extraction workflows
 	 */
-	readonly workflows: WorkflowsApiInterface;
+	readonly workflowsApi: WorkflowsApiInterface;
 
 	/**
 	 * Crawl API for crawling operations
 	 */
-	readonly crawl: CrawlerApiInterface;
+	readonly crawlApi: CrawlerApiInterface;
 
 	/**
 	 * Notifications API for managing notification channels and settings
 	 */
-	readonly notifications: NotificationsApiInterface;
+	readonly notificationsApi: NotificationsApiInterface;
 
 	/**
 	 * Workspaces API for managing workspaces, users, teams, and organizations
 	 */
-	readonly workspaces: WorkspacesApiInterface;
+	readonly workspacesApi: WorkspacesApiInterface;
 }

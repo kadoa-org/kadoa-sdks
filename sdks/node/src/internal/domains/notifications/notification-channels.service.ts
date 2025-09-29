@@ -15,7 +15,6 @@ import {
 	KadoaHttpException,
 	KadoaSdkException,
 } from "../../runtime/exceptions";
-import type { ApiProvider } from "../../runtime/http/api-provider";
 import type { UserService } from "../user/user.service";
 
 export type NotificationChannelConfig =
@@ -64,8 +63,11 @@ export class NotificationChannelsService {
 	private readonly api: NotificationsApiInterface;
 	private readonly userService: UserService;
 
-	constructor(client: ApiProvider, userService: UserService) {
-		this.api = client.notifications;
+	constructor(
+		notificationsApi: NotificationsApiInterface,
+		userService: UserService,
+	) {
+		this.api = notificationsApi;
 		this.userService = userService;
 	}
 

@@ -1,9 +1,9 @@
 import type { KadoaClient } from "../../src";
 
 export const seedWorkflow = async (
-	{ name }: { name: string },
+	{ name, runJob = false }: { name: string; runJob?: boolean },
 	client: KadoaClient,
-): Promise<{ workflowId: string; jobId: string }> => {
+): Promise<{ workflowId: string; jobId?: string }> => {
 	console.log(`[Seeder] Seeding workflow: ${name}`);
 	const existingWorkflow = await client.workflow.getByName(name);
 	if (existingWorkflow?._id && !existingWorkflow.jobId) {
@@ -18,23 +18,34 @@ export const seedWorkflow = async (
 		};
 	}
 
-	const workflow = await client.extraction.run({
-		name,
-		entity: "ai-detection",
-		urls: ["https://sandbox.kadoa.com/careers"],
-		bypassPreview: true,
-	});
+	const workflow = await client
+		.extract({
+			name,
+			entity: "ai-detection",
+			urls: ["https://sandbox.kadoa.com/careers"],
+			bypassPreview: true,
+		})
+		.create();
+
 	console.log(`[Seeder] Workflow ${name} seeded: ${workflow.workflowId}`);
-
-	const createdWorkflow = await client.workflow.getByName(name);
-	if (!createdWorkflow?._id || !createdWorkflow.jobId) {
-		throw new Error(`[Seeder] This should never happen`);
+	if (runJob) {
+		const job = await client.extraction.runJob(workflow.workflowId, {
+			limit: 10,
+		});
+		console.log(`[Seeder] Job ${name} seeded: ${job.jobId}`);
+		return {
+			workflowId: workflow.workflowId,
+			jobId: job.jobId,
+		};
+	} else {
+		const createdWorkflow = await client.workflow.getByName(name);
+		if (!createdWorkflow?._id) {
+			throw new Error(`[Seeder] This should never happen`);
+		}
+		return {
+			workflowId: createdWorkflow._id,
+		};
 	}
-
-	return {
-		workflowId: createdWorkflow._id,
-		jobId: createdWorkflow.jobId,
-	};
 };
 
 export const seedRule = async (

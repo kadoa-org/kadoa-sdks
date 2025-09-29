@@ -1,5 +1,4 @@
 import { KadoaHttpException } from "../../runtime/exceptions";
-import type { ApiProvider } from "../../runtime/http/api-provider";
 import {
 	type NotificationsApiInterface,
 	type NotificationsApiV5NotificationsSettingsGetRequest,
@@ -17,8 +16,8 @@ export type NotificationSettingsEventType =
 export class NotificationSettingsService {
 	private readonly api: NotificationsApiInterface;
 
-	constructor(client: ApiProvider) {
-		this.api = client.notifications;
+	constructor(notificationsApi: NotificationsApiInterface) {
+		this.api = notificationsApi;
 	}
 
 	async createSettings(

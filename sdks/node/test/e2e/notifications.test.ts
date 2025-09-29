@@ -16,7 +16,8 @@ describe("Notifications", () => {
 			timeout: 30000,
 		});
 
-		workflowId = await seedWorkflow({ name: "test-workflow-1" }, client);
+		const result = await seedWorkflow({ name: "test-workflow-1" }, client);
+		workflowId = result.workflowId;
 	});
 
 	beforeAll(async () => {

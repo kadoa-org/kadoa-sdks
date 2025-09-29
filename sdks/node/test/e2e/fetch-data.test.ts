@@ -3,6 +3,7 @@ import { DataFetcherService } from "../../src/internal/domains/extraction/servic
 import { getTestEnv } from "../utils/env";
 import { KadoaClient } from "../../src/kadoa-client";
 import { seedWorkflow } from "../utils/seeder";
+import { WorkflowsApi } from "../../src/generated";
 
 describe("FetchData", () => {
 	let client: KadoaClient;
@@ -13,9 +14,15 @@ describe("FetchData", () => {
 	beforeAll(async () => {
 		client = new KadoaClient({ apiKey: env.KADOA_API_KEY, timeout: 30000 });
 
-		service = new DataFetcherService(client);
+		const workflowsApi = new WorkflowsApi(
+			client.configuration,
+			client.baseUrl,
+			client.axiosInstance,
+		);
+		service = new DataFetcherService(workflowsApi);
 
-		workflowId = await seedWorkflow({ name: "test-workflow-1" }, client);
+		const result = await seedWorkflow({ name: "test-workflow-1" }, client);
+		workflowId = result.workflowId;
 	});
 
 	afterAll(() => {

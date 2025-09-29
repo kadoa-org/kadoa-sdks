@@ -1,29 +1,24 @@
 import { merge } from "es-toolkit";
-import type {
-	V4WorkflowsWorkflowIdGet200Response,
-	WorkflowWithCustomSchemaLocationTypeEnum,
-} from "../../../../generated";
-import type { KadoaClient } from "../../../../kadoa-client";
+import type { V4WorkflowsWorkflowIdGet200Response } from "../../../../generated";
 import { KadoaSdkException } from "../../../runtime/exceptions";
 import { ERROR_MESSAGES } from "../../../runtime/exceptions/base.exception";
 import type { PageInfo } from "../../../runtime/pagination";
-import { WorkflowsCoreService } from "../../workflows/workflows-core.service";
+import type { WorkflowsCoreService } from "../../workflows/workflows-core.service";
 import type {
 	MonitoringConfig,
 	NavigationMode,
+	LocationConfig,
 	WorkflowInterval,
 } from "../extraction.types";
-import { DataFetcherService } from "./data-fetcher.service";
-import {
+import type { DataFetcherService } from "./data-fetcher.service";
+import type {
 	EntityResolverService,
-	type EntityConfig,
+	EntityConfig,
 } from "./entity-resolver.service";
-import {
+import type {
 	NotificationSetupService,
-	type NotificationOptions,
+	NotificationOptions,
 } from "../../notifications/notification-setup.service";
-import { NotificationChannelsService } from "../../notifications/notification-channels.service";
-import { NotificationSettingsService } from "../../notifications/notification-settings.service";
 import { logger } from "../../../runtime/logger";
 
 const debug = logger.extraction;
@@ -34,9 +29,8 @@ export interface ExtractionOptionsInternal {
 	mode: "run" | "submit";
 	navigationMode: NavigationMode;
 	name: string;
-	location: {
-		type: WorkflowWithCustomSchemaLocationTypeEnum;
-	};
+	description?: string;
+	location: LocationConfig;
 	bypassPreview?: boolean;
 	pollingInterval: number;
 	maxWaitTime: number;
@@ -45,6 +39,7 @@ export interface ExtractionOptionsInternal {
 	monitoring?: MonitoringConfig;
 	tags?: string[];
 	notifications?: NotificationOptions;
+	autoStart?: boolean;
 }
 
 export type ExtractionOptions = {
@@ -68,34 +63,27 @@ const SUCCESSFUL_RUN_STATES = new Set(["FINISHED", "SUCCESS"]);
 
 export const DEFAULT_OPTIONS: Omit<
 	ExtractionOptionsInternal,
-	"urls" | "entity" | "fields"
+	"urls" | "entity" | "fields" | "description"
 > = {
 	mode: "run",
 	pollingInterval: 5000,
 	maxWaitTime: 300000,
-	navigationMode: "single-page" as const,
+	navigationMode: "single-page",
 	location: { type: "auto" },
 	name: "Untitled Workflow",
 	bypassPreview: true,
+	autoStart: true,
 } as const;
 /**
  * Service for managing extraction workflows and data fetching
  */
 export class ExtractionService {
-	private readonly entityResolver: EntityResolverService;
-	private readonly workflowsCoreService: WorkflowsCoreService;
-	private readonly dataFetcher: DataFetcherService;
-	private readonly notificationSetupService: NotificationSetupService;
-
-	constructor(client: KadoaClient) {
-		this.entityResolver = new EntityResolverService(client);
-		this.workflowsCoreService = new WorkflowsCoreService(client);
-		this.dataFetcher = new DataFetcherService(client);
-		this.notificationSetupService = new NotificationSetupService(
-			new NotificationChannelsService(client, client.user.service),
-			new NotificationSettingsService(client),
-		);
-	}
+	constructor(
+		private readonly workflowsCoreService: WorkflowsCoreService,
+		private readonly dataFetcherService: DataFetcherService,
+		private readonly entityResolverService: EntityResolverService,
+		private readonly notificationSetupService: NotificationSetupService,
+	) {}
 
 	/**
 	 * execute extraction workflow
@@ -112,7 +100,7 @@ export class ExtractionService {
 
 		let workflowId: string;
 
-		const resolvedEntity = await this.entityResolver.resolveEntity(
+		const resolvedEntity = await this.entityResolverService.resolveEntity(
 			options.entity || "ai-detection",
 			{
 				link: config.urls[0],
@@ -167,7 +155,7 @@ export class ExtractionService {
 		const isSuccess = this.isExtractionSuccessful(workflow.runState);
 
 		if (isSuccess) {
-			const dataPage = await this.dataFetcher.fetchData({ workflowId });
+			const dataPage = await this.dataFetcherService.fetchData({ workflowId });
 			data = dataPage.data;
 			pagination = dataPage.pagination;
 		} else {
@@ -219,7 +207,7 @@ export class ExtractionService {
 		const isSuccess = this.isExtractionSuccessful(workflow.runState);
 
 		if (isSuccess) {
-			const dataPage = await this.dataFetcher.fetchData({ workflowId });
+			const dataPage = await this.dataFetcherService.fetchData({ workflowId });
 			data = dataPage.data;
 			pagination = dataPage.pagination;
 		} else {

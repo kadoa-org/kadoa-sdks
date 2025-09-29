@@ -3889,20 +3889,22 @@
                       "format": "date-time",
                       "description": "Finish date and time of the job (if completed)"
                     },
-                    "screenshot": {
-                      "type": "string",
-                      "description": "Screenshot of the navigation during the job"
-                    },
-                    "records": {
+                    "limit": {
                       "type": "integer",
-                      "description": "Number of records processed in the job"
+                      "nullable": true,
+                      "description": "Record limit for the job"
                     },
-                    "credits": {
-                      "type": "number",
-                      "description": "Number of credits used for this job"
+                    "workflowId": {
+                      "type": "string",
+                      "description": "ID of the workflow/scraper"
+                    },
+                    "variables": {
+                      "type": "object",
+                      "description": "Job variables (optional)"
                     },
                     "protocol": {
                       "type": "object",
+                      "description": "Protocol information (optional)",
                       "properties": {
                         "decision": {
                           "type": "string",
@@ -3913,57 +3915,6 @@
                           "description": "Description why the run failed"
                         }
                       }
-                    },
-                    "errorMessage": {
-                      "type": "string",
-                      "description": "Error message if the job failed"
-                    },
-                    "screenshotLinks": {
-                      "type": "array",
-                      "items": {
-                        "type": "string"
-                      },
-                      "description": "Links to screenshots if available"
-                    },
-                    "url": {
-                      "type": "string",
-                      "description": "URL being scraped"
-                    },
-                    "limit": {
-                      "type": "integer",
-                      "description": "Record limit for the job"
-                    },
-                    "exploration": {
-                      "type": "string",
-                      "description": "Exploration mode used"
-                    },
-                    "userId": {
-                      "type": "string",
-                      "description": "ID of the user who created the job"
-                    },
-                    "scraperId": {
-                      "type": "string",
-                      "description": "ID of the scraper/workflow"
-                    },
-                    "escalatedSupport": {
-                      "type": "boolean",
-                      "description": "Whether the job was escalated to support"
-                    },
-                    "amountOfUrls": {
-                      "type": "integer",
-                      "description": "Number of URLs being processed"
-                    },
-                    "paused": {
-                      "type": "boolean",
-                      "description": "Whether the job is paused"
-                    },
-                    "userPrompt": {
-                      "type": "string",
-                      "description": "User prompt for the job"
-                    },
-                    "dataKey": {
-                      "type": "string",
-                      "description": "Key for accessing job data"
                     }
                   }
                 }
@@ -4408,10 +4359,15 @@
               "schema": {
                 "type": "object",
                 "properties": {
-                  "jobMetadata": {
+                  "variables": {
                     "type": "object",
-                    "description": "Optional metadata to attach to the job",
+                    "description": "Optional variables to pass to the workflow execution",
                     "additionalProperties": true
+                  },
+                  "limit": {
+                    "type": "number",
+                    "description": "Optional limit for the number of records to process",
+                    "example": 100
                   }
                 }
               }
@@ -4438,6 +4394,11 @@
                     "jobId": {
                       "type": "string",
                       "description": "The ID of the created job"
+                    },
+                    "status": {
+                      "type": "string",
+                      "description": "The status of the job",
+                      "example": "running"
                     }
                   }
                 }
@@ -4478,6 +4439,22 @@
                         "PIPELINE_CROWDED",
                         "USER_RATE_LIMIT"
                       ]
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal service error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "error": {
+                      "type": "string",
+                      "example": "Internal service error. Please try again later."
                     }
                   }
                 }
@@ -11795,7 +11772,6 @@
             ]
           },
           "status": {
-            "default": "enabled",
             "type": "string",
             "enum": [
               "preview",
@@ -11837,6 +11813,7 @@
         "required": [
           "id",
           "name",
+          "status",
           "createdAt",
           "updatedAt"
         ],
@@ -11950,7 +11927,6 @@
             }
           },
           "status": {
-            "default": "enabled",
             "type": "string",
             "enum": [
               "preview",

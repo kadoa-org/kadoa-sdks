@@ -1,17 +1,7 @@
 import type { AxiosInstance } from "axios";
 import axios, { AxiosError } from "axios";
 import { v4 } from "uuid";
-import {
-	Configuration,
-	CrawlerApi,
-	type CrawlerApiInterface,
-	NotificationsApi,
-	type NotificationsApiInterface,
-	WorkflowsApi,
-	type WorkflowsApiInterface,
-	WorkspacesApi,
-	type WorkspacesApiInterface,
-} from "./generated";
+import { Configuration, NotificationsApi, WorkflowsApi } from "./generated";
 import { Realtime } from "./internal/domains/realtime/realtime";
 import type { KadoaUser } from "./internal/domains/user/user.service";
 import { PUBLIC_API_URI } from "./internal/runtime/config";
@@ -19,7 +9,6 @@ import {
 	KadoaErrorCode,
 	KadoaHttpException,
 } from "./internal/runtime/exceptions";
-import type { ApiProvider } from "./internal/runtime/http/api-provider";
 import { ExtractionModule } from "./modules/extraction.module";
 import { NotificationsModule } from "./modules/notifications.module";
 import { SchemasModule } from "./modules/schemas.module";
@@ -27,6 +16,22 @@ import { UserModule } from "./modules/user.module";
 import { ValidationModule } from "./modules/validation.module";
 import { WorkflowsModule } from "./modules/workflows.module";
 import { SDK_LANGUAGE, SDK_NAME, SDK_VERSION } from "./version";
+import { UserService } from "./internal/domains/user/user.service";
+import { ExtractionService } from "./internal/domains/extraction/services/extraction.service";
+import { NotificationChannelsService } from "./internal/domains/notifications/notification-channels.service";
+import { NotificationSettingsService } from "./internal/domains/notifications/notification-settings.service";
+import { DataFetcherService } from "./internal/domains/extraction/services/data-fetcher.service";
+import { WorkflowsCoreService } from "./internal/domains/workflows/workflows-core.service";
+import { SchemasService } from "./internal/domains/schemas/schemas.service";
+import { NotificationSetupService } from "./internal/domains/notifications/notification-setup.service";
+import { ValidationCoreService } from "./internal/domains/validation/validation-core.service";
+import { ValidationRulesService } from "./internal/domains/validation/validation-rules.service";
+import { EntityResolverService } from "./internal/domains/extraction/services/entity-resolver.service";
+import {
+	ExtractionBuilderService,
+	type ExtractOptions,
+	type PreparedExtraction,
+} from "./internal/domains/extraction/services/extraction-builder.service";
 
 export interface KadoaClientStatus {
 	baseUrl: string;
@@ -52,10 +57,6 @@ export interface KadoaClientConfig {
 		/** Heartbeat interval in ms (default: 10000) */
 		heartbeatInterval?: number;
 	};
-	/**
-	 * Optional API overrides for testing
-	 */
-	apiOverrides?: Partial<ApiProvider>;
 }
 
 /**
@@ -75,22 +76,20 @@ export interface KadoaClientConfig {
  * });
  * ```
  */
-export class KadoaClient implements ApiProvider {
+export class KadoaClient {
 	private readonly _configuration: Configuration;
 	private readonly _axiosInstance: AxiosInstance;
 	private readonly _baseUrl: string;
 	private readonly _timeout: number;
 	private readonly _apiKey: string;
 
-	private readonly _workflowsApi: WorkflowsApiInterface;
-	private readonly _crawlApi: CrawlerApiInterface;
-	private readonly _notificationsApi: NotificationsApiInterface;
-	private readonly _workspacesApi: WorkspacesApiInterface;
 	private _realtime?: Realtime;
+	private _extractionBuilderService: ExtractionBuilderService;
+
 	public readonly extraction: ExtractionModule;
 	public readonly workflow: WorkflowsModule;
 	public readonly notification: NotificationsModule;
-	public readonly schemas: SchemasModule;
+	public readonly schema: SchemasModule;
 	public readonly user: UserModule;
 	public readonly validation: ValidationModule;
 
@@ -146,33 +145,68 @@ export class KadoaClient implements ApiProvider {
 			},
 		);
 
-		this._workflowsApi =
-			config.apiOverrides?.workflows ||
-			new WorkflowsApi(this._configuration, this._baseUrl, this._axiosInstance);
-		this._crawlApi =
-			config.apiOverrides?.crawl ||
-			new CrawlerApi(this._configuration, this._baseUrl, this._axiosInstance);
-		this._notificationsApi =
-			config.apiOverrides?.notifications ||
-			new NotificationsApi(
-				this._configuration,
-				this._baseUrl,
-				this._axiosInstance,
-			);
-		this._workspacesApi =
-			config.apiOverrides?.workspaces ||
-			new WorkspacesApi(
-				this._configuration,
-				this._baseUrl,
-				this._axiosInstance,
-			);
-		//todo: use proper DI container, until then, make sure that user module  as first module
-		this.user = new UserModule(this);
-		this.extraction = new ExtractionModule(this);
-		this.workflow = new WorkflowsModule(this);
-		this.schemas = new SchemasModule(this);
-		this.notification = new NotificationsModule(this);
-		this.validation = new ValidationModule(this);
+		//todo: use proper DI container,
+
+		//apis
+		const workflowsApi = new WorkflowsApi(
+			this.configuration,
+			this.baseUrl,
+			this.axiosInstance,
+		);
+
+		const notificationsApi = new NotificationsApi(
+			this.configuration,
+			this.baseUrl,
+			this.axiosInstance,
+		);
+
+		//services
+		const userService = new UserService(this);
+		const dataFetcherService = new DataFetcherService(workflowsApi);
+		const channelsService = new NotificationChannelsService(
+			notificationsApi,
+			userService,
+		);
+		const settingsService = new NotificationSettingsService(notificationsApi);
+		const entityResolverService = new EntityResolverService(this);
+		const workflowsCoreService = new WorkflowsCoreService(workflowsApi);
+		const schemasService = new SchemasService(this);
+		const channelSetupService = new NotificationSetupService(
+			channelsService,
+			settingsService,
+		);
+		const coreService = new ValidationCoreService(this);
+		const rulesService = new ValidationRulesService(this);
+		const extractionService = new ExtractionService(
+			workflowsCoreService,
+			dataFetcherService,
+			entityResolverService,
+			channelSetupService,
+		);
+		this._extractionBuilderService = new ExtractionBuilderService(
+			workflowsCoreService,
+			entityResolverService,
+			dataFetcherService,
+			channelSetupService,
+		);
+
+		//modules
+		this.user = new UserModule(userService);
+		this.extraction = new ExtractionModule(
+			extractionService,
+			dataFetcherService,
+			channelsService,
+			settingsService,
+			workflowsCoreService,
+		);
+		this.workflow = new WorkflowsModule(workflowsCoreService);
+		this.schema = new SchemasModule(schemasService);
+		this.notification = new NotificationsModule(
+			channelsService,
+			settingsService,
+			channelSetupService,
+		);
+		this.validation = new ValidationModule(coreService, rulesService);
 
 		if (config.enableRealtime && config.realtimeConfig?.autoConnect !== false) {
 			this.connectRealtime();
@@ -225,38 +259,14 @@ export class KadoaClient implements ApiProvider {
 	}
 
 	/**
-	 * Get the workflows API
-	 */
-	get workflows(): WorkflowsApiInterface {
-		return this._workflowsApi;
-	}
-
-	/**
-	 * Get the crawl API
-	 */
-	get crawl(): CrawlerApiInterface {
-		return this._crawlApi;
-	}
-
-	/**
-	 * Get the notifications API
-	 */
-	get notifications(): NotificationsApiInterface {
-		return this._notificationsApi;
-	}
-
-	/**
-	 * Get the workspaces API
-	 */
-	get workspaces(): WorkspacesApiInterface {
-		return this._workspacesApi;
-	}
-
-	/**
 	 * Get the realtime connection (if enabled)
 	 */
 	get realtime(): Realtime | undefined {
 		return this._realtime;
+	}
+
+	extract(options: ExtractOptions): PreparedExtraction {
+		return this._extractionBuilderService.extract(options);
 	}
 
 	/**

@@ -1,5 +1,4 @@
-import type { KadoaClient } from "../kadoa-client";
-import { ValidationRulesService } from "../internal/domains/validation/validation-rules.service";
+import type { ValidationRulesService } from "../internal/domains/validation/validation-rules.service";
 import type {
 	BulkApproveRulesResponseData,
 	BulkApproveRulesOptions,
@@ -14,27 +13,22 @@ import type {
 	DeleteAllRulesResponseData,
 	Rule,
 } from "../internal/domains/validation/validation-rules.service";
-import {
-	type AnomaliesByRuleResponse,
-	type ToggleResponse,
-	ValidationCoreService,
-	type WaitUntilCompletedOptions,
-} from "../internal/domains/validation/validation-core.service";
 import type {
+	AnomaliesByRuleResponse,
 	AnomalyRulePageResponse,
 	DataValidationReport,
 	ScheduleValidationResponse,
+	ToggleResponse,
+	ValidationCoreService,
 	ValidationListResponse,
-} from "../generated/models";
+	WaitUntilCompletedOptions,
+} from "../internal/domains/validation/validation-core.service";
 
 export class ValidationModule {
-	private readonly coreService: ValidationCoreService;
-	private readonly rulesService: ValidationRulesService;
-
-	constructor(client: KadoaClient) {
-		this.coreService = new ValidationCoreService(client);
-		this.rulesService = new ValidationRulesService(client);
-	}
+	constructor(
+		private readonly coreService: ValidationCoreService,
+		private readonly rulesService: ValidationRulesService,
+	) {}
 
 	listRules(options?: ListRulesOptions): Promise<RulesListResponse> {
 		return this.rulesService.listRules(options);

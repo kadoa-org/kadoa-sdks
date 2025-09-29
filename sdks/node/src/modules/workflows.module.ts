@@ -2,12 +2,16 @@ import type {
 	V4WorkflowsGet200ResponseWorkflowsInner,
 	V4WorkflowsWorkflowIdGet200Response,
 } from "../generated";
-import type { CreateWorkflowInput } from "../internal/domains/workflows/types";
-import {
-	type ListWorkflowsOptions,
+import type {
+	FinishedJob,
+	JobWaitOptions,
+	WorkflowId,
+	CreateWorkflowInput,
+} from "../internal/domains/workflows/types";
+import type {
+	ListWorkflowsOptions,
 	WorkflowsCoreService,
 } from "../internal/domains/workflows/workflows-core.service";
-import type { KadoaClient } from "../kadoa-client";
 
 export interface SubmitOptions {
 	idempotencyKey?: string;
@@ -19,16 +23,7 @@ export interface WaitOptions {
 }
 
 export class WorkflowsModule {
-	private readonly core: WorkflowsCoreService;
-
-	constructor(client: KadoaClient) {
-		this.core = new WorkflowsCoreService(client);
-	}
-
-	async submit(input: CreateWorkflowInput): Promise<{ workflowId: string }> {
-		const { id } = await this.core.create(input);
-		return { workflowId: id };
-	}
+	constructor(private readonly core: WorkflowsCoreService) {}
 
 	async get(workflowId: string): Promise<V4WorkflowsWorkflowIdGet200Response> {
 		return this.core.get(workflowId);
@@ -44,6 +39,10 @@ export class WorkflowsModule {
 		name: string,
 	): Promise<V4WorkflowsGet200ResponseWorkflowsInner | undefined> {
 		return this.core.getByName(name);
+	}
+
+	async create(input: CreateWorkflowInput): Promise<{ id: WorkflowId }> {
+		return this.core.create(input);
 	}
 
 	async cancel(workflowId: string): Promise<void> {
@@ -63,5 +62,23 @@ export class WorkflowsModule {
 		options?: WaitOptions,
 	): Promise<V4WorkflowsWorkflowIdGet200Response> {
 		return this.core.wait(workflowId, options);
+	}
+
+	/**
+	 * Get job status directly without polling workflow details
+	 */
+	async getJobStatus(workflowId: string, jobId: string): Promise<FinishedJob> {
+		return this.core.getJobStatus(workflowId, jobId);
+	}
+
+	/**
+	 * Wait for a job to complete using the job status endpoint
+	 */
+	async waitForJobCompletion(
+		workflowId: string,
+		jobId: string,
+		options?: JobWaitOptions,
+	): Promise<FinishedJob> {
+		return this.core.waitForJobCompletion(workflowId, jobId, options);
 	}
 }

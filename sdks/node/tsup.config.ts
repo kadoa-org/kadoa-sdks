@@ -14,7 +14,7 @@ export default defineConfig([
 		clean: true,
 		minify: false,
 		treeshake: true,
-		external: ["axios", "events", "ws"],
+		external: ["axios", "events", "ws", "zod"],
 		tsconfig: "tsconfig.json",
 	},
 	// Browser build

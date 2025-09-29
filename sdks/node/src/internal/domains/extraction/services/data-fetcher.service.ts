@@ -2,9 +2,9 @@ import type {
 	V4WorkflowsWorkflowIdDataGet200Response,
 	V4WorkflowsWorkflowIdDataGet200ResponsePagination,
 	V4WorkflowsWorkflowIdDataGetOrderEnum,
+	WorkflowsApiInterface,
 	WorkflowsApiV4WorkflowsWorkflowIdDataGetRequest,
 } from "../../../../generated";
-import type { KadoaClient } from "../../../../kadoa-client";
 import { PagedIterator, type PagedResponse } from "../../../runtime/pagination";
 
 export type DataPagination = V4WorkflowsWorkflowIdDataGet200ResponsePagination;
@@ -38,13 +38,13 @@ export type FetchDataOptions = Partial<
 export class DataFetcherService {
 	private readonly defaultLimit = 100;
 
-	constructor(private readonly client: KadoaClient) {}
+	constructor(private readonly workflowsApi: WorkflowsApiInterface) {}
 
 	/**
 	 * Fetch a page of workflow data
 	 */
 	async fetchData(options: FetchDataOptions): Promise<FetchDataResult> {
-		const response = await this.client.workflows.v4WorkflowsWorkflowIdDataGet({
+		const response = await this.workflowsApi.v4WorkflowsWorkflowIdDataGet({
 			...options,
 			page: options.page ?? 1,
 			limit: options.limit ?? this.defaultLimit,

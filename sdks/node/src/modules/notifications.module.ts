@@ -1,17 +1,16 @@
-import { NotificationChannelsService } from "../internal/domains/notifications/notification-channels.service";
-import {
-	type NotificationSetupRequestChannels,
+import type { NotificationChannelsService } from "../internal/domains/notifications/notification-channels.service";
+import type {
+	NotificationSetupRequestChannels,
 	NotificationSetupService,
 } from "../internal/domains/notifications/notification-setup.service";
-import {
-	type NotificationSettingsEventType,
+import type {
+	NotificationSettingsEventType,
 	NotificationSettingsService,
 } from "../internal/domains/notifications/notification-settings.service";
 import {
 	KadoaErrorCode,
 	KadoaSdkException,
 } from "../internal/runtime/exceptions";
-import type { KadoaClient } from "../kadoa-client";
 
 export interface SetupWorkspaceNotificationSettingsRequest {
 	events: NotificationSettingsEventType[] | "all";
@@ -24,21 +23,11 @@ export interface SetupWorkflowNotificationSettingsRequest
 }
 
 export class NotificationsModule {
-	private readonly channelsService: NotificationChannelsService;
-	private readonly channelSetupService: NotificationSetupService;
-	private readonly settingsService: NotificationSettingsService;
-
-	constructor(client: KadoaClient) {
-		this.channelsService = new NotificationChannelsService(
-			client,
-			client.user.service,
-		);
-		this.settingsService = new NotificationSettingsService(client);
-		this.channelSetupService = new NotificationSetupService(
-			this.channelsService,
-			this.settingsService,
-		);
-	}
+	constructor(
+		private readonly channelsService: NotificationChannelsService,
+		private readonly settingsService: NotificationSettingsService,
+		private readonly channelSetupService: NotificationSetupService,
+	) {}
 
 	async setupForWorkflow(
 		requestData: SetupWorkflowNotificationSettingsRequest,

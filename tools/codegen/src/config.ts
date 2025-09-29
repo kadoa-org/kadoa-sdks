@@ -29,7 +29,6 @@ export const GENERATORS: Record<string, GeneratorConfig> = {
 			apiPackage: "api",
 			modelPackage: "models",
 			withNodeImports: false, // Changed to false for browser compatibility
-			generateSourceCodeOnly: true,
 		},
 	},
 	python: {
