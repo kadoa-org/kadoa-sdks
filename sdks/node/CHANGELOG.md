@@ -1,5 +1,14 @@
 # Changelog
 
+## [0.11.1](https://github.com/kadoa-org/kadoa-sdks/compare/node-sdk-v0.11.0...node-sdk-v0.11.1) (2025-10-03)
+
+
+### Miscellaneous Chores
+
+* **deps-dev:** bump @types/node in /sdks/node in the development group ([#65](https://github.com/kadoa-org/kadoa-sdks/issues/65)) ([b81b410](https://github.com/kadoa-org/kadoa-sdks/commit/b81b41002512beed3bad3b4d0f2683c054e3c5f7))
+* **deps-dev:** bump the development group across 1 directory with 2 updates ([#63](https://github.com/kadoa-org/kadoa-sdks/issues/63)) ([bb15c9a](https://github.com/kadoa-org/kadoa-sdks/commit/bb15c9a42edad7164c9d681f5d1b1a1d98eddc9b))
+* **spec:** update OpenAPI spec ([#66](https://github.com/kadoa-org/kadoa-sdks/issues/66)) ([ab44f94](https://github.com/kadoa-org/kadoa-sdks/commit/ab44f946ba0e6da9f5ffc383eaeedcb4fe932bc9))
+
 ## [0.11.0](https://github.com/kadoa-org/kadoa-sdks/compare/node-sdk-v0.10.0...node-sdk-v0.11.0) (2025-09-29)
 
 
