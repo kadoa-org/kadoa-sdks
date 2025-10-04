@@ -14676,6 +14676,7 @@
             "description": "List of URLs to scrape"
           },
           "navigationMode": {
+            "default": "single-page",
             "type": "string",
             "enum": [
               "single-page",
@@ -14773,7 +14774,6 @@
         },
         "required": [
           "urls",
-          "navigationMode",
           "schemaId"
         ],
         "title": "CreateWorkflowWithSchemaBody",
@@ -14792,6 +14792,7 @@
             "description": "List of URLs to scrape"
           },
           "navigationMode": {
+            "default": "single-page",
             "type": "string",
             "enum": [
               "single-page",
@@ -14912,7 +14913,6 @@
         },
         "required": [
           "urls",
-          "navigationMode",
           "entity",
           "fields"
         ],
