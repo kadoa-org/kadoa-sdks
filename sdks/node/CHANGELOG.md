@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.12.1](https://github.com/kadoa-org/kadoa-sdks/compare/node-sdk-v0.12.0...node-sdk-v0.12.1) (2025-10-05)
+
+
+### Documentation
+
+* **node-sdk:** update README with builder API documentation ([96b377f](https://github.com/kadoa-org/kadoa-sdks/commit/96b377fce677a37b56bb2410313b705d91f2c178))
+
 ## [0.12.0](https://github.com/kadoa-org/kadoa-sdks/compare/node-sdk-v0.11.0...node-sdk-v0.12.0) (2025-10-05)
 
 
