@@ -13923,7 +13923,16 @@
               "IMAGE",
               "LINK",
               "OBJECT",
-              "ARRAY"
+              "ARRAY",
+              "JOB_DESCRIPTION",
+              "CATEGORY_JOB_TYPES",
+              "CLASSIFICATION",
+              "CATEGORIZE",
+              "STATIC_SCRAPER_DATA",
+              "UNIQUE_ID",
+              "JOBBIRD_CUSTOM",
+              "PASS",
+              "ADDITIONAL_DATA"
             ],
             "description": "Data type of the field"
           },
@@ -14676,6 +14685,7 @@
             "description": "List of URLs to scrape"
           },
           "navigationMode": {
+            "default": "single-page",
             "type": "string",
             "enum": [
               "single-page",
@@ -14773,7 +14783,6 @@
         },
         "required": [
           "urls",
-          "navigationMode",
           "schemaId"
         ],
         "title": "CreateWorkflowWithSchemaBody",
@@ -14792,6 +14801,7 @@
             "description": "List of URLs to scrape"
           },
           "navigationMode": {
+            "default": "single-page",
             "type": "string",
             "enum": [
               "single-page",
@@ -14912,7 +14922,6 @@
         },
         "required": [
           "urls",
-          "navigationMode",
           "entity",
           "fields"
         ],
