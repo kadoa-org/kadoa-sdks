@@ -99,9 +99,9 @@ describe("Data Validation Rules", () => {
 	});
 
 	//todo: uncomment this when API is updated
-	test.skip("should delete all rules", async () => {
-		const result = await client.validation.deleteAllRules({
-			// workflowId,
-		});
-	});
+	// test.skip("should delete all rules", async () => {
+	// 	const result = await client.validation.deleteAllRules({
+	// 		// workflowId,
+	// 	});
+	// });
 });

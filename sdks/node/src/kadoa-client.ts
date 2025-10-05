@@ -265,6 +265,41 @@ export class KadoaClient {
 		return this._realtime;
 	}
 
+	/**
+	 * Create a prepared extraction using the fluent builder API
+	 *
+	 * @param options - Extraction options including URLs and optional extraction builder
+	 * @returns PreparedExtraction that can be configured with notifications, monitoring, etc.
+	 *
+	 * @example Auto-detection
+	 * ```typescript
+	 * const extraction = await client.extract({
+	 *   urls: ["https://example.com"],
+	 *   name: "My Extraction"
+	 * }).create();
+	 * ```
+	 *
+	 * @example Raw extraction
+	 * ```typescript
+	 * const extraction = await client.extract({
+	 *   urls: ["https://example.com"],
+	 *   name: "My Extraction",
+	 *   extraction: builder => builder.raw("markdown")
+	 * }).create();
+	 * ```
+	 *
+	 * @example Custom schema
+	 * ```typescript
+	 * const extraction = await client.extract({
+	 *   urls: ["https://example.com"],
+	 *   name: "My Extraction",
+	 *   extraction: builder => builder
+	 *     .schema("Product")
+	 *     .field("title", "Product name", "STRING", { example: "Example" })
+	 *     .field("price", "Product price", "CURRENCY")
+	 * }).create();
+	 * ```
+	 */
 	extract(options: ExtractOptions): PreparedExtraction {
 		return this._extractionBuilderService.extract(options);
 	}

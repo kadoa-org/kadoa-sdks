@@ -1,19 +1,19 @@
 import type {
+	Location,
+	MonitoringConfig,
 	V4WorkflowsGet200ResponseWorkflowsInnerDisplayStateEnum,
 	V4WorkflowsGet200ResponseWorkflowsInnerStateEnum,
 	V4WorkflowsWorkflowIdJobsJobIdGet200Response,
 	V4WorkflowsWorkflowIdJobsJobIdGet200ResponseStateEnum,
-	WorkflowWithCustomSchemaLocation,
 } from "../../../generated";
 import type { SchemaField } from "../extraction/services/entity-resolver.service";
 import type {
-	MonitoringConfig,
 	NavigationMode,
 	WorkflowInterval,
 } from "../extraction/extraction.types";
 import type { PollingOptions } from "../../runtime/utils";
 
-export type LocationConfig = WorkflowWithCustomSchemaLocation;
+export type LocationConfig = Location;
 export type WorkflowId = string;
 
 export type WorkflowStateEnum =
@@ -34,8 +34,8 @@ export interface CreateWorkflowInput {
 	name: string;
 	description?: string;
 	schemaId?: string;
-	entity?: string;
-	fields?: Array<SchemaField>;
+	entity: string;
+	fields: Array<SchemaField>;
 	tags?: string[];
 	interval?: WorkflowInterval;
 	monitoring?: MonitoringConfig;

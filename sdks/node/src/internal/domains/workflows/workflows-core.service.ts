@@ -1,6 +1,7 @@
 import type {
+	CreateWorkflowWithCustomSchemaBody,
+	CreateWorkflowWithSchemaBody,
 	V4WorkflowsGet200ResponseWorkflowsInner,
-	V4WorkflowsPostRequest,
 	V4WorkflowsWorkflowIdGet200Response,
 	WorkflowsApiInterface,
 	WorkflowsApiV4WorkflowsGetRequest,
@@ -39,14 +40,16 @@ export class WorkflowsCoreService {
 	constructor(private readonly workflowsApi: WorkflowsApiInterface) {}
 
 	async create(input: CreateWorkflowInput): Promise<{ id: WorkflowId }> {
-		const request: V4WorkflowsPostRequest = {
+		const request:
+			| CreateWorkflowWithSchemaBody
+			| CreateWorkflowWithCustomSchemaBody = {
 			urls: input.urls,
 			name: input.name,
 			schemaId: input.schemaId,
 			description: input.description,
 			navigationMode: input.navigationMode,
 			entity: input.entity,
-			fields: input.fields as any, //todo: fix this
+			fields: input.fields,
 			bypassPreview: input.bypassPreview ?? true,
 			tags: input.tags,
 			interval: input.interval,
@@ -57,7 +60,7 @@ export class WorkflowsCoreService {
 		};
 
 		const response = await this.workflowsApi.v4WorkflowsPost({
-			v4WorkflowsPostRequest: request,
+			createWorkflowBody: request,
 		});
 		const workflowId = response.data?.workflowId;
 

@@ -1,11 +1,13 @@
 import { merge } from "es-toolkit";
-import type { V4WorkflowsWorkflowIdGet200Response } from "../../../../generated";
+import type {
+	MonitoringConfig,
+	V4WorkflowsWorkflowIdGet200Response,
+} from "../../../../generated";
 import { KadoaSdkException } from "../../../runtime/exceptions";
 import { ERROR_MESSAGES } from "../../../runtime/exceptions/base.exception";
 import type { PageInfo } from "../../../runtime/pagination";
 import type { WorkflowsCoreService } from "../../workflows/workflows-core.service";
 import type {
-	MonitoringConfig,
 	NavigationMode,
 	LocationConfig,
 	WorkflowInterval,
@@ -114,13 +116,7 @@ export class ExtractionService {
 		const result = await this.workflowsCoreService.create({
 			...config,
 			entity: resolvedEntity.entity,
-			fields: resolvedEntity.fields.map((field) => ({
-				name: field.name,
-				description: field.description,
-				example: field.example,
-				// todo: there is missmatch in kadoa-api so we need to cast
-				dataType: field.dataType,
-			})),
+			fields: resolvedEntity.fields,
 		});
 		workflowId = result.id;
 

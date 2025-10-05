@@ -1,21 +1,20 @@
 import type {
-	V4WorkflowsWorkflowIdMetadataPutRequestMonitoring,
 	V4WorkflowsWorkflowIdMetadataPutRequestMonitoringFieldsInner,
 	V4WorkflowsWorkflowIdMetadataPutRequestMonitoringFieldsInnerOperatorEnum,
-	WorkflowWithCustomSchemaFieldsInnerDataTypeEnum,
-	WorkflowWithCustomSchemaIntervalEnum,
-	WorkflowWithCustomSchemaLocation,
-	WorkflowWithExistingSchemaNavigationModeEnum,
+	ExtractionSchemaFieldDataTypeEnum,
+	CreateWorkflowWithSchemaBodyIntervalEnum,
+	CreateWorkflowWithSchemaBodyNavigationModeEnum,
+	Location,
 } from "../../../generated";
 
 export type NavigationMode =
-	(typeof WorkflowWithExistingSchemaNavigationModeEnum)[keyof typeof WorkflowWithExistingSchemaNavigationModeEnum];
+	(typeof CreateWorkflowWithSchemaBodyNavigationModeEnum)[keyof typeof CreateWorkflowWithSchemaBodyNavigationModeEnum];
 
 export type EntityFieldDataType =
-	(typeof WorkflowWithCustomSchemaFieldsInnerDataTypeEnum)[keyof typeof WorkflowWithCustomSchemaFieldsInnerDataTypeEnum];
+	(typeof ExtractionSchemaFieldDataTypeEnum)[keyof typeof ExtractionSchemaFieldDataTypeEnum];
 
 export type WorkflowInterval =
-	(typeof WorkflowWithCustomSchemaIntervalEnum)[keyof typeof WorkflowWithCustomSchemaIntervalEnum];
+	(typeof CreateWorkflowWithSchemaBodyIntervalEnum)[keyof typeof CreateWorkflowWithSchemaBodyIntervalEnum];
 
 export type MonitoringOperator =
 	(typeof V4WorkflowsWorkflowIdMetadataPutRequestMonitoringFieldsInnerOperatorEnum)[keyof typeof V4WorkflowsWorkflowIdMetadataPutRequestMonitoringFieldsInnerOperatorEnum];
@@ -25,9 +24,4 @@ export type MonitoringField =
 		isKeyField?: boolean;
 	};
 
-export type MonitoringConfig =
-	V4WorkflowsWorkflowIdMetadataPutRequestMonitoring & {
-		channels?: Array<unknown>;
-	};
-
-export type LocationConfig = WorkflowWithCustomSchemaLocation;
+export type LocationConfig = Location;

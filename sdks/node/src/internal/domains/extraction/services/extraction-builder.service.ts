@@ -1,7 +1,6 @@
 import assert from "node:assert";
 import type { WorkflowsCoreService } from "../../workflows/workflows-core.service";
 import type {
-	MonitoringConfig,
 	NavigationMode,
 	LocationConfig,
 	WorkflowInterval,
@@ -20,6 +19,10 @@ import type {
 	NotificationSetupService,
 	NotificationOptions,
 } from "../../notifications/notification-setup.service";
+import { ExtractionBuilder } from "../builders/extraction-builder";
+import type { MonitoringConfig } from "../../../../generated";
+import { KadoaSdkException } from "../../../runtime/exceptions";
+import { ERROR_MESSAGES } from "../../../runtime/exceptions/base.exception";
 
 const debug = logger.extraction;
 
@@ -38,7 +41,17 @@ export interface ExtractOptionsInternal {
 export interface ExtractOptions
 	extends Omit<ExtractOptionsInternal, "navigationMode" | "entity"> {
 	navigationMode?: NavigationMode;
-	entity?: EntityConfig;
+	/**
+	 * Extraction configuration builder function
+	 * @example
+	 * ```typescript
+	 * extraction: builder => builder
+	 *   .schema("Product")
+	 *   .field("title", "Product name", "STRING", { example: "Example Product" })
+	 *   .field("price", "Product price", "CURRENCY")
+	 * ```
+	 */
+	extraction?: (builder: ExtractionBuilder) => ExtractionBuilder;
 }
 
 export interface PreparedExtraction {
@@ -128,14 +141,38 @@ export class ExtractionBuilderService {
 		name,
 		description,
 		navigationMode,
-		entity,
+		extraction,
 	}: ExtractOptions): PreparedExtraction {
+		// Convert builder to EntityConfig
+		let entity: EntityConfig = "ai-detection";
+
+		if (extraction) {
+			const builder = extraction(new ExtractionBuilder());
+			const schemaId = builder.getSchemaId();
+			const schemaName = builder.getSchemaName();
+			const fields = builder.getFields();
+
+			if (schemaId) {
+				// Using existing schema
+				entity = { schemId: schemaId };
+			} else if (schemaName && fields.length > 0) {
+				// Custom schema with fields
+				entity = { name: schemaName, fields };
+			} else if (fields.length > 0 && !schemaName) {
+				// Raw extraction only (no schema name, just raw fields)
+				entity = { name: "RawExtraction", fields };
+			} else {
+				// Empty builder - fall back to AI detection
+				entity = "ai-detection";
+			}
+		}
+
 		this._options = {
 			urls,
 			name,
 			description,
 			navigationMode: navigationMode || "single-page",
-			entity: entity || "ai-detection",
+			entity,
 			bypassPreview: false,
 		};
 		return this;
@@ -190,6 +227,14 @@ export class ExtractionBuilderService {
 						location: this._options.location,
 						navigationMode,
 					});
+
+		if (!resolvedEntity) {
+			throw new KadoaSdkException(ERROR_MESSAGES.ENTITY_FETCH_FAILED, {
+				code: "VALIDATION_ERROR",
+				details: { entity },
+			});
+		}
+
 		const workflow = await this.workflowsCoreService.create({
 			urls,
 			name,
@@ -200,8 +245,8 @@ export class ExtractionBuilderService {
 				typeof entity === "object" && "schemId" in entity
 					? entity.schemId
 					: undefined,
-			entity: resolvedEntity?.entity,
-			fields: resolvedEntity?.fields,
+			entity: resolvedEntity.entity,
+			fields: resolvedEntity.fields,
 			autoStart: false,
 			interval: this._options.interval,
 			schedules: this._options.schedules,

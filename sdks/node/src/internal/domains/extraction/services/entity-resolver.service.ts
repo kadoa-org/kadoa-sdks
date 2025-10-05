@@ -4,53 +4,19 @@ import { KadoaSdkException } from "../../../runtime/exceptions";
 import { ERROR_MESSAGES } from "../../../runtime/exceptions/base.exception";
 import { SchemasService } from "../../schemas/schemas.service";
 import type { LocationConfig } from "../extraction.types";
-// import type { SchemaField } from "../../../../generated";
+import type {
+	ExtractionClassificationField,
+	ExtractionMetadataField,
+	ExtractionSchemaField,
+	ExtractionSchemaFieldDataTypeEnum,
+} from "../../../../generated";
 
-// export type EntityField = SchemaField;
-//todo: I wa not able to creat proper openapi documenation using swagger-js so I have to do this manually until migration to ts-rest
-export const SchemaFieldDataTypeEnum = {
-	String: "STRING",
-	Number: "NUMBER",
-	Boolean: "BOOLEAN",
-	Date: "DATE",
-	Datetime: "DATETIME",
-	Currency: "CURRENCY",
-	Money: "MONEY",
-	Location: "LOCATION",
-	Html: "HTML",
-	Markdown: "MARKDOWN",
-	Image: "IMAGE",
-	Link: "LINK",
-	Object: "OBJECT",
-	Array: "ARRAY",
-} as const;
+export type SchemaFieldDataTypeEnum = ExtractionSchemaFieldDataTypeEnum;
 
-export interface SchemaField {
-	/**
-	 * Field name
-	 * @type {string}
-	 * @memberof SchemaField
-	 */
-	name: string;
-	/**
-	 * Field description
-	 * @type {string}
-	 * @memberof SchemaField
-	 */
-	description: string;
-	/**
-	 * Example value for the field
-	 * @type {string}
-	 * @memberof SchemaField
-	 */
-	example: string;
-	/**
-	 * Data type of the field
-	 * @type {string}
-	 * @memberof SchemaField
-	 */
-	dataType: (typeof SchemaFieldDataTypeEnum)[keyof typeof SchemaFieldDataTypeEnum];
-}
+export type SchemaField =
+	| ExtractionSchemaField
+	| ExtractionClassificationField
+	| ExtractionMetadataField;
 
 export interface EntityPrediction {
 	entity: string;

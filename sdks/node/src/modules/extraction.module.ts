@@ -33,7 +33,15 @@ export class ExtractionModule {
 	 * @param options Extraction configuration options including optional notification settings
 	 * @returns ExtractionResult containing workflow ID, workflow details, and first page of extracted data
 	 *
-	 * @example
+	 * @example Simple extraction with AI detection
+	 * ```typescript
+	 * const result = await client.extraction.run({
+	 *   urls: ['https://example.com'],
+	 *   name: 'My Extraction'
+	 * });
+	 * ```
+	 *
+	 * @example With notifications
 	 * ```typescript
 	 * const result = await client.extraction.run({
 	 *   urls: ['https://example.com'],
@@ -47,6 +55,8 @@ export class ExtractionModule {
 	 *   }
 	 * });
 	 * ```
+	 *
+	 * @see {@link KadoaClient.extract} For more flexible extraction configuration using the builder API
 	 */
 	async run(options: ExtractionOptions): Promise<ExtractionResult> {
 		return await this.extractionService.executeExtraction({
@@ -74,6 +84,8 @@ export class ExtractionModule {
 	 *   }
 	 * });
 	 * ```
+	 *
+	 * @see {@link KadoaClient.extract} For more flexible extraction configuration using the builder API
 	 */
 	async submit(options: ExtractionOptions): Promise<SubmitExtractionResult> {
 		return await this.extractionService.executeExtraction({
