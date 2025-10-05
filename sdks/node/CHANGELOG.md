@@ -1,5 +1,20 @@
 # Changelog
 
+## [0.12.0](https://github.com/kadoa-org/kadoa-sdks/compare/node-sdk-v0.11.0...node-sdk-v0.12.0) (2025-10-05)
+
+
+### Features
+
+* **node-sdk:** add fluent builder API for extraction configuration ([80d9596](https://github.com/kadoa-org/kadoa-sdks/commit/80d9596fb403816b39e8114c3af2a726e44fbac8))
+
+
+### Miscellaneous Chores
+
+* **deps-dev:** bump @types/node in /sdks/node in the development group ([#65](https://github.com/kadoa-org/kadoa-sdks/issues/65)) ([b81b410](https://github.com/kadoa-org/kadoa-sdks/commit/b81b41002512beed3bad3b4d0f2683c054e3c5f7))
+* **deps-dev:** bump the development group across 1 directory with 2 updates ([#63](https://github.com/kadoa-org/kadoa-sdks/issues/63)) ([bb15c9a](https://github.com/kadoa-org/kadoa-sdks/commit/bb15c9a42edad7164c9d681f5d1b1a1d98eddc9b))
+* **spec:** update OpenAPI spec ([#66](https://github.com/kadoa-org/kadoa-sdks/issues/66)) ([ab44f94](https://github.com/kadoa-org/kadoa-sdks/commit/ab44f946ba0e6da9f5ffc383eaeedcb4fe932bc9))
+* **spec:** update OpenAPI spec ([#67](https://github.com/kadoa-org/kadoa-sdks/issues/67)) ([af0d253](https://github.com/kadoa-org/kadoa-sdks/commit/af0d253b6a73fd5f498dd870c533e6e24190180c))
+
 ## [0.11.0](https://github.com/kadoa-org/kadoa-sdks/compare/node-sdk-v0.10.0...node-sdk-v0.11.0) (2025-09-29)
 
 
