@@ -12,65 +12,245 @@ yarn add @kadoa/node-sdk
 pnpm add @kadoa/node-sdk
 ```
 
-
 ## Quick Start
 
 ```typescript
 import { KadoaClient } from '@kadoa/node-sdk';
 
-// Initialize the client
 const client = new KadoaClient({
   apiKey: 'your-api-key'
 });
 
-// Run an extraction
+// AI automatically detects and extracts data
 const result = await client.extraction.run({
-  urls: ['https://example.com'],
-  name: 'My Extraction Workflow'
+  urls: ['https://example.com/products'],
+  name: 'Product Extraction'
 });
 
-if (result) {
-  console.log(`Workflow created with ID: ${result.workflowId}`);
+console.log(`Extracted ${result.data?.length} items`);
+// Output: Extracted 25 items
+```
+
+## Extraction Methods
+
+### Auto-Detection
+
+The simplest way to extract data - AI automatically detects structured content:
+
+```typescript
+const result = await client.extraction.run({
+  urls: ['https://example.com'],
+  name: 'My Extraction'
+});
+
+// Returns:
+// {
+//   workflowId: "abc123",
+//   workflow: { id: "abc123", state: "FINISHED", ... },
+//   data: [
+//     { title: "Item 1", price: "$10" },
+//     { title: "Item 2", price: "$20" }
+//   ],
+//   pagination: { page: 1, totalPages: 3, hasMore: true }
+// }
+```
+
+**When to use:** Quick extractions, exploratory data gathering, or when you don't know the exact schema.
+
+### Builder API (Custom Schemas)
+
+Define exactly what data you want to extract using the fluent builder pattern:
+
+```typescript
+const extraction = await client.extract({
+  urls: ['https://example.com/products'],
+  name: 'Product Extraction',
+  extraction: builder => builder
+    .schema('Product')
+    .field('title', 'Product name', 'STRING', { example: 'Laptop' })
+    .field('price', 'Product price', 'CURRENCY')
+    .field('inStock', 'Stock status', 'BOOLEAN')
+    .field('rating', 'Star rating', 'NUMBER')
+}).create();
+
+// Run extraction
+const result = await extraction.run();
+const data = await result.fetchData({});
+
+// Returns:
+// {
+//   data: [
+//     { title: "Dell XPS", price: "$999", inStock: true, rating: 4.5 },
+//     { title: "MacBook", price: "$1299", inStock: false, rating: 4.8 }
+//   ],
+//   pagination: { ... }
+// }
+```
+
+**When to use:** Production applications, consistent schema requirements, data validation needs.
+
+#### Builder Patterns
+
+**Raw Content Extraction**
+
+Extract page content without structure transformation:
+
+```typescript
+// Single format
+extraction: builder => builder.raw('markdown')
+
+// Multiple formats
+extraction: builder => builder.raw(['html', 'markdown', 'url'])
+```
+
+**Classification Fields**
+
+Categorize content into predefined labels:
+
+```typescript
+extraction: builder => builder
+  .schema('Article')
+  .classify('sentiment', 'Content sentiment', [
+    { title: 'Positive', definition: 'Optimistic or favorable tone' },
+    { title: 'Negative', definition: 'Critical or unfavorable tone' },
+    { title: 'Neutral', definition: 'Balanced or objective tone' }
+  ])
+```
+
+**Hybrid Extraction**
+
+Combine structured fields with raw content:
+
+```typescript
+extraction: builder => builder
+  .schema('Product')
+  .field('title', 'Product name', 'STRING', { example: 'Item' })
+  .field('price', 'Product price', 'CURRENCY')
+  .raw('html')  // Include raw HTML alongside structured fields
+```
+
+**Reference Existing Schema**
+
+Reuse a previously defined schema:
+
+```typescript
+extraction: builder => builder.useSchema('schema-id-123')
+```
+
+### Working with Results
+
+**Fetch Specific Page**
+
+```typescript
+const page = await client.extraction.fetchData({
+  workflowId: 'workflow-id',
+  page: 2,
+  limit: 50
+});
+```
+
+**Iterate Through All Pages**
+
+```typescript
+for await (const page of client.extraction.fetchDataPages({
+  workflowId: 'workflow-id'
+})) {
+  console.log(`Processing ${page.data.length} items`);
+  // Process page.data
 }
+```
+
+**Fetch All Data at Once**
+
+```typescript
+const allData = await client.extraction.fetchAllData({
+  workflowId: 'workflow-id'
+});
+
+console.log(`Total items: ${allData.length}`);
+```
+
+### Advanced Workflow Control
+
+For scheduled extractions, monitoring, and notifications:
+
+```typescript
+const extraction = await client.extract({
+  urls: ['https://example.com'],
+  name: 'Scheduled Extraction',
+  extraction: builder => builder
+    .schema('Product')
+    .field('title', 'Product name', 'STRING', { example: 'Item' })
+    .field('price', 'Price', 'CURRENCY')
+})
+.setInterval({ interval: 'DAILY' })  // Schedule: HOURLY, DAILY, WEEKLY, MONTHLY
+.withNotifications({
+  events: 'all',
+  channels: { WEBSOCKET: true }
+})
+.bypassPreview()  // Skip approval step
+.create();
+
+const result = await extraction.run();
+```
+
+## Data Validation
+
+Kadoa can automatically suggest validation rules and detect anomalies:
+
+```typescript
+import { KadoaClient, pollUntil } from '@kadoa/node-sdk';
+
+const client = new KadoaClient({ apiKey: 'your-api-key' });
+
+// 1. Run extraction
+const result = await client.extraction.run({
+  urls: ['https://example.com']
+});
+
+// 2. Wait for AI-suggested validation rules
+const rules = await pollUntil(
+  async () => await client.validation.listRules({
+    workflowId: result.workflowId
+  }),
+  (result) => result.data.length > 0,
+  { pollIntervalMs: 1000, timeoutMs: 30000 }
+);
+
+// 3. Approve and run validation
+await client.validation.bulkApproveRules({
+  workflowId: result.workflowId,
+  ruleIds: rules.result.data.map(r => r.id)
+});
+
+const validation = await client.validation.scheduleValidation(
+  result.workflowId,
+  result.workflow?.jobId || ''
+);
+
+// 4. Check for anomalies
+const completed = await client.validation.waitUntilCompleted(
+  validation.validationId
+);
+const anomalies = await client.validation.getValidationAnomalies(
+  validation.validationId
+);
+
+console.log(`Found ${anomalies.length} anomalies`);
 ```
 
 ## Configuration
 
-### Basic Configuration
+### Basic Setup
 
 ```typescript
 const client = new KadoaClient({
   apiKey: 'your-api-key',
-  baseUrl: 'https://api.kadoa.com', // optional
-  timeout: 30000                    // optional, in ms
+  timeout: 30000  // optional, in ms
 });
 ```
 
-### Realtime Configuration
-
-To enable WebSocket connections for realtime events, use a team API key (starting with `tk-`):
-
-```typescript
-const client = new KadoaClient({
-  apiKey: 'tk-your-team-api-key',  // Must be a team API key
-  enableRealtime: true,
-  realtimeConfig: {
-    autoConnect: true,      // optional, default: true
-    reconnectDelay: 5000,   // optional, default: 5000ms
-    heartbeatInterval: 10000 // optional, default: 10000ms
-  }
-});
-```
-
-### Using Environment Variables
-
-```env
-KADOA_API_KEY=your-api-key
-KADOA_TEAM_API_KEY=tk-your-team-api-key  # For realtime features (optional)
-KADOA_PUBLIC_API_URI=https://api.kadoa.com
-KADOA_TIMEOUT=30000
-DEBUG=kadoa:*  # Enable all SDK debug logs (optional)
-```
+### Environment Variables
 
 ```typescript
 import { KadoaClient } from '@kadoa/node-sdk';
@@ -79,38 +259,13 @@ import { config } from 'dotenv';
 config();
 
 const client = new KadoaClient({
-  apiKey: process.env.KADOA_API_KEY!,
-  baseUrl: process.env.KADOA_PUBLIC_API_URI,
-  timeout: parseInt(process.env.KADOA_TIMEOUT || '30000')
+  apiKey: process.env.KADOA_API_KEY!
 });
 ```
 
-## Event Handling
+### WebSocket & Realtime Events
 
-```typescript
-const client = new KadoaClient({ apiKey: 'your-api-key' });
-
-// Listen to events
-client.onEvent((event) => {
-  console.log('Event:', event);
-});
-
-// Event types:
-// - entity:detected
-// - extraction:started
-// - extraction:status_changed
-// - extraction:data_available
-// - extraction:completed
-// - realtime:connected (when WebSocket enabled)
-// - realtime:disconnected
-// - realtime:event
-// - realtime:heartbeat
-// - realtime:error
-```
-
-### Realtime Events
-
-When realtime is enabled with a team API key:
+Enable realtime notifications using a team API key (starts with `tk-`):
 
 ```typescript
 const client = new KadoaClient({
@@ -118,203 +273,85 @@ const client = new KadoaClient({
   enableRealtime: true
 });
 
-// Listen to realtime events
-client.onEvent((event) => {
-  if (event.type === 'realtime:event') {
-    console.log('Received realtime data:', event.payload.data);
-  }
+// Listen to events
+client.realtime?.onEvent((event) => {
+  console.log('Event:', event);
 });
 
-// Manual connection control
-const realtime = client.connectRealtime();
-
-// Check connection status
-if (client.isRealtimeConnected()) {
-  console.log('Connected to realtime server');
-}
-
-// Disconnect when done
-client.disconnectRealtime();
+// Use with extractions
+const extraction = await client.extract({
+  urls: ['https://example.com'],
+  name: 'Monitored Extraction',
+  extraction: builder => builder.raw('markdown')
+})
+.withNotifications({
+  events: 'all',
+  channels: { WEBSOCKET: true }
+})
+.create();
 ```
 
-## Debug Logging
+**Connection control:**
 
-The SDK uses the [debug](https://www.npmjs.com/package/debug) package for logging, which is disabled by default. Enable debug logs using the `DEBUG` environment variable:
+```typescript
+const realtime = client.connectRealtime();      // Connect manually
+const connected = client.isRealtimeConnected(); // Check status
+client.disconnectRealtime();                    // Disconnect
+```
+
+## Error Handling
+
+```typescript
+import { KadoaClient, KadoaSdkException, KadoaHttpException } from '@kadoa/node-sdk';
+
+try {
+  const result = await client.extraction.run({
+    urls: ['https://example.com']
+  });
+} catch (error) {
+  if (error instanceof KadoaHttpException) {
+    console.error('API Error:', error.message);
+    console.error('Status:', error.httpStatus);
+  } else if (error instanceof KadoaSdkException) {
+    console.error('SDK Error:', error.message);
+    console.error('Code:', error.code);
+  }
+}
+```
+
+## Debugging
+
+Enable debug logs using the `DEBUG` environment variable:
 
 ```bash
-# Enable all Kadoa SDK logs
+# All SDK logs
 DEBUG=kadoa:* node app.js
 
-# Enable specific modules
-DEBUG=kadoa:client node app.js          # Client operations only
-DEBUG=kadoa:wss node app.js             # WebSocket logs only
-DEBUG=kadoa:extraction node app.js      # Extraction module logs
-DEBUG=kadoa:http node app.js            # HTTP request/response logs
-DEBUG=kadoa:workflow node app.js        # Workflow operations
-
-# Enable multiple modules
+# Specific modules
+DEBUG=kadoa:extraction node app.js
+DEBUG=kadoa:http node app.js
 DEBUG=kadoa:client,kadoa:extraction node app.js
 ```
 
-## Examples
+## More Examples
 
-### Basic Extraction
-
-```typescript
-import { KadoaClient } from '@kadoa/node-sdk';
-
-const client = new KadoaClient({
-  apiKey: 'your-api-key'
-});
-
-// Run an extraction
-const result = await client.extraction.run({
-  urls: ['https://sandbox.kadoa.com/ecommerce'],
-  name: 'My Extraction Workflow'
-});
-
-// Fetch paginated data
-if (result.workflowId) {
-  const page1 = await client.extraction.fetchData({
-    workflowId: result.workflowId,
-    page: 1
-  });
-
-  console.log('Data:', page1.data?.slice(0, 5));
-  console.log('Pagination:', page1.pagination);
-}
-```
-
-### WebSocket Events with Notifications
-
-```typescript
-// Initialize client with team API key for realtime features
-const client = new KadoaClient({
-  apiKey: 'tk-your-team-api-key',
-  enableRealtime: true,
-});
-
-// Listen to realtime events
-client.realtime?.onEvent((event) => {
-  console.log('Event received:', event);
-});
-
-// List available notification events
-const availableEvents = await client.notification.settings.listAllEvents();
-
-// Run extraction with notifications
-const result = await client.extraction.run({
-  urls: ['https://sandbox.kadoa.com/ecommerce'],
-  notifications: {
-    events: 'all', // or subset of availableEvents
-    channels: {
-      WEBSOCKET: true,
-    },
-  },
-});
-```
-
-### Data Validation with Rules
-
-```typescript
-import { KadoaClient, pollUntil } from '@kadoa/node-sdk';
-
-const client = new KadoaClient({ apiKey: 'your-api-key' });
-
-// 1. Run an extraction
-const result = await client.extraction.run({
-  urls: ['https://sandbox.kadoa.com/ecommerce'],
-});
-
-// 2. Wait for automatic rule suggestions
-const rulesResult = await pollUntil(
-  async () => await client.validation.listRules({
-    workflowId: result.workflowId,
-  }),
-  (result) => result.data.length > 0,
-  { pollIntervalMs: 1000, timeoutMs: 30000 }
-);
-
-// 3. Approve suggested rules
-const approvedRules = await client.validation.bulkApproveRules({
-  workflowId: result.workflowId,
-  ruleIds: rulesResult.result.data.map(rule => rule.id),
-});
-
-// 4. Run validation check
-const validation = await client.validation.scheduleValidation(
-  result.workflowId,
-  result.workflow?.jobId || ''
-);
-
-// 5. Wait for completion and check anomalies
-const completed = await client.validation.waitUntilCompleted(
-  validation.validationId
-);
-
-const anomalies = await client.validation.getValidationAnomalies(
-  validation.validationId
-);
-
-console.log('Validation anomalies:', anomalies);
-```
-
-### Complete Example
-
-```typescript
-import assert from 'node:assert';
-import { KadoaClient } from '@kadoa/node-sdk';
-
-async function main() {
-  const apiKey = process.env.KADOA_API_KEY;
-  assert(apiKey, 'KADOA_API_KEY is not set');
-
-  const client = new KadoaClient({ apiKey });
-
-  // Run extraction
-  const result = await client.extraction.run({
-    urls: ['https://sandbox.kadoa.com/ecommerce'],
-  });
-
-  // Fetch and display data
-  if (result.workflowId) {
-    const page1 = await client.extraction.fetchData({
-      workflowId: result.workflowId,
-      page: 1,
-    });
-
-    console.log('Page 1 Data:');
-    console.log('--------------------------------');
-    console.log(page1.data?.slice(0, 5));
-    console.log(page1.pagination);
-    console.log('--------------------------------');
-  }
-
-  console.log('Initial result:', result.data?.slice(0, 5));
-}
-
-main().catch(console.error);
-```
-
-### More Examples
-
-See the [examples directory](https://github.com/kadoa-org/kadoa-sdks/tree/main/examples/node-examples) for additional usage examples including:
-- Advanced extraction configurations
-- Custom validation rules
-- Error handling patterns
+See the [examples directory](https://github.com/kadoa-org/kadoa-sdks/tree/main/examples/node-examples) for complete examples including:
 - Batch processing
+- Custom error handling
 - Integration patterns
+- Advanced validation workflows
 
 ## Requirements
 
 - Node.js 22+
 
+## Support
+
+- **Documentation:** [docs.kadoa.com](https://docs.kadoa.com)
+- **API Reference:** [docs.kadoa.com/api](https://docs.kadoa.com/api)
+- **Support:** [support@kadoa.com](mailto:support@kadoa.com)
+- **Issues:** [GitHub Issues](https://github.com/kadoa-org/kadoa-sdks/issues)
+
 ## License
 
 MIT
-
-## Support
-
-- Documentation: [docs.kadoa.com](https://docs.kadoa.com)
-- Support: [support@kadoa.com](mailto:support@kadoa.com)
-- Issues: [GitHub Issues](https://github.com/kadoa-org/kadoa-sdks/issues)
