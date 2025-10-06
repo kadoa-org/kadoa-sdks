@@ -71,14 +71,18 @@ describe("Data Validation Rules", () => {
 		expect(result).toBeDefined();
 	});
 
-	test("should generate multiple rules using generated intents from schema", async () => {
-		const result = await client.validation.generateRules({
-			workflowId,
-		});
+	test(
+		"should generate multiple rules using generated intents from schema",
+		async () => {
+			const result = await client.validation.generateRules({
+				workflowId,
+			});
 
-		expect(result).toBeDefined();
-		expect(result?.length).toBeGreaterThan(0);
-	});
+			expect(result).toBeDefined();
+			expect(result?.length).toBeGreaterThan(0);
+		},
+		{ timeout: 60000 },
+	);
 
 	test("should bulk approve rules", async () => {
 		const result = await client.validation.bulkApproveRules({

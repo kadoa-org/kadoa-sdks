@@ -19,10 +19,10 @@ import type {
 	NotificationSetupService,
 	NotificationOptions,
 } from "../../notifications/notification-setup.service";
-import { ExtractionBuilder } from "../builders/extraction-builder";
 import type { MonitoringConfig } from "../../../../generated";
 import { KadoaSdkException } from "../../../runtime/exceptions";
 import { ERROR_MESSAGES } from "../../../runtime/exceptions/base.exception";
+import { SchemaBuilder } from "../../schemas/schema-builder";
 
 const debug = logger.extraction;
 
@@ -51,7 +51,7 @@ export interface ExtractOptions
 	 *   .field("price", "Product price", "CURRENCY")
 	 * ```
 	 */
-	extraction?: (builder: ExtractionBuilder) => ExtractionBuilder;
+	extraction?: (builder: SchemaBuilder) => SchemaBuilder | { schemaId: string };
 }
 
 export interface PreparedExtraction {
@@ -143,27 +143,16 @@ export class ExtractionBuilderService {
 		navigationMode,
 		extraction,
 	}: ExtractOptions): PreparedExtraction {
-		// Convert builder to EntityConfig
 		let entity: EntityConfig = "ai-detection";
 
 		if (extraction) {
-			const builder = extraction(new ExtractionBuilder());
-			const schemaId = builder.getSchemaId();
-			const schemaName = builder.getSchemaName();
-			const fields = builder.getFields();
+			const result = extraction(new SchemaBuilder());
 
-			if (schemaId) {
-				// Using existing schema
-				entity = { schemId: schemaId };
-			} else if (schemaName && fields.length > 0) {
-				// Custom schema with fields
-				entity = { name: schemaName, fields };
-			} else if (fields.length > 0 && !schemaName) {
-				// Raw extraction only (no schema name, just raw fields)
-				entity = { name: "RawExtraction", fields };
+			if ("schemaId" in result) {
+				entity = { schemaId: result.schemaId };
 			} else {
-				// Empty builder - fall back to AI detection
-				entity = "ai-detection";
+				const builtSchema = result.build();
+				entity = { name: builtSchema.entityName, fields: builtSchema.fields };
 			}
 		}
 
@@ -220,7 +209,7 @@ export class ExtractionBuilderService {
 		assert(this._options, "Options are not set");
 		const { urls, name, description, navigationMode, entity } = this.options;
 		const resolvedEntity =
-			typeof entity === "object" && "schemId" in entity
+			typeof entity === "object" && "schemaId" in entity
 				? undefined
 				: await this.entityResolverService.resolveEntity(entity, {
 						link: urls[0],
@@ -242,8 +231,8 @@ export class ExtractionBuilderService {
 			navigationMode,
 			monitoring: this._monitoringOptions,
 			schemaId:
-				typeof entity === "object" && "schemId" in entity
-					? entity.schemId
+				typeof entity === "object" && "schemaId" in entity
+					? entity.schemaId
 					: undefined,
 			entity: resolvedEntity.entity,
 			fields: resolvedEntity.fields,

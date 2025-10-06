@@ -11,9 +11,17 @@ export {
 } from "./kadoa-client";
 export { SchemasModule } from "./modules/schemas.module";
 export type {
-	Schema,
 	SchemaField,
+	CreateSchemaBody,
+	UpdateSchemaBody,
+	SchemaResponse,
 } from "./internal/domains/schemas/schemas.service";
+export {
+	SchemaBuilder,
+	type FieldOptions,
+	type Category,
+	type FieldExample,
+} from "./internal/domains/schemas/schema-builder";
 export { ValidationModule } from "./modules/validation.module";
 export type { ListRulesOptions } from "./internal/domains/validation/validation-rules.service";
 
@@ -25,3 +33,14 @@ export type {
 	RunWorkflowInput,
 	LocationConfig,
 } from "./internal/domains/workflows/types";
+
+export type {
+	RawFormat,
+	FieldType,
+	MetadataKey,
+	NavigationMode,
+	WorkflowInterval,
+	MonitoringOperator,
+	MonitoringField,
+	DataType,
+} from "./internal/domains/extraction/extraction.types";
