@@ -9,7 +9,7 @@
 	"scripts": {},
 	"devDependencies": {
 		"@types/bun": "latest",
-		"@types/node": "^24.5.2"
+		"@types/node": "^24.7.0"
 	},
 	"dependencies": {
 		"@openapitools/openapi-generator-cli": "^2.24.0",
