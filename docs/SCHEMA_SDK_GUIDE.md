@@ -265,17 +265,12 @@ const extraction = await client
 Create a reusable schema first, then reference it by ID.
 
 ```typescript
-// Create and save a schema
-const schema = await client.schemas.create(
-  'Product Schema',
-  (builder) =>
-    builder
-      .entity('Product')
-      .field('title', 'Product name', 'STRING', {
-        example: 'Example'
-      })
-      .field('price', 'Price', 'MONEY')
-);
+// Create and save a schema using fluent builder
+const schema = await client.schema
+  .builder('Product')
+  .field('title', 'Product name', 'STRING', { example: 'iPhone 15' })
+  .field('price', 'Product price', 'MONEY')
+  .create('Product Schema');
 
 // Use the saved schema in workflow
 const extraction = await client
@@ -365,33 +360,101 @@ const extraction = await client
 
 ## Saved Schema Management
 
-The SDK provides a `schemas` module for CRUD operations on saved schemas.
+The SDK provides a `schema` module (note: singular, not `schemas`) for CRUD operations on saved schemas.
+
+### Creating Schemas
+
+There are three ways to create a schema:
+
+#### Method 1: Fluent Builder with Create (Recommended)
+
+Create a schema directly using the fluent builder API with the `.create()` method.
 
 ```typescript
-// Create
-const schema = await client.schemas.create(
-  'Product Schema',
-  'Product',
-  (builder) =>
-    builder
-      .field('title', 'Product name', 'STRING', { example: 'Example' })
-      .field('price', 'Price', 'MONEY')
-);
+const schema = await client.schema
+  .builder('Product')
+  .field('title', 'Product name', 'STRING', { example: 'iPhone 15' })
+  .field('price', 'Product price', 'MONEY')
+  .create('Product Schema');
+```
 
-// List
-const schemas = await client.schemas.list();
+**When to use:**
+- Most concise and readable syntax
+- Quick schema creation
+- When you want to create and save in one step
 
-// Get
-const schema = await client.schemas.get('schema-id');
+#### Method 2: Build then Create
 
-// Update
-await client.schemas.update('schema-id', {
+Build the schema definition first, then create it separately.
+
+```typescript
+const schemaDefinition = client.schema
+  .builder('Product')
+  .field('title', 'Product name', 'STRING', { example: 'iPhone 15' })
+  .field('price', 'Product price', 'MONEY')
+  .build();
+
+const schema = await client.schema.create({
+  name: 'Product Schema',
+  entity: schemaDefinition.entityName,
+  fields: schemaDefinition.fields
+});
+```
+
+**When to use:**
+- Need to inspect schema before creating
+- Conditional logic for schema creation
+- Testing or validation
+
+#### Method 3: Manual Body Construction
+
+Create a schema using a manually constructed body object.
+
+```typescript
+const schema = await client.schema.create({
+  name: 'Product Schema',
+  entity: 'Product',
+  fields: [
+    {
+      name: 'title',
+      description: 'Product name',
+      dataType: 'STRING',
+      fieldType: 'SCHEMA',
+      example: 'iPhone 15'
+    },
+    {
+      name: 'price',
+      description: 'Product price',
+      dataType: 'MONEY',
+      fieldType: 'SCHEMA'
+    }
+  ]
+});
+```
+
+**When to use:**
+- Maximum control over field structure
+- Programmatic schema generation from external sources
+- Advanced use cases
+
+### Other Schema Operations
+
+```typescript
+// List all schemas
+const schemas = await client.schema.list();
+
+// Get a specific schema
+const schema = await client.schema.get('schema-id');
+
+// Update a schema
+await client.schema.update('schema-id', {
   name: 'Updated Product Schema',
+  entity: 'Product',
   fields: [...]
 });
 
-// Delete
-await client.schemas.delete('schema-id');
+// Delete a schema
+await client.schema.delete('schema-id');
 ```
 
 ## Best Practices

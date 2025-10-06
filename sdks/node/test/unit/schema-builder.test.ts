@@ -2,6 +2,8 @@ import { describe, expect, test } from "bun:test";
 import { SchemaBuilder } from "../../src/internal/domains/schemas/schema-builder";
 import { KadoaSdkException } from "../../src/internal/runtime/exceptions";
 import type { ExtractionSchemaField } from "../../src/generated";
+import { SchemasModule } from "../../src/modules/schemas.module";
+import type { SchemasService } from "../../src/internal/domains/schemas/schemas.service";
 
 describe("SchemaBuilder", () => {
 	describe("Validation", () => {
@@ -165,6 +167,42 @@ describe("SchemaBuilder", () => {
 				});
 			const field = builder.fields[0] as ExtractionSchemaField;
 			expect(field.isKey).toBe(true);
+		});
+	});
+});
+
+describe("SchemasModule.builder()", () => {
+	test("returns a SchemaBuilder instance with entity name set", () => {
+		const mockService = {} as SchemasService;
+		const module = new SchemasModule(mockService);
+
+		const builder = module.builder("Product");
+
+		expect(builder).toBeInstanceOf(SchemaBuilder);
+		expect(builder.entityName).toBe("Product");
+	});
+
+	test("builder can be used to create a complete schema", () => {
+		const mockService = {} as SchemasService;
+		const module = new SchemasModule(mockService);
+
+		const schema = module
+			.builder("Product")
+			.field("title", "Product name", "STRING", { example: "iPhone 15" })
+			.field("price", "Product price", "NUMBER")
+			.build();
+
+		expect(schema.entityName).toBe("Product");
+		expect(schema.fields).toHaveLength(2);
+		expect(schema.fields[0]).toMatchObject({
+			name: "title",
+			description: "Product name",
+			dataType: "STRING",
+		});
+		expect(schema.fields[1]).toMatchObject({
+			name: "price",
+			description: "Product price",
+			dataType: "NUMBER",
 		});
 	});
 });
