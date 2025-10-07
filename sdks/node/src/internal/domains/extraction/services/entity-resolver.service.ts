@@ -47,7 +47,7 @@ export interface ResolvedEntity {
 
 export type EntityConfig =
 	| "ai-detection"
-	| { schemId: string }
+	| { schemaId: string }
 	| { name: string; fields: SchemaField[] };
 
 export const ENTITY_API_ENDPOINT = "/v4/entity";
@@ -101,13 +101,13 @@ export class EntityResolverService {
 				fields: entityPrediction.fields,
 			};
 		} else if (entityConfig) {
-			if ("schemId" in entityConfig) {
+			if ("schemaId" in entityConfig) {
 				// Fetch schema from API to get entity and fields
 				const schema = await this.schemasService.getSchema(
-					entityConfig.schemId,
+					entityConfig.schemaId,
 				);
 				return {
-					entity: schema.entity,
+					entity: schema.entity ?? "",
 					fields: schema.schema,
 				};
 			} else if ("name" in entityConfig && "fields" in entityConfig) {

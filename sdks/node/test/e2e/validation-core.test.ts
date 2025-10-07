@@ -2,6 +2,7 @@ import { afterAll, beforeAll, describe, expect, test } from "bun:test";
 import { getE2ETestEnv } from "../utils/env";
 import { KadoaClient } from "../../src/kadoa-client";
 import { seedRule, seedValidation, seedWorkflow } from "../utils/seeder";
+import assert from "node:assert";
 
 describe("Data Validation", () => {
 	let client: KadoaClient;
@@ -20,10 +21,12 @@ describe("Data Validation", () => {
 		const result = await seedWorkflow(
 			{
 				name: "test-workflow-1",
+				runJob: true,
 			},
 			client,
 		);
 		workflowId = result.workflowId;
+		assert(result.jobId, "Job ID is not set");
 		jobId = result.jobId;
 		ruleId = await seedRule({ name: "test-rule-1", workflowId }, client);
 		validationId = await seedValidation({ workflowId, jobId }, client);

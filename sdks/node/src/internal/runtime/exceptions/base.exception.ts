@@ -60,6 +60,9 @@ export class KadoaSdkException extends Error {
 		SCHEMA_NOT_FOUND: "Schema not found",
 		SCHEMA_FETCH_ERROR: "Failed to fetch schema",
 		SCHEMAS_FETCH_ERROR: "Failed to fetch schemas",
+		SCHEMA_CREATE_FAILED: "Failed to create schema",
+		SCHEMA_UPDATE_FAILED: "Failed to update schema",
+		SCHEMA_DELETE_FAILED: "Failed to delete schema",
 	} as const;
 
 	constructor(message: string, options?: KadoaSdkExceptionOptions) {

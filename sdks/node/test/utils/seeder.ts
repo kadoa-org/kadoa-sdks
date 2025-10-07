@@ -6,12 +6,22 @@ export const seedWorkflow = async (
 ): Promise<{ workflowId: string; jobId?: string }> => {
 	console.log(`[Seeder] Seeding workflow: ${name}`);
 	const existingWorkflow = await client.workflow.getByName(name);
-	if (existingWorkflow?._id && !existingWorkflow.jobId) {
-		throw new Error(`[Seeder] This should never happen`);
-	} else if (existingWorkflow?._id && existingWorkflow.jobId) {
+	if (existingWorkflow?._id) {
 		console.log(
 			`[Seeder] Workflow ${name} already exists: ${existingWorkflow._id}`,
 		);
+
+		if (runJob && !existingWorkflow.jobId) {
+			const job = await client.extraction.runJob(existingWorkflow._id, {
+				limit: 10,
+			});
+			console.log(`[Seeder] Job ${name} seeded: ${job.jobId}`);
+			return {
+				workflowId: existingWorkflow._id,
+				jobId: job.jobId,
+			};
+		}
+
 		return {
 			workflowId: existingWorkflow._id,
 			jobId: existingWorkflow.jobId,
@@ -21,7 +31,6 @@ export const seedWorkflow = async (
 	const workflow = await client
 		.extract({
 			name,
-			entity: "ai-detection",
 			urls: ["https://sandbox.kadoa.com/careers"],
 			bypassPreview: true,
 		})
