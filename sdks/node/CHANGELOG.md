@@ -1,5 +1,24 @@
 # Changelog
 
+## [0.13.0](https://github.com/kadoa-org/kadoa-sdks/compare/node-sdk-v0.12.1...node-sdk-v0.13.0) (2025-10-07)
+
+
+### Features
+
+* **node-sdk:** add fluent schema builder with create method ([be5b65d](https://github.com/kadoa-org/kadoa-sdks/commit/be5b65d5d160289c9d256d8627d94521b0d9b109))
+
+
+### Miscellaneous Chores
+
+* **deps-dev:** bump @types/node from 24.5.2 to 24.7.0 ([#72](https://github.com/kadoa-org/kadoa-sdks/issues/72)) ([16771b3](https://github.com/kadoa-org/kadoa-sdks/commit/16771b30fd0d1c590822c83b5db002c1ef17b6c2))
+* **deps-dev:** bump @types/node in /sdks/node in the development group ([#79](https://github.com/kadoa-org/kadoa-sdks/issues/79)) ([4a5d514](https://github.com/kadoa-org/kadoa-sdks/commit/4a5d514ed6f65ba08c594e10ecf1b515dd2cf4af))
+* **deps:** bump zod in /sdks/node in the production group ([#78](https://github.com/kadoa-org/kadoa-sdks/issues/78)) ([60397b7](https://github.com/kadoa-org/kadoa-sdks/commit/60397b7f5c15dd4a2d43cb6c9b562ea4765f20a2))
+
+
+### Documentation
+
+* **node-sdk:** update terminology from metadata to raw fields in schema guide ([7d6c865](https://github.com/kadoa-org/kadoa-sdks/commit/7d6c8654789698ac7ec50c714785ac6cf1299e9c))
+
 ## [0.12.1](https://github.com/kadoa-org/kadoa-sdks/compare/node-sdk-v0.12.0...node-sdk-v0.12.1) (2025-10-05)
 
 
