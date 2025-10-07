@@ -85,6 +85,7 @@ describe("Schemas Module E2E", () => {
 				{ title: "Negative", definition: "Bad reviews" },
 			])
 			.raw("HTML")
+			.raw("PAGE_URL")
 			.build();
 
 		// Create the schema using the built definition
