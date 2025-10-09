@@ -17,21 +17,21 @@ import type { UserService } from "../internal/domains/user/user.service";
  * ```
  */
 export class UserModule {
-	constructor(private readonly userService: UserService) {}
+  constructor(private readonly userService: UserService) {}
 
-	/**
-	 * Get the underlying UserService instance
-	 * @returns UserService instance
-	 */
-	get service(): UserService {
-		return this.userService;
-	}
+  /**
+   * Get the underlying UserService instance
+   * @returns UserService instance
+   */
+  get service(): UserService {
+    return this.userService;
+  }
 
-	/**
-	 * Get current user details
-	 * @returns KadoaUser details
-	 */
-	async getCurrentUser(): Promise<KadoaUser> {
-		return this.userService.getCurrentUser();
-	}
+  /**
+   * Get current user details
+   * @returns KadoaUser details
+   */
+  async getCurrentUser(): Promise<KadoaUser> {
+    return this.userService.getCurrentUser();
+  }
 }

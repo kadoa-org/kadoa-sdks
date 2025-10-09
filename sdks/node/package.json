@@ -1,67 +1,67 @@
 {
-	"name": "@kadoa/node-sdk",
-	"version": "0.13.0",
-	"description": "Kadoa SDK for Node.js",
-	"main": "./dist/index.js",
-	"module": "./dist/index.mjs",
-	"types": "./dist/index.d.ts",
-	"exports": {
-		".": {
-			"types": "./dist/index.d.ts",
-			"import": "./dist/index.mjs",
-			"require": "./dist/index.js"
-		}
-	},
-	"files": [
-		"dist",
-		"README.md"
-	],
-	"scripts": {
-		"build": "tsup",
-		"dev": "tsup --watch",
-		"dev:watch": "tsup --watch --onSuccess 'echo SDK build completed'",
-		"test": "bun test",
-		"test:e2e": "bun test test/e2e",
-		"test:integration": "bun test test/integration",
-		"test:watch": "bun test --watch",
-		"audit": "npm audit --production",
-		"audit:fix": "npm audit fix --production",
-		"prepublishOnly": "bun run build"
-	},
-	"dependencies": {
-		"axios": "1.12.2",
-		"debug": "4.4.3",
-		"es-toolkit": "1.40.0",
-		"uuid": "13.0.0",
-		"ws": "8.18.3",
-		"zod": "4.1.12"
-	},
-	"devDependencies": {
-		"@types/debug": "^4.1.12",
-		"@types/node": "24.7.0",
-		"@types/uuid": "^11.0.0",
-		"tsup": "8.5.0",
-		"typescript": "5.9.3"
-	},
-	"engines": {
-		"node": ">=22"
-	},
-	"repository": {
-		"type": "git",
-		"url": "https://github.com/kadoa/kadoa-sdks.git",
-		"directory": "sdks/node"
-	},
-	"publishConfig": {
-		"access": "public"
-	},
-	"keywords": [
-		"kadoa",
-		"api",
-		"sdk",
-		"client",
-		"typescript",
-		"node"
-	],
-	"author": "Kadoa",
-	"license": "MIT"
+  "name": "@kadoa/node-sdk",
+  "version": "0.13.0",
+  "description": "Kadoa SDK for Node.js",
+  "main": "./dist/index.js",
+  "module": "./dist/index.mjs",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.mjs",
+      "require": "./dist/index.js"
+    }
+  },
+  "files": [
+    "dist",
+    "README.md"
+  ],
+  "scripts": {
+    "build": "tsup",
+    "dev": "tsup --watch",
+    "dev:watch": "tsup --watch --onSuccess 'echo SDK build completed'",
+    "test": "bun test",
+    "test:e2e": "bun test test/e2e",
+    "test:integration": "bun test test/integration",
+    "test:watch": "bun test --watch",
+    "audit": "npm audit --production",
+    "audit:fix": "npm audit fix --production",
+    "prepublishOnly": "bun run build"
+  },
+  "dependencies": {
+    "axios": "1.12.2",
+    "debug": "4.4.3",
+    "es-toolkit": "1.40.0",
+    "uuid": "13.0.0",
+    "ws": "8.18.3",
+    "zod": "4.1.12"
+  },
+  "devDependencies": {
+    "@types/debug": "^4.1.12",
+    "@types/node": "24.7.0",
+    "@types/uuid": "^11.0.0",
+    "tsup": "8.5.0",
+    "typescript": "5.9.3"
+  },
+  "engines": {
+    "node": ">=22"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/kadoa/kadoa-sdks.git",
+    "directory": "sdks/node"
+  },
+  "publishConfig": {
+    "access": "public"
+  },
+  "keywords": [
+    "kadoa",
+    "api",
+    "sdk",
+    "client",
+    "typescript",
+    "node"
+  ],
+  "author": "Kadoa",
+  "license": "MIT"
 }

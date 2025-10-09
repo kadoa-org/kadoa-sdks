@@ -4,62 +4,62 @@ import { KadoaSdkException } from "../exceptions";
  * Options for polling operations
  */
 export interface PollingOptions {
-	/**
-	 * Polling interval in milliseconds (minimum 250ms)
-	 * @default 1000
-	 */
-	pollIntervalMs?: number;
-	/**
-	 * Timeout in milliseconds
-	 * @default 300000 (5 minutes)
-	 */
-	timeoutMs?: number;
-	/**
-	 * AbortSignal to cancel the polling operation
-	 */
-	abortSignal?: AbortSignal;
+  /**
+   * Polling interval in milliseconds (minimum 250ms)
+   * @default 1000
+   */
+  pollIntervalMs?: number;
+  /**
+   * Timeout in milliseconds
+   * @default 300000 (5 minutes)
+   */
+  timeoutMs?: number;
+  /**
+   * AbortSignal to cancel the polling operation
+   */
+  abortSignal?: AbortSignal;
 }
 
 /**
  * Internal polling options with all required fields
  */
 export interface PollingOptionsInternal
-	extends Required<Omit<PollingOptions, "abortSignal">> {
-	abortSignal?: AbortSignal;
+  extends Required<Omit<PollingOptions, "abortSignal">> {
+  abortSignal?: AbortSignal;
 }
 
 /**
  * Default polling options
  */
 export const DEFAULT_POLLING_OPTIONS: PollingOptionsInternal = {
-	pollIntervalMs: 1000,
-	timeoutMs: 5 * 60 * 1000,
+  pollIntervalMs: 1000,
+  timeoutMs: 5 * 60 * 1000,
 };
 
 /**
  * Result of a polling operation
  */
 export interface PollingResult<T> {
-	/**
-	 * The final result when polling completes successfully
-	 */
-	result: T;
-	/**
-	 * The number of polling attempts made
-	 */
-	attempts: number;
-	/**
-	 * The total time spent polling in milliseconds
-	 */
-	duration: number;
+  /**
+   * The final result when polling completes successfully
+   */
+  result: T;
+  /**
+   * The number of polling attempts made
+   */
+  attempts: number;
+  /**
+   * The total time spent polling in milliseconds
+   */
+  duration: number;
 }
 
 /**
  * Polling error codes
  */
 export const POLLING_ERROR_CODES = {
-	ABORTED: "ABORTED",
-	TIMEOUT: "TIMEOUT",
+  ABORTED: "ABORTED",
+  TIMEOUT: "TIMEOUT",
 } as const;
 
 /**
@@ -80,50 +80,50 @@ export const POLLING_ERROR_CODES = {
  * ```
  */
 export async function pollUntil<T>(
-	pollFn: () => Promise<T>,
-	isComplete: (result: T) => boolean,
-	options: PollingOptions = {},
+  pollFn: () => Promise<T>,
+  isComplete: (result: T) => boolean,
+  options: PollingOptions = {},
 ): Promise<PollingResult<T>> {
-	const internalOptions: PollingOptionsInternal = {
-		...DEFAULT_POLLING_OPTIONS,
-		...options,
-	};
+  const internalOptions: PollingOptionsInternal = {
+    ...DEFAULT_POLLING_OPTIONS,
+    ...options,
+  };
 
-	const pollInterval = Math.max(250, internalOptions.pollIntervalMs);
-	const timeoutMs = internalOptions.timeoutMs;
-	const start = Date.now();
-	let attempts = 0;
+  const pollInterval = Math.max(250, internalOptions.pollIntervalMs);
+  const timeoutMs = internalOptions.timeoutMs;
+  const start = Date.now();
+  let attempts = 0;
 
-	while (Date.now() - start < timeoutMs) {
-		if (internalOptions.abortSignal?.aborted) {
-			throw new KadoaSdkException("Polling operation was aborted", {
-				code: POLLING_ERROR_CODES.ABORTED,
-			});
-		}
+  while (Date.now() - start < timeoutMs) {
+    if (internalOptions.abortSignal?.aborted) {
+      throw new KadoaSdkException("Polling operation was aborted", {
+        code: POLLING_ERROR_CODES.ABORTED,
+      });
+    }
 
-		attempts++;
-		const current = await pollFn();
+    attempts++;
+    const current = await pollFn();
 
-		if (isComplete(current)) {
-			return {
-				result: current,
-				attempts,
-				duration: Date.now() - start,
-			};
-		}
+    if (isComplete(current)) {
+      return {
+        result: current,
+        attempts,
+        duration: Date.now() - start,
+      };
+    }
 
-		await new Promise((resolve) => setTimeout(resolve, pollInterval));
-	}
+    await new Promise((resolve) => setTimeout(resolve, pollInterval));
+  }
 
-	throw new KadoaSdkException(
-		`Polling operation timed out after ${timeoutMs}ms`,
-		{
-			code: POLLING_ERROR_CODES.TIMEOUT,
-			details: {
-				timeoutMs,
-				attempts,
-				duration: Date.now() - start,
-			},
-		},
-	);
+  throw new KadoaSdkException(
+    `Polling operation timed out after ${timeoutMs}ms`,
+    {
+      code: POLLING_ERROR_CODES.TIMEOUT,
+      details: {
+        timeoutMs,
+        attempts,
+        duration: Date.now() - start,
+      },
+    },
+  );
 }

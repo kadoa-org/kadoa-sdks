@@ -6,29 +6,29 @@ import { AxiosVCR, type VCROptions } from "./axios-vcr";
  * This allows recording and replaying API responses
  */
 export class VCRKadoaClient extends KadoaClient {
-	private vcr: AxiosVCR;
+  private vcr: AxiosVCR;
 
-	constructor(config: KadoaClientConfig, vcrOptions: VCROptions) {
-		super(config);
+  constructor(config: KadoaClientConfig, vcrOptions: VCROptions) {
+    super(config);
 
-		// Initialize VCR with the client's axios instance
-		this.vcr = new AxiosVCR(this.axiosInstance, vcrOptions);
-	}
+    // Initialize VCR with the client's axios instance
+    this.vcr = new AxiosVCR(this.axiosInstance, vcrOptions);
+  }
 
-	/**
-	 * Get the VCR instance for direct control
-	 */
-	getVCR(): AxiosVCR {
-		return this.vcr;
-	}
+  /**
+   * Get the VCR instance for direct control
+   */
+  getVCR(): AxiosVCR {
+    return this.vcr;
+  }
 
-	/**
-	 * Override dispose to also clean up VCR
-	 */
-	dispose(): void {
-		this.vcr.dispose();
-		super.dispose();
-	}
+  /**
+   * Override dispose to also clean up VCR
+   */
+  dispose(): void {
+    this.vcr.dispose();
+    super.dispose();
+  }
 }
 
 /**
@@ -47,8 +47,8 @@ export class VCRKadoaClient extends KadoaClient {
  * ```
  */
 export function createVCRClient(
-	config: KadoaClientConfig,
-	vcrOptions: VCROptions,
+  config: KadoaClientConfig,
+  vcrOptions: VCROptions,
 ): VCRKadoaClient {
-	return new VCRKadoaClient(config, vcrOptions);
+  return new VCRKadoaClient(config, vcrOptions);
 }

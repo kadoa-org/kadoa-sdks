@@ -1,35 +1,35 @@
 {
-	"$schema": "https://raw.githubusercontent.com/googleapis/release-please/main/schemas/config.json",
-	"release-type": "simple",
-	"include-component-in-tag": true,
-	"separate-pull-requests": true,
-	"bump-minor-pre-major": true,
-	"changelog-sections": [
-		{ "type": "feat", "section": "Features" },
-		{ "type": "fix", "section": "Bug Fixes" },
-		{ "type": "chore", "section": "Miscellaneous Chores" },
-		{ "type": "refactor", "section": "Code Refactoring" },
-		{ "type": "ci", "section": "Continuous Integration" },
-		{ "type": "docs", "section": "Documentation" },
-		{ "type": "test", "section": "Tests" },
-		{ "type": "perf", "section": "Performance Improvements" },
-		{ "type": "revert", "section": "Reverts" },
-		{ "type": "style", "section": "Styles" }
-	],
-	"packages": {
-		"sdks/node": {
-			"release-type": "node",
-			"changelog-path": "CHANGELOG.md",
-			"package-name": "@kadoa/node-sdk",
-			"component": "node-sdk",
-			"extra-files": ["src/version.ts"]
-		},
-		"sdks/python": {
-			"release-type": "python",
-			"changelog-path": "CHANGELOG.md",
-			"package-name": "kadoa-python-sdk",
-			"component": "python-sdk",
-			"extra-files": ["kadoa_sdk/__init__.py", "kadoa_sdk/version.py"]
-		}
-	}
+  "$schema": "https://raw.githubusercontent.com/googleapis/release-please/main/schemas/config.json",
+  "release-type": "simple",
+  "include-component-in-tag": true,
+  "separate-pull-requests": true,
+  "bump-minor-pre-major": true,
+  "changelog-sections": [
+    { "type": "feat", "section": "Features" },
+    { "type": "fix", "section": "Bug Fixes" },
+    { "type": "chore", "section": "Miscellaneous Chores" },
+    { "type": "refactor", "section": "Code Refactoring" },
+    { "type": "ci", "section": "Continuous Integration" },
+    { "type": "docs", "section": "Documentation" },
+    { "type": "test", "section": "Tests" },
+    { "type": "perf", "section": "Performance Improvements" },
+    { "type": "revert", "section": "Reverts" },
+    { "type": "style", "section": "Styles" }
+  ],
+  "packages": {
+    "sdks/node": {
+      "release-type": "node",
+      "changelog-path": "CHANGELOG.md",
+      "package-name": "@kadoa/node-sdk",
+      "component": "node-sdk",
+      "extra-files": ["src/version.ts"]
+    },
+    "sdks/python": {
+      "release-type": "python",
+      "changelog-path": "CHANGELOG.md",
+      "package-name": "kadoa-python-sdk",
+      "component": "python-sdk",
+      "extra-files": ["kadoa_sdk/__init__.py", "kadoa_sdk/version.py"]
+    }
+  }
 }

@@ -1,36 +1,36 @@
 {
-	"name": "kadoa-sdks",
-	"private": true,
-	"scripts": {
-		"format-and-lint": "biome check .",
-		"format-and-lint:fix": "biome check . --write",
-		"build": "turbo run build",
-		"build:sdks": "turbo run build --filter='./sdks/*'",
-		"dev": "turbo run dev --parallel",
-		"dev:node": "turbo run dev --filter='@kadoa/node-sdk' --filter='@kadoa/node-examples' --parallel",
-		"dev:node-sdk": "cd sdks/node && bun run dev:watch",
-		"dev:node-examples": "cd examples/node-examples && bun run dev:hot",
-		"kadoa-codegen": "bun run ./tools/codegen/src/cli.ts",
-		"audit": "turbo run audit",
-		"audit:fix": "turbo run audit:fix",
-		"prepare": "husky"
-	},
-	"devDependencies": {
-		"@biomejs/biome": "2.2.5",
-		"@commitlint/cli": "20.1.0",
-		"@commitlint/config-conventional": "^20.0.0",
-		"husky": "^9.1.6",
-		"turbo": "^2.5.8",
-		"typescript": "5.9.3"
-	},
-	"engines": {
-		"node": ">=22"
-	},
-	"packageManager": "bun@1.2.21",
-	"workspaces": [
-		"sdks/*",
-		"packages/*",
-		"examples/*",
-		"tools/*"
-	]
+  "name": "kadoa-sdks",
+  "private": true,
+  "scripts": {
+    "format-and-lint": "biome check .",
+    "format-and-lint:fix": "biome check . --write",
+    "build": "turbo run build",
+    "build:sdks": "turbo run build --filter='./sdks/*'",
+    "dev": "turbo run dev --parallel",
+    "dev:node": "turbo run dev --filter='@kadoa/node-sdk' --filter='@kadoa/node-examples' --parallel",
+    "dev:node-sdk": "cd sdks/node && bun run dev:watch",
+    "dev:node-examples": "cd examples/node-examples && bun run dev:hot",
+    "kadoa-codegen": "bun run ./tools/codegen/src/cli.ts",
+    "audit": "turbo run audit",
+    "audit:fix": "turbo run audit:fix",
+    "prepare": "husky"
+  },
+  "devDependencies": {
+    "@biomejs/biome": "2.2.5",
+    "@commitlint/cli": "20.1.0",
+    "@commitlint/config-conventional": "^20.0.0",
+    "husky": "^9.1.6",
+    "turbo": "^2.5.8",
+    "typescript": "5.9.3"
+  },
+  "engines": {
+    "node": ">=22"
+  },
+  "packageManager": "bun@1.2.21",
+  "workspaces": [
+    "sdks/*",
+    "packages/*",
+    "examples/*",
+    "tools/*"
+  ]
 }

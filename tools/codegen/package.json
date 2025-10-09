@@ -1,18 +1,18 @@
 {
-	"name": "@kadoa/codegen",
-	"version": "0.0.3",
-	"private": true,
-	"type": "module",
-	"bin": {
-		"kadoa-codegen": "src/cli.ts"
-	},
-	"scripts": {},
-	"devDependencies": {
-		"@types/bun": "latest",
-		"@types/node": "^24.7.0"
-	},
-	"dependencies": {
-		"@openapitools/openapi-generator-cli": "^2.24.0",
-		"commander": "^14.0.1"
-	}
+  "name": "@kadoa/codegen",
+  "version": "0.0.3",
+  "private": true,
+  "type": "module",
+  "bin": {
+    "kadoa-codegen": "src/cli.ts"
+  },
+  "scripts": {},
+  "devDependencies": {
+    "@types/bun": "latest",
+    "@types/node": "^24.7.0"
+  },
+  "dependencies": {
+    "@openapitools/openapi-generator-cli": "^2.24.0",
+    "commander": "^14.0.1"
+  }
 }
