@@ -2,7 +2,7 @@ import assert from "node:assert";
 import { KadoaClient } from "@kadoa/node-sdk";
 
 async function main() {
-	const apiKey = process.env.KADOA_TEAM_API_KEY;
+	const apiKey = process.env.KADOA_API_KEY;
 	assert(apiKey, "KADOA_API_KEY is not set");
 
 	const client = new KadoaClient({

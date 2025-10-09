@@ -2,7 +2,6 @@ import { z } from "zod";
 
 const envSchema = z.object({
 	KADOA_API_KEY: z.string(),
-	KADOA_TEAM_API_KEY: z.string(),
 	KADOA_PUBLIC_API_URI: z.url(),
 	VCR_MODE: z.enum(["record", "replay", "auto"]).optional().default("auto"),
 	VCR_DEBUG: z.enum(["true", "false"]).optional().default("false"),

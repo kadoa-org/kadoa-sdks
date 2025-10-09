@@ -5,11 +5,11 @@ import { config } from "dotenv";
 config({ path: ".env" });
 
 async function main() {
-	assert(process.env.KADOA_TEAM_API_KEY, "KADOA_TEAM_API_KEY is not set");
+	assert(process.env.KADOA_API_KEY, "KADOA_API_KEY is not set");
 	assert(process.env.KADOA_PUBLIC_API_URI, "KADOA_PUBLIC_API_URI is not set");
 
 	const client = new KadoaClient({
-		apiKey: process.env.KADOA_TEAM_API_KEY,
+		apiKey: process.env.KADOA_API_KEY,
 		enableRealtime: true,
 	});
 

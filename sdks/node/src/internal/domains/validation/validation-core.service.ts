@@ -140,7 +140,7 @@ export class ValidationCoreService {
 				);
 		}
 
-		if (response.status !== 200 || response.data.error) {
+		if (response.status !== 200 || response.data?.error) {
 			throw KadoaHttpException.wrap(response.data, {
 				message: "Failed to get latest validation",
 			});

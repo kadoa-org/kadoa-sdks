@@ -8,7 +8,7 @@ describe("Extraction Builder", () => {
 
 	beforeAll(() => {
 		client = new KadoaClient({
-			apiKey: env.KADOA_TEAM_API_KEY,
+			apiKey: env.KADOA_API_KEY,
 			timeout: 30000,
 			enableRealtime: true,
 		});
