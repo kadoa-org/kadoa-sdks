@@ -14494,8 +14494,7 @@
           }
         },
         "required": [
-          "enabled",
-          "fields"
+          "enabled"
         ],
         "title": "MonitoringConfig"
       },
