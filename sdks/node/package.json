@@ -38,7 +38,7 @@
   },
   "devDependencies": {
     "@types/debug": "^4.1.12",
-    "@types/node": "24.7.0",
+    "@types/node": "24.7.1",
     "@types/uuid": "^11.0.0",
     "tsup": "8.5.0",
     "typescript": "5.9.3"
