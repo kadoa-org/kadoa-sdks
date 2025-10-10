@@ -2538,7 +2538,7 @@
           {
             "name": "search",
             "in": "query",
-            "description": "Search term to filter workflows by name or URL",
+            "description": "Search term to filter workflows by name, URL, or workflow ID",
             "required": false,
             "schema": {
               "type": "string"
@@ -12226,10 +12226,17 @@
               },
               "workflowId": {
                 "type": "string"
+              },
+              "deletedRuleIds": {
+                "type": "array",
+                "items": {
+                  "type": "string"
+                }
               }
             },
             "required": [
-              "deletedCount"
+              "deletedCount",
+              "deletedRuleIds"
             ]
           }
         },

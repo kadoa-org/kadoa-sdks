@@ -1,9 +1,13 @@
 import { describe, expect, test } from "bun:test";
-import { SchemaBuilder } from "../../src/internal/domains/schemas/schema-builder";
-import { KadoaSdkException } from "../../src/internal/runtime/exceptions";
+import { SchemaBuilder } from "../../src/domains/schemas/schema-builder";
+import type {
+  CreateSchemaRequest,
+  SchemaResponse,
+} from "../../src/domains/schemas/schemas.acl";
+import type { SchemasService } from "../../src/domains/schemas/schemas.service";
+import { SchemasService as SchemasServiceClass } from "../../src/domains/schemas/schemas.service";
 import type { ExtractionSchemaField } from "../../src/generated";
-import { SchemasModule } from "../../src/modules/schemas.module";
-import type { SchemasService } from "../../src/internal/domains/schemas/schemas.service";
+import { KadoaSdkException } from "../../src/runtime/exceptions";
 
 describe("SchemaBuilder", () => {
   describe("Validation", () => {
@@ -171,38 +175,54 @@ describe("SchemaBuilder", () => {
   });
 });
 
-describe("SchemasModule.builder()", () => {
+describe("SchemasService.builder()", () => {
   test("returns a SchemaBuilder instance with entity name set", () => {
-    const mockService = {} as SchemasService;
-    const module = new SchemasModule(mockService);
+    const mockService = { createSchema: async () => ({}) } as SchemasService;
 
-    const builder = module.builder("Product");
+    const builder = SchemasServiceClass.prototype.builder.call(
+      mockService,
+      "Product",
+    );
 
     expect(builder).toBeInstanceOf(SchemaBuilder);
     expect(builder.entityName).toBe("Product");
   });
 
-  test("builder can be used to create a complete schema", () => {
-    const mockService = {} as SchemasService;
-    const module = new SchemasModule(mockService);
+  test("builder create delegates to service", async () => {
+    const captured: CreateSchemaRequest[] = [];
+    const response: SchemaResponse = {
+      id: "schema_123",
+      name: "My Product Schema",
+      entity: "Product",
+      fields: [],
+      version: 1,
+      createdAt: "",
+      updatedAt: "",
+    };
 
-    const schema = module
-      .builder("Product")
-      .field("title", "Product name", "STRING", { example: "iPhone 15" })
-      .field("price", "Product price", "NUMBER")
-      .build();
+    const mockService = {
+      createSchema: async (body: CreateSchemaRequest) => {
+        captured.push(body);
+        return response;
+      },
+    } as SchemasService;
 
-    expect(schema.entityName).toBe("Product");
-    expect(schema.fields).toHaveLength(2);
-    expect(schema.fields[0]).toMatchObject({
-      name: "title",
-      description: "Product name",
-      dataType: "STRING",
+    const builder = SchemasServiceClass.prototype.builder.call(
+      mockService,
+      "Product",
+    );
+
+    builder
+      .field("title", "Product name", "STRING", { example: "Example" })
+      .field("price", "Product price", "NUMBER");
+
+    const result = await builder.create("My Product Schema");
+
+    expect(captured).toHaveLength(1);
+    expect(captured[0]).toMatchObject({
+      name: "My Product Schema",
+      entity: "Product",
     });
-    expect(schema.fields[1]).toMatchObject({
-      name: "price",
-      description: "Product price",
-      dataType: "NUMBER",
-    });
+    expect(result).toBe(response);
   });
 });

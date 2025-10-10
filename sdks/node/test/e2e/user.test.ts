@@ -1,6 +1,6 @@
 import { beforeAll, describe, expect, it } from "bun:test";
-import { KadoaHttpException } from "../../src/internal/runtime/exceptions";
 import { KadoaClient } from "../../src/kadoa-client";
+import { KadoaHttpException } from "../../src/runtime/exceptions";
 import { getTestEnv } from "../utils/env";
 
 describe("User Module", () => {

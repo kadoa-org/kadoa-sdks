@@ -2,6 +2,11 @@
 
 This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
 
+## SDK-Specific Instructions
+
+@sdks/node/CLAUDE.md
+@sdks/python/CLAUDE.md
+
 ## Package Manager
 
 **Bun** is used as the primary package manager for this monorepo (v1.2.21). All development commands should use `bun` instead of `npm/yarn/pnpm`. Note that the Node.js SDK is published to NPM registry despite using Bun for development.
@@ -47,45 +52,6 @@ bun kadoa-codegen fetch-spec -e http://localhost:12380/openapi -f
 bun kadoa-codegen generate --fetch-latest -e http://localhost:12380/openapi -f
 ```
 
-### Node SDK Commands
-
-```bash
-cd sdks/node
-
-# Build
-bun run build
-
-# Development
-bun run dev:watch
-
-# Testing
-bun test
-bun test test/e2e
-bun test --watch
-```
-
-### Python SDK Commands
-
-```bash
-cd sdks/python
-
-# Install
-make install          # Install SDK
-make install-dev      # Install with dev dependencies
-
-# Testing
-make test            # All tests
-make test-e2e        # E2E tests only
-make test-coverage   # With coverage report
-
-# Code quality
-make lint            # Run ruff linter
-make format          # Format with black
-
-# Clean
-make clean           # Remove build artifacts
-```
-
 ## Architecture Overview
 
 ### Monorepo Structure
@@ -96,22 +62,7 @@ This is a Turborepo-based monorepo containing:
 kadoa-sdks/
 ├── sdks/
 │   ├── node/           # Node.js/TypeScript SDK
-│   │   ├── src/
-│   │   │   ├── index.ts           # Public API exports
-│   │   │   ├── kadoa-client.ts    # Main client implementation
-│   │   │   ├── internal/
-│   │   │   │   ├── runtime/       # Cross-cutting infra (http, events, pagination, exceptions)
-│   │   │   │   └── domains/       # Domain-specific internals (orchestrators, services)
-│   │   │   ├── modules/           # Public facades (commands, services, types)
-│   │   │   └── generated/         # OpenAPI-generated client
-│   │   └── test/
 │   └── python/         # Python SDK
-│       ├── kadoa_sdk/
-│       │   ├── __init__.py        # Public API exports
-│       │   ├── client.py          # Main client implementation
-│       │   ├── core/              # Core utilities
-│       │   └── extraction/        # Extraction features
-│       └── tests/
 ├── examples/
 │   ├── node-examples/
 │   └── python-examples/
@@ -124,8 +75,7 @@ kadoa-sdks/
 
 1. **SDK Initialization Pattern**: Both SDKs use a client initialization pattern that returns configured API clients
 2. **Generated Code**: API clients are auto-generated from OpenAPI specs and placed in `generated/` directories
-3. **Modules & Internals**: Public modules compose `internal/domains` and `internal/runtime` on top of `generated` clients
-4. **Monorepo Tasks**: Turbo is used for task orchestration with caching for builds
+3. **Monorepo Tasks**: Turbo is used for task orchestration with caching for builds
 
 ## Development Workflow
 
@@ -137,25 +87,9 @@ kadoa-sdks/
 4. Add tests in the test directory
 5. Update examples if the feature affects the public API
 
-### Code Style
-
-- Follow `sdks/node/STYLEGUIDE.md` for Node SDK structure, boundaries, imports, events and errors.
-- **JavaScript/TypeScript** (Node SDK): Biome for formatting/linting; imports must respect boundaries:
-  - `modules/**` must not import from `internal/domains/**`.
-  - `internal/runtime/**` must not import from `modules/**` or `internal/domains/**`.
-  - `internal/domains/**` must not import from `modules/**`.
-  - Never edit `generated/**` by hand.
-- **Python**: Uses Black (100 char line length) and Ruff for formatting/linting
-
-### Testing Strategy
-
-- Node SDK: Uses Bun's built-in test runner
-- Python SDK: Uses pytest with coverage reporting
-- Both SDKs have E2E tests that require `KADOA_API_KEY` environment variable
-
 ## Release Process
 
-Uses [Release Please](https://github.com/googleapis/release-please) for automated versioning:
+Uses [Release Please](https://github.com/googleapis/release-please) for automated versioning.
 
 ### Conventional Commits
 

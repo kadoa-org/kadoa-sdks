@@ -1,37 +1,38 @@
 import type { AxiosInstance } from "axios";
 import axios, { AxiosError } from "axios";
 import { v4 } from "uuid";
-import { Configuration, NotificationsApi, WorkflowsApi } from "./generated";
-import { Realtime } from "./internal/domains/realtime/realtime";
-import type { KadoaUser } from "./internal/domains/user/user.service";
-import { PUBLIC_API_URI } from "./internal/runtime/config";
 import {
-  KadoaErrorCode,
-  KadoaHttpException,
-} from "./internal/runtime/exceptions";
-import { ExtractionModule } from "./modules/extraction.module";
-import { NotificationsModule } from "./modules/notifications.module";
-import { SchemasModule } from "./modules/schemas.module";
-import { UserModule } from "./modules/user.module";
-import { ValidationModule } from "./modules/validation.module";
-import { WorkflowsModule } from "./modules/workflows.module";
-import { SDK_LANGUAGE, SDK_NAME, SDK_VERSION } from "./version";
-import { UserService } from "./internal/domains/user/user.service";
-import { ExtractionService } from "./internal/domains/extraction/services/extraction.service";
-import { NotificationChannelsService } from "./internal/domains/notifications/notification-channels.service";
-import { NotificationSettingsService } from "./internal/domains/notifications/notification-settings.service";
-import { DataFetcherService } from "./internal/domains/extraction/services/data-fetcher.service";
-import { WorkflowsCoreService } from "./internal/domains/workflows/workflows-core.service";
-import { SchemasService } from "./internal/domains/schemas/schemas.service";
-import { NotificationSetupService } from "./internal/domains/notifications/notification-setup.service";
-import { ValidationCoreService } from "./internal/domains/validation/validation-core.service";
-import { ValidationRulesService } from "./internal/domains/validation/validation-rules.service";
-import { EntityResolverService } from "./internal/domains/extraction/services/entity-resolver.service";
+  Configuration,
+  NotificationsApi,
+  WorkflowsApi,
+} from "./domains/apis.acl";
+import { DataFetcherService } from "./domains/extraction/services/data-fetcher.service";
+import { EntityResolverService } from "./domains/extraction/services/entity-resolver.service";
+import { ExtractionService } from "./domains/extraction/services/extraction.service";
 import {
   ExtractionBuilderService,
   type ExtractOptions,
   type PreparedExtraction,
-} from "./internal/domains/extraction/services/extraction-builder.service";
+} from "./domains/extraction/services/extraction-builder.service";
+import {
+  type NotificationOptions,
+  type NotificationSettings,
+  NotificationSetupService,
+  type SetupWorkflowNotificationSettingsRequest,
+  type SetupWorkspaceNotificationSettingsRequest,
+} from "./domains/notifications";
+import { NotificationChannelsService } from "./domains/notifications/notification-channels.service";
+import { NotificationSettingsService } from "./domains/notifications/notification-settings.service";
+import { Realtime } from "./domains/realtime/realtime";
+import { SchemasService } from "./domains/schemas/schemas.service";
+import type { KadoaUser } from "./domains/user/user.service";
+import { UserService } from "./domains/user/user.service";
+import { ValidationCoreService } from "./domains/validation/validation-core.service";
+import { ValidationRulesService } from "./domains/validation/validation-rules.service";
+import { WorkflowsCoreService } from "./domains/workflows/workflows-core.service";
+import { PUBLIC_API_URI } from "./runtime/config";
+import { KadoaErrorCode, KadoaHttpException } from "./runtime/exceptions";
+import { SDK_LANGUAGE, SDK_NAME, SDK_VERSION } from "./version";
 
 export interface KadoaClientStatus {
   baseUrl: string;
@@ -57,6 +58,24 @@ export interface KadoaClientConfig {
     /** Heartbeat interval in ms (default: 10000) */
     heartbeatInterval?: number;
   };
+}
+
+export interface NotificationDomain {
+  channels: NotificationChannelsService;
+  settings: NotificationSettingsService;
+  setup: NotificationSetupService;
+  configure(options: NotificationOptions): Promise<NotificationSettings[]>;
+  setupForWorkflow(
+    requestData: SetupWorkflowNotificationSettingsRequest,
+  ): Promise<NotificationSettings[]>;
+  setupForWorkspace(
+    requestData: SetupWorkspaceNotificationSettingsRequest,
+  ): Promise<NotificationSettings[]>;
+}
+
+export interface ValidationDomain {
+  core: ValidationCoreService;
+  rules: ValidationRulesService;
 }
 
 /**
@@ -86,12 +105,13 @@ export class KadoaClient {
   private _realtime?: Realtime;
   private _extractionBuilderService: ExtractionBuilderService;
 
-  public readonly extraction: ExtractionModule;
-  public readonly workflow: WorkflowsModule;
-  public readonly notification: NotificationsModule;
-  public readonly schema: SchemasModule;
-  public readonly user: UserModule;
-  public readonly validation: ValidationModule;
+  public readonly extraction: ExtractionService;
+  public readonly workflow: WorkflowsCoreService;
+  public readonly workflows: WorkflowsCoreService;
+  public readonly notification: NotificationDomain;
+  public readonly schema: SchemasService;
+  public readonly user: UserService;
+  public readonly validation: ValidationDomain;
 
   constructor(config: KadoaClientConfig) {
     this._baseUrl = PUBLIC_API_URI;
@@ -182,6 +202,8 @@ export class KadoaClient {
       dataFetcherService,
       entityResolverService,
       channelSetupService,
+      channelsService,
+      settingsService,
     );
     this._extractionBuilderService = new ExtractionBuilderService(
       workflowsCoreService,
@@ -190,23 +212,31 @@ export class KadoaClient {
       channelSetupService,
     );
 
-    //modules
-    this.user = new UserModule(userService);
-    this.extraction = new ExtractionModule(
-      extractionService,
-      dataFetcherService,
-      channelsService,
-      settingsService,
-      workflowsCoreService,
-    );
-    this.workflow = new WorkflowsModule(workflowsCoreService);
-    this.schema = new SchemasModule(schemasService);
-    this.notification = new NotificationsModule(
-      channelsService,
-      settingsService,
-      channelSetupService,
-    );
-    this.validation = new ValidationModule(coreService, rulesService);
+    // domain services
+    this.user = userService;
+    this.extraction = extractionService;
+    this.workflow = workflowsCoreService;
+    this.workflows = workflowsCoreService;
+    this.schema = schemasService;
+    this.notification = {
+      channels: channelsService,
+      settings: settingsService,
+      setup: channelSetupService,
+      configure: (options: NotificationOptions) =>
+        channelSetupService.setup(options),
+      setupForWorkflow: (
+        request: SetupWorkflowNotificationSettingsRequest,
+      ): Promise<NotificationSettings[]> =>
+        channelSetupService.setupForWorkflow(request),
+      setupForWorkspace: (
+        request: SetupWorkspaceNotificationSettingsRequest,
+      ): Promise<NotificationSettings[]> =>
+        channelSetupService.setupForWorkspace(request),
+    };
+    this.validation = {
+      core: coreService,
+      rules: rulesService,
+    };
 
     if (config.enableRealtime && config.realtimeConfig?.autoConnect !== false) {
       this.connectRealtime();

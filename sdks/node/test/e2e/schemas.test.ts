@@ -1,6 +1,6 @@
-import { afterAll, describe, expect, it } from "bun:test";
-import { KadoaClient } from "../../src/kadoa-client";
+import { afterAll, beforeAll, describe, expect, it } from "bun:test";
 import type { ExtractionSchemaField } from "../../src/generated";
+import { KadoaClient } from "../../src/kadoa-client";
 import { getTestEnv } from "../utils/env";
 
 describe("Schemas Module E2E", () => {
@@ -8,19 +8,34 @@ describe("Schemas Module E2E", () => {
   const client = new KadoaClient({ apiKey: env.KADOA_API_KEY });
   const createdSchemaIds: string[] = [];
 
-  afterAll(async () => {
-    // Clean up created schemas
-    for (const schemaId of createdSchemaIds) {
-      try {
-        await client.schema.delete(schemaId);
-      } catch (_error) {
-        // Ignore cleanup errors
+  const testSchemaNames = [
+    "Test Product Schema",
+    "Test Reusable Product Schema",
+    "Test Complete Product Schema",
+    "Test Fluent Product Schema",
+  ];
+
+  async function cleanupSchemasByName() {
+    const schemas = await client.schema.listSchemas();
+    for (const schema of schemas) {
+      if (testSchemaNames.includes(schema.name)) {
+        await client.schema.deleteSchema(schema.id);
       }
+    }
+  }
+
+  beforeAll(async () => {
+    await cleanupSchemasByName();
+  });
+
+  afterAll(async () => {
+    for (const schemaId of createdSchemaIds) {
+      await client.schema.deleteSchema(schemaId);
     }
   });
 
   it("should create schema using body", async () => {
-    const schema = await client.schema.create({
+    const schema = await client.schema.createSchema({
       name: "Test Product Schema",
       entity: "TestProduct",
       fields: [
@@ -50,7 +65,7 @@ describe("Schemas Module E2E", () => {
 
   it("should reuse existing schema by ID", async () => {
     // Create a schema first
-    const created = await client.schema.create({
+    const created = await client.schema.createSchema({
       name: "Test Reusable Product Schema",
       entity: "TestReusableProduct",
       fields: [
@@ -67,7 +82,7 @@ describe("Schemas Module E2E", () => {
     createdSchemaIds.push(created.id);
 
     // Retrieve it
-    const retrieved = await client.schema.get(created.id);
+    const retrieved = await client.schema.getSchema(created.id);
 
     expect(retrieved).toBeDefined();
     expect(retrieved.id).toBe(created.id);
@@ -89,7 +104,7 @@ describe("Schemas Module E2E", () => {
       .build();
 
     // Create the schema using the built definition
-    const schema = await client.schema.create({
+    const schema = await client.schema.createSchema({
       name: "Test Complete Product Schema",
       entity: schemaDefinition.entityName,
       fields: schemaDefinition.fields,
@@ -104,7 +119,7 @@ describe("Schemas Module E2E", () => {
 
     // Verify the built definition structure before creation
     expect(schemaDefinition.entityName).toBe("TestCompleteProduct");
-    expect(schemaDefinition.fields).toHaveLength(4);
+    expect(schemaDefinition.fields).toHaveLength(5);
 
     // Verify field types
     const schemaField: ExtractionSchemaField = schemaDefinition.fields.find(

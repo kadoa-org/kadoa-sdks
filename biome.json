@@ -19,6 +19,54 @@
       ],
       "linter": { "enabled": false },
       "formatter": { "enabled": false }
+    },
+    {
+      "includes": ["sdks/node/src/**/*.ts"],
+      "linter": {
+        "rules": {
+          "style": {
+            "noRestrictedImports": {
+              "level": "error",
+              "options": {
+                "patterns": [
+                  {
+                    "group": ["**/generated/**", "**/generated"],
+                    "message": "Import generated code only from *.acl.ts files."
+                  }
+                ]
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "includes": ["sdks/node/src/**/*.acl.ts"],
+      "linter": {
+        "rules": {
+          "style": { "noRestrictedImports": "off" }
+        }
+      }
+    },
+    {
+      "includes": ["sdks/node/src/runtime/**/*.ts"],
+      "linter": {
+        "rules": {
+          "style": {
+            "noRestrictedImports": {
+              "level": "error",
+              "options": {
+                "patterns": [
+                  {
+                    "group": ["**/domains/**"],
+                    "message": "runtime/** must not import from domains/**."
+                  }
+                ]
+              }
+            }
+          }
+        }
+      }
     }
   ],
   "formatter": {
@@ -50,7 +98,7 @@
     "enabled": true,
     "actions": {
       "source": {
-        "organizeImports": "off"
+        "organizeImports": "on"
       }
     }
   }

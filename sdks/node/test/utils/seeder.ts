@@ -62,13 +62,13 @@ export const seedRule = async (
   client: KadoaClient,
 ): Promise<string> => {
   console.log(`[Seeder] Seeding rule: ${name}`);
-  const existingRule = await client.validation.getRuleByName(name);
+  const existingRule = await client.validation.rules.getRuleByName(name);
   if (existingRule?.id) {
     console.log(`[Seeder] Rule ${name} already exists: ${existingRule.id}`);
     return existingRule.id;
   }
 
-  const rule = await client.validation.createRule({
+  const rule = await client.validation.rules.createRule({
     name,
     description: "Test rule",
     ruleType: "custom_sql",
@@ -89,7 +89,7 @@ export const seedValidation = async (
 ): Promise<string> => {
   console.log(`[Seeder] Seeding validation: ${workflowId}`);
 
-  const existingValidation = await client.validation.getLatestValidation(
+  const existingValidation = await client.validation.core.getLatestValidation(
     workflowId,
     jobId,
   );
@@ -104,7 +104,10 @@ export const seedValidation = async (
     return existingValidation.id;
   }
 
-  const result = await client.validation.scheduleValidation(workflowId, jobId);
+  const result = await client.validation.core.scheduleValidation(
+    workflowId,
+    jobId,
+  );
   //i am lazy to implement validation status polling so we will wait for 1 second
   await Promise.resolve(new Promise((resolve) => setTimeout(resolve, 1000)));
   return result.validationId;

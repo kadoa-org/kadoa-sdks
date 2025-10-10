@@ -1,6 +1,6 @@
 import { afterAll, beforeAll, describe, expect, test } from "bun:test";
-import { getE2ETestEnv } from "../utils/env";
 import { KadoaClient } from "../../src/kadoa-client";
+import { getE2ETestEnv } from "../utils/env";
 import { seedRule, seedWorkflow } from "../utils/seeder";
 
 describe("Data Validation Rules", () => {
@@ -38,7 +38,7 @@ describe("Data Validation Rules", () => {
   );
 
   test("should create a validation rule", async () => {
-    const result = await client.validation.createRule({
+    const result = await client.validation.rules.createRule({
       name: "test-rule-2",
       description: "Test rule 2",
       ruleType: "custom_sql",
@@ -53,7 +53,7 @@ describe("Data Validation Rules", () => {
   });
 
   test("shoul return list of rules", async () => {
-    const result = await client.validation.listRules({
+    const result = await client.validation.rules.listRules({
       workflowId,
     });
 
@@ -62,7 +62,7 @@ describe("Data Validation Rules", () => {
   });
 
   test("should generate single rule using natural language", async () => {
-    const result = await client.validation.generateRule({
+    const result = await client.validation.rules.generateRule({
       workflowId,
       selectedColumns: ["title"],
       userPrompt: "Ensure the title is not empty",
@@ -74,7 +74,7 @@ describe("Data Validation Rules", () => {
   test(
     "should generate multiple rules using generated intents from schema",
     async () => {
-      const result = await client.validation.generateRules({
+      const result = await client.validation.rules.generateRules({
         workflowId,
       });
 
@@ -85,7 +85,7 @@ describe("Data Validation Rules", () => {
   );
 
   test("should bulk approve rules", async () => {
-    const result = await client.validation.bulkApproveRules({
+    const result = await client.validation.rules.bulkApproveRules({
       workflowId,
       ruleIds: [ruleId],
     });
@@ -94,7 +94,7 @@ describe("Data Validation Rules", () => {
   });
 
   test("should bulk delete rules", async () => {
-    const result = await client.validation.bulkDeleteRules({
+    const result = await client.validation.rules.bulkDeleteRules({
       workflowId,
       ruleIds: [ruleId],
     });

@@ -1,25 +1,15 @@
 import { afterAll, beforeAll, describe, expect, test } from "bun:test";
-import { DataFetcherService } from "../../src/internal/domains/extraction/services/data-fetcher.service";
-import { getTestEnv } from "../utils/env";
 import { KadoaClient } from "../../src/kadoa-client";
+import { getTestEnv } from "../utils/env";
 import { seedWorkflow } from "../utils/seeder";
-import { WorkflowsApi } from "../../src/generated";
 
 describe("FetchData", () => {
   let client: KadoaClient;
-  let service: DataFetcherService;
   const env = getTestEnv();
   let workflowId: string;
 
   beforeAll(async () => {
     client = new KadoaClient({ apiKey: env.KADOA_API_KEY, timeout: 30000 });
-
-    const workflowsApi = new WorkflowsApi(
-      client.configuration,
-      client.baseUrl,
-      client.axiosInstance,
-    );
-    service = new DataFetcherService(workflowsApi);
 
     const result = await seedWorkflow({ name: "test-workflow-1" }, client);
     workflowId = result.workflowId;
@@ -34,7 +24,7 @@ describe("FetchData", () => {
   test(
     "fetches first page of workflow data",
     async () => {
-      const result = await service.fetchData({
+      const result = await client.extraction.fetchData({
         workflowId: workflowId,
         page: 1,
         limit: 10,
@@ -59,13 +49,13 @@ describe("FetchData", () => {
   test(
     "fetches multiple pages",
     async () => {
-      const page1 = await service.fetchData({
+      const page1 = await client.extraction.fetchData({
         workflowId: workflowId,
         page: 1,
         limit: 5,
       });
 
-      const page2 = await service.fetchData({
+      const page2 = await client.extraction.fetchData({
         workflowId: workflowId,
         page: 2,
         limit: 5,
@@ -88,14 +78,14 @@ describe("FetchData", () => {
   test(
     "handles different query parameters",
     async () => {
-      const ascResult = await service.fetchData({
+      const ascResult = await client.extraction.fetchData({
         workflowId: workflowId,
         page: 1,
         limit: 5,
         order: "asc",
       });
 
-      const descResult = await service.fetchData({
+      const descResult = await client.extraction.fetchData({
         workflowId: workflowId,
         page: 1,
         limit: 5,

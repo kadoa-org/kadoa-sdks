@@ -1,8 +1,7 @@
 import { afterAll, beforeAll, describe, expect, test } from "bun:test";
-import { getE2ETestEnv } from "../utils/env";
-
-import { NotificationChannelType } from "../../src/internal/domains/notifications/notification-channels.service";
+import { NotificationChannelType } from "../../src";
 import { KadoaClient } from "../../src/kadoa-client";
+import { getE2ETestEnv } from "../utils/env";
 import { seedWorkflow } from "../utils/seeder";
 
 describe("Notifications", () => {

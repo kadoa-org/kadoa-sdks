@@ -81,7 +81,7 @@ describe("Extraction", () => {
         expect(result?.data?.length).toBeGreaterThan(0);
         expect(result?.workflow?.state).toBe("PREVIEW");
 
-        await client.workflow.approve(result?.workflowId);
+        await client.workflow.resume(result?.workflowId);
         const finished = await client.workflow.wait(result?.workflowId);
         expect(finished?.runState).toBe("FINISHED");
       },
