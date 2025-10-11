@@ -1,5 +1,36 @@
 # Changelog
 
+## [0.14.0](https://github.com/kadoa-org/kadoa-sdks/compare/node-sdk-v0.13.0...node-sdk-v0.14.0) (2025-10-11)
+
+
+### Features
+
+* **spec:** update spec fingerprint ([5afb9bb](https://github.com/kadoa-org/kadoa-sdks/commit/5afb9bb5660f20b22103690477dfe02665cf3713))
+
+
+### Miscellaneous Chores
+
+* **deps-dev:** bump @types/node in /sdks/node in the development group ([#83](https://github.com/kadoa-org/kadoa-sdks/issues/83)) ([a8e484d](https://github.com/kadoa-org/kadoa-sdks/commit/a8e484db668a9acb670977d83cc1b7d3433b5156))
+* **deps:** bump es-toolkit in /sdks/node in the production group ([#82](https://github.com/kadoa-org/kadoa-sdks/issues/82)) ([ee83d55](https://github.com/kadoa-org/kadoa-sdks/commit/ee83d55927ad30c6c124133ae9916be44d3bbc88))
+* **spec:** update OpenAPI spec ([#81](https://github.com/kadoa-org/kadoa-sdks/issues/81)) ([a6ca334](https://github.com/kadoa-org/kadoa-sdks/commit/a6ca3348b5000fa4672118eecb0778f8c3453cc7))
+
+
+### Code Refactoring
+
+* clean up examples and update client configuration ([66349de](https://github.com/kadoa-org/kadoa-sdks/commit/66349defd0c43d544359703db18d8ed2130f3543))
+* **node-sdk:** consolidate API key environment variables ([388293a](https://github.com/kadoa-org/kadoa-sdks/commit/388293ac4696227b54f403f1def14340df6acb6c))
+* **node-sdk:** restructure with domain-first architecture and ACLs ([3c70296](https://github.com/kadoa-org/kadoa-sdks/commit/3c702969162a340faf4c734e6f0293308f5760de))
+
+
+### Documentation
+
+* add comprehensive SDK documentation for validation and notifications ([0bdf28b](https://github.com/kadoa-org/kadoa-sdks/commit/0bdf28bc4f2d6a6bf31da0f6ff2cabb9d07bb5c9))
+
+
+### Styles
+
+* convert indentation from tabs to spaces ([b12e3aa](https://github.com/kadoa-org/kadoa-sdks/commit/b12e3aa1dd5e22e1bfdc5be4efcc9a476a450ddc))
+
 ## [0.13.0](https://github.com/kadoa-org/kadoa-sdks/compare/node-sdk-v0.12.1...node-sdk-v0.13.0) (2025-10-07)
 
 
