@@ -1,0 +1,481 @@
+# Validation Rules
+
+Learn how to create, manage, and customize validation rules programmatically using the Kadoa SDK. This guide covers AI-powered rule generation, manual rule creation, and bulk operations.
+
+For core validation concepts and visual rule management, see the [Data Validation documentation](https://docs.kadoa.com/docs/data-validation).
+
+## Prerequisites
+
+To get the most out of this guide, you'll need to:
+- Create a Kadoa account
+- Get your API key
+- Have a workflow with extracted data
+- Understand basic validation concepts from the [UI guide](https://docs.kadoa.com/docs/data-validation)
+
+## Introduction
+
+Validation rules define conditions that your extracted data must meet. The SDK provides powerful tools for:
+
+- **Automation**: Generate and manage rules programmatically
+- **Bulk Operations**: Handle multiple rules efficiently
+- **Custom Workflows**: Integrate validation into your applications
+- **CI/CD**: Automate rule approval and validation
+
+## AI-Powered Rule Generation (Recommended)
+
+The easiest way to create validation rules is using AI-powered generation. Kadoa analyzes your schema and data to suggest relevant rules.
+
+### Auto-Generate Rules from Schema
+
+Generate comprehensive validation rules based on your data schema:
+
+```typescript
+// Generate rules automatically from schema
+const generatedRules = await client.validation.rules.generateRules({
+  workflowId: 'your-workflow-id'
+});
+
+console.log(`Generated ${generatedRules.length} validation rules`);
+
+// Review generated rules
+for (const rule of generatedRules) {
+  console.log(`Rule: ${rule.name}`);
+  console.log(`Description: ${rule.description}`);
+  console.log(`Status: ${rule.status}`); // 'preview' - needs approval
+  console.log(`Target columns: ${rule.targetColumns.join(', ')}`);
+}
+```
+
+### Create Rules from Natural Language
+
+Generate specific rules using natural language descriptions. Focus on single-purpose rules for better maintainability:
+
+```typescript
+// Create a single-purpose rule for email validation
+const emailRule = await client.validation.rules.generateRule({
+  workflowId: 'your-workflow-id',
+  selectedColumns: ['email'],
+  userPrompt: 'Check that email addresses are valid'
+});
+
+// Create a separate rule for phone validation
+const phoneRule = await client.validation.rules.generateRule({
+  workflowId: 'your-workflow-id',
+  selectedColumns: ['phone'],
+  userPrompt: 'Check that phone numbers contain only digits'
+});
+
+console.log('Generated email rule:', emailRule.name);
+console.log('Generated phone rule:', phoneRule.name);
+```
+
+### Common Single-Purpose Rule Examples
+
+| Description | Target Column | Generated Rule |
+|-------------|---------------|----------------|
+| "Check email formats are valid" | `email` | `WHERE email NOT REGEXP '^[A-Za-z0-9+_.-]+@[A-Za-z0-9.-]+\\.[A-Za-z]{2,}$'` |
+| "All prices should be positive" | `price` | `WHERE price <= 0 OR price IS NULL` |
+| "Product URLs should contain the domain" | `url` | `WHERE url NOT LIKE '%example.com%'` |
+| "Check that publication dates are not in the future" | `publication_date` | `WHERE publication_date > CURRENT_DATE()` |
+| "Titles should not be empty" | `title` | `WHERE title IS NULL OR TRIM(title) = ''` |
+| "Ratings should be between 1 and 5" | `rating` | `WHERE rating < 1 OR rating > 5` |
+
+For more SQL patterns and examples, see the [UI documentation](https://docs.kadoa.com/docs/data-validation#example-rules).
+
+## Rule Approval Workflow
+
+Generated rules start in "preview" status and must be approved before becoming active.
+
+### List Suggested Rules
+
+```typescript
+// Get all suggested rules awaiting approval
+const suggestedRules = await client.validation.rules.listRules({
+  workflowId: 'your-workflow-id',
+  status: 'preview'
+});
+
+console.log(`Found ${suggestedRules.data.length} suggested rules`);
+```
+
+### Bulk Approve Rules
+
+Approve multiple rules at once:
+
+```typescript
+// Get all preview rules
+const previewRules = await client.validation.rules.listRules({
+  workflowId: 'your-workflow-id',
+  status: 'preview'
+});
+
+// Approve all suggested rules
+const approvedRules = await client.validation.rules.bulkApproveRules({
+  workflowId: 'your-workflow-id',
+  ruleIds: previewRules.data.map(rule => rule.id)
+});
+
+console.log(`Approved ${approvedRules.approvedCount} rules`);
+```
+
+### Individual Rule Approval
+
+Approve or modify individual rules:
+
+```typescript
+// Update rule status to enabled
+await client.validation.rules.updateRule(ruleId, {
+  status: 'enabled'
+});
+
+// Or disable a rule
+await client.validation.rules.disableRule({
+  ruleId: ruleId
+});
+```
+
+## Rule Management Operations
+
+### List Rules with Filters
+
+```typescript
+// List all rules for a workflow
+const allRules = await client.validation.rules.listRules({
+  workflowId: 'your-workflow-id'
+});
+
+// Filter by status
+const enabledRules = await client.validation.rules.listRules({
+  workflowId: 'your-workflow-id',
+  status: 'enabled'
+});
+
+// Pagination
+const page1 = await client.validation.rules.listRules({
+  workflowId: 'your-workflow-id',
+  page: 1,
+  pageSize: 10
+});
+```
+
+### Get Rule Details
+
+```typescript
+// Get rule by ID
+const rule = await client.validation.rules.getRuleById(ruleId);
+
+// Get rule by name
+const ruleByName = await client.validation.rules.getRuleByName('title_not_empty');
+```
+
+### Update Rule Properties
+
+```typescript
+// Update rule name and description
+await client.validation.rules.updateRule(ruleId, {
+  name: 'Updated Rule Name',
+  description: 'Updated description'
+});
+
+// Change rule status
+await client.validation.rules.updateRule(ruleId, {
+  status: 'disabled'
+});
+```
+
+### Bulk Operations
+
+```typescript
+// Bulk delete rules
+await client.validation.rules.bulkDeleteRules({
+  workflowId: 'your-workflow-id',
+  ruleIds: [ruleId1, ruleId2, ruleId3]
+});
+
+// Delete all rules for a workflow
+await client.validation.rules.deleteAllRules({
+  workflowId: 'your-workflow-id',
+  reason: 'Cleaning up test rules'
+});
+```
+
+## Manual Rule Creation (Advanced)
+
+For specific business logic that AI generation can't handle, create custom SQL rules. Keep rules focused on a single validation concern:
+
+```typescript
+// Create a single-purpose custom SQL rule for price range validation
+const priceRangeRule = await client.validation.rules.createRule({
+  name: 'price_within_range',
+  description: 'Ensure prices are between $1 and $1000',
+  ruleType: 'custom_sql',
+  parameters: {
+    sql: `SELECT __id__, 'price' AS __column__, 'RANGE' AS __type__, "price" AS __bad_value__ 
+          FROM _src 
+          WHERE "price" < 1 OR "price" > 1000`
+  },
+  workflowId: 'your-workflow-id',
+  targetColumns: ['price']
+});
+
+// Create separate rules for different concerns
+const titleLengthRule = await client.validation.rules.createRule({
+  name: 'title_length_limit',
+  description: 'Ensure titles are not longer than 100 characters',
+  ruleType: 'custom_sql',
+  parameters: {
+    sql: `SELECT __id__, 'title' AS __column__, 'LENGTH_MAX' AS __type__, "title" AS __bad_value__ 
+          FROM _src 
+          WHERE LENGTH("title") > 100`
+  },
+  workflowId: 'your-workflow-id',
+  targetColumns: ['title']
+});
+```
+
+### SQL Query Structure
+
+Custom SQL rules must follow this structure:
+
+| Field | Description | Example |
+|-------|-------------|---------|
+| `__id__` | Row identifier | `__id__` |
+| `__column__` | Column being validated | `'price'` |
+| `__type__` | Validation type | `'RANGE'`, `'FORMAT'`, `'LENGTH_MAX'` |
+| `__bad_value__` | The invalid value | `"price"` |
+
+### When to Use Manual Rules
+
+Use custom SQL rules when you need:
+- Complex business logic validation
+- Cross-column validation
+- Custom data format requirements
+- Integration with external validation logic
+
+For more SQL examples and patterns, see the [UI documentation](https://docs.kadoa.com/docs/data-validation#example-rules).
+
+## Rule Statuses
+
+Understanding rule states helps manage your validation workflow:
+
+| Status | Description | Action Required |
+|--------|-------------|-----------------|
+| `preview` | Suggested rule awaiting approval | Review and approve/delete |
+| `enabled` | Active rule generating validation issues | None - rule is working |
+| `disabled` | Inactive rule not checking data | Enable if needed |
+
+```typescript
+// Check rule status
+const rule = await client.validation.rules.getRuleById(ruleId);
+console.log(`Rule "${rule.name}" is ${rule.status}`);
+
+// List rules by status
+const previewRules = await client.validation.rules.listRules({
+  workflowId: 'your-workflow-id',
+  status: 'preview'
+});
+```
+
+## Best Practices
+
+### Start with AI Generation
+
+```typescript
+// 1. Generate rules automatically (AI creates single-purpose rules)
+const generatedRules = await client.validation.rules.generateRules({
+  workflowId: workflowId
+});
+
+// 2. Review and approve (each rule focuses on one validation concern)
+await client.validation.rules.bulkApproveRules({
+  workflowId: workflowId,
+  ruleIds: generatedRules.map(rule => rule.id)
+});
+
+// 3. Add custom single-purpose rules only if needed
+if (needsCustomValidation) {
+  // Create one rule per validation concern
+  await client.validation.rules.createRule({
+    name: 'specific_business_rule',
+    description: 'Single validation concern',
+    // ... configuration
+  });
+}
+```
+
+### Focus on Single-Purpose Rules
+
+```typescript
+// Good: One rule per validation concern
+await client.validation.rules.createRule({
+  name: 'email_format_validation',
+  description: 'Ensure email addresses follow valid format',
+  targetColumns: ['email']
+});
+
+await client.validation.rules.createRule({
+  name: 'phone_format_validation', 
+  description: 'Ensure phone numbers contain only digits',
+  targetColumns: ['phone']
+});
+
+// Avoid: Multi-purpose rules
+await client.validation.rules.createRule({
+  name: 'contact_validation',
+  description: 'Check email and phone formats', // Too broad
+  targetColumns: ['email', 'phone']
+});
+```
+
+### Use Descriptive Names
+
+```typescript
+// Good: Descriptive names
+await client.validation.rules.createRule({
+  name: 'email_format_validation',
+  description: 'Ensure email addresses follow valid format'
+});
+
+// Avoid: Generic names
+await client.validation.rules.createRule({
+  name: 'rule1',
+  description: 'Check email'
+});
+```
+
+### Test Rules in Preview
+
+```typescript
+// Create rule in preview status first
+const rule = await client.validation.rules.createRule({
+  name: 'test_rule',
+  status: 'preview', // Start in preview
+  // ... other properties
+});
+
+// Test the rule, then enable
+await client.validation.rules.updateRule(rule.id, {
+  status: 'enabled'
+});
+```
+
+### Leverage Bulk Operations
+
+```typescript
+// Efficient: Bulk operations
+const rules = await client.validation.rules.listRules({
+  workflowId: workflowId,
+  status: 'preview'
+});
+
+await client.validation.rules.bulkApproveRules({
+  workflowId: workflowId,
+  ruleIds: rules.data.map(rule => rule.id)
+});
+
+// Inefficient: Individual operations
+for (const rule of rules.data) {
+  await client.validation.rules.updateRule(rule.id, {
+    status: 'enabled'
+  });
+}
+```
+
+### Organize by Workflow
+
+```typescript
+// Always specify workflowId for context
+const rules = await client.validation.rules.listRules({
+  workflowId: 'specific-workflow-id'
+});
+
+// This helps with:
+// - Rule management
+// - Debugging
+// - Cleanup operations
+```
+
+## Integration Examples
+
+### Automated Rule Management
+
+```typescript
+// Automatically approve rules for trusted workflows
+async function autoApproveRules(workflowId: string) {
+  const suggestedRules = await client.validation.rules.listRules({
+    workflowId,
+    status: 'preview'
+  });
+
+  if (suggestedRules.data.length > 0) {
+    await client.validation.rules.bulkApproveRules({
+      workflowId,
+      ruleIds: suggestedRules.data.map(rule => rule.id)
+    });
+    
+    console.log(`Auto-approved ${suggestedRules.data.length} rules`);
+  }
+}
+```
+
+### Rule Health Monitoring
+
+```typescript
+// Monitor rule performance
+async function checkRuleHealth(workflowId: string) {
+  const rules = await client.validation.rules.listRules({
+    workflowId,
+    status: 'enabled'
+  });
+
+  for (const rule of rules.data) {
+    const anomalies = await client.validation.getAnomaliesByRule(
+      validationId,
+      rule.name
+    );
+    
+    if (anomalies.anomalies.length > 100) {
+      console.warn(`Rule "${rule.name}" has ${anomalies.anomalies.length} violations`);
+    }
+  }
+}
+```
+
+### Cleanup Old Rules
+
+```typescript
+// Clean up test rules
+async function cleanupTestRules(workflowId: string) {
+  const allRules = await client.validation.rules.listRules({
+    workflowId
+  });
+
+  const testRules = allRules.data.filter(rule => 
+    rule.name.startsWith('test_') || 
+    rule.description.includes('test')
+  );
+
+  if (testRules.length > 0) {
+    await client.validation.rules.bulkDeleteRules({
+      workflowId,
+      ruleIds: testRules.map(rule => rule.id)
+    });
+    
+    console.log(`Cleaned up ${testRules.length} test rules`);
+  }
+}
+```
+
+## Getting Help
+
+If you're stuck:
+1. **Check the examples** in this documentation
+2. **Browse the GitHub examples** in `/examples/node-examples/src/`
+3. **Search GitHub Issues**
+4. **Contact support** at support@kadoa.com
+
+## Next Steps
+
+- Learn about [Data Validation Workflows](./DATA_VALIDATION_GUIDE) for complete validation lifecycle
+- Explore [Schema Management](./SCHEMA_SDK_GUIDE) for defining data structures
+- Check out [Real-time Notifications](./NOTIFICATIONS_GUIDE) for monitoring validation events and rule performance
