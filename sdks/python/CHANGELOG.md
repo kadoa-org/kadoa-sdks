@@ -1,5 +1,32 @@
 # Changelog
 
+## [0.8.0](https://github.com/kadoa-org/kadoa-sdks/compare/python-sdk-v0.7.0...python-sdk-v0.8.0) (2025-10-11)
+
+
+### Features
+
+* **spec:** update spec fingerprint ([5afb9bb](https://github.com/kadoa-org/kadoa-sdks/commit/5afb9bb5660f20b22103690477dfe02665cf3713))
+* **spec:** update spec fingerprint ([100820b](https://github.com/kadoa-org/kadoa-sdks/commit/100820b1d0f3280c63776eca00508b061d8c5076))
+* **spec:** update spec fingerprint ([a1ef20f](https://github.com/kadoa-org/kadoa-sdks/commit/a1ef20f05bfe82230403a3f8aaa10b9443580bfc))
+* **spec:** update spec fingerprint ([ce5813f](https://github.com/kadoa-org/kadoa-sdks/commit/ce5813f26347cea91c38ab0aabab83ad2f4e0b28))
+* **spec:** update spec fingerprint ([c7fd61d](https://github.com/kadoa-org/kadoa-sdks/commit/c7fd61d173aa8c25bac52999a15259089c20f2b9))
+
+
+### Miscellaneous Chores
+
+* **python-sdk:** update documentation and test references ([d30858f](https://github.com/kadoa-org/kadoa-sdks/commit/d30858f4f3fe43e10f9478902cc1a2a0f88ac6a4))
+* **spec:** update OpenAPI spec ([#34](https://github.com/kadoa-org/kadoa-sdks/issues/34)) ([76b0093](https://github.com/kadoa-org/kadoa-sdks/commit/76b009372a2a163533cbae2624e44c3ba85cdedb))
+* **spec:** update OpenAPI spec ([#51](https://github.com/kadoa-org/kadoa-sdks/issues/51)) ([eec722e](https://github.com/kadoa-org/kadoa-sdks/commit/eec722e747c265cb5d5538185626c4b02b2a782f))
+* **spec:** update OpenAPI spec ([#54](https://github.com/kadoa-org/kadoa-sdks/issues/54)) ([6e1a6a8](https://github.com/kadoa-org/kadoa-sdks/commit/6e1a6a8910c77ce1f5171e151957b89938ebbedc))
+* **spec:** update OpenAPI spec ([#66](https://github.com/kadoa-org/kadoa-sdks/issues/66)) ([ab44f94](https://github.com/kadoa-org/kadoa-sdks/commit/ab44f946ba0e6da9f5ffc383eaeedcb4fe932bc9))
+* **spec:** update OpenAPI spec ([#67](https://github.com/kadoa-org/kadoa-sdks/issues/67)) ([af0d253](https://github.com/kadoa-org/kadoa-sdks/commit/af0d253b6a73fd5f498dd870c533e6e24190180c))
+* **spec:** update OpenAPI spec ([#81](https://github.com/kadoa-org/kadoa-sdks/issues/81)) ([a6ca334](https://github.com/kadoa-org/kadoa-sdks/commit/a6ca3348b5000fa4672118eecb0778f8c3453cc7))
+
+
+### Code Refactoring
+
+* **node-sdk:** restructure with domain-first architecture and ACLs ([3c70296](https://github.com/kadoa-org/kadoa-sdks/commit/3c702969162a340faf4c734e6f0293308f5760de))
+
 ## [0.7.0](https://github.com/kadoa-org/kadoa-sdks/compare/python-sdk-v0.6.1...python-sdk-v0.7.0) (2025-09-09)
 
 
