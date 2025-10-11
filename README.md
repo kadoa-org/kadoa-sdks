@@ -5,6 +5,8 @@ Monorepo for Kadoa's official SDKs for Node.js and Python, providing easy integr
 ## Quick Links
 
 - [Contributing Guide](./CONTRIBUTING.md) - How to contribute to this project
+- [Development Workflow](./docs/DEVELOPMENT_WORKFLOW.md) - Preview releases and branch strategy
+- [Branch Setup CLI](./docs/BRANCH_SETUP_CLI.md) - Automated setup with GitHub CLI
 - [Node.js SDK Documentation](./sdks/node/README.md) - Installation and usage
 - [Python SDK Documentation](./sdks/python/README.md) - Installation and usage
 
@@ -58,6 +60,19 @@ Now environment variables will be automatically loaded when you enter any projec
 
 This repository uses [Release Please](https://github.com/googleapis/release-please) for automated versioning and releases.
 
+### Development Workflow
+
+**Main Branch (`main`):**
+- Stable releases with semantic versioning
+- Automatic releases via Release Please
+- Published to npm/PyPI with `latest` tag
+
+**Development Branch (`development`):**
+- Preview releases for every commit
+- Version format: `X.Y.Z-dev.{shortSHA}` (e.g., `0.13.0-dev.abc1234`)
+- Published to npm with `dev` tag, PyPI as prerelease
+- Install with: `npm install @kadoa/node-sdk@dev` or `pip install --pre kadoa_sdk`
+
 ### Automatic Releases
 
 Commits that trigger automatic releases:
@@ -86,6 +101,7 @@ gh workflow run "Manual Release" \
 ```bash
 gh pr list --label "autorelease: pending"  # Check pending releases
 gh release list --limit 5                  # View recent releases
+gh release list --limit 10 --prerelease    # View preview releases
 ```
 
 ## Codegen CLI
