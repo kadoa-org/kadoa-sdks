@@ -7,17 +7,28 @@ async function main() {
 
   const client = new KadoaClient({
     apiKey,
+    enableRealtime: true,
+  });
+
+  client.realtime?.onEvent((event) => {
+    console.log("event: ", event);
   });
 
   const result = await client.extraction.run({
     urls: ["https://sandbox.kadoa.com/ecommerce"],
     bypassPreview: false, //skiped by default
+    notifications: {
+      events: "all",
+      channels: {
+        WEBSOCKET: true,
+      },
+    },
   });
 
   // rule suggestion is asynchronous process so we need to wait for it to complete
   const rulesResult = await pollUntil(
     async () => {
-      return await client.validation.listRules({
+      return await client.validation.rules.listRules({
         workflowId: result.workflowId,
       });
     },
@@ -30,14 +41,14 @@ async function main() {
   const rules = rulesResult.result;
   assert(rules.data.length > 0, "No rules found");
   //approve rules
-  const approvedRules = await client.validation.bulkApproveRules({
+  const approvedRules = await client.validation.rules.bulkApproveRules({
     workflowId: result.workflowId,
     ruleIds: rules.data.map((rule) => rule.id),
   });
   console.log("approvedRules: ", approvedRules);
 
   //schedule validation
-  const res = await client.validation.scheduleValidation(
+  const res = await client.validation.schedule(
     result.workflowId,
     result.workflow?.jobId || "",
   );
@@ -52,9 +63,7 @@ async function main() {
   console.log("validation: ", validation);
 
   //get validation anomalies
-  const anomalies = await client.validation.getValidationAnomalies(
-    res.validationId,
-  );
+  const anomalies = await client.validation.getAnomalies(res.validationId);
 
   console.log("anomalies: ", anomalies);
 }

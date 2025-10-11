@@ -29,7 +29,7 @@ async function main() {
     .extract({
       urls: ["https://sandbox.kadoa.com/ecommerce"],
       name: "Raw Markdown Demo",
-      extraction: (builder) => builder.raw("markdown").raw("url"),
+      extraction: (builder) => builder.raw("MARKDOWN").raw("PAGE_URL"),
     })
     .bypassPreview()
     .setInterval({ interval: "ONLY_ONCE" })
@@ -44,11 +44,11 @@ async function main() {
       name: "Custom Schema Demo",
       extraction: (builder) =>
         builder
-          .schema("Product")
+          .entity("Product")
           .field("title", "Product name", "STRING", {
             example: "Example Product",
           })
-          .field("price", "Product price", "CURRENCY"),
+          .field("price", "Product price", "MONEY"),
     })
     .bypassPreview()
     .setInterval({ interval: "ONLY_ONCE" })
@@ -63,12 +63,12 @@ async function main() {
       name: "Hybrid Demo",
       extraction: (builder) =>
         builder
-          .schema("Product")
+          .entity("Product")
           .field("title", "Product name", "STRING", {
             example: "Example Product",
           })
-          .field("price", "Product price", "CURRENCY")
-          .raw("html"),
+          .field("price", "Product price", "MONEY")
+          .raw("HTML"),
     })
     .bypassPreview()
     .setInterval({ interval: "ONLY_ONCE" })
@@ -82,7 +82,7 @@ async function main() {
       urls: ["https://sandbox.kadoa.com/ecommerce"],
       name: "Classification Demo",
       extraction: (builder) =>
-        builder.schema("Product").classify("category", "Product category", [
+        builder.entity("Product").classify("category", "Product category", [
           {
             title: "Electronics",
             definition: "Electronic devices and gadgets",

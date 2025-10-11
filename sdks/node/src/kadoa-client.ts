@@ -27,6 +27,10 @@ import { Realtime } from "./domains/realtime/realtime";
 import { SchemasService } from "./domains/schemas/schemas.service";
 import type { KadoaUser } from "./domains/user/user.service";
 import { UserService } from "./domains/user/user.service";
+import {
+  createValidationDomain,
+  type ValidationDomain,
+} from "./domains/validation/validation.facade";
 import { ValidationCoreService } from "./domains/validation/validation-core.service";
 import { ValidationRulesService } from "./domains/validation/validation-rules.service";
 import { WorkflowsCoreService } from "./domains/workflows/workflows-core.service";
@@ -73,10 +77,7 @@ export interface NotificationDomain {
   ): Promise<NotificationSettings[]>;
 }
 
-export interface ValidationDomain {
-  core: ValidationCoreService;
-  rules: ValidationRulesService;
-}
+export type { ValidationDomain } from "./domains/validation/validation.facade";
 
 /**
  * KadoaClient provides an object-oriented interface to the Kadoa SDK
@@ -107,7 +108,6 @@ export class KadoaClient {
 
   public readonly extraction: ExtractionService;
   public readonly workflow: WorkflowsCoreService;
-  public readonly workflows: WorkflowsCoreService;
   public readonly notification: NotificationDomain;
   public readonly schema: SchemasService;
   public readonly user: UserService;
@@ -216,7 +216,6 @@ export class KadoaClient {
     this.user = userService;
     this.extraction = extractionService;
     this.workflow = workflowsCoreService;
-    this.workflows = workflowsCoreService;
     this.schema = schemasService;
     this.notification = {
       channels: channelsService,
@@ -233,10 +232,7 @@ export class KadoaClient {
       ): Promise<NotificationSettings[]> =>
         channelSetupService.setupForWorkspace(request),
     };
-    this.validation = {
-      core: coreService,
-      rules: rulesService,
-    };
+    this.validation = createValidationDomain(coreService, rulesService);
 
     if (config.enableRealtime && config.realtimeConfig?.autoConnect !== false) {
       this.connectRealtime();
