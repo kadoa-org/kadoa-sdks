@@ -9,6 +9,9 @@ permissions:
   contents: write
   pull-requests: write
 
+# Require admin approval for this workflow
+# This ensures only admins can trigger releases
+
 jobs:
   release-please:
     runs-on: ubuntu-latest

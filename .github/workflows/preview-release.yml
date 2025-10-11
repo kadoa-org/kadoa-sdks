@@ -9,6 +9,9 @@ permissions:
     contents: write
     packages: write
 
+# Require admin approval for this workflow
+# This ensures only admins can trigger preview releases
+
 jobs:
     preview-release:
         runs-on: ubuntu-latest
