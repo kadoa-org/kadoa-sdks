@@ -1,135 +1,135 @@
 name: Preview Release
 
 on:
-    push:
-        branches:
-            - development
+  push:
+    branches:
+      - development
 
 permissions:
-    contents: write
-    packages: write
+  contents: write
+  packages: write
 
 # Require admin approval for this workflow
 # This ensures only admins can trigger preview releases
 
 jobs:
-    preview-release:
-        runs-on: ubuntu-latest
-        steps:
-            - name: Checkout
-              uses: actions/checkout@v5
-              with:
-                  fetch-depth: 0
+  preview-release:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v5
+        with:
+          fetch-depth: 0
 
-            - name: Setup Bun
-              uses: oven-sh/setup-bun@v2
-              with:
-                  bun-version: "latest"
+      - name: Setup Bun
+        uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: "latest"
 
-            - name: Setup Node.js
-              uses: actions/setup-node@v5
-              with:
-                  node-version: "22"
-                  registry-url: "https://registry.npmjs.org"
+      - name: Setup Node.js
+        uses: actions/setup-node@v5
+        with:
+          node-version: "22"
+          registry-url: "https://registry.npmjs.org"
 
-            - name: Set up Python
-              uses: actions/setup-python@v6
-              with:
-                  python-version: "3.11"
+      - name: Set up Python
+        uses: actions/setup-python@v6
+        with:
+          python-version: "3.11"
 
-            - name: Install dependencies
-              run: bun install
+      - name: Install dependencies
+        run: bun install
 
-            - name: Generate preview version
-              id: version
-              run: |
-                  # Get current version from manifest
-                  CURRENT_VERSION=$(jq -r '."sdks/node"' .release-please-manifest.json)
-                  # Get short commit SHA
-                  SHORT_SHA=$(git rev-parse --short HEAD)
-                  # Generate preview version
-                  PREVIEW_VERSION="${CURRENT_VERSION}-dev.${SHORT_SHA}"
+      - name: Generate preview version
+        id: version
+        run: |
+          # Get current version from manifest
+          CURRENT_VERSION=$(jq -r '."sdks/node"' .release-please-manifest.json)
+          # Get short commit SHA
+          SHORT_SHA=$(git rev-parse --short HEAD)
+          # Generate preview version
+          PREVIEW_VERSION="${CURRENT_VERSION}-dev.${SHORT_SHA}"
 
-                  echo "Current version: $CURRENT_VERSION"
-                  echo "Short SHA: $SHORT_SHA"
-                  echo "Preview version: $PREVIEW_VERSION"
+          echo "Current version: $CURRENT_VERSION"
+          echo "Short SHA: $SHORT_SHA"
+          echo "Preview version: $PREVIEW_VERSION"
 
-                  echo "preview_version=$PREVIEW_VERSION" >> $GITHUB_OUTPUT
-                  echo "current_version=$CURRENT_VERSION" >> $GITHUB_OUTPUT
+          echo "preview_version=$PREVIEW_VERSION" >> $GITHUB_OUTPUT
+          echo "current_version=$CURRENT_VERSION" >> $GITHUB_OUTPUT
 
-            - name: Update Node SDK version
-              run: |
-                  # Update package.json
-                  cd sdks/node
-                  npm version ${{ steps.version.outputs.preview_version }} --no-git-tag-version
+      - name: Update Node SDK version
+        run: |
+          # Update package.json
+          cd sdks/node
+          npm version ${{ steps.version.outputs.preview_version }} --no-git-tag-version
 
-                  # Update version.ts
-                  echo "export const VERSION = '${{ steps.version.outputs.preview_version }}';" > src/version.ts
+          # Update version.ts
+          echo "export const VERSION = '${{ steps.version.outputs.preview_version }}';" > src/version.ts
 
-            - name: Update Python SDK version
-              run: |
-                  # Update pyproject.toml
-                  cd sdks/python
-                  sed -i "s/version = \".*\"/version = \"${{ steps.version.outputs.preview_version }}\"/" pyproject.toml
+      - name: Update Python SDK version
+        run: |
+          # Update pyproject.toml
+          cd sdks/python
+          sed -i "s/version = \".*\"/version = \"${{ steps.version.outputs.preview_version }}\"/" pyproject.toml
 
-                  # Update version.py
-                  echo "VERSION = '${{ steps.version.outputs.preview_version }}'" > kadoa_sdk/version.py
+          # Update version.py
+          echo "VERSION = '${{ steps.version.outputs.preview_version }}'" > kadoa_sdk/version.py
 
-            - name: Generate SDK code
-              run: bun kadoa-codegen generate -c node && bun kadoa-codegen generate -c python
+      - name: Generate SDK code
+        run: bun kadoa-codegen generate -c node && bun kadoa-codegen generate -c python
 
-            - name: Build Node SDK
-              working-directory: sdks/node
-              run: bun run build
+      - name: Build Node SDK
+        working-directory: sdks/node
+        run: bun run build
 
-            - name: Build Python SDK
-              working-directory: sdks/python
-              run: |
-                  python -m pip install --upgrade pip
-                  pip install build twine
-                  python -m build
+      - name: Build Python SDK
+        working-directory: sdks/python
+        run: |
+          python -m pip install --upgrade pip
+          pip install build twine
+          python -m build
 
-            - name: Publish Node SDK to npm
-              working-directory: sdks/node
-              env:
-                  NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
-              run: |
-                  npm whoami || npm config set //registry.npmjs.org/:_authToken=${NODE_AUTH_TOKEN}
-                  npm publish --tag dev --access public
+      - name: Publish Node SDK to npm
+        working-directory: sdks/node
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+        run: |
+          npm whoami || npm config set //registry.npmjs.org/:_authToken=${NODE_AUTH_TOKEN}
+          npm publish --tag dev --access public
 
-            - name: Publish Python SDK to PyPI
-              working-directory: sdks/python
-              env:
-                  TWINE_USERNAME: __token__
-                  TWINE_PASSWORD: ${{ secrets.PYPI_API_TOKEN }}
-              run: |
-                  python -m twine upload dist/* --non-interactive
+      - name: Publish Python SDK to PyPI
+        working-directory: sdks/python
+        env:
+          TWINE_USERNAME: __token__
+          TWINE_PASSWORD: ${{ secrets.PYPI_API_TOKEN }}
+        run: |
+          python -m twine upload dist/* --non-interactive
 
-            - name: Create Git tag
-              run: |
-                  git config --local user.email "action@github.com"
-                  git config --local user.name "GitHub Action"
-                  git add .
-                  git commit -m "chore: bump preview version to ${{ steps.version.outputs.preview_version }}" || exit 0
-                  git tag "preview-${{ steps.version.outputs.preview_version }}"
-                  git push origin "preview-${{ steps.version.outputs.preview_version }}"
+      - name: Create Git tag
+        run: |
+          git config --local user.email "action@github.com"
+          git config --local user.name "GitHub Action"
+          git add .
+          git commit -m "chore: bump preview version to ${{ steps.version.outputs.preview_version }}" || exit 0
+          git tag "preview-${{ steps.version.outputs.preview_version }}"
+          git push origin "preview-${{ steps.version.outputs.preview_version }}"
 
-            - name: Create GitHub Release
-              uses: actions/create-release@v1
-              env:
-                  GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-              with:
-                  tag_name: preview-${{ steps.version.outputs.preview_version }}
-                  release_name: Preview Release ${{ steps.version.outputs.preview_version }}
-                  body: |
-                      This is a preview release from the development branch.
+      - name: Create GitHub Release
+        uses: actions/create-release@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          tag_name: preview-${{ steps.version.outputs.preview_version }}
+          release_name: Preview Release ${{ steps.version.outputs.preview_version }}
+          body: |
+            This is a preview release from the development branch.
 
-                      **Installation:**
-                      - Node.js: `npm install @kadoa/node-sdk@dev`
-                      - Python: `pip install --pre kadoa_sdk`
+            **Installation:**
+            - Node.js: `npm install @kadoa/node-sdk@dev`
+            - Python: `pip install --pre kadoa_sdk`
 
-                      **Changes:**
-                      - Commit: ${{ github.sha }}
-                      - Branch: development
-                  draft: false
-                  prerelease: true
+            **Changes:**
+            - Commit: ${{ github.sha }}
+            - Branch: development
+          draft: false
+          prerelease: true
