@@ -135,6 +135,7 @@ export const WorkflowDisplayStateEnum = {
   Queued: "QUEUED",
   Setup: "SETUP",
   Running: "RUNNING",
+  Failed: "FAILED",
 } as const satisfies Record<
   keyof typeof V4WorkflowsGet200ResponseWorkflowsInnerDisplayStateEnum,
   V4WorkflowsGet200ResponseWorkflowsInnerDisplayStateEnum
