@@ -26,8 +26,9 @@ jobs:
               uses: anthropics/claude-code-action@v1
               with:
                   anthropic_api_key: ${{ secrets.ANTHROPIC_API_KEY }}
-                  # Use the /review command to analyze the PR
                   prompt: |
+                      /review
+
                       Please review this pull request focusing on:
                       - Code quality and adherence to the style guides in CLAUDE.md and STYLEGUIDE.md
                       - Conventional commit message format compliance
