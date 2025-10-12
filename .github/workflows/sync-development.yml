@@ -8,7 +8,6 @@ on:
 
 permissions:
   contents: write
-  pull-requests: write
 
 jobs:
   sync:
@@ -19,39 +18,23 @@ jobs:
           fetch-depth: 0
           token: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: Install GitHub CLI
-        run: |
-          curl -fsSL https://cli.github.com/packages/githubcli-archive-keyring.gpg | sudo dd of=/usr/share/keyrings/githubcli-archive-keyring.gpg
-          sudo chmod go+r /usr/share/keyrings/githubcli-archive-keyring.gpg
-          echo "deb [arch=$(dpkg --print-architecture) signed-by=/usr/share/keyrings/githubcli-archive-keyring.gpg] https://cli.github.com/packages stable main" | sudo tee /etc/apt/sources.list.d/github-cli.list > /dev/null
-          sudo apt update
-          sudo apt install gh -y
-
       - name: Sync development branch
-        env:
-          GH_TOKEN: ${{ github.token }}
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
+
+          # Fetch and checkout development branch
           git fetch origin development
           git checkout development
-          git merge origin/main
-          
+
+          # Merge main into development
+          git merge origin/main --no-edit -m "chore: sync development with main"
+
           # Check if there are changes to push
           if git diff --quiet HEAD origin/development; then
-            echo "No changes to sync"
+            echo "No changes to sync - development is already up to date"
             exit 0
           fi
-          
-          # Create a new branch for the sync
-          BRANCH_NAME="sync-development-$(date +%Y%m%d-%H%M%S)"
-          git checkout -b "$BRANCH_NAME"
-          git push origin "$BRANCH_NAME"
-          
-          # Create a pull request
-          gh pr create \
-            --title "Sync development with main" \
-            --body "Automated sync of development branch with main branch" \
-            --base development \
-            --head "$BRANCH_NAME" \
-            --label "automated,sync"
+
+          # Push changes directly to development
+          git push origin development
