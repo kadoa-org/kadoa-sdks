@@ -2,7 +2,7 @@ name: Claude Code Review
 
 on:
     pull_request:
-        types: [opened, synchronize]
+        types: [opened, synchronize, ready_for_review, reopened]
         # Only review code changes, skip docs-only PRs
         paths:
             - "sdks/**/*.ts"
@@ -33,13 +33,14 @@ jobs:
             - name: Checkout code
               uses: actions/checkout@v5
               with:
-                  fetch-depth: 1
+                  fetch-depth: 0
 
             - name: Claude Code Review
               uses: anthropics/claude-code-action@v1
               with:
                   anthropic_api_key: ${{ secrets.ANTHROPIC_API_KEY }}
                   use_sticky_comment: true
+                  track_progress: true
                   trigger_phrase: "@claude"
                   prompt: |
                       /review
@@ -64,4 +65,7 @@ jobs:
                       - Conventional commit scope and type correctness
                       - Breaking changes properly flagged (`!`)
                       - Missing documentation for public APIs
-                  claude_args: "--max-turns 10 --model claude-sonnet-4-5-20250929"
+
+                      Post your review as a top-level comment using the update_claude_comment tool.
+                      Use inline comments only for specific code issues that need attention.
+                  claude_args: "--model claude-sonnet-4-5-20250929 --max-turns 15"
