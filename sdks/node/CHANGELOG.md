@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.14.1](https://github.com/kadoa-org/kadoa-sdks/compare/node-sdk-v0.14.0...node-sdk-v0.14.1) (2025-10-12)
+
+
+### Miscellaneous Chores
+
+* **spec:** update OpenAPI spec ([#86](https://github.com/kadoa-org/kadoa-sdks/issues/86)) ([ca6b132](https://github.com/kadoa-org/kadoa-sdks/commit/ca6b132f4dbb2b62c73c6409b5191354ccdef236))
+
 ## [0.14.0](https://github.com/kadoa-org/kadoa-sdks/compare/node-sdk-v0.13.0...node-sdk-v0.14.0) (2025-10-11)
 
 
