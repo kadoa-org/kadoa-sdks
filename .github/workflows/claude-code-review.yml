@@ -29,12 +29,38 @@ jobs:
                   prompt: |
                       /review
 
-                      Please review this pull request focusing on:
-                      - Code quality and adherence to the style guides in CLAUDE.md and STYLEGUIDE.md
-                      - Conventional commit message format compliance
-                      - ACL pattern compliance (no direct imports from generated/)
-                      - Module boundary violations (runtime vs domains)
-                      - Potential bugs or logic errors
-                      - Test coverage for new features
-                      - Documentation completeness
+                      Review this PR following our monorepo guidelines (@CLAUDE.md, @sdks/node/STYLEGUIDE.md).
+
+                      **Architecture & Import Boundaries:**
+                      - ❌ `runtime/**` must NOT import from `domains/**`
+                      - ❌ Domains must NOT import from other domain's `internal/**` folders
+                      - ❌ No deep-linking into `generated/**` files (use barrels only)
+                      - ✅ Public exports only from `src/index.ts` and domain barrels (`domains/**/index.ts`)
+
+                      **ACL Pattern Compliance (`*.acl.ts` files):**
+                      - ❌ NO duplicate imports from `/generated/**` across ACL files (each type imported once)
+                      - ❌ Generated types ONLY imported in `.acl.ts` files (never in services/commands)
+                      - ✅ ACL types use explicit classes/interfaces with `implements` (not simple type aliases)
+                      - ✅ Follow naming: `VerbResourceRequest`, `ResourceResponse`, `VerbResourceInput`
+                      - ✅ Enums as const objects with `satisfies Record<keyof typeof GeneratedEnum, string>`
+
+                      **Code Quality:**
+                      - Biome formatting compliance (run `bun run format-and-lint:fix`)
+                      - Error handling: use `KadoaSdkException` / `KadoaHttpException` (not plain `Error`)
+                      - Logging: concise, actionable, no PII
+                      - No edits to `generated/**` directory
+
+                      **Conventional Commits:**
+                      - Verify correct scope: `node-sdk`, `python-sdk`, `ci`, `docs`, `deps`, `release`, `spec`, `codegen`, `node-examples`, `python-examples`
+                      - Check type triggers correct release: `feat:` (minor), `fix:` (patch), `feat!:`/`fix!:` (major)
+
+                      **Testing:**
+                      - New features require E2E tests
+                      - Domain services and runtime utilities need unit tests
+                      - Tests use Bun test runner
+
+                      **Monorepo Specifics:**
+                      - Use `bun` commands (not npm/yarn/pnpm)
+                      - Follow Turborepo task patterns
+                      - Generated code via `bun kadoa-codegen generate`
                   claude_args: "--max-turns 10 --model claude-sonnet-4-5-20250929"
