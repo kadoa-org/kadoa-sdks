@@ -2,12 +2,13 @@ name: Daily fetch OpenAPI and open PR
 
 on:
   schedule:
-    - cron: '17 7 * * *'
+    - cron: "17 7 * * *"
   workflow_dispatch:
 
 permissions:
   contents: write
   pull-requests: write
+  id-token: write
 
 concurrency:
   group: daily-fetch-openapi-${{ github.ref }}
@@ -25,7 +26,7 @@ jobs:
       - name: Setup Bun
         uses: oven-sh/setup-bun@v2
         with:
-          bun-version: '1.2.21'
+          bun-version: "1.2.21"
 
       - name: Install deps (root)
         env:
@@ -47,6 +48,43 @@ jobs:
             echo "changed=true" >> "$GITHUB_OUTPUT"
           fi
 
+      - name: Generate change summary with Claude
+        id: claude-summary
+        if: steps.diff.outputs.changed == 'true'
+        uses: anthropics/claude-code-action@v1
+        with:
+          anthropic_api_key: ${{ secrets.ANTHROPIC_API_KEY }}
+          prompt: |
+            Analyze the OpenAPI spec changes in specs/openapi.json and provide a concise summary.
+
+            Focus on:
+            - New endpoints added
+            - Modified endpoints (changed parameters, responses)
+            - Removed endpoints
+            - New schemas/models
+            - Changed schemas/models
+            - Removed schemas/models
+
+            Format as markdown with bullet points. Be concise but informative.
+            Keep it under 500 words.
+
+            Write the summary to a file called OPENAPI_SUMMARY.md in the repository root.
+          claude_args: "--max-turns 3 --model claude-sonnet-4-5-20250929"
+
+      - name: Read Claude summary
+        id: read-summary
+        if: steps.diff.outputs.changed == 'true'
+        run: |
+          if [ -f OPENAPI_SUMMARY.md ]; then
+            {
+              echo 'summary<<EOF'
+              cat OPENAPI_SUMMARY.md
+              echo EOF
+            } >> "$GITHUB_OUTPUT"
+          else
+            echo 'summary=Claude analysis unavailable. Please review the diff manually.' >> "$GITHUB_OUTPUT"
+          fi
+
       - name: Create pull request
         if: steps.diff.outputs.changed == 'true'
         uses: peter-evans/create-pull-request@v7
@@ -58,9 +96,17 @@ jobs:
             This PR was created automatically by the daily fetch workflow.
           title: "chore(spec): update OpenAPI spec"
           body: |
+            ## OpenAPI Spec Update
+
             This PR updates `specs/openapi.json` and `specs/openapi-metadata.json` with the latest version from `https://api.kadoa.com/openapi`.
 
-            If merged, the spec fingerprint workflow will trigger SDK releases if needed.
+            ### Summary of Changes
+
+            ${{ steps.read-summary.outputs.summary }}
+
+            ---
+
+            **Next Steps:** If merged, the spec fingerprint workflow will trigger SDK releases if needed.
           branch: ci/daily-openapi-update
           delete-branch: true
           labels: ci
@@ -68,5 +114,3 @@ jobs:
       - name: No changes
         if: steps.diff.outputs.changed != 'true'
         run: echo "OpenAPI spec unchanged; no PR created."
-
-
