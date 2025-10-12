@@ -48,9 +48,10 @@ jobs:
             echo "changed=true" >> "$GITHUB_OUTPUT"
           fi
 
-      - name: Generate change summary with Claude
-        id: claude-summary
+      - name: Analyze changes and create PR
         if: steps.diff.outputs.changed == 'true'
+        env:
+          GH_TOKEN: ${{ secrets.RELEASE_PLEASE_TOKEN || secrets.GITHUB_TOKEN }}
         uses: anthropics/claude-code-action@v1
         with:
           anthropic_api_key: ${{ secrets.ANTHROPIC_API_KEY }}
@@ -58,9 +59,13 @@ jobs:
           prompt: |
             REPO: ${{ github.repository }}
 
-            Analyze the OpenAPI spec changes in specs/openapi.json and provide a concise summary.
+            The OpenAPI spec in specs/openapi.json has been updated.
 
-            Review the git diff and focus on:
+            Your task:
+            1. Analyze the git diff to understand what changed
+            2. Create a pull request with a summary of the changes
+
+            For the analysis, focus on:
             - New endpoints added
             - Modified endpoints (changed parameters, responses)
             - Removed endpoints
@@ -68,60 +73,33 @@ jobs:
             - Changed schemas/models
             - Removed schemas/models
 
-            Format as markdown with bullet points. Be concise but informative.
-            Keep it under 500 words.
+            Create the PR using this command:
 
-            Write the summary to a file called OPENAPI_SUMMARY.md in the repository root.
-          claude_args: |
-            --allowedTools "Read,Write,Bash(git:*)"
-            --model claude-sonnet-4-5-20250929
-            --max-turns 3
+            gh pr create \
+              --base main \
+              --head ci/daily-openapi-update \
+              --title "chore(spec): update OpenAPI spec" \
+              --body "## OpenAPI Spec Update
 
-      - name: Read Claude summary
-        id: read-summary
-        if: steps.diff.outputs.changed == 'true'
-        run: |
-          if [ -f OPENAPI_SUMMARY.md ]; then
-            {
-              echo 'summary<<EOF'
-              cat OPENAPI_SUMMARY.md
-              echo EOF
-            } >> "$GITHUB_OUTPUT"
-          else
-            {
-              echo 'summary<<EOF'
-              echo '⚠️ Claude analysis did not complete. Please review the changes manually.'
-              echo ''
-              echo 'View the workflow run for details: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}'
-              echo EOF
-            } >> "$GITHUB_OUTPUT"
-          fi
-
-      - name: Create pull request
-        if: steps.diff.outputs.changed == 'true'
-        uses: peter-evans/create-pull-request@v7
-        with:
-          token: ${{ secrets.RELEASE_PLEASE_TOKEN || secrets.GITHUB_TOKEN }}
-          commit-message: |
-            chore(spec): update OpenAPI spec
-
-            This PR was created automatically by the daily fetch workflow.
-          title: "chore(spec): update OpenAPI spec"
-          body: |
-            ## OpenAPI Spec Update
-
-            This PR updates `specs/openapi.json` and `specs/openapi-metadata.json` with the latest version from `https://api.kadoa.com/openapi`.
+            This PR updates \`specs/openapi.json\` and \`specs/openapi-metadata.json\` with the latest version from \`https://api.kadoa.com/openapi\`.
 
             ### Summary of Changes
 
-            ${{ steps.read-summary.outputs.summary }}
+            [Your analysis here - use markdown bullets, keep under 500 words]
 
             ---
 
-            **Next Steps:** If merged, the spec fingerprint workflow will trigger SDK releases if needed.
-          branch: ci/daily-openapi-update
-          delete-branch: true
-          labels: ci
+            **Next Steps:** If merged, the spec fingerprint workflow will trigger SDK releases if needed." \
+              --label ci
+
+            Important: 
+            - First commit the changes to a new branch ci/daily-openapi-update
+            - Then create the PR from that branch
+            - Replace [Your analysis here] with your actual analysis
+          claude_args: |
+            --allowedTools "Read,Bash(git:*),Bash(gh:*)"
+            --model claude-sonnet-4-5-20250929
+            --max-turns 5
 
       - name: No changes
         if: steps.diff.outputs.changed != 'true'
