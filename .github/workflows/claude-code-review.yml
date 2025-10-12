@@ -1,48 +1,46 @@
 name: Claude Code Review
 
 on:
+    pull_request:
+        types: [opened, synchronize]
+        # Only review code changes, skip docs-only PRs
+        paths:
+            - "sdks/**/*.ts"
+            - "tools/**/*.ts"
+            - ".github/workflows/**"
     issue_comment:
         types: [created]
     pull_request_review_comment:
         types: [created]
-    pull_request_review:
-        types: [submitted]
-    issues:
-        types: [opened, assigned]
-    # Allow manual triggers for re-running reviews
     workflow_dispatch:
+
+permissions:
+    contents: read
+    pull-requests: write
+    issues: write
+    id-token: write
 
 jobs:
     claude-review:
         name: Review PR with Claude
-        # Only run when @claude is mentioned or on workflow_dispatch
-        if: |
-            github.event_name == 'workflow_dispatch' ||
-            (github.event_name == 'issue_comment' && contains(github.event.comment.body, '@claude')) ||
-            (github.event_name == 'pull_request_review_comment' && contains(github.event.comment.body, '@claude')) ||
-            (github.event_name == 'pull_request_review' && contains(github.event.review.body, '@claude')) ||
-            (github.event_name == 'issues' && (contains(github.event.issue.body, '@claude') || contains(github.event.issue.title, '@claude')))
         runs-on: ubuntu-latest
-        permissions:
-            contents: read
-            pull-requests: write
-            issues: write
-            id-token: write
-            actions: read
+        # Skip review for WIP PRs or if explicitly disabled
+        if: |
+            !contains(github.event.pull_request.title, '[skip-review]') &&
+            !contains(github.event.pull_request.title, '[WIP]') &&
+            !contains(github.event.pull_request.title, 'WIP:')
         steps:
             - name: Checkout code
-              uses: actions/checkout@v5
+              uses: actions/checkout@v4
               with:
-                  fetch-depth: 0
+                  fetch-depth: 1
 
             - name: Claude Code Review
               uses: anthropics/claude-code-action@v1
               with:
                   anthropic_api_key: ${{ secrets.ANTHROPIC_API_KEY }}
-                  github_token: ${{ secrets.GITHUB_TOKEN }}
+                  use_sticky_comment: true
                   trigger_phrase: "@claude"
-                  additional_permissions: |
-                      actions: read
                   prompt: |
                       /review
 
