@@ -18,6 +18,11 @@ jobs:
           fetch-depth: 0
           token: ${{ secrets.GITHUB_TOKEN }}
 
+      - name: Setup GitHub CLI
+        uses: actions/setup-gh@v1
+        with:
+          version: latest
+
       - name: Sync development branch
         run: |
           git config user.name "github-actions[bot]"
@@ -25,4 +30,22 @@ jobs:
           git fetch origin development
           git checkout development
           git merge origin/main
-          git push origin development
+          
+          # Check if there are changes to push
+          if git diff --quiet HEAD origin/development; then
+            echo "No changes to sync"
+            exit 0
+          fi
+          
+          # Create a new branch for the sync
+          BRANCH_NAME="sync-development-$(date +%Y%m%d-%H%M%S)"
+          git checkout -b "$BRANCH_NAME"
+          git push origin "$BRANCH_NAME"
+          
+          # Create a pull request
+          gh pr create \
+            --title "Sync development with main" \
+            --body "Automated sync of development branch with main branch" \
+            --base development \
+            --head "$BRANCH_NAME" \
+            --label "automated,sync"
