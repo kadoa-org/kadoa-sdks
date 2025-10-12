@@ -29,38 +29,24 @@ jobs:
                   prompt: |
                       /review
 
-                      Review this PR following our monorepo guidelines (@CLAUDE.md, @sdks/node/STYLEGUIDE.md).
+                      Review this PR following @CLAUDE.md and @sdks/node/STYLEGUIDE.md. Focus on:
 
-                      **Architecture & Import Boundaries:**
-                      - ❌ `runtime/**` must NOT import from `domains/**`
-                      - ❌ Domains must NOT import from other domain's `internal/**` folders
-                      - ❌ No deep-linking into `generated/**` files (use barrels only)
-                      - ✅ Public exports only from `src/index.ts` and domain barrels (`domains/**/index.ts`)
+                      **Architecture (requires AI judgment):**
+                      - Import boundaries: `runtime/**` ↛ `domains/**`, no cross-domain `internal/**` imports
+                      - ACL violations: duplicate `/generated/**` imports, non-ACL files importing generated types
+                      - API design: type safety, interface contracts, error handling patterns
 
-                      **ACL Pattern Compliance (`*.acl.ts` files):**
-                      - ❌ NO duplicate imports from `/generated/**` across ACL files (each type imported once)
-                      - ❌ Generated types ONLY imported in `.acl.ts` files (never in services/commands)
-                      - ✅ ACL types use explicit classes/interfaces with `implements` (not simple type aliases)
-                      - ✅ Follow naming: `VerbResourceRequest`, `ResourceResponse`, `VerbResourceInput`
-                      - ✅ Enums as const objects with `satisfies Record<keyof typeof GeneratedEnum, string>`
+                      **ACL Patterns (if `*.acl.ts` changed):**
+                      - Explicit `implements` over type aliases, proper naming (`VerbResourceRequest`, `ResourceResponse`)
+                      - Enum pattern: `const X = {...} as const satisfies Record<keyof typeof GenEnum, string>`
 
                       **Code Quality:**
-                      - Biome formatting compliance (run `bun run format-and-lint:fix`)
-                      - Error handling: use `KadoaSdkException` / `KadoaHttpException` (not plain `Error`)
-                      - Logging: concise, actionable, no PII
-                      - No edits to `generated/**` directory
+                      - Logic errors, edge cases, performance issues
+                      - Test coverage gaps (E2E for features, unit for services/runtime)
+                      - Security concerns, PII in logs
 
-                      **Conventional Commits:**
-                      - Verify correct scope: `node-sdk`, `python-sdk`, `ci`, `docs`, `deps`, `release`, `spec`, `codegen`, `node-examples`, `python-examples`
-                      - Check type triggers correct release: `feat:` (minor), `fix:` (patch), `feat!:`/`fix!:` (major)
-
-                      **Testing:**
-                      - New features require E2E tests
-                      - Domain services and runtime utilities need unit tests
-                      - Tests use Bun test runner
-
-                      **Monorepo Specifics:**
-                      - Use `bun` commands (not npm/yarn/pnpm)
-                      - Follow Turborepo task patterns
-                      - Generated code via `bun kadoa-codegen generate`
+                      **Commit & Documentation:**
+                      - Conventional commit scope and type correctness
+                      - Breaking changes properly flagged (`!`)
+                      - Missing documentation for public APIs
                   claude_args: "--max-turns 10 --model claude-sonnet-4-5-20250929"
