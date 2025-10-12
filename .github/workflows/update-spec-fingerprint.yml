@@ -40,7 +40,7 @@ jobs:
             git config user.name "github-actions[bot]"
             git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
             git add sdks/node/SPEC_SHA256 sdks/python/SPEC_SHA256
-            git commit -m "feat(spec): update spec fingerprint" -m "release-please:force-release"
+            git commit -m "build(spec): update spec fingerprint" -m "release-please:force-release"
             git push
           else
             echo "No changes to commit."
