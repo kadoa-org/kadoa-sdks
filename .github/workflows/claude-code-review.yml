@@ -36,4 +36,4 @@ jobs:
                       - Potential bugs or logic errors
                       - Test coverage for new features
                       - Documentation completeness
-                  claude_args: "--max-turns 10 --model claude-sonnet-4"
+                  claude_args: "--max-turns 10 --model claude-sonnet-4-5-20250929"
