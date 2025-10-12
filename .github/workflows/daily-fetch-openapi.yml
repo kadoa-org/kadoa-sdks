@@ -54,10 +54,13 @@ jobs:
         uses: anthropics/claude-code-action@v1
         with:
           anthropic_api_key: ${{ secrets.ANTHROPIC_API_KEY }}
+          track_progress: true
           prompt: |
+            REPO: ${{ github.repository }}
+
             Analyze the OpenAPI spec changes in specs/openapi.json and provide a concise summary.
 
-            Focus on:
+            Review the git diff and focus on:
             - New endpoints added
             - Modified endpoints (changed parameters, responses)
             - Removed endpoints
@@ -69,7 +72,10 @@ jobs:
             Keep it under 500 words.
 
             Write the summary to a file called OPENAPI_SUMMARY.md in the repository root.
-          claude_args: "--max-turns 3 --model claude-sonnet-4-5-20250929"
+          claude_args: |
+            --allowedTools "Read,Write,Bash(git:*)"
+            --model claude-sonnet-4-5-20250929
+            --max-turns 3
 
       - name: Read Claude summary
         id: read-summary
@@ -82,7 +88,13 @@ jobs:
               echo EOF
             } >> "$GITHUB_OUTPUT"
           else
-            echo 'summary=Claude analysis unavailable. Please review the diff manually.' >> "$GITHUB_OUTPUT"
+            {
+              echo 'summary<<EOF'
+              echo '⚠️ Claude analysis did not complete. Please review the changes manually.'
+              echo ''
+              echo 'View the workflow run for details: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}'
+              echo EOF
+            } >> "$GITHUB_OUTPUT"
           fi
 
       - name: Create pull request
