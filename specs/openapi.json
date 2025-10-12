@@ -1059,13 +1059,44 @@
                       "format": "date-time",
                       "description": "When the last job started"
                     },
-                    "protocol": {
-                      "type": "string",
-                      "description": "Protocol information from last job"
-                    },
                     "dataKey": {
                       "type": "string",
                       "description": "Database key for the workflow data"
+                    },
+                    "lastJob": {
+                      "type": "object",
+                      "properties": {
+                        "errors": {
+                          "type": "array",
+                          "description": "Errors from the last job run",
+                          "items": {
+                            "type": "object",
+                            "properties": {
+                              "errorCode": {
+                                "type": "string",
+                                "description": "Error code identifying the type of error"
+                              },
+                              "message": {
+                                "type": "string",
+                                "description": "Human-readable error message"
+                              },
+                              "timestamp": {
+                                "type": "string",
+                                "format": "date-time",
+                                "description": "When the error occurred"
+                              },
+                              "screenshot": {
+                                "type": "string",
+                                "description": "Optional screenshot URL"
+                              },
+                              "context": {
+                                "type": "object",
+                                "description": "Additional context about the error"
+                              }
+                            }
+                          }
+                        }
+                      }
                     },
                     "runCosts": {
                       "type": "number",
@@ -2341,16 +2372,33 @@
                             "type": "integer",
                             "description": "Number of records processed in the workflow run"
                           },
-                          "protocol": {
-                            "type": "object",
-                            "properties": {
-                              "decision": {
-                                "type": "string",
-                                "description": "state of the run if it FAILED"
-                              },
-                              "reasoning": {
-                                "type": "string",
-                                "description": "description why the run failed"
+                          "errors": {
+                            "type": "array",
+                            "description": "Errors that occurred during the workflow run",
+                            "items": {
+                              "type": "object",
+                              "properties": {
+                                "errorCode": {
+                                  "type": "string",
+                                  "description": "Error code identifying the type of error"
+                                },
+                                "message": {
+                                  "type": "string",
+                                  "description": "Human-readable error message"
+                                },
+                                "timestamp": {
+                                  "type": "string",
+                                  "format": "date-time",
+                                  "description": "When the error occurred"
+                                },
+                                "screenshot": {
+                                  "type": "string",
+                                  "description": "Optional screenshot URL"
+                                },
+                                "context": {
+                                  "type": "object",
+                                  "description": "Additional context about the error"
+                                }
                               }
                             }
                           },
@@ -2713,7 +2761,8 @@
                               "COMPLIANCE_REJECTED",
                               "QUEUED",
                               "SETUP",
-                              "RUNNING"
+                              "RUNNING",
+                              "FAILED"
                             ],
                             "description": "Display state for frontend"
                           },
@@ -2746,10 +2795,6 @@
                             "type": "string",
                             "format": "date-time",
                             "description": "When the last job started"
-                          },
-                          "protocol": {
-                            "type": "string",
-                            "description": "Protocol information from last job"
                           },
                           "jobId": {
                             "type": "string",
@@ -2896,6 +2941,41 @@
                           "isSchemaEditable": {
                             "type": "boolean",
                             "description": "Whether the schema can be edited"
+                          },
+                          "lastJob": {
+                            "type": "object",
+                            "properties": {
+                              "errors": {
+                                "type": "array",
+                                "description": "Errors from the last job run",
+                                "items": {
+                                  "type": "object",
+                                  "properties": {
+                                    "errorCode": {
+                                      "type": "string",
+                                      "description": "Error code identifying the type of error"
+                                    },
+                                    "message": {
+                                      "type": "string",
+                                      "description": "Human-readable error message"
+                                    },
+                                    "timestamp": {
+                                      "type": "string",
+                                      "format": "date-time",
+                                      "description": "When the error occurred"
+                                    },
+                                    "screenshot": {
+                                      "type": "string",
+                                      "description": "Optional screenshot URL"
+                                    },
+                                    "context": {
+                                      "type": "object",
+                                      "description": "Additional context about the error"
+                                    }
+                                  }
+                                }
+                              }
+                            }
                           },
                           "dataValidation": {
                             "type": "object",
