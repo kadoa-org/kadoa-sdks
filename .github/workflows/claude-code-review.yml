@@ -1,8 +1,10 @@
 name: Claude Code Review
 
 on:
-    pull_request:
-        types: [opened, synchronize, reopened]
+    issue_comment:
+        types: [created]
+    pull_request_review_comment:
+        types: [created]
     # Allow manual triggers for re-running reviews
     workflow_dispatch:
 
@@ -26,6 +28,7 @@ jobs:
               uses: anthropics/claude-code-action@v1
               with:
                   anthropic_api_key: ${{ secrets.ANTHROPIC_API_KEY }}
+                  trigger_phrase: "@claude"
                   prompt: |
                       /review
 
