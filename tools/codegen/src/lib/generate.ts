@@ -53,7 +53,7 @@ export function generateClient(_name: string, config: GeneratorConfig): void {
     args.push("--config", opts);
   }
 
-  const command = `bunx openapi-generator-cli ${args.join(" ")}`;
+  const command = `bunx @openapitools/openapi-generator-cli ${args.join(" ")}`;
 
   execSync(command, {
     stdio: "inherit",
