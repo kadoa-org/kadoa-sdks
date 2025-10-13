@@ -56,7 +56,7 @@ jobs:
           prompt: |
             The OpenAPI spec in specs/openapi.json has been updated.
 
-            Your task: Analyze the git diff and write a concise markdown summary to /tmp/analysis.md
+            Your task: Analyze the git diff and write a concise markdown summary to analysis.md
 
             Steps:
             1. Run: git diff specs/openapi.json specs/openapi-metadata.json
@@ -65,7 +65,7 @@ jobs:
                - Endpoint changes (new/modified/removed APIs)
                - Breaking vs non-breaking changes
                - Metadata updates (checksum, version, timestamp)
-            3. Write analysis to /tmp/analysis.md using this structure:
+            3. Write analysis to analysis.md (in the current directory) using this structure:
 
             ```markdown
             ### Summary of Changes
@@ -94,21 +94,35 @@ jobs:
             ```
 
             IMPORTANT:
-            - Use Write tool to save to /tmp/analysis.md
+            - Use Write tool to save to analysis.md in current directory
             - Keep analysis concise (300-500 words)
             - Focus on developer-relevant changes
             - Use clear markdown formatting
           claude_args: |
-            --allowedTools "Read,Write(/tmp/*:*),Bash(git diff:*)"
+            --allowedTools "Read,Write,Bash(git diff:*)"
             --model claude-sonnet-4-5-20250929
+
+      - name: Upload analysis artifact
+        if: steps.diff.outputs.changed == 'true'
+        uses: actions/upload-artifact@v4
+        with:
+          name: openapi-analysis
+          path: analysis.md
+          retention-days: 1
+
+      - name: Download analysis artifact
+        if: steps.diff.outputs.changed == 'true'
+        uses: actions/download-artifact@v4
+        with:
+          name: openapi-analysis
 
       - name: Create branch and PR
         if: steps.diff.outputs.changed == 'true'
         env:
           GH_TOKEN: ${{ secrets.RELEASE_PLEASE_TOKEN || secrets.GITHUB_TOKEN }}
         run: |
-          # Read Claude's analysis
-          ANALYSIS=$(cat /tmp/analysis.md)
+          # Read Claude's analysis from artifact
+          ANALYSIS=$(cat analysis.md)
 
           # Create and push branch
           git checkout -b ci/daily-openapi-update
