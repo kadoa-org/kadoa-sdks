@@ -1063,37 +1063,32 @@
                       "type": "string",
                       "description": "Database key for the workflow data"
                     },
-                    "lastJob": {
-                      "type": "object",
-                      "properties": {
-                        "errors": {
-                          "type": "array",
-                          "description": "Errors from the last job run",
-                          "items": {
+                    "errors": {
+                      "type": "array",
+                      "description": "Errors from the last job run",
+                      "items": {
+                        "type": "object",
+                        "properties": {
+                          "errorCode": {
+                            "type": "string",
+                            "description": "Error code identifying the type of error"
+                          },
+                          "message": {
+                            "type": "string",
+                            "description": "Human-readable error message"
+                          },
+                          "timestamp": {
+                            "type": "string",
+                            "format": "date-time",
+                            "description": "When the error occurred"
+                          },
+                          "screenshot": {
+                            "type": "string",
+                            "description": "Optional screenshot URL"
+                          },
+                          "context": {
                             "type": "object",
-                            "properties": {
-                              "errorCode": {
-                                "type": "string",
-                                "description": "Error code identifying the type of error"
-                              },
-                              "message": {
-                                "type": "string",
-                                "description": "Human-readable error message"
-                              },
-                              "timestamp": {
-                                "type": "string",
-                                "format": "date-time",
-                                "description": "When the error occurred"
-                              },
-                              "screenshot": {
-                                "type": "string",
-                                "description": "Optional screenshot URL"
-                              },
-                              "context": {
-                                "type": "object",
-                                "description": "Additional context about the error"
-                              }
-                            }
+                            "description": "Additional context about the error"
                           }
                         }
                       }
@@ -2397,7 +2392,31 @@
                                 },
                                 "context": {
                                   "type": "object",
-                                  "description": "Additional context about the error"
+                                  "description": "Additional context about the error",
+                                  "properties": {
+                                    "url": {
+                                      "type": "string",
+                                      "description": "The URL where the error occurred"
+                                    },
+                                    "httpStatus": {
+                                      "type": "integer",
+                                      "description": "HTTP status code if applicable"
+                                    },
+                                    "retryCount": {
+                                      "type": "integer",
+                                      "description": "Number of retry attempts made"
+                                    },
+                                    "details": {
+                                      "type": "string",
+                                      "description": "Additional error-specific details"
+                                    },
+                                    "timestamp": {
+                                      "type": "string",
+                                      "format": "date-time",
+                                      "description": "When the error context was captured"
+                                    }
+                                  },
+                                  "additionalProperties": true
                                 }
                               }
                             }
@@ -2942,37 +2961,56 @@
                             "type": "boolean",
                             "description": "Whether the schema can be edited"
                           },
-                          "lastJob": {
-                            "type": "object",
-                            "properties": {
-                              "errors": {
-                                "type": "array",
-                                "description": "Errors from the last job run",
-                                "items": {
+                          "errors": {
+                            "type": "array",
+                            "description": "Errors from the last job run",
+                            "items": {
+                              "type": "object",
+                              "properties": {
+                                "errorCode": {
+                                  "type": "string",
+                                  "description": "Error code identifying the type of error"
+                                },
+                                "message": {
+                                  "type": "string",
+                                  "description": "Human-readable error message"
+                                },
+                                "timestamp": {
+                                  "type": "string",
+                                  "format": "date-time",
+                                  "description": "When the error occurred"
+                                },
+                                "screenshot": {
+                                  "type": "string",
+                                  "description": "Optional screenshot URL"
+                                },
+                                "context": {
                                   "type": "object",
+                                  "description": "Additional context about the error",
                                   "properties": {
-                                    "errorCode": {
+                                    "url": {
                                       "type": "string",
-                                      "description": "Error code identifying the type of error"
+                                      "description": "The URL where the error occurred"
                                     },
-                                    "message": {
+                                    "httpStatus": {
+                                      "type": "integer",
+                                      "description": "HTTP status code if applicable"
+                                    },
+                                    "retryCount": {
+                                      "type": "integer",
+                                      "description": "Number of retry attempts made"
+                                    },
+                                    "details": {
                                       "type": "string",
-                                      "description": "Human-readable error message"
+                                      "description": "Additional error-specific details"
                                     },
                                     "timestamp": {
                                       "type": "string",
                                       "format": "date-time",
-                                      "description": "When the error occurred"
-                                    },
-                                    "screenshot": {
-                                      "type": "string",
-                                      "description": "Optional screenshot URL"
-                                    },
-                                    "context": {
-                                      "type": "object",
-                                      "description": "Additional context about the error"
+                                      "description": "When the error context was captured"
                                     }
-                                  }
+                                  },
+                                  "additionalProperties": true
                                 }
                               }
                             }
