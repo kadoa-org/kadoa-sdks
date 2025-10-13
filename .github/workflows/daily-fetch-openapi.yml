@@ -56,47 +56,63 @@ jobs:
         with:
           anthropic_api_key: ${{ secrets.ANTHROPIC_API_KEY }}
           prompt: |
-            REPO: ${{ github.repository }}
+            The OpenAPI spec in specs/openapi.json has been updated. Your task is to analyze the changes and create a pull request.
 
-            The OpenAPI spec in specs/openapi.json has been updated.
+            Follow these steps IN ORDER:
 
-            Your task:
-            1. Analyze the git diff to understand what changed
-            2. Create a pull request with a summary of the changes
+            1. Analyze the changes:
+               - Run: git diff specs/openapi.json specs/openapi-metadata.json
+               - Focus on: new/modified/removed endpoints, schemas, breaking changes
 
-            For the analysis, focus on:
-            - New endpoints added
-            - Modified endpoints (changed parameters, responses)
-            - Removed endpoints
-            - New schemas/models
-            - Changed schemas/models
-            - Removed schemas/models
+            2. Create and push a new branch:
+               - git checkout -b ci/daily-openapi-update
+               - git add specs/openapi.json specs/openapi-metadata.json
+               - git commit -m "chore(spec): update OpenAPI spec"
+               - git push -u origin ci/daily-openapi-update
 
-            Create the PR using this command:
+            3. Create PR body file:
+               - Use the Write tool to create /tmp/pr-body.md with this structure:
 
-            gh pr create \
-              --base main \
-              --head ci/daily-openapi-update \
-              --title "chore(spec): update OpenAPI spec" \
-              --body "## OpenAPI Spec Update
+            ```markdown
+            ## OpenAPI Spec Update
 
-            This PR updates \`specs/openapi.json\` and \`specs/openapi-metadata.json\` with the latest version from \`https://api.kadoa.com/openapi\`.
+            This PR updates `specs/openapi.json` and `specs/openapi-metadata.json` with the latest version from `https://api.kadoa.com/openapi`.
 
             ### Summary of Changes
 
-            [Your analysis here - use markdown bullets, keep under 500 words]
+            [Write your detailed analysis here using markdown]
+
+            Focus on:
+            - **Schema Changes**: List structural changes to data models
+            - **Endpoint Changes**: New/modified/removed API endpoints
+            - **Breaking Changes**: Identify any backward-incompatible changes
+
+            #### Metadata Changes
+            - Checksum: [old] → [new]
+            - Fetched At: [timestamp]
+            - API Version: [version]
+
+            #### Impact Assessment
+            - **Breaking Changes**: [Yes/No - explain if yes]
+            - **New Endpoints**: [List or "None"]
+            - **Modified Endpoints**: [List or "None"]
+            - **Removed Endpoints**: [List or "None"]
 
             ---
 
-            **Next Steps:** If merged, the spec fingerprint workflow will trigger SDK releases if needed." \
-              --label ci
+            **Next Steps:** If merged, the spec fingerprint workflow will trigger SDK releases if needed.
+            ```
 
-            Important: 
-            - First commit the changes to a new branch ci/daily-openapi-update
-            - Then create the PR from that branch
-            - Replace [Your analysis here] with your actual analysis
+            4. Create the PR:
+               - Run: gh pr create --base main --head ci/daily-openapi-update --title "chore(spec): update OpenAPI spec" --body-file /tmp/pr-body.md --label ci
+
+            IMPORTANT:
+            - Use Write tool to create /tmp/pr-body.md (you have permission)
+            - Use --body-file flag (NOT --body with inline text)
+            - Keep analysis concise but thorough (300-500 words)
+            - Don't try to edit the PR after creation
           claude_args: |
-            --allowedTools "Read,Bash(git:*),Bash(gh:*)"
+            --allowedTools "Read,Write(/tmp/*:*),Bash(git:*),Bash(gh:*)"
             --model claude-sonnet-4-5-20250929
 
       - name: No changes
