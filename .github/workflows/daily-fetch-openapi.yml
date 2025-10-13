@@ -56,7 +56,7 @@ jobs:
           prompt: |
             The OpenAPI spec in specs/openapi.json has been updated.
 
-            Your task: Analyze the git diff and create a concise, visual markdown summary in analysis.md
+            Your task: Analyze the git diff and create a concise, structured markdown summary in analysis.md
 
             Steps:
             1. Run: git diff specs/openapi.json specs/openapi-metadata.json
@@ -64,70 +64,65 @@ jobs:
                - New/modified/removed endpoints (HTTP method + path)
                - Schema/model changes (structure, properties, types)
                - Breaking changes (anything that breaks existing clients)
-               - Metadata updates
             3. Write analysis to analysis.md using this EXACT structure:
 
             ```markdown
-            ## 📊 API Changes Overview
+            ## Summary
 
-            > [One sentence summary of the update - e.g., "Minor schema enhancements with no breaking changes" or "Major update with 3 new endpoints"]
+            [One or two sentence overview of what changed - e.g., "Schema improvements to error handling with no breaking changes" or "Added 3 new endpoints for workflow management"]
 
-            ### 🔗 Endpoints
+            ### Endpoints
 
-            | Status | Method | Path | Changes |
-            |--------|--------|------|---------|
-            | ➕ **Added** | `POST` | `/v4/example` | New endpoint for X |
-            | ✏️ **Modified** | `GET` | `/v4/users` | Added optional `filter` parameter |
-            | ❌ **Removed** | `DELETE` | `/v3/legacy` | Deprecated endpoint removed |
+            | Status | Method | Path | Description |
+            |--------|--------|------|-------------|
+            | **Added** | `POST` | `/v4/example` | Creates a new example resource |
+            | **Modified** | `GET` | `/v4/users` | Added optional `filter` query parameter |
+            | **Removed** | `DELETE` | `/v3/legacy` | Deprecated endpoint removed |
 
-            **Note:** If no endpoint changes, replace the table with: `No endpoint changes.`
+            **If no endpoint changes exist, write:** `No endpoint changes.`
 
-            ### 📦 Schema Changes
+            ### Schema Changes
 
-            | Schema | Type | Description |
-            |--------|------|-------------|
-            | `ErrorContext` | Modified | Added `url`, `httpStatus`, `retryCount`, `details`, `timestamp` properties |
-            | `WorkflowResponse` | Modified | Moved `errors` from nested `lastJob` to top-level |
-            | `NewModel` | Added | New data model for feature X |
+            | Schema | Change | Details |
+            |--------|--------|---------|
+            | `ErrorContext` | Modified | Added properties: `url`, `httpStatus`, `retryCount`, `details`, `timestamp` |
+            | `WorkflowResponse` | Modified | Moved `errors` array from nested `lastJob` to top-level |
+            | `UserProfile` | Added | New model for user profile data |
+            | `LegacyModel` | Removed | Deprecated model removed |
 
-            **Note:** If no schema changes, replace the table with: `No schema changes.`
+            **If no schema changes exist, write:** `No schema changes.`
 
-            ### ⚠️ Breaking Changes
+            ### Breaking Changes
 
-            **Only include this section if there ARE breaking changes. If NO breaking changes, completely omit this section.**
+            **ONLY include this section if breaking changes exist. If NO breaking changes, completely omit this entire section.**
 
-            If breaking changes exist, use this format:
-            ```
-            > **⚠️ WARNING: This update contains breaking changes**
+            When breaking changes exist, use this format:
 
-            - **[What breaks]**: [Explanation of impact]
-            - **Migration**: [How to fix]
-            ```
+            > **WARNING: This update contains breaking changes that may affect existing clients.**
 
-            ### 📋 Metadata
+            **What breaks:**
+            - [Specific change that breaks compatibility]
+            - [Another breaking change]
 
-            | Field | Value |
-            |-------|-------|
-            | **API Version** | `3.0.0` → `3.0.0` (or show change if different) |
-            | **Checksum** | `76a4f...` → `8db83...` |
-            | **Fetched At** | `2025-10-13T09:38:53Z` |
+            **Migration guide:**
+            - [Step-by-step instructions to update client code]
 
-            ### 🎯 Impact Summary
+            ### Impact Assessment
 
-            - **Backward Compatible**: Yes/No
-            - **SDK Regeneration Required**: Yes/No
-            - **Client Code Changes**: None/Optional/Required
+            - **Backward Compatible:** Yes / No
+            - **Requires SDK Regeneration:** Yes / No
+            - **Client Action Required:** None / Optional / Required
             ```
 
-            IMPORTANT FORMATTING RULES:
-            - Use emojis for visual hierarchy (📊 🔗 📦 ⚠️ 📋 🎯)
-            - Use GitHub-flavored markdown tables
-            - Use ➕ ✏️ ❌ status indicators in endpoint table
-            - Use `code blocks` for methods, paths, and schema names
-            - Bold important text with **bold**
-            - ONLY include "Breaking Changes" section if breaking changes exist
-            - Keep total length under 500 words
-            - Be precise and developer-focused
+            FORMATTING REQUIREMENTS:
+            - Use clean markdown tables (no emojis)
+            - Use `code blocks` for all HTTP methods, paths, schema names, and field names
+            - Use **bold** for Status column values and important warnings
+            - Keep descriptions concise and technical
+            - ONLY show Breaking Changes section if breaking changes exist
+            - Skip metadata section entirely
+            - Total length should be 200-400 words
+            - Focus on what developers need to know
           claude_args: |
             --allowedTools "Read,Write,Bash(git diff:*)"
             --model claude-sonnet-4-5-20250929
@@ -164,11 +159,6 @@ jobs:
 
           cat >> pr-body.md << 'EOF'
 
-          ---
-
-          **Next Steps:** If merged, the spec fingerprint workflow will trigger SDK releases if needed.
-
-          🤖 Generated with [Claude Code](https://claude.com/claude-code)
           EOF
 
       - name: Create pull request
@@ -181,9 +171,6 @@ jobs:
 
             Updates specs/openapi.json and specs/openapi-metadata.json with the latest version from https://api.kadoa.com/openapi.
 
-            🤖 Generated with [Claude Code](https://claude.com/claude-code)
-
-            Co-Authored-By: Claude <noreply@anthropic.com>
           title: "chore(spec): update OpenAPI spec"
           body-path: pr-body.md
           branch: ci/daily-openapi-update
