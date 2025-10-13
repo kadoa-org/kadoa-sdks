@@ -56,48 +56,78 @@ jobs:
           prompt: |
             The OpenAPI spec in specs/openapi.json has been updated.
 
-            Your task: Analyze the git diff and write a concise markdown summary to analysis.md
+            Your task: Analyze the git diff and create a concise, visual markdown summary in analysis.md
 
             Steps:
             1. Run: git diff specs/openapi.json specs/openapi-metadata.json
-            2. Analyze the changes focusing on:
-               - Schema changes (data model structures)
-               - Endpoint changes (new/modified/removed APIs)
-               - Breaking vs non-breaking changes
-               - Metadata updates (checksum, version, timestamp)
-            3. Write analysis to analysis.md (in the current directory) using this structure:
+            2. Analyze ALL changes thoroughly:
+               - New/modified/removed endpoints (HTTP method + path)
+               - Schema/model changes (structure, properties, types)
+               - Breaking changes (anything that breaks existing clients)
+               - Metadata updates
+            3. Write analysis to analysis.md using this EXACT structure:
 
             ```markdown
-            ### Summary of Changes
+            ## 📊 API Changes Overview
 
-            [Brief overview paragraph]
+            > [One sentence summary of the update - e.g., "Minor schema enhancements with no breaking changes" or "Major update with 3 new endpoints"]
 
-            #### Schema Changes
-            - [List key structural changes to data models]
-            - [Use bullet points]
+            ### 🔗 Endpoints
 
-            #### Endpoint Changes
-            - [List new/modified/removed API endpoints]
-            - [Specify HTTP methods and paths]
+            | Status | Method | Path | Changes |
+            |--------|--------|------|---------|
+            | ➕ **Added** | `POST` | `/v4/example` | New endpoint for X |
+            | ✏️ **Modified** | `GET` | `/v4/users` | Added optional `filter` parameter |
+            | ❌ **Removed** | `DELETE` | `/v3/legacy` | Deprecated endpoint removed |
 
-            #### Breaking Changes
-            - [Yes/No - if yes, explain what breaks]
+            **Note:** If no endpoint changes, replace the table with: `No endpoint changes.`
 
-            #### Metadata Changes
-            - **Checksum**: [old value] → [new value]
-            - **Fetched At**: [timestamp]
-            - **API Version**: [version]
+            ### 📦 Schema Changes
 
-            #### Impact Assessment
-            - **Backward Compatibility**: [Assessment]
-            - **SDK Generation**: [Any impacts on code generation]
+            | Schema | Type | Description |
+            |--------|------|-------------|
+            | `ErrorContext` | Modified | Added `url`, `httpStatus`, `retryCount`, `details`, `timestamp` properties |
+            | `WorkflowResponse` | Modified | Moved `errors` from nested `lastJob` to top-level |
+            | `NewModel` | Added | New data model for feature X |
+
+            **Note:** If no schema changes, replace the table with: `No schema changes.`
+
+            ### ⚠️ Breaking Changes
+
+            **Only include this section if there ARE breaking changes. If NO breaking changes, completely omit this section.**
+
+            If breaking changes exist, use this format:
+            ```
+            > **⚠️ WARNING: This update contains breaking changes**
+
+            - **[What breaks]**: [Explanation of impact]
+            - **Migration**: [How to fix]
             ```
 
-            IMPORTANT:
-            - Use Write tool to save to analysis.md in current directory
-            - Keep analysis concise (300-500 words)
-            - Focus on developer-relevant changes
-            - Use clear markdown formatting
+            ### 📋 Metadata
+
+            | Field | Value |
+            |-------|-------|
+            | **API Version** | `3.0.0` → `3.0.0` (or show change if different) |
+            | **Checksum** | `76a4f...` → `8db83...` |
+            | **Fetched At** | `2025-10-13T09:38:53Z` |
+
+            ### 🎯 Impact Summary
+
+            - **Backward Compatible**: Yes/No
+            - **SDK Regeneration Required**: Yes/No
+            - **Client Code Changes**: None/Optional/Required
+            ```
+
+            IMPORTANT FORMATTING RULES:
+            - Use emojis for visual hierarchy (📊 🔗 📦 ⚠️ 📋 🎯)
+            - Use GitHub-flavored markdown tables
+            - Use ➕ ✏️ ❌ status indicators in endpoint table
+            - Use `code blocks` for methods, paths, and schema names
+            - Bold important text with **bold**
+            - ONLY include "Breaking Changes" section if breaking changes exist
+            - Keep total length under 500 words
+            - Be precise and developer-focused
           claude_args: |
             --allowedTools "Read,Write,Bash(git diff:*)"
             --model claude-sonnet-4-5-20250929
