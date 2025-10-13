@@ -22,6 +22,8 @@ jobs:
         uses: actions/checkout@v5
         with:
           fetch-depth: 0
+          token: ${{ secrets.RELEASE_PLEASE_TOKEN || secrets.GITHUB_TOKEN }}
+          persist-credentials: true
 
       - name: Setup Bun
         uses: oven-sh/setup-bun@v2
@@ -121,6 +123,10 @@ jobs:
         env:
           GH_TOKEN: ${{ secrets.RELEASE_PLEASE_TOKEN || secrets.GITHUB_TOKEN }}
         run: |
+          # Configure git to use the GitHub token
+          git config --global user.name "github-actions[bot]"
+          git config --global user.email "github-actions[bot]@users.noreply.github.com"
+
           # Read Claude's analysis from artifact
           ANALYSIS=$(cat analysis.md)
 
