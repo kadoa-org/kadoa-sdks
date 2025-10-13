@@ -48,72 +48,103 @@ jobs:
             echo "changed=true" >> "$GITHUB_OUTPUT"
           fi
 
-      - name: Analyze changes and create PR
+      - name: Analyze changes with Claude
         if: steps.diff.outputs.changed == 'true'
-        env:
-          GH_TOKEN: ${{ secrets.RELEASE_PLEASE_TOKEN || secrets.GITHUB_TOKEN }}
         uses: anthropics/claude-code-action@v1
         with:
           anthropic_api_key: ${{ secrets.ANTHROPIC_API_KEY }}
           prompt: |
-            The OpenAPI spec in specs/openapi.json has been updated. Your task is to analyze the changes and create a pull request.
+            The OpenAPI spec in specs/openapi.json has been updated.
 
-            Follow these steps IN ORDER:
+            Your task: Analyze the git diff and write a concise markdown summary to /tmp/analysis.md
 
-            1. Analyze the changes:
-               - Run: git diff specs/openapi.json specs/openapi-metadata.json
-               - Focus on: new/modified/removed endpoints, schemas, breaking changes
-
-            2. Create and push a new branch:
-               - git checkout -b ci/daily-openapi-update
-               - git add specs/openapi.json specs/openapi-metadata.json
-               - git commit -m "chore(spec): update OpenAPI spec"
-               - git push -u origin ci/daily-openapi-update
-
-            3. Create PR body file:
-               - Use the Write tool to create /tmp/pr-body.md with this structure:
+            Steps:
+            1. Run: git diff specs/openapi.json specs/openapi-metadata.json
+            2. Analyze the changes focusing on:
+               - Schema changes (data model structures)
+               - Endpoint changes (new/modified/removed APIs)
+               - Breaking vs non-breaking changes
+               - Metadata updates (checksum, version, timestamp)
+            3. Write analysis to /tmp/analysis.md using this structure:
 
             ```markdown
-            ## OpenAPI Spec Update
-
-            This PR updates `specs/openapi.json` and `specs/openapi-metadata.json` with the latest version from `https://api.kadoa.com/openapi`.
-
             ### Summary of Changes
 
-            [Write your detailed analysis here using markdown]
+            [Brief overview paragraph]
 
-            Focus on:
-            - **Schema Changes**: List structural changes to data models
-            - **Endpoint Changes**: New/modified/removed API endpoints
-            - **Breaking Changes**: Identify any backward-incompatible changes
+            #### Schema Changes
+            - [List key structural changes to data models]
+            - [Use bullet points]
+
+            #### Endpoint Changes
+            - [List new/modified/removed API endpoints]
+            - [Specify HTTP methods and paths]
+
+            #### Breaking Changes
+            - [Yes/No - if yes, explain what breaks]
 
             #### Metadata Changes
-            - Checksum: [old] → [new]
-            - Fetched At: [timestamp]
-            - API Version: [version]
+            - **Checksum**: [old value] → [new value]
+            - **Fetched At**: [timestamp]
+            - **API Version**: [version]
 
             #### Impact Assessment
-            - **Breaking Changes**: [Yes/No - explain if yes]
-            - **New Endpoints**: [List or "None"]
-            - **Modified Endpoints**: [List or "None"]
-            - **Removed Endpoints**: [List or "None"]
-
-            ---
-
-            **Next Steps:** If merged, the spec fingerprint workflow will trigger SDK releases if needed.
+            - **Backward Compatibility**: [Assessment]
+            - **SDK Generation**: [Any impacts on code generation]
             ```
 
-            4. Create the PR:
-               - Run: gh pr create --base main --head ci/daily-openapi-update --title "chore(spec): update OpenAPI spec" --body-file /tmp/pr-body.md --label ci
-
             IMPORTANT:
-            - Use Write tool to create /tmp/pr-body.md (you have permission)
-            - Use --body-file flag (NOT --body with inline text)
-            - Keep analysis concise but thorough (300-500 words)
-            - Don't try to edit the PR after creation
+            - Use Write tool to save to /tmp/analysis.md
+            - Keep analysis concise (300-500 words)
+            - Focus on developer-relevant changes
+            - Use clear markdown formatting
           claude_args: |
-            --allowedTools "Read,Write(/tmp/*:*),Bash(git:*),Bash(gh:*)"
+            --allowedTools "Read,Write(/tmp/*:*),Bash(git diff:*)"
             --model claude-sonnet-4-5-20250929
+
+      - name: Create branch and PR
+        if: steps.diff.outputs.changed == 'true'
+        env:
+          GH_TOKEN: ${{ secrets.RELEASE_PLEASE_TOKEN || secrets.GITHUB_TOKEN }}
+        run: |
+          # Read Claude's analysis
+          ANALYSIS=$(cat /tmp/analysis.md)
+
+          # Create and push branch
+          git checkout -b ci/daily-openapi-update
+          git add specs/openapi.json specs/openapi-metadata.json
+          git commit -m "chore(spec): update OpenAPI spec
+
+          Updates specs/openapi.json and specs/openapi-metadata.json with the latest version from https://api.kadoa.com/openapi.
+
+          🤖 Generated with [Claude Code](https://claude.com/claude-code)
+
+          Co-Authored-By: Claude <noreply@anthropic.com>"
+          git push -u origin ci/daily-openapi-update
+
+          # Create PR with analysis
+          cat > /tmp/pr-body.md << 'EOF'
+          ## OpenAPI Spec Update
+
+          This PR updates `specs/openapi.json` and `specs/openapi-metadata.json` with the latest version from `https://api.kadoa.com/openapi`.
+
+          EOF
+
+          echo "$ANALYSIS" >> /tmp/pr-body.md
+
+          cat >> /tmp/pr-body.md << 'EOF'
+
+          ---
+
+          **Next Steps:** If merged, the spec fingerprint workflow will trigger SDK releases if needed.
+          EOF
+
+          gh pr create \
+            --base main \
+            --head ci/daily-openapi-update \
+            --title "chore(spec): update OpenAPI spec" \
+            --body-file /tmp/pr-body.md \
+            --label ci
 
       - name: No changes
         if: steps.diff.outputs.changed != 'true'
