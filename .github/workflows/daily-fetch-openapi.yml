@@ -26,7 +26,7 @@ jobs:
       - name: Setup Bun
         uses: oven-sh/setup-bun@v2
         with:
-          bun-version: "1.2.21"
+          bun-version: "1.3.0"
 
       - name: Install deps (root)
         env:
@@ -56,6 +56,7 @@ jobs:
         with:
           anthropic_api_key: ${{ secrets.ANTHROPIC_API_KEY }}
           track_progress: true
+          use_sticky_comment: true
           prompt: |
             REPO: ${{ github.repository }}
 
@@ -99,7 +100,6 @@ jobs:
           claude_args: |
             --allowedTools "Read,Bash(git:*),Bash(gh:*)"
             --model claude-sonnet-4-5-20250929
-            --max-turns 5
 
       - name: No changes
         if: steps.diff.outputs.changed != 'true'
