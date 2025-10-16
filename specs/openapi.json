@@ -6083,6 +6083,235 @@
         }
       }
     },
+    "/v5/workflows/{id}/steps/{stepId}": {
+      "get": {
+        "summary": "Get a specific step",
+        "description": "Retrieves details of a specific step in the workflow",
+        "tags": [
+          "Workflow Steps"
+        ],
+        "security": [
+          {
+            "ApiKeyAuth": []
+          },
+          {
+            "BearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            },
+            "description": "The workflow ID"
+          },
+          {
+            "in": "path",
+            "name": "stepId",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            },
+            "description": "The workflow step ID"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Step retrieved successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "id": {
+                      "type": "string",
+                      "format": "uuid",
+                      "description": "The ID of the workflow step"
+                    },
+                    "workflowId": {
+                      "type": "string",
+                      "format": "uuid",
+                      "description": "The workflow ID"
+                    },
+                    "stepId": {
+                      "type": "string",
+                      "format": "uuid",
+                      "description": "Reference to the step template"
+                    },
+                    "stepVersion": {
+                      "type": "integer",
+                      "description": "Version of the step"
+                    },
+                    "position": {
+                      "type": "integer",
+                      "description": "Position of the step in the workflow sequence"
+                    },
+                    "parameters": {
+                      "type": "object",
+                      "description": "Parameter overrides for this step"
+                    },
+                    "createdAt": {
+                      "type": "string",
+                      "format": "date-time",
+                      "description": "Timestamp when the step was created"
+                    },
+                    "stepType": {
+                      "type": "string",
+                      "description": "The type of step"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized - missing or invalid authentication"
+          },
+          "403": {
+            "description": "Forbidden - user doesn't have required permissions"
+          },
+          "404": {
+            "description": "Workflow or step not found"
+          }
+        }
+      }
+    },
+    "/v5/workflows/{id}/steps": {
+      "get": {
+        "summary": "List all steps for a workflow",
+        "description": "Retrieves all steps associated with the specified workflow",
+        "tags": [
+          "Workflow Steps"
+        ],
+        "security": [
+          {
+            "ApiKeyAuth": []
+          },
+          {
+            "BearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "in": "path",
+            "name": "id",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            },
+            "description": "The workflow ID"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Steps retrieved successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "workflowId": {
+                      "type": "string",
+                      "format": "uuid",
+                      "description": "The workflow ID"
+                    },
+                    "count": {
+                      "type": "integer",
+                      "description": "The number of steps"
+                    },
+                    "steps": {
+                      "type": "array",
+                      "items": {
+                        "type": "object",
+                        "properties": {
+                          "id": {
+                            "type": "string",
+                            "format": "uuid",
+                            "description": "The ID of the workflow step"
+                          },
+                          "workflowId": {
+                            "type": "string",
+                            "format": "uuid",
+                            "description": "The workflow ID"
+                          },
+                          "stepId": {
+                            "type": "string",
+                            "format": "uuid",
+                            "description": "Reference to the step template"
+                          },
+                          "stepVersion": {
+                            "type": "integer",
+                            "description": "Version of the step"
+                          },
+                          "position": {
+                            "type": "integer",
+                            "description": "Position of the step in the workflow sequence"
+                          },
+                          "parameters": {
+                            "type": "object",
+                            "description": "Parameter overrides for this step"
+                          },
+                          "createdAt": {
+                            "type": "string",
+                            "format": "date-time",
+                            "description": "Timestamp when the step was created"
+                          },
+                          "stepInfo": {
+                            "type": "object",
+                            "properties": {
+                              "name": {
+                                "type": "string",
+                                "description": "The name of the step"
+                              },
+                              "description": {
+                                "type": "string",
+                                "description": "The description of the step"
+                              },
+                              "stepType": {
+                                "type": "string",
+                                "description": "The type of step (e.g., EXTRACTION, CRAWLING)"
+                              },
+                              "defaultParameters": {
+                                "type": "object",
+                                "description": "Default parameters for this step version"
+                              },
+                              "schemaId": {
+                                "type": "string",
+                                "format": "uuid",
+                                "description": "ID of the schema used by this step version"
+                              },
+                              "schema": {
+                                "type": "object",
+                                "description": "Schema definition if available"
+                              }
+                            }
+                          }
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized - missing or invalid authentication"
+          },
+          "403": {
+            "description": "Forbidden - user doesn't have required permissions"
+          },
+          "404": {
+            "description": "Workflow not found"
+          }
+        }
+      }
+    },
     "/v5/workspaces/{workspaceId}/details": {
       "get": {
         "summary": "Get workspace details (supports users, teams, and organizations)",
@@ -14391,7 +14620,6 @@
         },
         "required": [
           "name",
-          "entity",
           "fields"
         ],
         "title": "CreateSchemaBody",
@@ -15046,7 +15274,6 @@
         },
         "required": [
           "urls",
-          "entity",
           "fields"
         ],
         "title": "CreateWorkflowWithCustomSchemaBody",

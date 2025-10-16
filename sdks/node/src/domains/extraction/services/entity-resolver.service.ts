@@ -28,14 +28,14 @@ export interface EntityRequestOptions {
 }
 
 export interface ResolvedEntity {
-  entity: string;
+  entity?: string;
   fields: SchemaField[];
 }
 
 export type EntityConfig =
   | "ai-detection"
   | { schemaId: string }
-  | { name: string; fields: SchemaField[] };
+  | { name?: string; fields: SchemaField[] };
 
 export const ENTITY_API_ENDPOINT = "/v4/entity";
 
@@ -83,8 +83,9 @@ export class EntityResolverService {
         navigationMode: options.navigationMode,
       });
 
+      const entity = entityPrediction.entity;
       return {
-        entity: entityPrediction.entity,
+        entity,
         fields: entityPrediction.fields,
       };
     } else if (entityConfig) {
@@ -94,10 +95,10 @@ export class EntityResolverService {
           entityConfig.schemaId,
         );
         return {
-          entity: schema.entity ?? "",
+          entity: schema.entity ?? undefined,
           fields: schema.schema,
         };
-      } else if ("name" in entityConfig && "fields" in entityConfig) {
+      } else if ("fields" in entityConfig) {
         return {
           entity: entityConfig.name,
           fields: entityConfig.fields,

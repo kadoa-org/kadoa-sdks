@@ -1,6 +1,6 @@
 {
-  "fetchedAt": "2025-10-13T09:49:29.097Z",
+  "fetchedAt": "2025-10-13T14:39:58.971Z",
   "apiVersion": "3.0.0",
-  "checksum": "8db838a90078f3b70363f5e1e74a155524c3da6edba35202ec8a3c1bdcc84a60",
-  "endpoint": "https://api.kadoa.com/openapi"
+  "checksum": "101a7bd6d29e72bcfefa1fa2f44d57eff68db5426246a2b1e7fe982113eb4bc5",
+  "endpoint": "http://localhost:12380/openapi"
 }

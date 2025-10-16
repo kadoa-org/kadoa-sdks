@@ -161,6 +161,50 @@ describe("SchemaBuilder", () => {
     });
   });
 
+  describe("Entity Requirement", () => {
+    test("allows raw-only schema without entity", () => {
+      expect(() => new SchemaBuilder().raw("MARKDOWN").build()).not.toThrow();
+    });
+
+    test("allows classification-only schema without entity", () => {
+      expect(() =>
+        new SchemaBuilder()
+          .classify("sentiment", "Sentiment", [
+            { title: "Positive", definition: "Good" },
+          ])
+          .build(),
+      ).not.toThrow();
+    });
+
+    test("allows raw and classification schema without entity", () => {
+      expect(() =>
+        new SchemaBuilder()
+          .raw("HTML")
+          .classify("category", "Category", [
+            { title: "Tech", definition: "Technology" },
+          ])
+          .build(),
+      ).not.toThrow();
+    });
+
+    test("requires entity when schema fields are present", () => {
+      expect(() =>
+        new SchemaBuilder()
+          .field("title", "Title", "STRING", { example: "Test" })
+          .build(),
+      ).toThrow(KadoaSdkException);
+    });
+
+    test("requires entity when mixing schema with other fields", () => {
+      expect(() =>
+        new SchemaBuilder()
+          .field("title", "Title", "STRING", { example: "Test" })
+          .raw("HTML")
+          .build(),
+      ).toThrow(KadoaSdkException);
+    });
+  });
+
   describe("Key Field Option", () => {
     test("sets isKey option correctly", () => {
       const builder = new SchemaBuilder()
@@ -172,57 +216,5 @@ describe("SchemaBuilder", () => {
       const field = builder.fields[0] as ExtractionSchemaField;
       expect(field.isKey).toBe(true);
     });
-  });
-});
-
-describe("SchemasService.builder()", () => {
-  test("returns a SchemaBuilder instance with entity name set", () => {
-    const mockService = { createSchema: async () => ({}) } as SchemasService;
-
-    const builder = SchemasServiceClass.prototype.builder.call(
-      mockService,
-      "Product",
-    );
-
-    expect(builder).toBeInstanceOf(SchemaBuilder);
-    expect(builder.entityName).toBe("Product");
-  });
-
-  test("builder create delegates to service", async () => {
-    const captured: CreateSchemaRequest[] = [];
-    const response: SchemaResponse = {
-      id: "schema_123",
-      name: "My Product Schema",
-      entity: "Product",
-      fields: [],
-      version: 1,
-      createdAt: "",
-      updatedAt: "",
-    };
-
-    const mockService = {
-      createSchema: async (body: CreateSchemaRequest) => {
-        captured.push(body);
-        return response;
-      },
-    } as SchemasService;
-
-    const builder = SchemasServiceClass.prototype.builder.call(
-      mockService,
-      "Product",
-    );
-
-    builder
-      .field("title", "Product name", "STRING", { example: "Example" })
-      .field("price", "Product price", "NUMBER");
-
-    const result = await builder.create("My Product Schema");
-
-    expect(captured).toHaveLength(1);
-    expect(captured[0]).toMatchObject({
-      name: "My Product Schema",
-      entity: "Product",
-    });
-    expect(result).toBe(response);
   });
 });

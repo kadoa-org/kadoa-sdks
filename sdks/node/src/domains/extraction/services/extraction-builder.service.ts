@@ -142,7 +142,9 @@ export class ExtractionBuilderService {
         entity = { schemaId: result.schemaId };
       } else {
         const builtSchema = result.build();
-        entity = { name: builtSchema.entityName, fields: builtSchema.fields };
+        entity = builtSchema.entityName
+          ? { name: builtSchema.entityName, fields: builtSchema.fields }
+          : { fields: builtSchema.fields };
       }
     }
 
@@ -198,21 +200,14 @@ export class ExtractionBuilderService {
   async create(): Promise<CreatedExtraction> {
     assert(this._options, "Options are not set");
     const { urls, name, description, navigationMode, entity } = this.options;
-    const resolvedEntity =
-      typeof entity === "object" && "schemaId" in entity
-        ? undefined
-        : await this.entityResolverService.resolveEntity(entity, {
-            link: urls[0],
-            location: this._options.location,
-            navigationMode,
-          });
-
-    if (!resolvedEntity) {
-      throw new KadoaSdkException(ERROR_MESSAGES.ENTITY_FETCH_FAILED, {
-        code: "VALIDATION_ERROR",
-        details: { entity },
-      });
-    }
+    const resolvedEntity = await this.entityResolverService.resolveEntity(
+      entity,
+      {
+        link: urls[0],
+        location: this._options.location,
+        navigationMode,
+      },
+    );
 
     const workflow = await this.workflowsCoreService.create({
       urls,

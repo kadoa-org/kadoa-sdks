@@ -214,11 +214,15 @@ export class ExtractionService {
 
     const hasNotifications = !!config.notifications;
 
-    const result = await this.workflowsCoreService.create({
+    const workflowRequest = {
       ...config,
-      entity: resolvedEntity.entity,
       fields: resolvedEntity.fields,
-    });
+      ...(resolvedEntity.entity !== undefined
+        ? { entity: resolvedEntity.entity }
+        : {}),
+    };
+
+    const result = await this.workflowsCoreService.create(workflowRequest);
     workflowId = result.id;
 
     if (hasNotifications) {
