@@ -40,7 +40,7 @@ export interface CreateWorkflowInput {
   name: string;
   description?: string;
   schemaId?: string;
-  entity: string;
+  entity?: string;
   fields: Array<SchemaField>;
   tags?: string[];
   interval?: WorkflowInterval;

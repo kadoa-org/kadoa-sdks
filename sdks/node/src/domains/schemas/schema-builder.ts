@@ -36,6 +36,10 @@ export class SchemaBuilder {
   readonly fields: SchemaField[] = [];
   entityName?: string;
 
+  private hasSchemaFields(): boolean {
+    return this.fields.some((field) => field.fieldType === "SCHEMA");
+  }
+
   entity(entityName: string): this {
     this.entityName = entityName;
     return this;
@@ -118,12 +122,15 @@ export class SchemaBuilder {
     return this;
   }
 
-  build(): { entityName: string; fields: SchemaField[] } {
-    if (!this.entityName) {
-      throw new KadoaSdkException("Entity name is required", {
-        code: "VALIDATION_ERROR",
-        details: { entityName: this.entityName },
-      });
+  build(): { entityName?: string; fields: SchemaField[] } {
+    if (this.hasSchemaFields() && !this.entityName) {
+      throw new KadoaSdkException(
+        "Entity name is required when schema fields are present",
+        {
+          code: "VALIDATION_ERROR",
+          details: { entityName: this.entityName },
+        },
+      );
     }
 
     return {

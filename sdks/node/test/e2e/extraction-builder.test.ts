@@ -69,7 +69,7 @@ describe("Extraction Builder", () => {
         .extract({
           urls: ["https://sandbox.kadoa.com/ecommerce"],
           name: "Raw Markdown Extraction",
-          extraction: (builder) => builder.entity("Product").raw("MARKDOWN"),
+          extraction: (builder) => builder.raw("MARKDOWN"),
         })
         .bypassPreview()
         .setInterval({
@@ -188,7 +188,7 @@ describe("Extraction Builder", () => {
           urls: ["https://sandbox.kadoa.com/ecommerce"],
           name: "Classification Test",
           extraction: (builder) =>
-            builder.entity("Product").classify("category", "Product category", [
+            builder.classify("category", "Product category", [
               {
                 title: "Electronics",
                 definition: "Electronic devices and gadgets",

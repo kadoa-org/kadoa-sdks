@@ -82,7 +82,7 @@ async function main() {
       urls: ["https://sandbox.kadoa.com/ecommerce"],
       name: "Classification Demo",
       extraction: (builder) =>
-        builder.entity("Product").classify("category", "Product category", [
+        builder.classify("category", "Product category", [
           {
             title: "Electronics",
             definition: "Electronic devices and gadgets",

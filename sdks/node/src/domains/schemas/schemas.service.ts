@@ -29,22 +29,40 @@ export class SchemasService {
    * Create a schema builder with fluent API and inline create support.
    */
   builder(
-    entityName: string,
+    entityName?: string,
   ): SchemaBuilder & { create(name?: string): Promise<SchemaResponse> } {
     const service = this;
     return new (class extends SchemaBuilder {
       constructor() {
         super();
-        this.entity(entityName);
+        if (entityName) {
+          this.entity(entityName);
+        }
       }
 
       async create(name?: string): Promise<SchemaResponse> {
         const built = this.build();
-        return service.createSchema({
-          name: name || built.entityName,
-          entity: built.entityName,
+        const schemaName = name ?? built.entityName;
+
+        if (!schemaName) {
+          throw new KadoaSdkException(
+            "Schema name is required when entity name is not provided",
+            {
+              code: "VALIDATION_ERROR",
+              details: { name },
+            },
+          );
+        }
+
+        const createSchemaBody = {
+          name: schemaName,
           fields: built.fields,
-        });
+          ...(built.entityName ? { entity: built.entityName } : {}),
+        };
+
+        return service.createSchema(
+          createSchemaBody as CreateSchemaRequest,
+        );
       }
     })();
   }

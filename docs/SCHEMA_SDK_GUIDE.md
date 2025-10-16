@@ -221,15 +221,24 @@ builder
 ```
 
 ### 4. Entity Name Requirement
-Entity name must be set before building.
+Entity name is only required when the schema includes structured (`SCHEMA`) fields.
 
 ```typescript
-// ❌ Invalid - no entity name
-builder.field('title', 'Title', 'STRING', { example: 'A' }).build()
-// Throws: Entity name is required
+// ✅ Raw or classification only - entity optional
+builder.raw('MARKDOWN').build();
+builder
+  .classify('sentiment', 'Sentiment', [{ title: 'Positive', definition: 'Good' }])
+  .build();
 
-// ✅ Valid
-builder.entity('Product').field('title', 'Title', 'STRING', { example: 'A' }).build()
+// ❌ Structured schema field without entity
+builder.field('title', 'Title', 'STRING', { example: 'A' }).build();
+// Throws: Entity name is required when schema fields are present
+
+// ✅ Structured schema field with entity
+builder
+  .entity('Product')
+  .field('title', 'Title', 'STRING', { example: 'A' })
+  .build();
 ```
 
 ## Using Schemas in Workflow Creation
@@ -370,12 +379,37 @@ There are three ways to create a schema:
 
 Create a schema directly using the fluent builder API with the `.create()` method.
 
+**With structured fields (entity required):**
+
 ```typescript
 const schema = await client.schema
   .builder('Product')
   .field('title', 'Product name', 'STRING', { example: 'iPhone 15' })
   .field('price', 'Product price', 'MONEY')
   .create('Product Schema');
+```
+
+**Raw content only (entity optional):**
+
+```typescript
+const rawSchema = await client.schema
+  .builder()  // No entity required
+  .raw('MARKDOWN')
+  .raw('PAGE_URL')
+  .create('Raw Content Schema');
+```
+
+**Classification only (entity optional):**
+
+```typescript
+const classificationSchema = await client.schema
+  .builder()  // No entity required
+  .classify('sentiment', 'Content sentiment', [
+    { title: 'Positive', definition: 'Positive tone' },
+    { title: 'Neutral', definition: 'Neutral tone' },
+    { title: 'Negative', definition: 'Negative tone' }
+  ])
+  .create('Sentiment Classification Schema');
 ```
 
 **When to use:**
