@@ -1,5 +1,26 @@
 # Changelog
 
+## [0.15.0](https://github.com/kadoa-org/kadoa-sdks/compare/node-sdk-v0.14.1...node-sdk-v0.15.0) (2025-10-16)
+
+
+### Features
+
+* **node-sdk:** make entity optional in schema builder API (KAD-3462) ([#101](https://github.com/kadoa-org/kadoa-sdks/issues/101)) ([12e8027](https://github.com/kadoa-org/kadoa-sdks/commit/12e8027296379b842c281a85179073bc955745d9))
+
+
+### Bug Fixes
+
+* **node-sdk:** add Failed state to WorkflowDisplayStateEnum ([67b7fcf](https://github.com/kadoa-org/kadoa-sdks/commit/67b7fcf423befdef4d7eac6495ffe2e2f78f8a5c))
+
+
+### Miscellaneous Chores
+
+* **deps-dev:** bump @types/node in /examples/node-examples ([#94](https://github.com/kadoa-org/kadoa-sdks/issues/94)) ([94f64a7](https://github.com/kadoa-org/kadoa-sdks/commit/94f64a78b55f68b5e3293361e88595d72783d2ed))
+* **deps-dev:** bump @types/node in /sdks/node in the development group ([#91](https://github.com/kadoa-org/kadoa-sdks/issues/91)) ([ef542be](https://github.com/kadoa-org/kadoa-sdks/commit/ef542bedae6669fbf9a0736dd5f8e06078129b66))
+* **deps-dev:** bump @types/node in /tools/codegen ([#98](https://github.com/kadoa-org/kadoa-sdks/issues/98)) ([ec79d81](https://github.com/kadoa-org/kadoa-sdks/commit/ec79d8158a27dbf643f1d35c93530a92eca70c91))
+* **deps:** bump @openapitools/openapi-generator-cli in /tools/codegen ([#96](https://github.com/kadoa-org/kadoa-sdks/issues/96)) ([a600e5c](https://github.com/kadoa-org/kadoa-sdks/commit/a600e5c9f9160eed7788e69cb82fdb2717a1b1bc))
+* **spec:** update OpenAPI spec ([#92](https://github.com/kadoa-org/kadoa-sdks/issues/92)) ([57cb113](https://github.com/kadoa-org/kadoa-sdks/commit/57cb113cd6f18ceed8875e5b640522334f6c853b))
+
 ## [0.14.1](https://github.com/kadoa-org/kadoa-sdks/compare/node-sdk-v0.14.0...node-sdk-v0.14.1) (2025-10-12)
 
 
