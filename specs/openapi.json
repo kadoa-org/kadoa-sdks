@@ -6083,235 +6083,6 @@
         }
       }
     },
-    "/v5/workflows/{id}/steps/{stepId}": {
-      "get": {
-        "summary": "Get a specific step",
-        "description": "Retrieves details of a specific step in the workflow",
-        "tags": [
-          "Workflow Steps"
-        ],
-        "security": [
-          {
-            "ApiKeyAuth": []
-          },
-          {
-            "BearerAuth": []
-          }
-        ],
-        "parameters": [
-          {
-            "in": "path",
-            "name": "id",
-            "required": true,
-            "schema": {
-              "type": "string",
-              "format": "uuid"
-            },
-            "description": "The workflow ID"
-          },
-          {
-            "in": "path",
-            "name": "stepId",
-            "required": true,
-            "schema": {
-              "type": "string",
-              "format": "uuid"
-            },
-            "description": "The workflow step ID"
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "Step retrieved successfully",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "type": "object",
-                  "properties": {
-                    "id": {
-                      "type": "string",
-                      "format": "uuid",
-                      "description": "The ID of the workflow step"
-                    },
-                    "workflowId": {
-                      "type": "string",
-                      "format": "uuid",
-                      "description": "The workflow ID"
-                    },
-                    "stepId": {
-                      "type": "string",
-                      "format": "uuid",
-                      "description": "Reference to the step template"
-                    },
-                    "stepVersion": {
-                      "type": "integer",
-                      "description": "Version of the step"
-                    },
-                    "position": {
-                      "type": "integer",
-                      "description": "Position of the step in the workflow sequence"
-                    },
-                    "parameters": {
-                      "type": "object",
-                      "description": "Parameter overrides for this step"
-                    },
-                    "createdAt": {
-                      "type": "string",
-                      "format": "date-time",
-                      "description": "Timestamp when the step was created"
-                    },
-                    "stepType": {
-                      "type": "string",
-                      "description": "The type of step"
-                    }
-                  }
-                }
-              }
-            }
-          },
-          "401": {
-            "description": "Unauthorized - missing or invalid authentication"
-          },
-          "403": {
-            "description": "Forbidden - user doesn't have required permissions"
-          },
-          "404": {
-            "description": "Workflow or step not found"
-          }
-        }
-      }
-    },
-    "/v5/workflows/{id}/steps": {
-      "get": {
-        "summary": "List all steps for a workflow",
-        "description": "Retrieves all steps associated with the specified workflow",
-        "tags": [
-          "Workflow Steps"
-        ],
-        "security": [
-          {
-            "ApiKeyAuth": []
-          },
-          {
-            "BearerAuth": []
-          }
-        ],
-        "parameters": [
-          {
-            "in": "path",
-            "name": "id",
-            "required": true,
-            "schema": {
-              "type": "string",
-              "format": "uuid"
-            },
-            "description": "The workflow ID"
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "Steps retrieved successfully",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "type": "object",
-                  "properties": {
-                    "workflowId": {
-                      "type": "string",
-                      "format": "uuid",
-                      "description": "The workflow ID"
-                    },
-                    "count": {
-                      "type": "integer",
-                      "description": "The number of steps"
-                    },
-                    "steps": {
-                      "type": "array",
-                      "items": {
-                        "type": "object",
-                        "properties": {
-                          "id": {
-                            "type": "string",
-                            "format": "uuid",
-                            "description": "The ID of the workflow step"
-                          },
-                          "workflowId": {
-                            "type": "string",
-                            "format": "uuid",
-                            "description": "The workflow ID"
-                          },
-                          "stepId": {
-                            "type": "string",
-                            "format": "uuid",
-                            "description": "Reference to the step template"
-                          },
-                          "stepVersion": {
-                            "type": "integer",
-                            "description": "Version of the step"
-                          },
-                          "position": {
-                            "type": "integer",
-                            "description": "Position of the step in the workflow sequence"
-                          },
-                          "parameters": {
-                            "type": "object",
-                            "description": "Parameter overrides for this step"
-                          },
-                          "createdAt": {
-                            "type": "string",
-                            "format": "date-time",
-                            "description": "Timestamp when the step was created"
-                          },
-                          "stepInfo": {
-                            "type": "object",
-                            "properties": {
-                              "name": {
-                                "type": "string",
-                                "description": "The name of the step"
-                              },
-                              "description": {
-                                "type": "string",
-                                "description": "The description of the step"
-                              },
-                              "stepType": {
-                                "type": "string",
-                                "description": "The type of step (e.g., EXTRACTION, CRAWLING)"
-                              },
-                              "defaultParameters": {
-                                "type": "object",
-                                "description": "Default parameters for this step version"
-                              },
-                              "schemaId": {
-                                "type": "string",
-                                "format": "uuid",
-                                "description": "ID of the schema used by this step version"
-                              },
-                              "schema": {
-                                "type": "object",
-                                "description": "Schema definition if available"
-                              }
-                            }
-                          }
-                        }
-                      }
-                    }
-                  }
-                }
-              }
-            }
-          },
-          "401": {
-            "description": "Unauthorized - missing or invalid authentication"
-          },
-          "403": {
-            "description": "Forbidden - user doesn't have required permissions"
-          },
-          "404": {
-            "description": "Workflow not found"
-          }
-        }
-      }
-    },
     "/v5/workspaces/{workspaceId}/details": {
       "get": {
         "summary": "Get workspace details (supports users, teams, and organizations)",
@@ -10846,6 +10617,14 @@
             "schema": {
               "type": "string"
             }
+          },
+          {
+            "name": "includeAll",
+            "in": "query",
+            "schema": {
+              "type": "boolean",
+              "nullable": true
+            }
           }
         ],
         "responses": {
@@ -13555,6 +13334,11 @@
             "minimum": 1,
             "description": "Maximum number of pages to crawl"
           },
+          "maxMatches": {
+            "type": "number",
+            "minimum": 1,
+            "description": "Maximum number of matched pages to crawl before stopping"
+          },
           "concurrency": {
             "type": "number",
             "minimum": 1,
@@ -13580,6 +13364,205 @@
             "format": "uri",
             "nullable": true,
             "description": "Webhook URL for completion notifications"
+          },
+          "processDuringCrawl": {
+            "type": "boolean",
+            "description": "Whether to run preprocessing and extraction during the crawl phase"
+          },
+          "crawlMethod": {
+            "type": "object",
+            "properties": {
+              "type": {
+                "type": "string",
+                "description": "Crawler execution type (e.g. puppeteer, impit)"
+              }
+            },
+            "required": [
+              "type"
+            ],
+            "additionalProperties": {
+              "nullable": true
+            },
+            "description": "Crawl method configuration"
+          },
+          "matchThreshold": {
+            "type": "number",
+            "minimum": 0,
+            "maximum": 1,
+            "description": "Match threshold override for blueprint filtering"
+          },
+          "blueprint": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "name": {
+                  "type": "string"
+                },
+                "description": {
+                  "type": "string"
+                },
+                "selector": {
+                  "type": "string"
+                },
+                "type": {
+                  "type": "string"
+                }
+              },
+              "additionalProperties": {
+                "nullable": true
+              },
+              "description": "Blueprint field definition"
+            },
+            "description": "Blueprint fields applied during crawling"
+          },
+          "extractionOptions": {
+            "type": "object",
+            "properties": {
+              "extractions": {
+                "type": "object",
+                "additionalProperties": {
+                  "type": "boolean"
+                },
+                "description": "Feature toggles for available extraction helpers"
+              },
+              "schema": {
+                "nullable": true,
+                "description": "Schema definition for structured extractions"
+              },
+              "entity": {
+                "nullable": true,
+                "description": "Entity metadata used for extraction mappings"
+              },
+              "mainContextSelector": {
+                "type": "string",
+                "description": "CSS selector anchoring focus-driven extractors"
+              },
+              "xhrExtractorConfigs": {
+                "type": "array",
+                "items": {
+                  "nullable": true
+                },
+                "description": "XHR extractor configuration entries"
+              }
+            },
+            "additionalProperties": false,
+            "description": "Extraction-related options derived from legacy launch summary"
+          },
+          "navigationOptions": {
+            "type": "object",
+            "properties": {
+              "browserActions": {
+                "type": "array",
+                "items": {
+                  "type": "object",
+                  "additionalProperties": {}
+                },
+                "description": "Ordered list of scripted browser actions executed after navigation"
+              },
+              "preBrowserActions": {
+                "type": "array",
+                "items": {
+                  "type": "object",
+                  "additionalProperties": {}
+                },
+                "description": "Browser actions performed before the main action chain"
+              },
+              "scrollHtml": {
+                "type": "boolean",
+                "description": "Enable HTML capture while scrolling through the page"
+              },
+              "scrollHtmlTimeout": {
+                "type": "number",
+                "minimum": 0,
+                "description": "Maximum scroll duration in milliseconds"
+              },
+              "visualHtml": {
+                "type": "boolean",
+                "description": "Enable visual HTML capture for navigation heuristics"
+              },
+              "navigationStrategy": {
+                "type": "string",
+                "description": "Primary navigation strategy identifier"
+              },
+              "navigationStrategies": {
+                "type": "array",
+                "items": {
+                  "type": "string"
+                },
+                "description": "Fallback navigation strategy order"
+              },
+              "limit": {
+                "type": "number",
+                "minimum": 0,
+                "description": "Maximum number of navigation steps"
+              },
+              "disableNavigation": {
+                "type": "boolean",
+                "description": "Skip automated navigation heuristics"
+              },
+              "ignoreIframes": {
+                "type": "boolean",
+                "description": "Disable iframe traversal during navigation"
+              },
+              "navigationExploration": {
+                "type": "object",
+                "additionalProperties": {},
+                "description": "Navigation exploration tuning payload"
+              },
+              "loadHtmlOnly": {
+                "type": "boolean",
+                "description": "Skip scripted interactions and only capture HTML"
+              },
+              "acceptCookies": {
+                "type": "boolean",
+                "description": "Force cookie acceptance automation"
+              },
+              "cachedCookieAccept": {
+                "oneOf": [
+                  {
+                    "type": "boolean"
+                  },
+                  {
+                    "type": "string"
+                  }
+                ],
+                "description": "Reuse cached cookie acceptance flow"
+              }
+            },
+            "additionalProperties": false,
+            "description": "Navigation-related options derived from legacy launch summary"
+          },
+          "artifactOptions": {
+            "type": "object",
+            "properties": {
+              "screenshot": {
+                "type": "boolean",
+                "description": "Capture standard screenshot"
+              },
+              "screenshotFull": {
+                "type": "boolean",
+                "description": "Capture full-page screenshot"
+              },
+              "screenshotCache": {
+                "type": "boolean",
+                "description": "Re-use cached screenshot when available"
+              },
+              "screenshotPublic": {
+                "type": "boolean",
+                "description": "Make captured screenshot publicly accessible"
+              },
+              "screenshotLink": {
+                "type": "string",
+                "description": "Stored screenshot link for follow-up processing"
+              },
+              "archivePdf": {
+                "type": "boolean",
+                "description": "Generate archival PDF for crawled pages"
+              }
+            },
+            "additionalProperties": false,
+            "description": "Artifact capture options derived from legacy launch summary"
           }
         },
         "title": "CreateCrawlerConfigRequest",
@@ -13641,6 +13624,11 @@
             "minimum": 1,
             "description": "Maximum number of pages to crawl"
           },
+          "maxMatches": {
+            "type": "number",
+            "minimum": 1,
+            "description": "Maximum number of matched pages to crawl before stopping"
+          },
           "concurrency": {
             "type": "number",
             "minimum": 1,
@@ -13666,6 +13654,205 @@
             "format": "uri",
             "nullable": true,
             "description": "Webhook URL for completion notifications"
+          },
+          "processDuringCrawl": {
+            "type": "boolean",
+            "description": "Whether to run preprocessing and extraction during the crawl phase"
+          },
+          "crawlMethod": {
+            "type": "object",
+            "properties": {
+              "type": {
+                "type": "string",
+                "description": "Crawler execution type (e.g. puppeteer, impit)"
+              }
+            },
+            "required": [
+              "type"
+            ],
+            "additionalProperties": {
+              "nullable": true
+            },
+            "description": "Crawl method configuration"
+          },
+          "matchThreshold": {
+            "type": "number",
+            "minimum": 0,
+            "maximum": 1,
+            "description": "Match threshold override for blueprint filtering"
+          },
+          "blueprint": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "name": {
+                  "type": "string"
+                },
+                "description": {
+                  "type": "string"
+                },
+                "selector": {
+                  "type": "string"
+                },
+                "type": {
+                  "type": "string"
+                }
+              },
+              "additionalProperties": {
+                "nullable": true
+              },
+              "description": "Blueprint field definition"
+            },
+            "description": "Blueprint fields applied during crawling"
+          },
+          "extractionOptions": {
+            "type": "object",
+            "properties": {
+              "extractions": {
+                "type": "object",
+                "additionalProperties": {
+                  "type": "boolean"
+                },
+                "description": "Feature toggles for available extraction helpers"
+              },
+              "schema": {
+                "nullable": true,
+                "description": "Schema definition for structured extractions"
+              },
+              "entity": {
+                "nullable": true,
+                "description": "Entity metadata used for extraction mappings"
+              },
+              "mainContextSelector": {
+                "type": "string",
+                "description": "CSS selector anchoring focus-driven extractors"
+              },
+              "xhrExtractorConfigs": {
+                "type": "array",
+                "items": {
+                  "nullable": true
+                },
+                "description": "XHR extractor configuration entries"
+              }
+            },
+            "additionalProperties": false,
+            "description": "Extraction-related options derived from legacy launch summary"
+          },
+          "navigationOptions": {
+            "type": "object",
+            "properties": {
+              "browserActions": {
+                "type": "array",
+                "items": {
+                  "type": "object",
+                  "additionalProperties": {}
+                },
+                "description": "Ordered list of scripted browser actions executed after navigation"
+              },
+              "preBrowserActions": {
+                "type": "array",
+                "items": {
+                  "type": "object",
+                  "additionalProperties": {}
+                },
+                "description": "Browser actions performed before the main action chain"
+              },
+              "scrollHtml": {
+                "type": "boolean",
+                "description": "Enable HTML capture while scrolling through the page"
+              },
+              "scrollHtmlTimeout": {
+                "type": "number",
+                "minimum": 0,
+                "description": "Maximum scroll duration in milliseconds"
+              },
+              "visualHtml": {
+                "type": "boolean",
+                "description": "Enable visual HTML capture for navigation heuristics"
+              },
+              "navigationStrategy": {
+                "type": "string",
+                "description": "Primary navigation strategy identifier"
+              },
+              "navigationStrategies": {
+                "type": "array",
+                "items": {
+                  "type": "string"
+                },
+                "description": "Fallback navigation strategy order"
+              },
+              "limit": {
+                "type": "number",
+                "minimum": 0,
+                "description": "Maximum number of navigation steps"
+              },
+              "disableNavigation": {
+                "type": "boolean",
+                "description": "Skip automated navigation heuristics"
+              },
+              "ignoreIframes": {
+                "type": "boolean",
+                "description": "Disable iframe traversal during navigation"
+              },
+              "navigationExploration": {
+                "type": "object",
+                "additionalProperties": {},
+                "description": "Navigation exploration tuning payload"
+              },
+              "loadHtmlOnly": {
+                "type": "boolean",
+                "description": "Skip scripted interactions and only capture HTML"
+              },
+              "acceptCookies": {
+                "type": "boolean",
+                "description": "Force cookie acceptance automation"
+              },
+              "cachedCookieAccept": {
+                "oneOf": [
+                  {
+                    "type": "boolean"
+                  },
+                  {
+                    "type": "string"
+                  }
+                ],
+                "description": "Reuse cached cookie acceptance flow"
+              }
+            },
+            "additionalProperties": false,
+            "description": "Navigation-related options derived from legacy launch summary"
+          },
+          "artifactOptions": {
+            "type": "object",
+            "properties": {
+              "screenshot": {
+                "type": "boolean",
+                "description": "Capture standard screenshot"
+              },
+              "screenshotFull": {
+                "type": "boolean",
+                "description": "Capture full-page screenshot"
+              },
+              "screenshotCache": {
+                "type": "boolean",
+                "description": "Re-use cached screenshot when available"
+              },
+              "screenshotPublic": {
+                "type": "boolean",
+                "description": "Make captured screenshot publicly accessible"
+              },
+              "screenshotLink": {
+                "type": "string",
+                "description": "Stored screenshot link for follow-up processing"
+              },
+              "archivePdf": {
+                "type": "boolean",
+                "description": "Generate archival PDF for crawled pages"
+              }
+            },
+            "additionalProperties": false,
+            "description": "Artifact capture options derived from legacy launch summary"
           },
           "configId": {
             "type": "string",
@@ -13744,6 +13931,11 @@
             "minimum": 1,
             "description": "Maximum number of pages to crawl"
           },
+          "maxMatches": {
+            "type": "number",
+            "minimum": 1,
+            "description": "Maximum number of matched pages to crawl before stopping"
+          },
           "concurrency": {
             "type": "number",
             "minimum": 1,
@@ -13769,6 +13961,205 @@
             "format": "uri",
             "nullable": true,
             "description": "Webhook URL for completion notifications"
+          },
+          "processDuringCrawl": {
+            "type": "boolean",
+            "description": "Whether to run preprocessing and extraction during the crawl phase"
+          },
+          "crawlMethod": {
+            "type": "object",
+            "properties": {
+              "type": {
+                "type": "string",
+                "description": "Crawler execution type (e.g. puppeteer, impit)"
+              }
+            },
+            "required": [
+              "type"
+            ],
+            "additionalProperties": {
+              "nullable": true
+            },
+            "description": "Crawl method configuration"
+          },
+          "matchThreshold": {
+            "type": "number",
+            "minimum": 0,
+            "maximum": 1,
+            "description": "Match threshold override for blueprint filtering"
+          },
+          "blueprint": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "name": {
+                  "type": "string"
+                },
+                "description": {
+                  "type": "string"
+                },
+                "selector": {
+                  "type": "string"
+                },
+                "type": {
+                  "type": "string"
+                }
+              },
+              "additionalProperties": {
+                "nullable": true
+              },
+              "description": "Blueprint field definition"
+            },
+            "description": "Blueprint fields applied during crawling"
+          },
+          "extractionOptions": {
+            "type": "object",
+            "properties": {
+              "extractions": {
+                "type": "object",
+                "additionalProperties": {
+                  "type": "boolean"
+                },
+                "description": "Feature toggles for available extraction helpers"
+              },
+              "schema": {
+                "nullable": true,
+                "description": "Schema definition for structured extractions"
+              },
+              "entity": {
+                "nullable": true,
+                "description": "Entity metadata used for extraction mappings"
+              },
+              "mainContextSelector": {
+                "type": "string",
+                "description": "CSS selector anchoring focus-driven extractors"
+              },
+              "xhrExtractorConfigs": {
+                "type": "array",
+                "items": {
+                  "nullable": true
+                },
+                "description": "XHR extractor configuration entries"
+              }
+            },
+            "additionalProperties": false,
+            "description": "Extraction-related options derived from legacy launch summary"
+          },
+          "navigationOptions": {
+            "type": "object",
+            "properties": {
+              "browserActions": {
+                "type": "array",
+                "items": {
+                  "type": "object",
+                  "additionalProperties": {}
+                },
+                "description": "Ordered list of scripted browser actions executed after navigation"
+              },
+              "preBrowserActions": {
+                "type": "array",
+                "items": {
+                  "type": "object",
+                  "additionalProperties": {}
+                },
+                "description": "Browser actions performed before the main action chain"
+              },
+              "scrollHtml": {
+                "type": "boolean",
+                "description": "Enable HTML capture while scrolling through the page"
+              },
+              "scrollHtmlTimeout": {
+                "type": "number",
+                "minimum": 0,
+                "description": "Maximum scroll duration in milliseconds"
+              },
+              "visualHtml": {
+                "type": "boolean",
+                "description": "Enable visual HTML capture for navigation heuristics"
+              },
+              "navigationStrategy": {
+                "type": "string",
+                "description": "Primary navigation strategy identifier"
+              },
+              "navigationStrategies": {
+                "type": "array",
+                "items": {
+                  "type": "string"
+                },
+                "description": "Fallback navigation strategy order"
+              },
+              "limit": {
+                "type": "number",
+                "minimum": 0,
+                "description": "Maximum number of navigation steps"
+              },
+              "disableNavigation": {
+                "type": "boolean",
+                "description": "Skip automated navigation heuristics"
+              },
+              "ignoreIframes": {
+                "type": "boolean",
+                "description": "Disable iframe traversal during navigation"
+              },
+              "navigationExploration": {
+                "type": "object",
+                "additionalProperties": {},
+                "description": "Navigation exploration tuning payload"
+              },
+              "loadHtmlOnly": {
+                "type": "boolean",
+                "description": "Skip scripted interactions and only capture HTML"
+              },
+              "acceptCookies": {
+                "type": "boolean",
+                "description": "Force cookie acceptance automation"
+              },
+              "cachedCookieAccept": {
+                "oneOf": [
+                  {
+                    "type": "boolean"
+                  },
+                  {
+                    "type": "string"
+                  }
+                ],
+                "description": "Reuse cached cookie acceptance flow"
+              }
+            },
+            "additionalProperties": false,
+            "description": "Navigation-related options derived from legacy launch summary"
+          },
+          "artifactOptions": {
+            "type": "object",
+            "properties": {
+              "screenshot": {
+                "type": "boolean",
+                "description": "Capture standard screenshot"
+              },
+              "screenshotFull": {
+                "type": "boolean",
+                "description": "Capture full-page screenshot"
+              },
+              "screenshotCache": {
+                "type": "boolean",
+                "description": "Re-use cached screenshot when available"
+              },
+              "screenshotPublic": {
+                "type": "boolean",
+                "description": "Make captured screenshot publicly accessible"
+              },
+              "screenshotLink": {
+                "type": "string",
+                "description": "Stored screenshot link for follow-up processing"
+              },
+              "archivePdf": {
+                "type": "boolean",
+                "description": "Generate archival PDF for crawled pages"
+              }
+            },
+            "additionalProperties": false,
+            "description": "Artifact capture options derived from legacy launch summary"
           },
           "configId": {
             "type": "string",
@@ -13880,6 +14271,11 @@
             "minimum": 1,
             "description": "Maximum number of pages to crawl"
           },
+          "maxMatches": {
+            "type": "number",
+            "minimum": 1,
+            "description": "Maximum number of matched pages to crawl before stopping"
+          },
           "concurrency": {
             "type": "number",
             "minimum": 1,
@@ -13905,6 +14301,205 @@
             "format": "uri",
             "nullable": true,
             "description": "Webhook URL for completion notifications"
+          },
+          "processDuringCrawl": {
+            "type": "boolean",
+            "description": "Whether to run preprocessing and extraction during the crawl phase"
+          },
+          "crawlMethod": {
+            "type": "object",
+            "properties": {
+              "type": {
+                "type": "string",
+                "description": "Crawler execution type (e.g. puppeteer, impit)"
+              }
+            },
+            "required": [
+              "type"
+            ],
+            "additionalProperties": {
+              "nullable": true
+            },
+            "description": "Crawl method configuration"
+          },
+          "matchThreshold": {
+            "type": "number",
+            "minimum": 0,
+            "maximum": 1,
+            "description": "Match threshold override for blueprint filtering"
+          },
+          "blueprint": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "name": {
+                  "type": "string"
+                },
+                "description": {
+                  "type": "string"
+                },
+                "selector": {
+                  "type": "string"
+                },
+                "type": {
+                  "type": "string"
+                }
+              },
+              "additionalProperties": {
+                "nullable": true
+              },
+              "description": "Blueprint field definition"
+            },
+            "description": "Blueprint fields applied during crawling"
+          },
+          "extractionOptions": {
+            "type": "object",
+            "properties": {
+              "extractions": {
+                "type": "object",
+                "additionalProperties": {
+                  "type": "boolean"
+                },
+                "description": "Feature toggles for available extraction helpers"
+              },
+              "schema": {
+                "nullable": true,
+                "description": "Schema definition for structured extractions"
+              },
+              "entity": {
+                "nullable": true,
+                "description": "Entity metadata used for extraction mappings"
+              },
+              "mainContextSelector": {
+                "type": "string",
+                "description": "CSS selector anchoring focus-driven extractors"
+              },
+              "xhrExtractorConfigs": {
+                "type": "array",
+                "items": {
+                  "nullable": true
+                },
+                "description": "XHR extractor configuration entries"
+              }
+            },
+            "additionalProperties": false,
+            "description": "Extraction-related options derived from legacy launch summary"
+          },
+          "navigationOptions": {
+            "type": "object",
+            "properties": {
+              "browserActions": {
+                "type": "array",
+                "items": {
+                  "type": "object",
+                  "additionalProperties": {}
+                },
+                "description": "Ordered list of scripted browser actions executed after navigation"
+              },
+              "preBrowserActions": {
+                "type": "array",
+                "items": {
+                  "type": "object",
+                  "additionalProperties": {}
+                },
+                "description": "Browser actions performed before the main action chain"
+              },
+              "scrollHtml": {
+                "type": "boolean",
+                "description": "Enable HTML capture while scrolling through the page"
+              },
+              "scrollHtmlTimeout": {
+                "type": "number",
+                "minimum": 0,
+                "description": "Maximum scroll duration in milliseconds"
+              },
+              "visualHtml": {
+                "type": "boolean",
+                "description": "Enable visual HTML capture for navigation heuristics"
+              },
+              "navigationStrategy": {
+                "type": "string",
+                "description": "Primary navigation strategy identifier"
+              },
+              "navigationStrategies": {
+                "type": "array",
+                "items": {
+                  "type": "string"
+                },
+                "description": "Fallback navigation strategy order"
+              },
+              "limit": {
+                "type": "number",
+                "minimum": 0,
+                "description": "Maximum number of navigation steps"
+              },
+              "disableNavigation": {
+                "type": "boolean",
+                "description": "Skip automated navigation heuristics"
+              },
+              "ignoreIframes": {
+                "type": "boolean",
+                "description": "Disable iframe traversal during navigation"
+              },
+              "navigationExploration": {
+                "type": "object",
+                "additionalProperties": {},
+                "description": "Navigation exploration tuning payload"
+              },
+              "loadHtmlOnly": {
+                "type": "boolean",
+                "description": "Skip scripted interactions and only capture HTML"
+              },
+              "acceptCookies": {
+                "type": "boolean",
+                "description": "Force cookie acceptance automation"
+              },
+              "cachedCookieAccept": {
+                "oneOf": [
+                  {
+                    "type": "boolean"
+                  },
+                  {
+                    "type": "string"
+                  }
+                ],
+                "description": "Reuse cached cookie acceptance flow"
+              }
+            },
+            "additionalProperties": false,
+            "description": "Navigation-related options derived from legacy launch summary"
+          },
+          "artifactOptions": {
+            "type": "object",
+            "properties": {
+              "screenshot": {
+                "type": "boolean",
+                "description": "Capture standard screenshot"
+              },
+              "screenshotFull": {
+                "type": "boolean",
+                "description": "Capture full-page screenshot"
+              },
+              "screenshotCache": {
+                "type": "boolean",
+                "description": "Re-use cached screenshot when available"
+              },
+              "screenshotPublic": {
+                "type": "boolean",
+                "description": "Make captured screenshot publicly accessible"
+              },
+              "screenshotLink": {
+                "type": "string",
+                "description": "Stored screenshot link for follow-up processing"
+              },
+              "archivePdf": {
+                "type": "boolean",
+                "description": "Generate archival PDF for crawled pages"
+              }
+            },
+            "additionalProperties": false,
+            "description": "Artifact capture options derived from legacy launch summary"
           }
         },
         "title": "StartCrawlerSessionRequest",
@@ -14205,11 +14800,42 @@
                 },
                 "html_filename": {
                   "type": "string",
-                  "description": "Base64 encoded filename for the HTML content"
+                  "description": "Base64 encoded filename for the HTML content (null when HTML not stored)",
+                  "nullable": true
                 },
                 "screenshot_filename": {
                   "type": "string",
-                  "description": "Base64 encoded filename for the screenshot"
+                  "description": "Base64 encoded filename for the screenshot (null when screenshot not available)",
+                  "nullable": true
+                },
+                "processed_html_filename": {
+                  "type": "string",
+                  "description": "Base64 encoded filename for the processed Kadoa HTML",
+                  "nullable": true
+                },
+                "json_filename": {
+                  "type": "string",
+                  "description": "Base64 encoded filename for the crawler result JSON",
+                  "nullable": true
+                },
+                "match_score": {
+                  "type": "number",
+                  "description": "Match score between 0 and 1 (null when blueprint not provided)",
+                  "nullable": true
+                },
+                "matched_fields": {
+                  "type": "number",
+                  "description": "Number of blueprint fields populated for the page",
+                  "nullable": true
+                },
+                "total_fields": {
+                  "type": "number",
+                  "description": "Total blueprint fields evaluated for matching",
+                  "nullable": true
+                },
+                "is_match": {
+                  "type": "boolean",
+                  "description": "Whether the page met the blueprint match threshold"
                 }
               },
               "required": [
@@ -14217,7 +14843,13 @@
                 "status",
                 "created_at",
                 "html_filename",
-                "screenshot_filename"
+                "screenshot_filename",
+                "processed_html_filename",
+                "json_filename",
+                "match_score",
+                "matched_fields",
+                "total_fields",
+                "is_match"
               ]
             },
             "description": "List of pages in the session"
@@ -14272,12 +14904,12 @@
               "BOOLEAN",
               "DATE",
               "DATETIME",
-              "CURRENCY",
               "MONEY",
               "IMAGE",
               "LINK",
               "OBJECT",
               "ARRAY",
+              "CURRENCY",
               "JOB_DESCRIPTION",
               "CATEGORY_JOB_TYPES",
               "CLASSIFICATION",
@@ -14620,6 +15252,7 @@
         },
         "required": [
           "name",
+          "entity",
           "fields"
         ],
         "title": "CreateSchemaBody",
@@ -15274,6 +15907,7 @@
         },
         "required": [
           "urls",
+          "entity",
           "fields"
         ],
         "title": "CreateWorkflowWithCustomSchemaBody",
