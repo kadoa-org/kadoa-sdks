@@ -48,8 +48,8 @@ test = [
 ]
 
 [project.urls]
-Homepage = "https://github.com/kadoa/kadoa-sdks"
-Repository = "https://github.com/kadoa/kadoa-sdks.git"
+Homepage = "https://github.com/kadoa-org/kadoa-sdks"
+Repository = "https://github.com/kadoa-org/kadoa-sdks.git"
 Documentation = "https://docs.kadoa.com"
 
 [tool.setuptools.packages.find]
