@@ -16,6 +16,8 @@ export type {
   ResponseFormat,
   RunWorkflowRequest,
   RunWorkflowResponse,
+  UpdateWorkflowRequest,
+  UpdateWorkflowResponse,
   UpdateInterval,
   WorkflowDisplayStateEnum,
   WorkflowResponse,

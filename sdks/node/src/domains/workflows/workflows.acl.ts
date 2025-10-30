@@ -21,6 +21,8 @@ import type {
   V4WorkflowsWorkflowIdJobsJobIdGet200ResponseStateEnum,
   V4WorkflowsWorkflowIdRunPut200Response,
   V4WorkflowsWorkflowIdRunPutRequest,
+  V4WorkflowsWorkflowIdMetadataPut200Response,
+  V4WorkflowsWorkflowIdMetadataPutRequest,
   WorkflowsApiInterface,
   WorkflowsApiV4WorkflowsGetRequest,
 } from "../../generated";
@@ -221,3 +223,7 @@ export interface GetJobResponse
 export type RunWorkflowRequest = V4WorkflowsWorkflowIdRunPutRequest;
 
 export type RunWorkflowResponse = V4WorkflowsWorkflowIdRunPut200Response;
+
+export type UpdateWorkflowRequest = V4WorkflowsWorkflowIdMetadataPutRequest;
+
+export type UpdateWorkflowResponse = V4WorkflowsWorkflowIdMetadataPut200Response;

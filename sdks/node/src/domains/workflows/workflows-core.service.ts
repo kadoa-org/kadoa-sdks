@@ -18,6 +18,8 @@ import {
   type MonitoringConfig,
   type RunWorkflowRequest,
   type RunWorkflowResponse,
+  type UpdateWorkflowRequest,
+  type UpdateWorkflowResponse,
   type WorkflowResponse,
   type WorkflowStateEnum,
   type WorkflowsApiInterface,
@@ -127,10 +129,31 @@ export class WorkflowsCoreService {
     return response.data?.workflows?.[0];
   }
 
+  /**
+   * @deprecated Use delete(id) instead.
+   */
   async cancel(id: WorkflowId): Promise<void> {
+    console.warn(
+      "[Kadoa SDK] workflow.cancel(id) will be deprecated. Use workflow.delete(id).",
+    );
+    await this.delete(id);
+  }
+
+  async delete(id: WorkflowId): Promise<void> {
     await this.workflowsApi.v4WorkflowsWorkflowIdDelete({
       workflowId: id,
     });
+  }
+
+  async update(
+    id: WorkflowId,
+    input: UpdateWorkflowRequest,
+  ): Promise<UpdateWorkflowResponse> {
+    const response = await this.workflowsApi.v4WorkflowsWorkflowIdMetadataPut({
+      workflowId: id,
+      v4WorkflowsWorkflowIdMetadataPutRequest: input,
+    });
+    return response.data;
   }
 
   async resume(id: WorkflowId): Promise<void> {

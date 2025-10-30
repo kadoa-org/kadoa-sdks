@@ -341,6 +341,34 @@ See the [examples directory](https://github.com/kadoa-org/kadoa-sdks/tree/main/e
 - Integration patterns
 - Advanced validation workflows
 
+## Workflow Management
+
+Use the workflows domain to inspect or modify existing workflows without leaving your application.
+
+### Update Workflow Metadata
+
+Wraps `PUT /v4/workflows/{workflowId}/metadata` so you can adjust limits, schedules, tags, schema, monitoring, etc.
+
+```typescript
+const result = await client.workflow.update("workflow-id", {
+  limit: 1000,
+  monitoring: { enabled: true },
+  tags: ["weekly-report"],
+});
+
+console.log(result);
+// { success: true, message: "Workflow metadata updated successfully" }
+```
+
+### Delete a Workflow
+
+```typescript
+await client.workflow.delete("workflow-id");
+```
+
+> [!NOTE]
+> `client.workflow.cancel(id)` still calls the delete endpoint for backward compatibility, but it now logs a deprecation warning. Use `client.workflow.delete(id)` going forward.
+
 ## Requirements
 
 - Node.js 22+
