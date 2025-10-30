@@ -221,4 +221,48 @@ describe("Extraction Builder", () => {
     },
     { timeout: 700000 },
   );
+
+  test(
+    "extraction builder with additionalData",
+    async () => {
+      const testData = {
+        sourceSystem: "e2e-test",
+        metadata: { version: 1, testRun: true },
+      };
+
+      const createdExtraction = await client
+        .extract({
+          urls: ["https://sandbox.kadoa.com/ecommerce"],
+          name: "Extraction Builder Additional Data Test",
+          extraction: (builder) =>
+            builder.entity("Product").field("title", "Product name", "STRING", {
+              example: "Example Product",
+            }),
+          additionalData: testData,
+        })
+        .bypassPreview()
+        .setInterval({
+          interval: "ONLY_ONCE",
+        })
+        .create();
+
+      try {
+        expect(createdExtraction).toBeDefined();
+        expect(createdExtraction?.workflowId).toBeDefined();
+
+        // Verify additionalData is persisted
+        const workflow = await client.workflow.get(
+          createdExtraction.workflowId,
+        );
+        expect(workflow.additionalData).toBeDefined();
+        expect(workflow.additionalData?.sourceSystem).toBe("e2e-test");
+        expect(workflow.additionalData?.metadata?.version).toBe(1);
+        expect(workflow.additionalData?.metadata?.testRun).toBe(true);
+      } finally {
+        // Cleanup
+        await client.workflow.delete(createdExtraction.workflowId);
+      }
+    },
+    { timeout: 60000 },
+  );
 });

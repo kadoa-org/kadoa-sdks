@@ -19,10 +19,10 @@ import type {
   V4WorkflowsWorkflowIdGet200Response,
   V4WorkflowsWorkflowIdJobsJobIdGet200Response,
   V4WorkflowsWorkflowIdJobsJobIdGet200ResponseStateEnum,
-  V4WorkflowsWorkflowIdRunPut200Response,
-  V4WorkflowsWorkflowIdRunPutRequest,
   V4WorkflowsWorkflowIdMetadataPut200Response,
   V4WorkflowsWorkflowIdMetadataPutRequest,
+  V4WorkflowsWorkflowIdRunPut200Response,
+  V4WorkflowsWorkflowIdRunPutRequest,
   WorkflowsApiInterface,
   WorkflowsApiV4WorkflowsGetRequest,
 } from "../../generated";
@@ -195,19 +195,24 @@ export type CreateWorkflowWithCustomSchemaRequest =
 export interface WorkflowResponse
   extends Omit<
     V4WorkflowsGet200ResponseWorkflowsInner,
-    "state" | "displayState"
+    "state" | "displayState" | "additionalData"
   > {
   state?: WorkflowStateEnum;
   displayState?: WorkflowDisplayStateEnum;
+  additionalData?: Record<string, any>;
 }
 
 /**
  * Get workflow details response with SDK-curated enum types.
  */
 export interface GetWorkflowResponse
-  extends Omit<V4WorkflowsWorkflowIdGet200Response, "state" | "displayState"> {
+  extends Omit<
+    V4WorkflowsWorkflowIdGet200Response,
+    "state" | "displayState" | "additionalData"
+  > {
   state?: WorkflowStateEnum;
   displayState?: WorkflowDisplayStateEnum;
+  additionalData?: Record<string, any>;
 }
 
 export type { MonitoringConfig };
@@ -226,4 +231,5 @@ export type RunWorkflowResponse = V4WorkflowsWorkflowIdRunPut200Response;
 
 export type UpdateWorkflowRequest = V4WorkflowsWorkflowIdMetadataPutRequest;
 
-export type UpdateWorkflowResponse = V4WorkflowsWorkflowIdMetadataPut200Response;
+export type UpdateWorkflowResponse =
+  V4WorkflowsWorkflowIdMetadataPut200Response;

@@ -1,7 +1,11 @@
 import { KadoaSdkException } from "../../runtime/exceptions";
 import { ERROR_MESSAGES } from "../../runtime/exceptions/base.exception";
 import { logger } from "../../runtime/logger";
-import { type PollingOptions, pollUntil } from "../../runtime/utils";
+import {
+  type PollingOptions,
+  pollUntil,
+  validateAdditionalData,
+} from "../../runtime/utils";
 import type {
   LocationConfig,
   NavigationMode,
@@ -51,6 +55,7 @@ export interface CreateWorkflowInput {
   bypassPreview?: boolean;
   autoStart?: boolean;
   schedules?: string[];
+  additionalData?: Record<string, any>;
 }
 
 const TERMINAL_JOB_STATES: Set<JobStateEnum> = new Set([
@@ -75,6 +80,8 @@ export class WorkflowsCoreService {
   constructor(private readonly workflowsApi: WorkflowsApiInterface) {}
 
   async create(input: CreateWorkflowInput): Promise<{ id: WorkflowId }> {
+    validateAdditionalData(input.additionalData);
+
     const request:
       | CreateWorkflowRequest
       | CreateWorkflowWithCustomSchemaRequest = {
@@ -92,6 +99,7 @@ export class WorkflowsCoreService {
       location: input.location,
       autoStart: input.autoStart,
       schedules: input.schedules,
+      additionalData: input.additionalData,
     };
 
     const response = await this.workflowsApi.v4WorkflowsPost({
@@ -149,6 +157,8 @@ export class WorkflowsCoreService {
     id: WorkflowId,
     input: UpdateWorkflowRequest,
   ): Promise<UpdateWorkflowResponse> {
+    validateAdditionalData(input.additionalData);
+
     const response = await this.workflowsApi.v4WorkflowsWorkflowIdMetadataPut({
       workflowId: id,
       v4WorkflowsWorkflowIdMetadataPutRequest: input,
