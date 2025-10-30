@@ -60,9 +60,7 @@ export class SchemasService {
           ...(built.entityName ? { entity: built.entityName } : {}),
         };
 
-        return service.createSchema(
-          createSchemaBody as CreateSchemaRequest,
-        );
+        return service.createSchema(createSchemaBody as CreateSchemaRequest);
       }
     })();
   }

@@ -15,7 +15,10 @@ describe("Workflows", () => {
       timeout: 30000,
     });
 
-    const result = await seedWorkflow({ name: "test-workflow-update-delete" }, client);
+    const result = await seedWorkflow(
+      { name: "test-workflow-update-delete" },
+      client,
+    );
     workflowId = result.workflowId;
   });
 
@@ -58,6 +61,41 @@ describe("Workflows", () => {
 
       const workflow = await client.workflow.get(workflowId);
       expect(workflow.name).toBe("Updated Workflow Name");
+    },
+    { timeout: 60000 },
+  );
+
+  test(
+    "should validate additionalData on update",
+    async () => {
+      const { KadoaSdkException } = await import(
+        "../../src/runtime/exceptions"
+      );
+
+      // Test invalid additionalData (array)
+      await expect(
+        client.workflow.update(workflowId, {
+          additionalData: ["invalid"] as any,
+        }),
+      ).rejects.toThrow(KadoaSdkException);
+
+      // Test invalid additionalData (null)
+      await expect(
+        client.workflow.update(workflowId, {
+          additionalData: null as any,
+        }),
+      ).rejects.toThrow(KadoaSdkException);
+
+      // Test valid additionalData
+      const validData = { testKey: "testValue", nested: { count: 1 } };
+      const result = await client.workflow.update(workflowId, {
+        additionalData: validData,
+      });
+      expect(result.success).toBe(true);
+
+      // Verify additionalData was updated
+      const workflow = await client.workflow.get(workflowId);
+      expect(workflow.additionalData).toEqual(validData);
     },
     { timeout: 60000 },
   );

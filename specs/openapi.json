@@ -2805,6 +2805,10 @@
                             "type": "integer",
                             "description": "Maximum number of items to scrape"
                           },
+                          "additionalData": {
+                            "type": "object",
+                            "description": "Additional static data for the workflow"
+                          },
                           "finishedAt": {
                             "type": "string",
                             "format": "date-time",
@@ -14980,6 +14984,10 @@
             "type": "boolean",
             "description": "Whether data validation is enabled"
           },
+          "additionalData": {
+            "type": "object",
+            "description": "Additional static data for the workflow"
+          },
           "userPrompt": {
             "type": "string",
             "minLength": 10,
@@ -15128,6 +15136,10 @@
             "type": "boolean",
             "description": "Whether data validation is enabled"
           },
+          "additionalData": {
+            "type": "object",
+            "description": "Additional static data for the workflow"
+          },
           "schemaId": {
             "type": "string",
             "description": "ID of existing schema configuration"
@@ -15243,6 +15255,10 @@
           "dataValidationEnabled": {
             "type": "boolean",
             "description": "Whether data validation is enabled"
+          },
+          "additionalData": {
+            "type": "object",
+            "description": "Additional static data for the workflow"
           },
           "entity": {
             "type": "string",

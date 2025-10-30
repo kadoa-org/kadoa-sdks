@@ -36,6 +36,7 @@ export interface ExtractOptionsInternal {
   interval?: WorkflowInterval;
   schedules?: string[];
   location?: LocationConfig;
+  additionalData?: Record<string, any>;
 }
 
 export interface ExtractOptions
@@ -132,6 +133,7 @@ export class ExtractionBuilderService {
     description,
     navigationMode,
     extraction,
+    additionalData,
   }: ExtractOptions): PreparedExtraction {
     let entity: EntityConfig = "ai-detection";
 
@@ -155,6 +157,7 @@ export class ExtractionBuilderService {
       navigationMode: navigationMode || "single-page",
       entity,
       bypassPreview: false,
+      additionalData,
     };
     return this;
   }
@@ -224,6 +227,7 @@ export class ExtractionBuilderService {
       autoStart: false,
       interval: this._options.interval,
       schedules: this._options.schedules,
+      additionalData: this._options.additionalData,
     });
 
     if (this._notificationOptions) {

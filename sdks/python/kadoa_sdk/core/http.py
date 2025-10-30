@@ -3,7 +3,12 @@ from __future__ import annotations
 from typing import TYPE_CHECKING, Dict
 
 from openapi_client import ApiClient
-from openapi_client.api.crawl_api import CrawlApi
+
+try:  # pragma: no cover - compatibility shim for generator rename
+    from openapi_client.api.crawler_api import CrawlerApi as CrawlApi  # type: ignore[attr-defined]
+except ImportError:  # pragma: no cover
+    from openapi_client.api.crawl_api import CrawlApi  # type: ignore[attr-defined]
+
 from openapi_client.api.workflows_api import WorkflowsApi
 
 if TYPE_CHECKING:  # pragma: no cover

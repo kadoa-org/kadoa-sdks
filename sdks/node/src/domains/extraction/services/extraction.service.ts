@@ -53,6 +53,7 @@ export interface ExtractionOptionsInternal {
   tags?: string[];
   notifications?: NotificationOptions;
   autoStart?: boolean;
+  additionalData?: Record<string, any>;
 }
 
 export type ExtractionOptions = {

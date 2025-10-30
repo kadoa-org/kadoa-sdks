@@ -1,16 +1,13 @@
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, List, Optional
+from typing import TYPE_CHECKING, List, Optional, Dict, Any
 import logging
+import json
 
-from openapi_client.models.v4_workflows_post_request import (
-    V4WorkflowsPostRequest,
-)
+from openapi_client.models.create_workflow_body import CreateWorkflowBody
+from openapi_client.models.create_workflow_with_custom_schema_body import CreateWorkflowWithCustomSchemaBody
 from openapi_client.models.v4_workflows_workflow_id_get200_response import (
     V4WorkflowsWorkflowIdGet200Response,
-)
-from openapi_client.models.workflow_with_custom_schema import (
-    WorkflowWithCustomSchema,
 )
 
 if TYPE_CHECKING:  # pragma: no cover
@@ -44,12 +41,36 @@ class WorkflowManagerService:
                 headers["x-api-key"] = key
         return headers
 
+    def _validate_additional_data(self, additional_data: Optional[Dict[str, Any]]) -> None:
+        if additional_data is None:
+            return
+        
+        if not isinstance(additional_data, dict):
+            raise KadoaSdkException(
+                "additional_data must be a dictionary",
+                code="VALIDATION_ERROR"
+            )
+        
+        try:
+            serialized = json.dumps(additional_data)
+            if len(serialized) > 100 * 1024:
+                self._logger.warning(
+                    "[Kadoa SDK] additional_data exceeds 100KB, consider reducing size"
+                )
+        except (TypeError, ValueError):
+            raise KadoaSdkException(
+                "additional_data must be JSON-serializable",
+                code="VALIDATION_ERROR"
+            )
+
     def is_terminal_run_state(self, run_state: Optional[str]) -> bool:
         return bool(run_state and run_state.upper() in TERMINAL_RUN_STATES)
 
     def create_workflow(self, *, entity: str, fields: List[dict], config: ExtractionOptions) -> str:
+        self._validate_additional_data(config.additional_data)
+        
         api = get_workflows_api(self.client)
-        inner = WorkflowWithCustomSchema(
+        inner = CreateWorkflowWithCustomSchemaBody(
             urls=config.urls,
             navigation_mode=(config.navigation_mode or DEFAULTS["navigation_mode"]),
             entity=entity,
@@ -59,10 +80,11 @@ class WorkflowManagerService:
             bypass_preview=True,
             limit=(config.max_records or DEFAULTS["max_records"]),
             tags=["sdk"],
+            additional_data=config.additional_data,
         )
         try:
-            wrapper = V4WorkflowsPostRequest(inner)
-            resp = api.v4_workflows_post(v4_workflows_post_request=wrapper)
+            wrapper = CreateWorkflowBody(inner)
+            resp = api.v4_workflows_post(create_workflow_body=wrapper)
             workflow_id = getattr(resp, "workflow_id", None) or getattr(resp, "workflowId", None)
             if not workflow_id:
                 raise KadoaSdkException(
