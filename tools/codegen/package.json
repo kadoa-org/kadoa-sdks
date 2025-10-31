@@ -13,6 +13,6 @@
   },
   "dependencies": {
     "@openapitools/openapi-generator-cli": "^2.25.0",
-    "commander": "^14.0.1"
+    "commander": "^14.0.2"
   }
 }
