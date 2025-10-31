@@ -934,7 +934,7 @@
                 "schema": {
                   "type": "object",
                   "properties": {
-                    "_id": {
+                    "id": {
                       "type": "string",
                       "description": "Unique identifier for the workflow"
                     },
@@ -1187,14 +1187,6 @@
                         }
                       },
                       "description": "Extraction schema fields"
-                    },
-                    "schemaType": {
-                      "type": "string",
-                      "enum": [
-                        "DETAIL",
-                        "DIRECTORY"
-                      ],
-                      "description": "Type of schema (deprecated)"
                     },
                     "entity": {
                       "type": "object",
@@ -2698,6 +2690,15 @@
             }
           },
           {
+            "name": "userId",
+            "in": "query",
+            "description": "Filter workflows by user ID (only works in team context)",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
             "name": "includeDeleted",
             "in": "query",
             "description": "Include deleted workflows (for compliance officers)",
@@ -2740,7 +2741,7 @@
                       "items": {
                         "type": "object",
                         "properties": {
-                          "_id": {
+                          "id": {
                             "type": "string",
                             "description": "Unique identifier for the workflow"
                           },
@@ -2941,14 +2942,6 @@
                             },
                             "description": "Extraction schema fields"
                           },
-                          "schemaType": {
-                            "type": "string",
-                            "enum": [
-                              "DETAIL",
-                              "DIRECTORY"
-                            ],
-                            "description": "Type of schema (deprecated)"
-                          },
                           "templateName": {
                             "type": "string",
                             "description": "Name of the template used"
@@ -2956,10 +2949,6 @@
                           "templateId": {
                             "type": "string",
                             "description": "ID of the template used"
-                          },
-                          "isSchemaEditable": {
-                            "type": "boolean",
-                            "description": "Whether the schema can be edited"
                           },
                           "errors": {
                             "type": "array",
@@ -5690,624 +5679,6 @@
           },
           "500": {
             "description": "Internal server error"
-          }
-        }
-      }
-    },
-    "/v5/workflows": {
-      "post": {
-        "summary": "Create a new workflow",
-        "description": "Creates a new workflow in pending state",
-        "tags": [
-          "Workflows"
-        ],
-        "security": [
-          {
-            "ApiKeyAuth": []
-          },
-          {
-            "BearerAuth": []
-          }
-        ],
-        "requestBody": {
-          "required": true,
-          "content": {
-            "application/json": {
-              "schema": {
-                "type": "object",
-                "required": [
-                  "name"
-                ],
-                "properties": {
-                  "name": {
-                    "type": "string",
-                    "description": "Name of the workflow"
-                  },
-                  "description": {
-                    "type": "string",
-                    "maxLength": 500,
-                    "description": "Optional description of the workflow"
-                  },
-                  "workflowTags": {
-                    "type": "array",
-                    "items": {
-                      "type": "string",
-                      "format": "uuid"
-                    },
-                    "description": "Array of tag IDs to associate with the workflow"
-                  },
-                  "recordLimit": {
-                    "type": "integer",
-                    "description": "Maximum number of records to process"
-                  }
-                }
-              }
-            }
-          }
-        },
-        "responses": {
-          "201": {
-            "description": "Workflow created successfully",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "type": "object",
-                  "properties": {
-                    "id": {
-                      "type": "string",
-                      "format": "uuid",
-                      "description": "The ID of the created workflow"
-                    },
-                    "name": {
-                      "type": "string",
-                      "description": "The name of the created workflow"
-                    },
-                    "description": {
-                      "type": "string",
-                      "description": "The description of the created workflow"
-                    },
-                    "state": {
-                      "type": "string",
-                      "description": "The state of the created workflow"
-                    },
-                    "recordLimit": {
-                      "type": "integer",
-                      "description": "Maximum number of records to process"
-                    },
-                    "createdAt": {
-                      "type": "string",
-                      "format": "date-time",
-                      "description": "Timestamp when the workflow was created"
-                    },
-                    "updatedAt": {
-                      "type": "string",
-                      "format": "date-time",
-                      "description": "Timestamp when the workflow was last updated"
-                    }
-                  }
-                }
-              }
-            }
-          },
-          "400": {
-            "description": "Bad request - validation error"
-          },
-          "401": {
-            "description": "Unauthorized - missing or invalid authentication"
-          },
-          "403": {
-            "description": "Forbidden - user doesn't have required permissions"
-          }
-        }
-      }
-    },
-    "/v5/workflows/{id}": {
-      "get": {
-        "summary": "Get workflow by ID",
-        "description": "Retrieves a specific workflow and its associated tags by ID",
-        "tags": [
-          "Workflows"
-        ],
-        "security": [
-          {
-            "ApiKeyAuth": []
-          },
-          {
-            "BearerAuth": []
-          }
-        ],
-        "parameters": [
-          {
-            "in": "path",
-            "name": "id",
-            "required": true,
-            "schema": {
-              "type": "string",
-              "format": "uuid"
-            },
-            "description": "The ID of the workflow to retrieve"
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "Workflow retrieved successfully",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "type": "object",
-                  "properties": {
-                    "id": {
-                      "type": "string",
-                      "format": "uuid",
-                      "description": "The ID of the workflow"
-                    },
-                    "state": {
-                      "type": "string",
-                      "description": "The current state of the workflow"
-                    },
-                    "name": {
-                      "type": "string",
-                      "description": "The name of the workflow"
-                    },
-                    "description": {
-                      "type": "string",
-                      "description": "The description of the workflow"
-                    },
-                    "recordsLimit": {
-                      "type": "integer",
-                      "description": "Maximum number of records to process"
-                    },
-                    "workflowTags": {
-                      "type": "array",
-                      "items": {
-                        "type": "object",
-                        "properties": {
-                          "id": {
-                            "type": "string",
-                            "format": "uuid",
-                            "description": "The ID of the tag"
-                          },
-                          "name": {
-                            "type": "string",
-                            "description": "The name of the tag"
-                          },
-                          "description": {
-                            "type": "string",
-                            "description": "The description of the tag"
-                          }
-                        }
-                      }
-                    },
-                    "createdAt": {
-                      "type": "string",
-                      "format": "date-time",
-                      "description": "Timestamp when the workflow was created"
-                    },
-                    "updatedAt": {
-                      "type": "string",
-                      "format": "date-time",
-                      "description": "Timestamp when the workflow was last updated"
-                    }
-                  }
-                }
-              }
-            }
-          },
-          "401": {
-            "description": "Unauthorized - missing or invalid authentication"
-          },
-          "403": {
-            "description": "Forbidden - user doesn't have required permissions"
-          },
-          "404": {
-            "description": "Workflow not found"
-          }
-        }
-      },
-      "put": {
-        "summary": "Update a workflow",
-        "description": "Updates an existing workflow's properties",
-        "tags": [
-          "Workflows"
-        ],
-        "security": [
-          {
-            "ApiKeyAuth": []
-          },
-          {
-            "BearerAuth": []
-          }
-        ],
-        "parameters": [
-          {
-            "in": "path",
-            "name": "id",
-            "required": true,
-            "schema": {
-              "type": "string",
-              "format": "uuid"
-            },
-            "description": "The ID of the workflow to update"
-          }
-        ],
-        "requestBody": {
-          "required": true,
-          "content": {
-            "application/json": {
-              "schema": {
-                "type": "object",
-                "properties": {
-                  "name": {
-                    "type": "string",
-                    "description": "New name for the workflow"
-                  },
-                  "description": {
-                    "type": "string",
-                    "maxLength": 500,
-                    "description": "New description for the workflow"
-                  },
-                  "workflowTags": {
-                    "type": "array",
-                    "items": {
-                      "type": "string",
-                      "format": "uuid"
-                    },
-                    "description": "Array of tag IDs to associate with the workflow"
-                  },
-                  "recordLimit": {
-                    "type": "integer",
-                    "description": "Maximum number of records to process"
-                  },
-                  "state": {
-                    "type": "string",
-                    "enum": [
-                      "active",
-                      "inactive",
-                      "archived"
-                    ],
-                    "description": "New state for the workflow"
-                  }
-                }
-              }
-            }
-          }
-        },
-        "responses": {
-          "200": {
-            "description": "Workflow updated successfully",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "type": "object",
-                  "properties": {
-                    "id": {
-                      "type": "string",
-                      "format": "uuid"
-                    },
-                    "name": {
-                      "type": "string"
-                    },
-                    "description": {
-                      "type": "string"
-                    },
-                    "state": {
-                      "type": "string"
-                    },
-                    "recordLimit": {
-                      "type": "integer"
-                    },
-                    "workflowTags": {
-                      "type": "array",
-                      "items": {
-                        "type": "object",
-                        "properties": {
-                          "id": {
-                            "type": "string",
-                            "format": "uuid"
-                          },
-                          "name": {
-                            "type": "string"
-                          },
-                          "description": {
-                            "type": "string"
-                          }
-                        }
-                      }
-                    },
-                    "createdAt": {
-                      "type": "string",
-                      "format": "date-time"
-                    },
-                    "updatedAt": {
-                      "type": "string",
-                      "format": "date-time"
-                    }
-                  }
-                }
-              }
-            }
-          },
-          "400": {
-            "description": "Bad request - validation error"
-          },
-          "401": {
-            "description": "Unauthorized - missing or invalid authentication"
-          },
-          "403": {
-            "description": "Forbidden - user doesn't have required permissions"
-          },
-          "404": {
-            "description": "Workflow not found"
-          }
-        }
-      },
-      "delete": {
-        "summary": "Delete a workflow",
-        "description": "Permanently deletes a workflow and its associated tags",
-        "tags": [
-          "Workflows"
-        ],
-        "security": [
-          {
-            "ApiKeyAuth": []
-          },
-          {
-            "BearerAuth": []
-          }
-        ],
-        "parameters": [
-          {
-            "in": "path",
-            "name": "id",
-            "required": true,
-            "schema": {
-              "type": "string",
-              "format": "uuid"
-            },
-            "description": "The ID of the workflow to delete"
-          }
-        ],
-        "responses": {
-          "204": {
-            "description": "Workflow deleted successfully"
-          },
-          "401": {
-            "description": "Unauthorized - missing or invalid authentication"
-          },
-          "403": {
-            "description": "Forbidden - user doesn't have required permissions"
-          },
-          "404": {
-            "description": "Workflow not found"
-          }
-        }
-      }
-    },
-    "/v5/workflows/{id}/steps/{stepId}": {
-      "get": {
-        "summary": "Get a specific step",
-        "description": "Retrieves details of a specific step in the workflow",
-        "tags": [
-          "Workflow Steps"
-        ],
-        "security": [
-          {
-            "ApiKeyAuth": []
-          },
-          {
-            "BearerAuth": []
-          }
-        ],
-        "parameters": [
-          {
-            "in": "path",
-            "name": "id",
-            "required": true,
-            "schema": {
-              "type": "string",
-              "format": "uuid"
-            },
-            "description": "The workflow ID"
-          },
-          {
-            "in": "path",
-            "name": "stepId",
-            "required": true,
-            "schema": {
-              "type": "string",
-              "format": "uuid"
-            },
-            "description": "The workflow step ID"
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "Step retrieved successfully",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "type": "object",
-                  "properties": {
-                    "id": {
-                      "type": "string",
-                      "format": "uuid",
-                      "description": "The ID of the workflow step"
-                    },
-                    "workflowId": {
-                      "type": "string",
-                      "format": "uuid",
-                      "description": "The workflow ID"
-                    },
-                    "stepId": {
-                      "type": "string",
-                      "format": "uuid",
-                      "description": "Reference to the step template"
-                    },
-                    "stepVersion": {
-                      "type": "integer",
-                      "description": "Version of the step"
-                    },
-                    "position": {
-                      "type": "integer",
-                      "description": "Position of the step in the workflow sequence"
-                    },
-                    "parameters": {
-                      "type": "object",
-                      "description": "Parameter overrides for this step"
-                    },
-                    "createdAt": {
-                      "type": "string",
-                      "format": "date-time",
-                      "description": "Timestamp when the step was created"
-                    },
-                    "stepType": {
-                      "type": "string",
-                      "description": "The type of step"
-                    }
-                  }
-                }
-              }
-            }
-          },
-          "401": {
-            "description": "Unauthorized - missing or invalid authentication"
-          },
-          "403": {
-            "description": "Forbidden - user doesn't have required permissions"
-          },
-          "404": {
-            "description": "Workflow or step not found"
-          }
-        }
-      }
-    },
-    "/v5/workflows/{id}/steps": {
-      "get": {
-        "summary": "List all steps for a workflow",
-        "description": "Retrieves all steps associated with the specified workflow",
-        "tags": [
-          "Workflow Steps"
-        ],
-        "security": [
-          {
-            "ApiKeyAuth": []
-          },
-          {
-            "BearerAuth": []
-          }
-        ],
-        "parameters": [
-          {
-            "in": "path",
-            "name": "id",
-            "required": true,
-            "schema": {
-              "type": "string",
-              "format": "uuid"
-            },
-            "description": "The workflow ID"
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "Steps retrieved successfully",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "type": "object",
-                  "properties": {
-                    "workflowId": {
-                      "type": "string",
-                      "format": "uuid",
-                      "description": "The workflow ID"
-                    },
-                    "count": {
-                      "type": "integer",
-                      "description": "The number of steps"
-                    },
-                    "steps": {
-                      "type": "array",
-                      "items": {
-                        "type": "object",
-                        "properties": {
-                          "id": {
-                            "type": "string",
-                            "format": "uuid",
-                            "description": "The ID of the workflow step"
-                          },
-                          "workflowId": {
-                            "type": "string",
-                            "format": "uuid",
-                            "description": "The workflow ID"
-                          },
-                          "stepId": {
-                            "type": "string",
-                            "format": "uuid",
-                            "description": "Reference to the step template"
-                          },
-                          "stepVersion": {
-                            "type": "integer",
-                            "description": "Version of the step"
-                          },
-                          "position": {
-                            "type": "integer",
-                            "description": "Position of the step in the workflow sequence"
-                          },
-                          "parameters": {
-                            "type": "object",
-                            "description": "Parameter overrides for this step"
-                          },
-                          "createdAt": {
-                            "type": "string",
-                            "format": "date-time",
-                            "description": "Timestamp when the step was created"
-                          },
-                          "stepInfo": {
-                            "type": "object",
-                            "properties": {
-                              "name": {
-                                "type": "string",
-                                "description": "The name of the step"
-                              },
-                              "description": {
-                                "type": "string",
-                                "description": "The description of the step"
-                              },
-                              "stepType": {
-                                "type": "string",
-                                "description": "The type of step (e.g., EXTRACTION, CRAWLING)"
-                              },
-                              "defaultParameters": {
-                                "type": "object",
-                                "description": "Default parameters for this step version"
-                              },
-                              "schemaId": {
-                                "type": "string",
-                                "format": "uuid",
-                                "description": "ID of the schema used by this step version"
-                              },
-                              "schema": {
-                                "type": "object",
-                                "description": "Schema definition if available"
-                              }
-                            }
-                          }
-                        }
-                      }
-                    }
-                  }
-                }
-              }
-            }
-          },
-          "401": {
-            "description": "Unauthorized - missing or invalid authentication"
-          },
-          "403": {
-            "description": "Forbidden - user doesn't have required permissions"
-          },
-          "404": {
-            "description": "Workflow not found"
           }
         }
       }
@@ -10846,6 +10217,14 @@
             "schema": {
               "type": "string"
             }
+          },
+          {
+            "name": "includeAll",
+            "in": "query",
+            "schema": {
+              "type": "boolean",
+              "nullable": true
+            }
           }
         ],
         "responses": {
@@ -13555,6 +12934,11 @@
             "minimum": 1,
             "description": "Maximum number of pages to crawl"
           },
+          "maxMatches": {
+            "type": "number",
+            "minimum": 1,
+            "description": "Maximum number of matched pages to crawl before stopping"
+          },
           "concurrency": {
             "type": "number",
             "minimum": 1,
@@ -13580,6 +12964,205 @@
             "format": "uri",
             "nullable": true,
             "description": "Webhook URL for completion notifications"
+          },
+          "processDuringCrawl": {
+            "type": "boolean",
+            "description": "Whether to run preprocessing and extraction during the crawl phase"
+          },
+          "crawlMethod": {
+            "type": "object",
+            "properties": {
+              "type": {
+                "type": "string",
+                "description": "Crawler execution type (e.g. puppeteer, impit)"
+              }
+            },
+            "required": [
+              "type"
+            ],
+            "additionalProperties": {
+              "nullable": true
+            },
+            "description": "Crawl method configuration"
+          },
+          "matchThreshold": {
+            "type": "number",
+            "minimum": 0,
+            "maximum": 1,
+            "description": "Match threshold override for blueprint filtering"
+          },
+          "blueprint": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "name": {
+                  "type": "string"
+                },
+                "description": {
+                  "type": "string"
+                },
+                "selector": {
+                  "type": "string"
+                },
+                "type": {
+                  "type": "string"
+                }
+              },
+              "additionalProperties": {
+                "nullable": true
+              },
+              "description": "Blueprint field definition"
+            },
+            "description": "Blueprint fields applied during crawling"
+          },
+          "extractionOptions": {
+            "type": "object",
+            "properties": {
+              "extractions": {
+                "type": "object",
+                "additionalProperties": {
+                  "type": "boolean"
+                },
+                "description": "Feature toggles for available extraction helpers"
+              },
+              "schema": {
+                "nullable": true,
+                "description": "Schema definition for structured extractions"
+              },
+              "entity": {
+                "nullable": true,
+                "description": "Entity metadata used for extraction mappings"
+              },
+              "mainContextSelector": {
+                "type": "string",
+                "description": "CSS selector anchoring focus-driven extractors"
+              },
+              "xhrExtractorConfigs": {
+                "type": "array",
+                "items": {
+                  "nullable": true
+                },
+                "description": "XHR extractor configuration entries"
+              }
+            },
+            "additionalProperties": false,
+            "description": "Extraction-related options derived from legacy launch summary"
+          },
+          "navigationOptions": {
+            "type": "object",
+            "properties": {
+              "browserActions": {
+                "type": "array",
+                "items": {
+                  "type": "object",
+                  "additionalProperties": {}
+                },
+                "description": "Ordered list of scripted browser actions executed after navigation"
+              },
+              "preBrowserActions": {
+                "type": "array",
+                "items": {
+                  "type": "object",
+                  "additionalProperties": {}
+                },
+                "description": "Browser actions performed before the main action chain"
+              },
+              "scrollHtml": {
+                "type": "boolean",
+                "description": "Enable HTML capture while scrolling through the page"
+              },
+              "scrollHtmlTimeout": {
+                "type": "number",
+                "minimum": 0,
+                "description": "Maximum scroll duration in milliseconds"
+              },
+              "visualHtml": {
+                "type": "boolean",
+                "description": "Enable visual HTML capture for navigation heuristics"
+              },
+              "navigationStrategy": {
+                "type": "string",
+                "description": "Primary navigation strategy identifier"
+              },
+              "navigationStrategies": {
+                "type": "array",
+                "items": {
+                  "type": "string"
+                },
+                "description": "Fallback navigation strategy order"
+              },
+              "limit": {
+                "type": "number",
+                "minimum": 0,
+                "description": "Maximum number of navigation steps"
+              },
+              "disableNavigation": {
+                "type": "boolean",
+                "description": "Skip automated navigation heuristics"
+              },
+              "ignoreIframes": {
+                "type": "boolean",
+                "description": "Disable iframe traversal during navigation"
+              },
+              "navigationExploration": {
+                "type": "object",
+                "additionalProperties": {},
+                "description": "Navigation exploration tuning payload"
+              },
+              "loadHtmlOnly": {
+                "type": "boolean",
+                "description": "Skip scripted interactions and only capture HTML"
+              },
+              "acceptCookies": {
+                "type": "boolean",
+                "description": "Force cookie acceptance automation"
+              },
+              "cachedCookieAccept": {
+                "oneOf": [
+                  {
+                    "type": "boolean"
+                  },
+                  {
+                    "type": "string"
+                  }
+                ],
+                "description": "Reuse cached cookie acceptance flow"
+              }
+            },
+            "additionalProperties": false,
+            "description": "Navigation-related options derived from legacy launch summary"
+          },
+          "artifactOptions": {
+            "type": "object",
+            "properties": {
+              "screenshot": {
+                "type": "boolean",
+                "description": "Capture standard screenshot"
+              },
+              "screenshotFull": {
+                "type": "boolean",
+                "description": "Capture full-page screenshot"
+              },
+              "screenshotCache": {
+                "type": "boolean",
+                "description": "Re-use cached screenshot when available"
+              },
+              "screenshotPublic": {
+                "type": "boolean",
+                "description": "Make captured screenshot publicly accessible"
+              },
+              "screenshotLink": {
+                "type": "string",
+                "description": "Stored screenshot link for follow-up processing"
+              },
+              "archivePdf": {
+                "type": "boolean",
+                "description": "Generate archival PDF for crawled pages"
+              }
+            },
+            "additionalProperties": false,
+            "description": "Artifact capture options derived from legacy launch summary"
           }
         },
         "title": "CreateCrawlerConfigRequest",
@@ -13641,6 +13224,11 @@
             "minimum": 1,
             "description": "Maximum number of pages to crawl"
           },
+          "maxMatches": {
+            "type": "number",
+            "minimum": 1,
+            "description": "Maximum number of matched pages to crawl before stopping"
+          },
           "concurrency": {
             "type": "number",
             "minimum": 1,
@@ -13666,6 +13254,205 @@
             "format": "uri",
             "nullable": true,
             "description": "Webhook URL for completion notifications"
+          },
+          "processDuringCrawl": {
+            "type": "boolean",
+            "description": "Whether to run preprocessing and extraction during the crawl phase"
+          },
+          "crawlMethod": {
+            "type": "object",
+            "properties": {
+              "type": {
+                "type": "string",
+                "description": "Crawler execution type (e.g. puppeteer, impit)"
+              }
+            },
+            "required": [
+              "type"
+            ],
+            "additionalProperties": {
+              "nullable": true
+            },
+            "description": "Crawl method configuration"
+          },
+          "matchThreshold": {
+            "type": "number",
+            "minimum": 0,
+            "maximum": 1,
+            "description": "Match threshold override for blueprint filtering"
+          },
+          "blueprint": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "name": {
+                  "type": "string"
+                },
+                "description": {
+                  "type": "string"
+                },
+                "selector": {
+                  "type": "string"
+                },
+                "type": {
+                  "type": "string"
+                }
+              },
+              "additionalProperties": {
+                "nullable": true
+              },
+              "description": "Blueprint field definition"
+            },
+            "description": "Blueprint fields applied during crawling"
+          },
+          "extractionOptions": {
+            "type": "object",
+            "properties": {
+              "extractions": {
+                "type": "object",
+                "additionalProperties": {
+                  "type": "boolean"
+                },
+                "description": "Feature toggles for available extraction helpers"
+              },
+              "schema": {
+                "nullable": true,
+                "description": "Schema definition for structured extractions"
+              },
+              "entity": {
+                "nullable": true,
+                "description": "Entity metadata used for extraction mappings"
+              },
+              "mainContextSelector": {
+                "type": "string",
+                "description": "CSS selector anchoring focus-driven extractors"
+              },
+              "xhrExtractorConfigs": {
+                "type": "array",
+                "items": {
+                  "nullable": true
+                },
+                "description": "XHR extractor configuration entries"
+              }
+            },
+            "additionalProperties": false,
+            "description": "Extraction-related options derived from legacy launch summary"
+          },
+          "navigationOptions": {
+            "type": "object",
+            "properties": {
+              "browserActions": {
+                "type": "array",
+                "items": {
+                  "type": "object",
+                  "additionalProperties": {}
+                },
+                "description": "Ordered list of scripted browser actions executed after navigation"
+              },
+              "preBrowserActions": {
+                "type": "array",
+                "items": {
+                  "type": "object",
+                  "additionalProperties": {}
+                },
+                "description": "Browser actions performed before the main action chain"
+              },
+              "scrollHtml": {
+                "type": "boolean",
+                "description": "Enable HTML capture while scrolling through the page"
+              },
+              "scrollHtmlTimeout": {
+                "type": "number",
+                "minimum": 0,
+                "description": "Maximum scroll duration in milliseconds"
+              },
+              "visualHtml": {
+                "type": "boolean",
+                "description": "Enable visual HTML capture for navigation heuristics"
+              },
+              "navigationStrategy": {
+                "type": "string",
+                "description": "Primary navigation strategy identifier"
+              },
+              "navigationStrategies": {
+                "type": "array",
+                "items": {
+                  "type": "string"
+                },
+                "description": "Fallback navigation strategy order"
+              },
+              "limit": {
+                "type": "number",
+                "minimum": 0,
+                "description": "Maximum number of navigation steps"
+              },
+              "disableNavigation": {
+                "type": "boolean",
+                "description": "Skip automated navigation heuristics"
+              },
+              "ignoreIframes": {
+                "type": "boolean",
+                "description": "Disable iframe traversal during navigation"
+              },
+              "navigationExploration": {
+                "type": "object",
+                "additionalProperties": {},
+                "description": "Navigation exploration tuning payload"
+              },
+              "loadHtmlOnly": {
+                "type": "boolean",
+                "description": "Skip scripted interactions and only capture HTML"
+              },
+              "acceptCookies": {
+                "type": "boolean",
+                "description": "Force cookie acceptance automation"
+              },
+              "cachedCookieAccept": {
+                "oneOf": [
+                  {
+                    "type": "boolean"
+                  },
+                  {
+                    "type": "string"
+                  }
+                ],
+                "description": "Reuse cached cookie acceptance flow"
+              }
+            },
+            "additionalProperties": false,
+            "description": "Navigation-related options derived from legacy launch summary"
+          },
+          "artifactOptions": {
+            "type": "object",
+            "properties": {
+              "screenshot": {
+                "type": "boolean",
+                "description": "Capture standard screenshot"
+              },
+              "screenshotFull": {
+                "type": "boolean",
+                "description": "Capture full-page screenshot"
+              },
+              "screenshotCache": {
+                "type": "boolean",
+                "description": "Re-use cached screenshot when available"
+              },
+              "screenshotPublic": {
+                "type": "boolean",
+                "description": "Make captured screenshot publicly accessible"
+              },
+              "screenshotLink": {
+                "type": "string",
+                "description": "Stored screenshot link for follow-up processing"
+              },
+              "archivePdf": {
+                "type": "boolean",
+                "description": "Generate archival PDF for crawled pages"
+              }
+            },
+            "additionalProperties": false,
+            "description": "Artifact capture options derived from legacy launch summary"
           },
           "configId": {
             "type": "string",
@@ -13744,6 +13531,11 @@
             "minimum": 1,
             "description": "Maximum number of pages to crawl"
           },
+          "maxMatches": {
+            "type": "number",
+            "minimum": 1,
+            "description": "Maximum number of matched pages to crawl before stopping"
+          },
           "concurrency": {
             "type": "number",
             "minimum": 1,
@@ -13769,6 +13561,205 @@
             "format": "uri",
             "nullable": true,
             "description": "Webhook URL for completion notifications"
+          },
+          "processDuringCrawl": {
+            "type": "boolean",
+            "description": "Whether to run preprocessing and extraction during the crawl phase"
+          },
+          "crawlMethod": {
+            "type": "object",
+            "properties": {
+              "type": {
+                "type": "string",
+                "description": "Crawler execution type (e.g. puppeteer, impit)"
+              }
+            },
+            "required": [
+              "type"
+            ],
+            "additionalProperties": {
+              "nullable": true
+            },
+            "description": "Crawl method configuration"
+          },
+          "matchThreshold": {
+            "type": "number",
+            "minimum": 0,
+            "maximum": 1,
+            "description": "Match threshold override for blueprint filtering"
+          },
+          "blueprint": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "name": {
+                  "type": "string"
+                },
+                "description": {
+                  "type": "string"
+                },
+                "selector": {
+                  "type": "string"
+                },
+                "type": {
+                  "type": "string"
+                }
+              },
+              "additionalProperties": {
+                "nullable": true
+              },
+              "description": "Blueprint field definition"
+            },
+            "description": "Blueprint fields applied during crawling"
+          },
+          "extractionOptions": {
+            "type": "object",
+            "properties": {
+              "extractions": {
+                "type": "object",
+                "additionalProperties": {
+                  "type": "boolean"
+                },
+                "description": "Feature toggles for available extraction helpers"
+              },
+              "schema": {
+                "nullable": true,
+                "description": "Schema definition for structured extractions"
+              },
+              "entity": {
+                "nullable": true,
+                "description": "Entity metadata used for extraction mappings"
+              },
+              "mainContextSelector": {
+                "type": "string",
+                "description": "CSS selector anchoring focus-driven extractors"
+              },
+              "xhrExtractorConfigs": {
+                "type": "array",
+                "items": {
+                  "nullable": true
+                },
+                "description": "XHR extractor configuration entries"
+              }
+            },
+            "additionalProperties": false,
+            "description": "Extraction-related options derived from legacy launch summary"
+          },
+          "navigationOptions": {
+            "type": "object",
+            "properties": {
+              "browserActions": {
+                "type": "array",
+                "items": {
+                  "type": "object",
+                  "additionalProperties": {}
+                },
+                "description": "Ordered list of scripted browser actions executed after navigation"
+              },
+              "preBrowserActions": {
+                "type": "array",
+                "items": {
+                  "type": "object",
+                  "additionalProperties": {}
+                },
+                "description": "Browser actions performed before the main action chain"
+              },
+              "scrollHtml": {
+                "type": "boolean",
+                "description": "Enable HTML capture while scrolling through the page"
+              },
+              "scrollHtmlTimeout": {
+                "type": "number",
+                "minimum": 0,
+                "description": "Maximum scroll duration in milliseconds"
+              },
+              "visualHtml": {
+                "type": "boolean",
+                "description": "Enable visual HTML capture for navigation heuristics"
+              },
+              "navigationStrategy": {
+                "type": "string",
+                "description": "Primary navigation strategy identifier"
+              },
+              "navigationStrategies": {
+                "type": "array",
+                "items": {
+                  "type": "string"
+                },
+                "description": "Fallback navigation strategy order"
+              },
+              "limit": {
+                "type": "number",
+                "minimum": 0,
+                "description": "Maximum number of navigation steps"
+              },
+              "disableNavigation": {
+                "type": "boolean",
+                "description": "Skip automated navigation heuristics"
+              },
+              "ignoreIframes": {
+                "type": "boolean",
+                "description": "Disable iframe traversal during navigation"
+              },
+              "navigationExploration": {
+                "type": "object",
+                "additionalProperties": {},
+                "description": "Navigation exploration tuning payload"
+              },
+              "loadHtmlOnly": {
+                "type": "boolean",
+                "description": "Skip scripted interactions and only capture HTML"
+              },
+              "acceptCookies": {
+                "type": "boolean",
+                "description": "Force cookie acceptance automation"
+              },
+              "cachedCookieAccept": {
+                "oneOf": [
+                  {
+                    "type": "boolean"
+                  },
+                  {
+                    "type": "string"
+                  }
+                ],
+                "description": "Reuse cached cookie acceptance flow"
+              }
+            },
+            "additionalProperties": false,
+            "description": "Navigation-related options derived from legacy launch summary"
+          },
+          "artifactOptions": {
+            "type": "object",
+            "properties": {
+              "screenshot": {
+                "type": "boolean",
+                "description": "Capture standard screenshot"
+              },
+              "screenshotFull": {
+                "type": "boolean",
+                "description": "Capture full-page screenshot"
+              },
+              "screenshotCache": {
+                "type": "boolean",
+                "description": "Re-use cached screenshot when available"
+              },
+              "screenshotPublic": {
+                "type": "boolean",
+                "description": "Make captured screenshot publicly accessible"
+              },
+              "screenshotLink": {
+                "type": "string",
+                "description": "Stored screenshot link for follow-up processing"
+              },
+              "archivePdf": {
+                "type": "boolean",
+                "description": "Generate archival PDF for crawled pages"
+              }
+            },
+            "additionalProperties": false,
+            "description": "Artifact capture options derived from legacy launch summary"
           },
           "configId": {
             "type": "string",
@@ -13880,6 +13871,11 @@
             "minimum": 1,
             "description": "Maximum number of pages to crawl"
           },
+          "maxMatches": {
+            "type": "number",
+            "minimum": 1,
+            "description": "Maximum number of matched pages to crawl before stopping"
+          },
           "concurrency": {
             "type": "number",
             "minimum": 1,
@@ -13905,6 +13901,205 @@
             "format": "uri",
             "nullable": true,
             "description": "Webhook URL for completion notifications"
+          },
+          "processDuringCrawl": {
+            "type": "boolean",
+            "description": "Whether to run preprocessing and extraction during the crawl phase"
+          },
+          "crawlMethod": {
+            "type": "object",
+            "properties": {
+              "type": {
+                "type": "string",
+                "description": "Crawler execution type (e.g. puppeteer, impit)"
+              }
+            },
+            "required": [
+              "type"
+            ],
+            "additionalProperties": {
+              "nullable": true
+            },
+            "description": "Crawl method configuration"
+          },
+          "matchThreshold": {
+            "type": "number",
+            "minimum": 0,
+            "maximum": 1,
+            "description": "Match threshold override for blueprint filtering"
+          },
+          "blueprint": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "name": {
+                  "type": "string"
+                },
+                "description": {
+                  "type": "string"
+                },
+                "selector": {
+                  "type": "string"
+                },
+                "type": {
+                  "type": "string"
+                }
+              },
+              "additionalProperties": {
+                "nullable": true
+              },
+              "description": "Blueprint field definition"
+            },
+            "description": "Blueprint fields applied during crawling"
+          },
+          "extractionOptions": {
+            "type": "object",
+            "properties": {
+              "extractions": {
+                "type": "object",
+                "additionalProperties": {
+                  "type": "boolean"
+                },
+                "description": "Feature toggles for available extraction helpers"
+              },
+              "schema": {
+                "nullable": true,
+                "description": "Schema definition for structured extractions"
+              },
+              "entity": {
+                "nullable": true,
+                "description": "Entity metadata used for extraction mappings"
+              },
+              "mainContextSelector": {
+                "type": "string",
+                "description": "CSS selector anchoring focus-driven extractors"
+              },
+              "xhrExtractorConfigs": {
+                "type": "array",
+                "items": {
+                  "nullable": true
+                },
+                "description": "XHR extractor configuration entries"
+              }
+            },
+            "additionalProperties": false,
+            "description": "Extraction-related options derived from legacy launch summary"
+          },
+          "navigationOptions": {
+            "type": "object",
+            "properties": {
+              "browserActions": {
+                "type": "array",
+                "items": {
+                  "type": "object",
+                  "additionalProperties": {}
+                },
+                "description": "Ordered list of scripted browser actions executed after navigation"
+              },
+              "preBrowserActions": {
+                "type": "array",
+                "items": {
+                  "type": "object",
+                  "additionalProperties": {}
+                },
+                "description": "Browser actions performed before the main action chain"
+              },
+              "scrollHtml": {
+                "type": "boolean",
+                "description": "Enable HTML capture while scrolling through the page"
+              },
+              "scrollHtmlTimeout": {
+                "type": "number",
+                "minimum": 0,
+                "description": "Maximum scroll duration in milliseconds"
+              },
+              "visualHtml": {
+                "type": "boolean",
+                "description": "Enable visual HTML capture for navigation heuristics"
+              },
+              "navigationStrategy": {
+                "type": "string",
+                "description": "Primary navigation strategy identifier"
+              },
+              "navigationStrategies": {
+                "type": "array",
+                "items": {
+                  "type": "string"
+                },
+                "description": "Fallback navigation strategy order"
+              },
+              "limit": {
+                "type": "number",
+                "minimum": 0,
+                "description": "Maximum number of navigation steps"
+              },
+              "disableNavigation": {
+                "type": "boolean",
+                "description": "Skip automated navigation heuristics"
+              },
+              "ignoreIframes": {
+                "type": "boolean",
+                "description": "Disable iframe traversal during navigation"
+              },
+              "navigationExploration": {
+                "type": "object",
+                "additionalProperties": {},
+                "description": "Navigation exploration tuning payload"
+              },
+              "loadHtmlOnly": {
+                "type": "boolean",
+                "description": "Skip scripted interactions and only capture HTML"
+              },
+              "acceptCookies": {
+                "type": "boolean",
+                "description": "Force cookie acceptance automation"
+              },
+              "cachedCookieAccept": {
+                "oneOf": [
+                  {
+                    "type": "boolean"
+                  },
+                  {
+                    "type": "string"
+                  }
+                ],
+                "description": "Reuse cached cookie acceptance flow"
+              }
+            },
+            "additionalProperties": false,
+            "description": "Navigation-related options derived from legacy launch summary"
+          },
+          "artifactOptions": {
+            "type": "object",
+            "properties": {
+              "screenshot": {
+                "type": "boolean",
+                "description": "Capture standard screenshot"
+              },
+              "screenshotFull": {
+                "type": "boolean",
+                "description": "Capture full-page screenshot"
+              },
+              "screenshotCache": {
+                "type": "boolean",
+                "description": "Re-use cached screenshot when available"
+              },
+              "screenshotPublic": {
+                "type": "boolean",
+                "description": "Make captured screenshot publicly accessible"
+              },
+              "screenshotLink": {
+                "type": "string",
+                "description": "Stored screenshot link for follow-up processing"
+              },
+              "archivePdf": {
+                "type": "boolean",
+                "description": "Generate archival PDF for crawled pages"
+              }
+            },
+            "additionalProperties": false,
+            "description": "Artifact capture options derived from legacy launch summary"
           }
         },
         "title": "StartCrawlerSessionRequest",
@@ -14205,11 +14400,42 @@
                 },
                 "html_filename": {
                   "type": "string",
-                  "description": "Base64 encoded filename for the HTML content"
+                  "description": "Base64 encoded filename for the HTML content (null when HTML not stored)",
+                  "nullable": true
                 },
                 "screenshot_filename": {
                   "type": "string",
-                  "description": "Base64 encoded filename for the screenshot"
+                  "description": "Base64 encoded filename for the screenshot (null when screenshot not available)",
+                  "nullable": true
+                },
+                "processed_html_filename": {
+                  "type": "string",
+                  "description": "Base64 encoded filename for the processed Kadoa HTML",
+                  "nullable": true
+                },
+                "json_filename": {
+                  "type": "string",
+                  "description": "Base64 encoded filename for the crawler result JSON",
+                  "nullable": true
+                },
+                "match_score": {
+                  "type": "number",
+                  "description": "Match score between 0 and 1 (null when blueprint not provided)",
+                  "nullable": true
+                },
+                "matched_fields": {
+                  "type": "number",
+                  "description": "Number of blueprint fields populated for the page",
+                  "nullable": true
+                },
+                "total_fields": {
+                  "type": "number",
+                  "description": "Total blueprint fields evaluated for matching",
+                  "nullable": true
+                },
+                "is_match": {
+                  "type": "boolean",
+                  "description": "Whether the page met the blueprint match threshold"
                 }
               },
               "required": [
@@ -14217,7 +14443,13 @@
                 "status",
                 "created_at",
                 "html_filename",
-                "screenshot_filename"
+                "screenshot_filename",
+                "processed_html_filename",
+                "json_filename",
+                "match_score",
+                "matched_fields",
+                "total_fields",
+                "is_match"
               ]
             },
             "description": "List of pages in the session"
@@ -14230,7 +14462,7 @@
         "title": "GetCrawlerSessionDataListResponse",
         "description": "Response schema for getting a crawling session data list"
       },
-      "ExtractionSchemaField": {
+      "DataField": {
         "type": "object",
         "properties": {
           "name": {
@@ -14266,29 +14498,19 @@
           },
           "dataType": {
             "type": "string",
+            "description": "Data type of the field",
             "enum": [
               "STRING",
               "NUMBER",
               "BOOLEAN",
               "DATE",
               "DATETIME",
-              "CURRENCY",
               "MONEY",
               "IMAGE",
               "LINK",
               "OBJECT",
-              "ARRAY",
-              "JOB_DESCRIPTION",
-              "CATEGORY_JOB_TYPES",
-              "CLASSIFICATION",
-              "CATEGORIZE",
-              "STATIC_SCRAPER_DATA",
-              "UNIQUE_ID",
-              "JOBBIRD_CUSTOM",
-              "PASS",
-              "ADDITIONAL_DATA"
-            ],
-            "description": "Data type of the field"
+              "ARRAY"
+            ]
           },
           "isKey": {
             "type": "boolean",
@@ -14300,10 +14522,10 @@
           "description",
           "dataType"
         ],
-        "title": "ExtractionSchemaField",
-        "description": "Extracts and structures specific data from web pages (e.g., product prices, article titles)"
+        "title": "DataField",
+        "description": "Extract and structure specific data from web pages with typed values (e.g., product prices, article titles, dates). Use this for actual data you want to capture."
       },
-      "ExtractionMetadataField": {
+      "RawContentField": {
         "type": "object",
         "properties": {
           "name": {
@@ -14314,7 +14536,7 @@
           "description": {
             "type": "string",
             "minLength": 1,
-            "description": "Field description"
+            "description": "Optional field description"
           },
           "fieldType": {
             "type": "string",
@@ -14334,14 +14556,14 @@
         },
         "required": [
           "name",
-          "description",
           "fieldType",
           "metadataKey"
         ],
-        "title": "ExtractionMetadataField",
-        "description": "Exposes the raw page content in different formats (HTML, Markdown) for further processing"
+        "additionalProperties": true,
+        "title": "RawContentField",
+        "description": "Capture raw page content (HTML or Markdown) for further processing. Use this when you need the unstructured content for post-processing or AI analysis."
       },
-      "ExtractionClassificationField": {
+      "ClassificationField": {
         "type": "object",
         "properties": {
           "name": {
@@ -14352,7 +14574,7 @@
           "description": {
             "type": "string",
             "minLength": 1,
-            "description": "Field description"
+            "description": "Optional field description"
           },
           "fieldType": {
             "type": "string",
@@ -14384,12 +14606,12 @@
         },
         "required": [
           "name",
-          "description",
           "fieldType",
           "categories"
         ],
-        "title": "ExtractionClassificationField",
-        "description": "Categorizes extracted data into predefined labels based on the content"
+        "additionalProperties": true,
+        "title": "ClassificationField",
+        "description": "Categorize extracted data into predefined labels. Use this when you want the system to classify content into specific categories you define."
       },
       "SchemaResponse": {
         "type": "object",
@@ -14401,13 +14623,6 @@
           "name": {
             "type": "string",
             "description": "Name of the schema"
-          },
-          "type": {
-            "type": "string",
-            "enum": [
-              "NEO"
-            ],
-            "description": "Schema type (always NEO)"
           },
           "isPublic": {
             "type": "boolean",
@@ -14422,13 +14637,13 @@
               },
               "oneOf": [
                 {
-                  "$ref": "#/components/schemas/ExtractionSchemaField"
+                  "$ref": "#/components/schemas/DataField"
                 },
                 {
-                  "$ref": "#/components/schemas/ExtractionMetadataField"
+                  "$ref": "#/components/schemas/RawContentField"
                 },
                 {
-                  "$ref": "#/components/schemas/ExtractionClassificationField"
+                  "$ref": "#/components/schemas/ClassificationField"
                 }
               ]
             },
@@ -14456,7 +14671,6 @@
         "required": [
           "id",
           "name",
-          "type",
           "isPublic",
           "schema",
           "entity",
@@ -14511,13 +14725,6 @@
                 "type": "string",
                 "description": "Name of the schema"
               },
-              "type": {
-                "type": "string",
-                "enum": [
-                  "NEO"
-                ],
-                "description": "Schema type (always NEO)"
-              },
               "isPublic": {
                 "type": "boolean",
                 "description": "Whether the schema is public"
@@ -14531,13 +14738,13 @@
                   },
                   "oneOf": [
                     {
-                      "$ref": "#/components/schemas/ExtractionSchemaField"
+                      "$ref": "#/components/schemas/DataField"
                     },
                     {
-                      "$ref": "#/components/schemas/ExtractionMetadataField"
+                      "$ref": "#/components/schemas/RawContentField"
                     },
                     {
-                      "$ref": "#/components/schemas/ExtractionClassificationField"
+                      "$ref": "#/components/schemas/ClassificationField"
                     }
                   ]
                 },
@@ -14565,7 +14772,6 @@
             "required": [
               "id",
               "name",
-              "type",
               "isPublic",
               "schema",
               "entity",
@@ -14604,18 +14810,18 @@
               },
               "oneOf": [
                 {
-                  "$ref": "#/components/schemas/ExtractionSchemaField"
+                  "$ref": "#/components/schemas/DataField"
                 },
                 {
-                  "$ref": "#/components/schemas/ExtractionMetadataField"
+                  "$ref": "#/components/schemas/RawContentField"
                 },
                 {
-                  "$ref": "#/components/schemas/ExtractionClassificationField"
+                  "$ref": "#/components/schemas/ClassificationField"
                 }
               ]
             },
             "minItems": 1,
-            "description": "Array of field definitions"
+            "description": "Schema fields for extraction - choose from Data Field (typed data), Raw Content Field (HTML/Markdown), or Classification Field (predefined categories)"
           }
         },
         "required": [
@@ -14689,13 +14895,13 @@
               },
               "oneOf": [
                 {
-                  "$ref": "#/components/schemas/ExtractionSchemaField"
+                  "$ref": "#/components/schemas/DataField"
                 },
                 {
-                  "$ref": "#/components/schemas/ExtractionMetadataField"
+                  "$ref": "#/components/schemas/RawContentField"
                 },
                 {
-                  "$ref": "#/components/schemas/ExtractionClassificationField"
+                  "$ref": "#/components/schemas/ClassificationField"
                 }
               ]
             },
@@ -14779,7 +14985,7 @@
           "type"
         ],
         "title": "Location",
-        "description": "Scraping location configuration"
+        "description": "Geographic location for scraping. Use 'auto' for automatic detection or 'manual' to specify a country"
       },
       "MonitoredField": {
         "type": "object",
@@ -14814,6 +15020,7 @@
             "description": "Whether monitoring is enabled"
           },
           "fields": {
+            "default": [],
             "type": "array",
             "items": {
               "$ref": "#/components/schemas/MonitoredField"
@@ -14851,7 +15058,7 @@
         ],
         "title": "MonitoringConfig"
       },
-      "Interaction": {
+      "BrowserInteraction": {
         "type": "object",
         "properties": {
           "type": {
@@ -14861,26 +15068,164 @@
               "TYPE",
               "HOVER",
               "SCROLL",
-              "WAIT"
+              "WAIT",
+              "KEYPRESS",
+              "LOAD",
+              "SELECT",
+              "BACKSPACE",
+              "ENTER",
+              "TAB",
+              "DELETE",
+              "GOTO",
+              "REFRESH",
+              "NAVIGATE_BACK"
             ],
             "description": "Type of interaction"
           },
           "selector": {
             "type": "string",
-            "description": "CSS selector for the target element"
+            "description": "CSS selector for the target element (required for CLICK, HOVER)"
           },
           "text": {
             "type": "string",
-            "description": "Text to type (required for TYPE interactions)"
+            "description": "Text to type (required for TYPE)"
+          },
+          "timeMs": {
+            "type": "number",
+            "description": "Time in milliseconds (required for WAIT)"
+          },
+          "url": {
+            "type": "string",
+            "description": "URL to navigate to (required for GOTO)"
+          },
+          "tagName": {
+            "type": "string",
+            "description": "HTML tag name of the element"
+          },
+          "innerText": {
+            "type": "string",
+            "description": "Inner text content of the element"
           }
         },
         "required": [
           "type"
         ],
-        "title": "Interaction",
-        "description": "Browser interaction definition"
+        "additionalProperties": true,
+        "title": "BrowserInteraction",
+        "description": "Browser interaction definition. Examples:\n- CLICK: {type: 'CLICK', selector: '#submit-btn'}\n- TYPE: {type: 'TYPE', text: 'hello world'}\n- WAIT: {type: 'WAIT', timeMs: 2000}\n- GOTO: {type: 'GOTO', url: 'https://example.com'}\n- ENTER/TAB/BACKSPACE/DELETE/REFRESH/NAVIGATE_BACK/SCROLL/HOVER/SELECT/LOAD/KEYPRESS: {type: 'ENTER'} (no additional parameters needed)"
       },
-      "CreateWorkflowAgenticBody": {
+      "WebExtensionInteraction": {
+        "type": "object",
+        "properties": {
+          "type": {
+            "type": "string",
+            "description": "Type of interaction"
+          },
+          "id": {
+            "type": "string",
+            "description": "Unique interaction ID"
+          },
+          "x": {
+            "type": "number",
+            "description": "X coordinate"
+          },
+          "y": {
+            "type": "number",
+            "description": "Y coordinate"
+          },
+          "link": {
+            "type": "string",
+            "description": "Page URL"
+          },
+          "time": {
+            "type": "string",
+            "description": "Timestamp"
+          },
+          "bodyHTMLUrl": {
+            "type": "string",
+            "description": "URL to captured HTML body"
+          },
+          "screenshotUrl": {
+            "type": "string",
+            "description": "URL to captured screenshot"
+          },
+          "target": {
+            "type": "object",
+            "properties": {
+              "id": {
+                "type": "string"
+              },
+              "x": {
+                "type": "number"
+              },
+              "y": {
+                "type": "number"
+              },
+              "width": {
+                "type": "number"
+              },
+              "height": {
+                "type": "number"
+              },
+              "tagName": {
+                "type": "string"
+              },
+              "html": {
+                "type": "string"
+              },
+              "innerText": {
+                "type": "string"
+              }
+            },
+            "description": "Target element information"
+          },
+          "key": {
+            "type": "string",
+            "description": "Key value"
+          },
+          "code": {
+            "type": "string",
+            "description": "Key code"
+          },
+          "metaKeys": {
+            "type": "object",
+            "properties": {
+              "alt": {
+                "type": "boolean"
+              },
+              "ctrl": {
+                "type": "boolean"
+              },
+              "meta": {
+                "type": "boolean"
+              },
+              "shift": {
+                "type": "boolean"
+              }
+            },
+            "description": "Modifier keys state"
+          }
+        },
+        "required": [
+          "type"
+        ],
+        "additionalProperties": true,
+        "title": "WebExtensionInteraction",
+        "description": "Web extension interaction in complex format"
+      },
+      "Interaction": {
+        "oneOf": [
+          {
+            "$ref": "#/components/schemas/BrowserInteraction"
+          },
+          {
+            "$ref": "#/components/schemas/WebExtensionInteraction"
+          }
+        ],
+        "title": "Interaction",
+        "description": "Browser interaction definition. Accepts both simple format (with selector, text, url) and complex format from browser extensions"
+      },
+      "AgenticWorkflow": {
         "type": "object",
         "properties": {
           "urls": {
@@ -14890,24 +15235,24 @@
               "format": "uri"
             },
             "minItems": 1,
-            "description": "List of URLs to scrape"
+            "description": "List of URLs to scrape. Can be a single URL or multiple URLs to scrape across different pages or domains."
           },
           "navigationMode": {
             "type": "string",
             "enum": [
               "agentic-navigation"
             ],
-            "description": "Must be agentic-navigation mode"
+            "description": "Must be set to 'agentic-navigation' for agentic workflows"
           },
           "name": {
             "type": "string",
             "minLength": 1,
-            "description": "Name of the workflow"
+            "description": "Human-readable name for this workflow (e.g., 'Product Catalog Scraper')"
           },
           "description": {
             "type": "string",
             "maxLength": 500,
-            "description": "Optional description of the workflow (maximum 500 characters)"
+            "description": "Detailed description of what this workflow does and why it was created (maximum 500 characters)"
           },
           "tags": {
             "type": "array",
@@ -14915,12 +15260,12 @@
               "type": "string",
               "minLength": 3
             },
-            "description": "Tags for categorization"
+            "description": "Tags for organizing and categorizing workflows (minimum 3 characters per tag)"
           },
           "limit": {
             "type": "integer",
             "minimum": 1,
-            "description": "Maximum number of items to scrape"
+            "description": "Maximum number of items to scrape. Useful for limiting scope during development or cost control"
           },
           "location": {
             "$ref": "#/components/schemas/Location"
@@ -14950,49 +15295,53 @@
               "REAL_TIME",
               "CUSTOM"
             ],
-            "description": "Update frequency"
+            "description": "How frequently this workflow should run (ONLY_ONCE, HOURLY, DAILY, WEEKLY, etc.)"
           },
           "schedules": {
             "type": "array",
             "items": {
               "type": "string"
             },
-            "description": "Cron schedules for updates"
+            "description": "Cron expressions for custom schedules. Overrides the interval setting for fine-grained control"
           },
           "bypassPreview": {
             "default": false,
             "type": "boolean",
-            "description": "When true, bypasses preview and installs the scraper immediately"
+            "description": "Skip preview and validation, deploy scraper immediately. Use with caution - set to true only when you're confident the configuration is correct"
           },
           "autoStart": {
             "default": true,
             "type": "boolean",
-            "description": "Whether to automatically start the workflow after creation"
+            "description": "Automatically start the workflow after creation. Set to false if you want to test/review before starting"
           },
           "interactions": {
             "type": "array",
             "items": {
               "$ref": "#/components/schemas/Interaction"
             },
-            "description": "Optional browser interactions to perform during scraping"
+            "description": "Browser interactions to perform before scraping (e.g., clicking buttons, filling forms, scrolling). See Interaction schema for available action types"
           },
           "dataValidationEnabled": {
             "type": "boolean",
-            "description": "Whether data validation is enabled"
+            "description": "Enable data quality validation. When true, scraped data is validated against the schema and anomalies are detected"
+          },
+          "additionalData": {
+            "nullable": true,
+            "description": "Additional data for the workflow (e.g. IDs from your system to link data)"
           },
           "userPrompt": {
             "type": "string",
             "minLength": 10,
             "maxLength": 5000,
-            "description": "Natural language instructions for the agent (between 10 and 5000 characters)"
+            "description": "Natural language instructions for the AI agent (10-5000 characters). Describe what data to extract and how to navigate the site"
           },
           "schemaId": {
             "type": "string",
-            "description": "Optional schema ID for agentic workflows"
+            "description": "Optional: Schema ID to use with agentic extraction"
           },
           "entity": {
             "type": "string",
-            "description": "Optional entity name for agentic workflows"
+            "description": "Optional: Entity name for agentic extraction"
           },
           "fields": {
             "type": "array",
@@ -15003,17 +15352,17 @@
               },
               "oneOf": [
                 {
-                  "$ref": "#/components/schemas/ExtractionSchemaField"
+                  "$ref": "#/components/schemas/DataField"
                 },
                 {
-                  "$ref": "#/components/schemas/ExtractionMetadataField"
+                  "$ref": "#/components/schemas/RawContentField"
                 },
                 {
-                  "$ref": "#/components/schemas/ExtractionClassificationField"
+                  "$ref": "#/components/schemas/ClassificationField"
                 }
               ]
             },
-            "description": "Optional schema fields for agentic workflows"
+            "description": "Optional: Additional extraction fields to guide the agent"
           }
         },
         "required": [
@@ -15021,10 +15370,10 @@
           "navigationMode",
           "userPrompt"
         ],
-        "title": "CreateWorkflowAgenticBody",
-        "description": "Create an agentic workflow with natural language instructions"
+        "title": "AgenticWorkflow",
+        "description": "Create an AI-powered workflow that uses natural language instructions to intelligently extract and adapt data extraction based on page content. The agent can navigate complex sites and understand context.\n\nExample: `{\"urls\": [\"https://example.com\"], \"navigationMode\": \"agentic-navigation\", \"userPrompt\": \"Extract all job listings with title, company, salary, and location. Click on each listing to get full details.\"}`"
       },
-      "CreateWorkflowWithSchemaBody": {
+      "WorkflowWithEntityAndFields": {
         "type": "object",
         "properties": {
           "urls": {
@@ -15034,7 +15383,7 @@
               "format": "uri"
             },
             "minItems": 1,
-            "description": "List of URLs to scrape"
+            "description": "List of URLs to scrape. Can be a single URL or multiple URLs to scrape across different pages or domains."
           },
           "navigationMode": {
             "default": "single-page",
@@ -15050,12 +15399,12 @@
           "name": {
             "type": "string",
             "minLength": 1,
-            "description": "Name of the workflow"
+            "description": "Human-readable name for this workflow (e.g., 'Product Catalog Scraper')"
           },
           "description": {
             "type": "string",
             "maxLength": 500,
-            "description": "Optional description of the workflow (maximum 500 characters)"
+            "description": "Detailed description of what this workflow does and why it was created (maximum 500 characters)"
           },
           "tags": {
             "type": "array",
@@ -15063,12 +15412,12 @@
               "type": "string",
               "minLength": 3
             },
-            "description": "Tags for categorization"
+            "description": "Tags for organizing and categorizing workflows (minimum 3 characters per tag)"
           },
           "limit": {
             "type": "integer",
             "minimum": 1,
-            "description": "Maximum number of items to scrape"
+            "description": "Maximum number of items to scrape. Useful for limiting scope during development or cost control"
           },
           "location": {
             "$ref": "#/components/schemas/Location"
@@ -15098,156 +15447,44 @@
               "REAL_TIME",
               "CUSTOM"
             ],
-            "description": "Update frequency"
+            "description": "How frequently this workflow should run (ONLY_ONCE, HOURLY, DAILY, WEEKLY, etc.)"
           },
           "schedules": {
             "type": "array",
             "items": {
               "type": "string"
             },
-            "description": "Cron schedules for updates"
+            "description": "Cron expressions for custom schedules. Overrides the interval setting for fine-grained control"
           },
           "bypassPreview": {
             "default": false,
             "type": "boolean",
-            "description": "When true, bypasses preview and installs the scraper immediately"
+            "description": "Skip preview and validation, deploy scraper immediately. Use with caution - set to true only when you're confident the configuration is correct"
           },
           "autoStart": {
             "default": true,
             "type": "boolean",
-            "description": "Whether to automatically start the workflow after creation"
+            "description": "Automatically start the workflow after creation. Set to false if you want to test/review before starting"
           },
           "interactions": {
             "type": "array",
             "items": {
               "$ref": "#/components/schemas/Interaction"
             },
-            "description": "Optional browser interactions to perform during scraping"
+            "description": "Browser interactions to perform before scraping (e.g., clicking buttons, filling forms, scrolling). See Interaction schema for available action types"
           },
           "dataValidationEnabled": {
             "type": "boolean",
-            "description": "Whether data validation is enabled"
+            "description": "Enable data quality validation. When true, scraped data is validated against the schema and anomalies are detected"
           },
-          "schemaId": {
-            "type": "string",
-            "description": "ID of existing schema configuration"
-          }
-        },
-        "required": [
-          "urls",
-          "schemaId"
-        ],
-        "title": "CreateWorkflowWithSchemaBody",
-        "description": "Create a workflow using an existing schema configuration"
-      },
-      "CreateWorkflowWithCustomSchemaBody": {
-        "type": "object",
-        "properties": {
-          "urls": {
-            "type": "array",
-            "items": {
-              "type": "string",
-              "format": "uri"
-            },
-            "minItems": 1,
-            "description": "List of URLs to scrape"
-          },
-          "navigationMode": {
-            "default": "single-page",
-            "type": "string",
-            "enum": [
-              "single-page",
-              "paginated-page",
-              "page-and-detail",
-              "agentic-navigation"
-            ],
-            "description": "Navigation mode for scraping"
-          },
-          "name": {
-            "type": "string",
-            "minLength": 1,
-            "description": "Name of the workflow"
-          },
-          "description": {
-            "type": "string",
-            "maxLength": 500,
-            "description": "Optional description of the workflow (maximum 500 characters)"
-          },
-          "tags": {
-            "type": "array",
-            "items": {
-              "type": "string",
-              "minLength": 3
-            },
-            "description": "Tags for categorization"
-          },
-          "limit": {
-            "type": "integer",
-            "minimum": 1,
-            "description": "Maximum number of items to scrape"
-          },
-          "location": {
-            "$ref": "#/components/schemas/Location"
-          },
-          "monitoring": {
-            "$ref": "#/components/schemas/MonitoringConfig"
-          },
-          "interval": {
-            "type": "string",
-            "enum": [
-              "ONLY_ONCE",
-              "EVERY_10_MINUTES",
-              "HALF_HOURLY",
-              "HOURLY",
-              "THREE_HOURLY",
-              "SIX_HOURLY",
-              "TWELVE_HOURLY",
-              "EIGHTEEN_HOURLY",
-              "DAILY",
-              "TWO_DAY",
-              "THREE_DAY",
-              "WEEKLY",
-              "BIWEEKLY",
-              "TRIWEEKLY",
-              "FOUR_WEEKS",
-              "MONTHLY",
-              "REAL_TIME",
-              "CUSTOM"
-            ],
-            "description": "Update frequency"
-          },
-          "schedules": {
-            "type": "array",
-            "items": {
-              "type": "string"
-            },
-            "description": "Cron schedules for updates"
-          },
-          "bypassPreview": {
-            "default": false,
-            "type": "boolean",
-            "description": "When true, bypasses preview and installs the scraper immediately"
-          },
-          "autoStart": {
-            "default": true,
-            "type": "boolean",
-            "description": "Whether to automatically start the workflow after creation"
-          },
-          "interactions": {
-            "type": "array",
-            "items": {
-              "$ref": "#/components/schemas/Interaction"
-            },
-            "description": "Optional browser interactions to perform during scraping"
-          },
-          "dataValidationEnabled": {
-            "type": "boolean",
-            "description": "Whether data validation is enabled"
+          "additionalData": {
+            "nullable": true,
+            "description": "Additional data for the workflow (e.g. IDs from your system to link data)"
           },
           "entity": {
             "type": "string",
             "minLength": 1,
-            "description": "Entity name for extraction"
+            "description": "Entity name for extraction (e.g., 'Product', 'JobListing')"
           },
           "fields": {
             "type": "array",
@@ -15258,37 +15495,158 @@
               },
               "oneOf": [
                 {
-                  "$ref": "#/components/schemas/ExtractionSchemaField"
+                  "$ref": "#/components/schemas/DataField"
                 },
                 {
-                  "$ref": "#/components/schemas/ExtractionMetadataField"
+                  "$ref": "#/components/schemas/RawContentField"
                 },
                 {
-                  "$ref": "#/components/schemas/ExtractionClassificationField"
+                  "$ref": "#/components/schemas/ClassificationField"
                 }
               ]
             },
             "minItems": 1,
-            "description": "Schema fields for extraction"
+            "description": "Array of fields to extract from each item. Each field defines a property to capture (e.g., title, price, description)"
           }
         },
         "required": [
           "urls",
+          "entity",
           "fields"
         ],
-        "title": "CreateWorkflowWithCustomSchemaBody",
-        "description": "Create a workflow by defining entity and fields directly"
+        "title": "WorkflowWithEntityAndFields",
+        "description": "Create a workflow by defining extraction entity and fields directly in the request. Inline your schema definition to quickly set up custom data extraction without creating a schema separately.\n\nExample: `{\"urls\": [\"https://example.com\"], \"entity\": \"Product\", \"fields\": [{\"name\": \"title\", \"description\": \"Product title\", \"fieldType\": \"SCHEMA\", \"dataType\": \"STRING\"}, {\"name\": \"price\", \"description\": \"Product price\", \"fieldType\": \"SCHEMA\", \"dataType\": \"NUMBER\"}]}`"
+      },
+      "WorkflowWithExistingSchema": {
+        "type": "object",
+        "properties": {
+          "urls": {
+            "type": "array",
+            "items": {
+              "type": "string",
+              "format": "uri"
+            },
+            "minItems": 1,
+            "description": "List of URLs to scrape. Can be a single URL or multiple URLs to scrape across different pages or domains."
+          },
+          "navigationMode": {
+            "default": "single-page",
+            "type": "string",
+            "enum": [
+              "single-page",
+              "paginated-page",
+              "page-and-detail",
+              "agentic-navigation"
+            ],
+            "description": "Navigation mode for scraping"
+          },
+          "name": {
+            "type": "string",
+            "minLength": 1,
+            "description": "Human-readable name for this workflow (e.g., 'Product Catalog Scraper')"
+          },
+          "description": {
+            "type": "string",
+            "maxLength": 500,
+            "description": "Detailed description of what this workflow does and why it was created (maximum 500 characters)"
+          },
+          "tags": {
+            "type": "array",
+            "items": {
+              "type": "string",
+              "minLength": 3
+            },
+            "description": "Tags for organizing and categorizing workflows (minimum 3 characters per tag)"
+          },
+          "limit": {
+            "type": "integer",
+            "minimum": 1,
+            "description": "Maximum number of items to scrape. Useful for limiting scope during development or cost control"
+          },
+          "location": {
+            "$ref": "#/components/schemas/Location"
+          },
+          "monitoring": {
+            "$ref": "#/components/schemas/MonitoringConfig"
+          },
+          "interval": {
+            "type": "string",
+            "enum": [
+              "ONLY_ONCE",
+              "EVERY_10_MINUTES",
+              "HALF_HOURLY",
+              "HOURLY",
+              "THREE_HOURLY",
+              "SIX_HOURLY",
+              "TWELVE_HOURLY",
+              "EIGHTEEN_HOURLY",
+              "DAILY",
+              "TWO_DAY",
+              "THREE_DAY",
+              "WEEKLY",
+              "BIWEEKLY",
+              "TRIWEEKLY",
+              "FOUR_WEEKS",
+              "MONTHLY",
+              "REAL_TIME",
+              "CUSTOM"
+            ],
+            "description": "How frequently this workflow should run (ONLY_ONCE, HOURLY, DAILY, WEEKLY, etc.)"
+          },
+          "schedules": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "description": "Cron expressions for custom schedules. Overrides the interval setting for fine-grained control"
+          },
+          "bypassPreview": {
+            "default": false,
+            "type": "boolean",
+            "description": "Skip preview and validation, deploy scraper immediately. Use with caution - set to true only when you're confident the configuration is correct"
+          },
+          "autoStart": {
+            "default": true,
+            "type": "boolean",
+            "description": "Automatically start the workflow after creation. Set to false if you want to test/review before starting"
+          },
+          "interactions": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/Interaction"
+            },
+            "description": "Browser interactions to perform before scraping (e.g., clicking buttons, filling forms, scrolling). See Interaction schema for available action types"
+          },
+          "dataValidationEnabled": {
+            "type": "boolean",
+            "description": "Enable data quality validation. When true, scraped data is validated against the schema and anomalies are detected"
+          },
+          "additionalData": {
+            "nullable": true,
+            "description": "Additional data for the workflow (e.g. IDs from your system to link data)"
+          },
+          "schemaId": {
+            "type": "string",
+            "description": "ID of an existing schema configuration. Use this to reference a previously defined schema without re-defining extraction fields"
+          }
+        },
+        "required": [
+          "urls",
+          "schemaId"
+        ],
+        "title": "WorkflowWithExistingSchema",
+        "description": "Create a workflow using a pre-defined schema configuration. Reference an existing schema by ID to extract data without re-defining fields. Perfect when you have multiple workflows using the same data structure.\n\nExample: `{\"urls\": [\"https://example.com\"], \"schemaId\": \"schema-abc123\", \"interval\": \"DAILY\"}`"
       },
       "CreateWorkflowBody": {
         "oneOf": [
           {
-            "$ref": "#/components/schemas/CreateWorkflowAgenticBody"
+            "$ref": "#/components/schemas/AgenticWorkflow"
           },
           {
-            "$ref": "#/components/schemas/CreateWorkflowWithSchemaBody"
+            "$ref": "#/components/schemas/WorkflowWithEntityAndFields"
           },
           {
-            "$ref": "#/components/schemas/CreateWorkflowWithCustomSchemaBody"
+            "$ref": "#/components/schemas/WorkflowWithExistingSchema"
           }
         ],
         "title": "CreateWorkflowBody",
