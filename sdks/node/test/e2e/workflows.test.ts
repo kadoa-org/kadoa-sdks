@@ -75,14 +75,14 @@ describe("Workflows", () => {
       // Test invalid additionalData (array)
       await expect(
         client.workflow.update(workflowId, {
-          additionalData: ["invalid"] as any,
+          additionalData: ["invalid"] as unknown as Record<string, unknown>,
         }),
       ).rejects.toThrow(KadoaSdkException);
 
       // Test invalid additionalData (null)
       await expect(
         client.workflow.update(workflowId, {
-          additionalData: null as any,
+          additionalData: null as unknown as Record<string, unknown>,
         }),
       ).rejects.toThrow(KadoaSdkException);
 
