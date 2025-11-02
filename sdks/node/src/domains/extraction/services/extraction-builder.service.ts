@@ -7,6 +7,7 @@ import type {
   NotificationSetupService,
 } from "../../notifications/notification-setup.service";
 import { SchemaBuilder } from "../../schemas/schema-builder";
+import type { GetWorkflowResponse } from "../../workflows/workflows.acl";
 import type { WorkflowsCoreService } from "../../workflows/workflows-core.service";
 import type {
   FetchDataOptions,
@@ -36,7 +37,7 @@ export interface ExtractOptionsInternal {
   interval?: WorkflowInterval;
   schedules?: string[];
   location?: LocationConfig;
-  additionalData?: Record<string, any>;
+  additionalData?: Record<string, unknown>;
 }
 
 export interface ExtractOptions
@@ -70,8 +71,15 @@ export interface RunWorkflowOptions {
 export interface CreatedExtraction {
   options: ExtractOptionsInternal;
   workflowId: string;
+  waitForReady: (options?: WaitForReadyOptions) => Promise<GetWorkflowResponse>;
   run: (options?: RunWorkflowOptions) => Promise<FinishedExtraction>;
   submit: (options?: RunWorkflowOptions) => Promise<SubmittedExtraction>;
+}
+
+export interface WaitForReadyOptions {
+  targetState?: "PREVIEW" | "ACTIVE";
+  pollIntervalMs?: number;
+  timeoutMs?: number;
 }
 
 export interface SubmittedExtraction {
@@ -203,12 +211,18 @@ export class ExtractionBuilderService {
   async create(): Promise<CreatedExtraction> {
     assert(this._options, "Options are not set");
     const { urls, name, description, navigationMode, entity } = this.options;
+
+    // For real-time workflows with AI detection, use selector mode
+    const isRealTime = this._options.interval === "REAL_TIME";
+    const useSelectorMode = isRealTime && entity === "ai-detection";
+
     const resolvedEntity = await this.entityResolverService.resolveEntity(
       entity,
       {
         link: urls[0],
         location: this._options.location,
         navigationMode,
+        selectorMode: useSelectorMode,
       },
     );
 
@@ -241,9 +255,45 @@ export class ExtractionBuilderService {
     return this;
   }
 
+  async waitForReady(
+    options?: WaitForReadyOptions,
+  ): Promise<GetWorkflowResponse> {
+    assert(this._workflowId, "Workflow ID is not set");
+    const targetState = options?.targetState ?? "PREVIEW";
+
+    const current = await this.workflowsCoreService.get(this._workflowId);
+    if (
+      current.state === targetState ||
+      (targetState === "PREVIEW" && current.state === "ACTIVE")
+    ) {
+      return current;
+    }
+
+    const workflow = await this.workflowsCoreService.wait(this._workflowId, {
+      targetState,
+      pollIntervalMs: options?.pollIntervalMs,
+      timeoutMs: options?.timeoutMs,
+    });
+
+    return workflow;
+  }
+
   async run(options?: RunWorkflowOptions): Promise<FinishedExtraction> {
     assert(this._options, "Options are not set");
     assert(this._workflowId, "Workflow ID is not set");
+
+    if (this._options.interval === "REAL_TIME") {
+      throw new KadoaSdkException(
+        "run() is not supported for real-time workflows. Use waitForReady() and subscribe via client.realtime.onEvent(...).",
+        {
+          code: "BAD_REQUEST",
+          details: {
+            interval: "REAL_TIME",
+            workflowId: this._workflowId,
+          },
+        },
+      );
+    }
 
     const startedJob = await this.workflowsCoreService.runWorkflow(
       this._workflowId,
@@ -264,6 +314,19 @@ export class ExtractionBuilderService {
   async submit(options?: RunWorkflowOptions): Promise<SubmittedExtraction> {
     assert(this._options, "Options are not set");
     assert(this._workflowId, "Workflow ID is not set");
+
+    if (this._options.interval === "REAL_TIME") {
+      throw new KadoaSdkException(
+        "submit() is not supported for real-time workflows. Use waitForReady() and subscribe via client.realtime.onEvent(...).",
+        {
+          code: "BAD_REQUEST",
+          details: {
+            interval: "REAL_TIME",
+            workflowId: this._workflowId,
+          },
+        },
+      );
+    }
 
     const submittedJob = await this.workflowsCoreService.runWorkflow(
       this._workflowId,

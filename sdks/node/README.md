@@ -137,6 +137,59 @@ Reuse a previously defined schema:
 extraction: builder => builder.useSchema('schema-id-123')
 ```
 
+### Real-time Monitoring
+
+Monitor websites continuously and receive live updates when data changes.
+
+**Setup:**
+
+```typescript
+// Enable real-time with team API key
+const client = new KadoaClient({
+  apiKey: 'tk-your-team-api-key',
+  enableRealtime: true
+});
+
+// Verify connection
+if (client.isRealtimeConnected()) {
+  console.log('Connected to real-time updates');
+}
+```
+
+**Create a monitor:**
+
+```typescript
+const monitor = await client
+  .extract({
+    urls: ['https://example.com/products'],
+    name: 'Price Monitor',
+    extraction: schema =>
+      schema
+        .entity('Product')
+        .field('name', 'Product name', 'STRING')
+        .field('price', 'Current price', 'MONEY'),
+  })
+  .setInterval({ interval: 'REAL_TIME' })
+  .create();
+
+// Wait for monitor to start
+await monitor.waitForReady();
+
+// Handle updates
+client.realtime?.onEvent((event) => {
+  if (event.workflowId === monitor.workflowId) {
+    console.log('Update:', event.data);
+  }
+});
+```
+
+**Requirements:**
+- Team API key (starts with `tk-`)
+- `enableRealtime: true` in client configuration
+- Notifications enabled for at least one channel ( Webhook, Email, or Slack)
+
+**When to use:** Price tracking, inventory monitoring, live content updates.
+
 ### Working with Results
 
 **Fetch Specific Page**

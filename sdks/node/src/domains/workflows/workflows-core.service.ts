@@ -55,7 +55,7 @@ export interface CreateWorkflowInput {
   bypassPreview?: boolean;
   autoStart?: boolean;
   schedules?: string[];
-  additionalData?: Record<string, any>;
+  additionalData?: Record<string, unknown>;
 }
 
 const TERMINAL_JOB_STATES: Set<JobStateEnum> = new Set([
@@ -122,19 +122,19 @@ export class WorkflowsCoreService {
     const response = await this.workflowsApi.v4WorkflowsWorkflowIdGet({
       workflowId: id,
     });
-    return response.data;
+    return response.data as GetWorkflowResponse;
   }
 
   async list(filters?: ListWorkflowsRequest): Promise<WorkflowResponse[]> {
     const response = await this.workflowsApi.v4WorkflowsGet(filters);
-    return response.data?.workflows ?? [];
+    return (response.data?.workflows ?? []) as WorkflowResponse[];
   }
 
   async getByName(name: string): Promise<WorkflowResponse | undefined> {
     const response = await this.workflowsApi.v4WorkflowsGet({
       search: name,
     });
-    return response.data?.workflows?.[0];
+    return response.data?.workflows?.[0] as WorkflowResponse | undefined;
   }
 
   /**

@@ -199,7 +199,7 @@ export interface WorkflowResponse
   > {
   state?: WorkflowStateEnum;
   displayState?: WorkflowDisplayStateEnum;
-  additionalData?: Record<string, any>;
+  additionalData?: Record<string, unknown>;
 }
 
 /**
@@ -212,7 +212,7 @@ export interface GetWorkflowResponse
   > {
   state?: WorkflowStateEnum;
   displayState?: WorkflowDisplayStateEnum;
-  additionalData?: Record<string, any>;
+  additionalData?: Record<string, unknown>;
 }
 
 export type { MonitoringConfig };

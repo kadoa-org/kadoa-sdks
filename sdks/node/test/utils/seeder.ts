@@ -5,7 +5,7 @@ export const seedWorkflow = async (
     name,
     runJob = false,
     additionalData,
-  }: { name: string; runJob?: boolean; additionalData?: Record<string, any> },
+  }: { name: string; runJob?: boolean; additionalData?: Record<string, unknown> },
   client: KadoaClient,
 ): Promise<{ workflowId: string; jobId?: string }> => {
   console.log(`[Seeder] Seeding workflow: ${name}`);
