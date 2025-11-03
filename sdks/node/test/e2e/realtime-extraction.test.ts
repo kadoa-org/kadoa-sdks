@@ -1,6 +1,9 @@
 import { afterAll, beforeAll, describe, expect, test } from "bun:test";
 import { KadoaClient, KadoaHttpException } from "../../src";
-import type { WaitForReadyOptions } from "../../src/domains/extraction/services/extraction-builder.service";
+import type {
+  CreatedExtraction,
+  WaitForReadyOptions,
+} from "../../src/domains/extraction/services/extraction-builder.service";
 import { getE2ETestEnv } from "../utils/env";
 
 type IntervalValidationError = {
@@ -11,7 +14,8 @@ type IntervalValidationError = {
 
 const hasRealTimeIntervalError = (payload: unknown): boolean => {
   if (!payload || typeof payload !== "object") return false;
-  const candidate = (payload as IntervalValidationError).validationErrors?.interval;
+  const candidate = (payload as IntervalValidationError).validationErrors
+    ?.interval;
   return typeof candidate === "string" && candidate.includes("REAL_TIME");
 };
 
@@ -85,7 +89,7 @@ describe("Realtime extraction lifecycle", () => {
         "https://sandbox.kadoa.com/change-detection",
       ];
 
-      let created;
+      let created: CreatedExtraction | undefined;
       let schemaType: "financial" | "changeDetection" | undefined;
 
       for (const url of urls) {
