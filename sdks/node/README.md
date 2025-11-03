@@ -144,9 +144,9 @@ Monitor websites continuously and receive live updates when data changes.
 **Setup:**
 
 ```typescript
-// Enable real-time with team API key
+// Enable real-time with API key
 const client = new KadoaClient({
-  apiKey: 'tk-your-team-api-key',
+  apiKey: 'your-api-key',
   enableRealtime: true
 });
 
@@ -184,7 +184,7 @@ client.realtime?.onEvent((event) => {
 ```
 
 **Requirements:**
-- Team API key (starts with `tk-`)
+- API key (personal or team)
 - `enableRealtime: true` in client configuration
 - Notifications enabled for at least one channel ( Webhook, Email, or Slack)
 
@@ -318,11 +318,11 @@ const client = new KadoaClient({
 
 ### WebSocket & Realtime Events
 
-Enable realtime notifications using a team API key (starts with `tk-`):
+Enable realtime notifications using an API key:
 
 ```typescript
 const client = new KadoaClient({
-  apiKey: 'tk-your-team-api-key',
+  apiKey: 'your-api-key',
   enableRealtime: true
 });
 

@@ -1,11 +1,11 @@
 import { KadoaClient } from "@kadoa/node-sdk";
 
-const TEAM_API_KEY =
+const API_KEY =
   process.env.KADOA_API_KEY || "39113751-1e7a-4cb2-9516-1e25d0085aa5";
 
 async function main() {
   const client = new KadoaClient({
-    apiKey: TEAM_API_KEY,
+    apiKey: API_KEY,
     timeout: 300000,
   });
 
