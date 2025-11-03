@@ -338,7 +338,7 @@ export class KadoaClient {
    */
   connectRealtime(): Realtime {
     if (!this._realtime) {
-      this._realtime = new Realtime({ teamApiKey: this._apiKey });
+      this._realtime = new Realtime({ apiKey: this._apiKey });
       this._realtime.connect();
     }
     return this._realtime;
