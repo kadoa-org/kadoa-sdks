@@ -15330,12 +15330,9 @@
             "description": "Enable data quality validation. When true, scraped data is validated against the schema and anomalies are detected"
           },
           "additionalData": {
-            "nullable": true,
-            "description": "Additional data for the workflow (e.g. IDs from your system to link data)"
-          },
-          "additionalData": {
             "type": "object",
-            "description": "Additional static data for the workflow"
+            "nullable": true,
+            "description": "Additional static data for the workflow (e.g. IDs from your system to link data)"
           },
           "userPrompt": {
             "type": "string",
