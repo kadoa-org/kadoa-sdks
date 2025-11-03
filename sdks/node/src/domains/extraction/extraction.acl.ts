@@ -6,23 +6,23 @@
  */
 
 import type {
-  CreateWorkflowWithSchemaBodyIntervalEnum,
-  CreateWorkflowWithSchemaBodyNavigationModeEnum,
-  ExtractionClassificationField,
-  ExtractionClassificationFieldFieldTypeEnum,
-  ExtractionMetadataField,
-  ExtractionMetadataFieldFieldTypeEnum,
-  ExtractionMetadataFieldMetadataKeyEnum,
-  ExtractionSchemaField,
-  ExtractionSchemaFieldDataTypeEnum,
-  ExtractionSchemaFieldFieldTypeEnum,
+  ClassificationField,
+  ClassificationFieldFieldTypeEnum,
+  DataField,
+  DataFieldFieldTypeEnum,
   Location,
+  RawContentField,
+  RawContentFieldFieldTypeEnum,
+  RawContentFieldMetadataKeyEnum,
   V4WorkflowsWorkflowIdDataGet200Response,
   V4WorkflowsWorkflowIdDataGet200ResponsePagination,
   V4WorkflowsWorkflowIdDataGetOrderEnum,
   V4WorkflowsWorkflowIdMetadataPutRequestMonitoringFieldsInner,
   V4WorkflowsWorkflowIdMetadataPutRequestMonitoringFieldsInnerOperatorEnum,
+  WorkflowWithExistingSchemaIntervalEnum,
+  WorkflowWithExistingSchemaNavigationModeEnum,
 } from "../../generated";
+import { DataFieldDataTypeEnum } from "../../generated";
 import type {
   GetWorkflowResponse,
   MonitoringConfig,
@@ -69,35 +69,46 @@ export class FetchDataOptions {
 
 /**
  * Schema field data type enum.
+ * Canonical entries align with the generated `DataFieldDataTypeEnum` values.
+ */
+const CanonicalSchemaFieldDataType = {
+  String: DataFieldDataTypeEnum.String,
+  Number: DataFieldDataTypeEnum.Number,
+  Boolean: DataFieldDataTypeEnum.Boolean,
+  Date: DataFieldDataTypeEnum.Date,
+  Datetime: DataFieldDataTypeEnum.Datetime,
+  Money: DataFieldDataTypeEnum.Money,
+  Image: DataFieldDataTypeEnum.Image,
+  Link: DataFieldDataTypeEnum.Link,
+  Object: DataFieldDataTypeEnum.Object,
+  Array: DataFieldDataTypeEnum.Array,
+} as const satisfies Record<
+  keyof typeof DataFieldDataTypeEnum,
+  DataFieldDataTypeEnum
+>;
+
+/**
+ * Curated field data type enum exposed by the SDK.
+ * Includes aliases for the legacy TEXT/URL identifiers for backwards compatibility.
  */
 export const SchemaFieldDataType = {
-  Text: "TEXT",
-  Number: "NUMBER",
-  Date: "DATE",
-  Url: "URL",
-  Email: "EMAIL",
-  Image: "IMAGE",
-  Video: "VIDEO",
-  Phone: "PHONE",
-  Boolean: "BOOLEAN",
-  Location: "LOCATION",
-  Array: "ARRAY",
-  Object: "OBJECT",
-} as const satisfies Record<string, string>;
+  ...CanonicalSchemaFieldDataType,
+  /** @deprecated use `SchemaFieldDataType.String` */
+  Text: DataFieldDataTypeEnum.String,
+  /** @deprecated use `SchemaFieldDataType.Link` */
+  Url: DataFieldDataTypeEnum.Link,
+} as const satisfies Record<string, DataFieldDataTypeEnum>;
 
 export type SchemaFieldDataType =
   (typeof SchemaFieldDataType)[keyof typeof SchemaFieldDataType];
 
-export type SchemaField =
-  | ExtractionSchemaField
-  | ExtractionClassificationField
-  | ExtractionMetadataField;
+export type SchemaField = DataField | ClassificationField | RawContentField;
 
 export type NavigationMode =
-  (typeof CreateWorkflowWithSchemaBodyNavigationModeEnum)[keyof typeof CreateWorkflowWithSchemaBodyNavigationModeEnum];
+  (typeof WorkflowWithExistingSchemaNavigationModeEnum)[keyof typeof WorkflowWithExistingSchemaNavigationModeEnum];
 
 export type DataTypeInternal =
-  (typeof ExtractionSchemaFieldDataTypeEnum)[keyof typeof ExtractionSchemaFieldDataTypeEnum];
+  (typeof DataFieldDataTypeEnum)[keyof typeof DataFieldDataTypeEnum];
 
 export type DataType = Exclude<
   DataTypeInternal,
@@ -114,10 +125,10 @@ export type DataType = Exclude<
 >;
 
 export type MetadataKey =
-  (typeof ExtractionMetadataFieldMetadataKeyEnum)[keyof typeof ExtractionMetadataFieldMetadataKeyEnum];
+  (typeof RawContentFieldMetadataKeyEnum)[keyof typeof RawContentFieldMetadataKeyEnum];
 
 export type WorkflowInterval =
-  (typeof CreateWorkflowWithSchemaBodyIntervalEnum)[keyof typeof CreateWorkflowWithSchemaBodyIntervalEnum];
+  (typeof WorkflowWithExistingSchemaIntervalEnum)[keyof typeof WorkflowWithExistingSchemaIntervalEnum];
 
 export type MonitoringOperator =
   (typeof V4WorkflowsWorkflowIdMetadataPutRequestMonitoringFieldsInnerOperatorEnum)[keyof typeof V4WorkflowsWorkflowIdMetadataPutRequestMonitoringFieldsInnerOperatorEnum];
@@ -130,12 +141,12 @@ export type MonitoringField =
 export type LocationConfig = Location;
 
 export type RawFormat =
-  (typeof ExtractionMetadataFieldMetadataKeyEnum)[keyof typeof ExtractionMetadataFieldMetadataKeyEnum];
+  (typeof RawContentFieldMetadataKeyEnum)[keyof typeof RawContentFieldMetadataKeyEnum];
 
 export type FieldType =
-  | ExtractionMetadataFieldFieldTypeEnum
-  | ExtractionClassificationFieldFieldTypeEnum
-  | ExtractionSchemaFieldFieldTypeEnum;
+  | RawContentFieldFieldTypeEnum
+  | ClassificationFieldFieldTypeEnum
+  | DataFieldFieldTypeEnum;
 
 export type WorkflowMonitoringConfig = MonitoringConfig;
 

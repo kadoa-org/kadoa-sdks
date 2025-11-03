@@ -1,12 +1,6 @@
 import { describe, expect, test } from "bun:test";
 import { SchemaBuilder } from "../../src/domains/schemas/schema-builder";
-import type {
-  CreateSchemaRequest,
-  SchemaResponse,
-} from "../../src/domains/schemas/schemas.acl";
-import type { SchemasService } from "../../src/domains/schemas/schemas.service";
-import { SchemasService as SchemasServiceClass } from "../../src/domains/schemas/schemas.service";
-import type { ExtractionSchemaField } from "../../src/generated";
+import type { DataField } from "../../src/generated";
 import { KadoaSdkException } from "../../src/runtime/exceptions";
 
 describe("SchemaBuilder", () => {
@@ -213,7 +207,7 @@ describe("SchemaBuilder", () => {
           example: "12345",
           isKey: true,
         });
-      const field = builder.fields[0] as ExtractionSchemaField;
+      const field = builder.fields[0] as DataField;
       expect(field.isKey).toBe(true);
     });
   });

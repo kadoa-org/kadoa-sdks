@@ -1,5 +1,5 @@
 import { afterAll, beforeAll, describe, expect, it } from "bun:test";
-import type { ExtractionSchemaField } from "../../src/generated";
+import type { DataField } from "../../src/generated";
 import { KadoaClient } from "../../src/kadoa-client";
 import { getTestEnv } from "../utils/env";
 
@@ -122,12 +122,12 @@ describe("Schemas Module E2E", () => {
     expect(schemaDefinition.fields).toHaveLength(5);
 
     // Verify field types
-    const schemaField: ExtractionSchemaField = schemaDefinition.fields.find(
+    const schemaField: DataField = schemaDefinition.fields.find(
       (f) => f.name === "title",
-    ) as ExtractionSchemaField;
-    const numberField: ExtractionSchemaField = schemaDefinition.fields.find(
+    ) as DataField;
+    const numberField: DataField = schemaDefinition.fields.find(
       (f) => f.name === "price",
-    ) as ExtractionSchemaField;
+    ) as DataField;
     const classificationField = schemaDefinition.fields.find(
       (f) => f.name === "sentiment",
     );

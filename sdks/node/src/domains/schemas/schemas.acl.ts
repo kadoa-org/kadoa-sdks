@@ -11,8 +11,8 @@
  */
 
 import {
-  type ExtractionClassificationFieldCategoriesInner,
-  type ExtractionSchemaFieldExample,
+  type ClassificationFieldCategoriesInner,
+  type DataFieldExample,
   type CreateSchemaBody as GeneratedCreateSchemaBody,
   type SchemaResponse as GeneratedSchemaResponse,
   type UpdateSchemaBody as GeneratedUpdateSchemaBody,
@@ -64,12 +64,12 @@ export type SchemaField = SchemaResponseSchemaInner;
 
 /**
  * Example value for a field.
- * Re-exported from generated ExtractionSchemaFieldExample model.
+ * Re-exported from generated DataFieldExample model.
  */
-export type FieldExample = ExtractionSchemaFieldExample;
+export type FieldExample = DataFieldExample;
 
 /**
  * Category definition for classification fields.
- * Re-exported from generated ExtractionClassificationFieldCategoriesInner model.
+ * Re-exported from generated ClassificationFieldCategoriesInner model.
  */
-export type Category = ExtractionClassificationFieldCategoriesInner;
+export type Category = ClassificationFieldCategoriesInner;
