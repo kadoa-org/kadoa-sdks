@@ -5,6 +5,22 @@
 
 * **workflows:** add `workflow.update` helper and new `workflow.delete` method; mark `workflow.cancel` deprecated with runtime warning
 
+## [0.15.1](https://github.com/kadoa-org/kadoa-sdks/compare/node-sdk-v0.15.0...node-sdk-v0.15.1) (2025-11-03)
+
+
+### Bug Fixes
+
+* **node-sdk:** add workflow update/delete and real-time extraction support ([56f0fbf](https://github.com/kadoa-org/kadoa-sdks/commit/56f0fbfa33cf398a8aca9b2d9619d8621ad3c4b0))
+
+
+### Miscellaneous Chores
+
+* **deps-dev:** bump @types/bun from 1.3.0 to 1.3.1 ([#112](https://github.com/kadoa-org/kadoa-sdks/issues/112)) ([20b8fa1](https://github.com/kadoa-org/kadoa-sdks/commit/20b8fa1704e0d21aa2996caabdf8c577424f7283))
+* **deps-dev:** bump @types/node from 24.7.2 to 24.9.1 ([#114](https://github.com/kadoa-org/kadoa-sdks/issues/114)) ([53c2c45](https://github.com/kadoa-org/kadoa-sdks/commit/53c2c454326de6cc3adf7b48bd53261fa4ecb5f6))
+* **deps-dev:** bump @types/node in /sdks/node in the development group ([#102](https://github.com/kadoa-org/kadoa-sdks/issues/102)) ([9523abd](https://github.com/kadoa-org/kadoa-sdks/commit/9523abdd897ecebc021a728522e0d5127fb805a8))
+* **deps:** bump the production group across 1 directory with 2 updates ([#120](https://github.com/kadoa-org/kadoa-sdks/issues/120)) ([0f60da9](https://github.com/kadoa-org/kadoa-sdks/commit/0f60da9586814e22f837d00b25ced35b6d14580a))
+* **spec:** update OpenAPI spec ([#100](https://github.com/kadoa-org/kadoa-sdks/issues/100)) ([46631ff](https://github.com/kadoa-org/kadoa-sdks/commit/46631ffa9b13e3ce0f21d7d9551d37688c2d64aa))
+
 ## [0.15.0](https://github.com/kadoa-org/kadoa-sdks/compare/node-sdk-v0.14.1...node-sdk-v0.15.0) (2025-10-16)
 
 
