@@ -5,6 +5,17 @@
 
 * **workflows:** add `workflow.update` helper and new `workflow.delete` method; mark `workflow.cancel` deprecated with runtime warning
 
+## [0.17.0](https://github.com/kadoa-org/kadoa-sdks/compare/node-sdk-v0.16.1...node-sdk-v0.17.0) (2025-11-03)
+
+
+### ⚠ BREAKING CHANGES
+
+* **node-sdk:** RealtimeConfig.teamApiKey renamed to apiKey
+
+### Features
+
+* **node-sdk:** allow personal API keys for realtime connections ([#129](https://github.com/kadoa-org/kadoa-sdks/issues/129)) ([779e6fd](https://github.com/kadoa-org/kadoa-sdks/commit/779e6fde74e4bd7ee25a622e60af5be6d6ef7aa6))
+
 ## [0.16.1](https://github.com/kadoa-org/kadoa-sdks/compare/node-sdk-v0.16.0...node-sdk-v0.16.1) (2025-11-03)
 
 
