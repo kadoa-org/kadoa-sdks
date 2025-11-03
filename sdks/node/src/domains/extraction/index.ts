@@ -42,5 +42,6 @@ export type {
   FinishedExtraction,
   PreparedExtraction,
   SubmittedExtraction,
+  WaitForReadyOptions,
 } from "./services/extraction-builder.service";
 export { ExtractionBuilderService } from "./services/extraction-builder.service";

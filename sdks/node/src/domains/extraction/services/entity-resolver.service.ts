@@ -25,6 +25,7 @@ export interface EntityRequestOptions {
   link: string;
   location?: LocationConfig;
   navigationMode?: string;
+  selectorMode?: boolean;
 }
 
 export interface ResolvedEntity {
@@ -66,6 +67,7 @@ export class EntityResolverService {
       link?: string;
       location?: LocationConfig;
       navigationMode?: string;
+      selectorMode?: boolean;
     },
   ): Promise<ResolvedEntity> {
     if (entityConfig === "ai-detection") {
@@ -81,6 +83,7 @@ export class EntityResolverService {
         link: options.link,
         location: options.location,
         navigationMode: options.navigationMode,
+        selectorMode: options.selectorMode ?? false,
       });
 
       const entity = entityPrediction.entity;

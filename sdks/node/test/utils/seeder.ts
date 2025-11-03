@@ -1,7 +1,11 @@
 import type { KadoaClient } from "../../src";
 
 export const seedWorkflow = async (
-  { name, runJob = false }: { name: string; runJob?: boolean },
+  {
+    name,
+    runJob = false,
+    additionalData,
+  }: { name: string; runJob?: boolean; additionalData?: Record<string, unknown> },
   client: KadoaClient,
 ): Promise<{ workflowId: string; jobId?: string }> => {
   console.log(`[Seeder] Seeding workflow: ${name}`);
@@ -33,6 +37,7 @@ export const seedWorkflow = async (
       name,
       urls: ["https://sandbox.kadoa.com/careers"],
       bypassPreview: true,
+      additionalData,
     })
     .create();
 

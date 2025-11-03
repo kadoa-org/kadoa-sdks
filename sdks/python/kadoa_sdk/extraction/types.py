@@ -24,6 +24,7 @@ class ExtractionOptions:
     polling_interval: Optional[float] = None  # seconds
     max_wait_time: Optional[float] = None  # seconds
     max_records: Optional[int] = None
+    additional_data: Optional[Dict[str, Any]] = None
 
 
 @dataclass

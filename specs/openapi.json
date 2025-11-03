@@ -2806,6 +2806,10 @@
                             "type": "integer",
                             "description": "Maximum number of items to scrape"
                           },
+                          "additionalData": {
+                            "type": "object",
+                            "description": "Additional static data for the workflow"
+                          },
                           "finishedAt": {
                             "type": "string",
                             "format": "date-time",
@@ -15329,6 +15333,10 @@
             "nullable": true,
             "description": "Additional data for the workflow (e.g. IDs from your system to link data)"
           },
+          "additionalData": {
+            "type": "object",
+            "description": "Additional static data for the workflow"
+          },
           "userPrompt": {
             "type": "string",
             "minLength": 10,
@@ -15478,10 +15486,10 @@
             "description": "Enable data quality validation. When true, scraped data is validated against the schema and anomalies are detected"
           },
           "additionalData": {
-            "nullable": true,
-            "description": "Additional data for the workflow (e.g. IDs from your system to link data)"
+            "type": "object",
+            "description": "Additional static data for the workflow"
           },
-          "entity": {
+          "schemaId": {
             "type": "string",
             "minLength": 1,
             "description": "Entity name for extraction (e.g., 'Product', 'JobListing')"
@@ -15622,8 +15630,13 @@
             "description": "Enable data quality validation. When true, scraped data is validated against the schema and anomalies are detected"
           },
           "additionalData": {
-            "nullable": true,
-            "description": "Additional data for the workflow (e.g. IDs from your system to link data)"
+            "type": "object",
+            "description": "Additional static data for the workflow"
+          },
+          "entity": {
+            "type": "string",
+            "minLength": 1,
+            "description": "Entity name for extraction"
           },
           "schemaId": {
             "type": "string",

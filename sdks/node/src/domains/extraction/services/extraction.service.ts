@@ -53,6 +53,7 @@ export interface ExtractionOptionsInternal {
   tags?: string[];
   notifications?: NotificationOptions;
   autoStart?: boolean;
+  additionalData?: Record<string, unknown>;
 }
 
 export type ExtractionOptions = {
@@ -200,6 +201,21 @@ export class ExtractionService {
       DEFAULT_OPTIONS,
       options,
     );
+
+    const isRealTime = config.interval === "REAL_TIME";
+
+    // Real-time workflows cannot use run()/submit() - they use a different execution model
+    if (isRealTime) {
+      throw new KadoaSdkException(
+        "extraction.run()/submit() are not supported for real-time workflows. Use the builder API, call waitForReady(), and subscribe via client.realtime.onEvent(...).",
+        {
+          code: "BAD_REQUEST",
+          details: {
+            interval: "REAL_TIME",
+          },
+        },
+      );
+    }
 
     let workflowId: string;
 

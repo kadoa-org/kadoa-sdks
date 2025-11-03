@@ -3,6 +3,7 @@
  * Public boundary for workflows functionality.
  */
 
+export { validateAdditionalData } from "../../runtime/utils";
 // ACL types (owned by workflows.acl.ts)
 export type {
   CreateWorkflowRequest,
@@ -17,13 +18,14 @@ export type {
   RunWorkflowRequest,
   RunWorkflowResponse,
   UpdateInterval,
+  UpdateWorkflowRequest,
+  UpdateWorkflowResponse,
   WorkflowDisplayStateEnum,
   WorkflowResponse,
   WorkflowState,
   WorkflowStateEnum,
   WorkflowsApiInterface,
 } from "./workflows.acl";
-
 // Service types (owned by workflows-core.service.ts)
 export type {
   CreateWorkflowInput,
@@ -32,6 +34,5 @@ export type {
   WaitOptions,
   WorkflowId,
 } from "./workflows-core.service";
-
 // Service class
 export { WorkflowsCoreService } from "./workflows-core.service";

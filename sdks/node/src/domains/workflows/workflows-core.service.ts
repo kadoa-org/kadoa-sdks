@@ -1,7 +1,11 @@
 import { KadoaSdkException } from "../../runtime/exceptions";
 import { ERROR_MESSAGES } from "../../runtime/exceptions/base.exception";
 import { logger } from "../../runtime/logger";
-import { type PollingOptions, pollUntil } from "../../runtime/utils";
+import {
+  type PollingOptions,
+  pollUntil,
+  validateAdditionalData,
+} from "../../runtime/utils";
 import type {
   LocationConfig,
   NavigationMode,
@@ -18,6 +22,8 @@ import {
   type MonitoringConfig,
   type RunWorkflowRequest,
   type RunWorkflowResponse,
+  type UpdateWorkflowRequest,
+  type UpdateWorkflowResponse,
   type WorkflowResponse,
   type WorkflowStateEnum,
   type WorkflowsApiInterface,
@@ -49,6 +55,7 @@ export interface CreateWorkflowInput {
   bypassPreview?: boolean;
   autoStart?: boolean;
   schedules?: string[];
+  additionalData?: Record<string, unknown>;
 }
 
 const TERMINAL_JOB_STATES: Set<JobStateEnum> = new Set([
@@ -73,6 +80,8 @@ export class WorkflowsCoreService {
   constructor(private readonly workflowsApi: WorkflowsApiInterface) {}
 
   async create(input: CreateWorkflowInput): Promise<{ id: WorkflowId }> {
+    validateAdditionalData(input.additionalData);
+
     const request:
       | CreateWorkflowRequest
       | CreateWorkflowWithCustomSchemaRequest = {
@@ -90,6 +99,7 @@ export class WorkflowsCoreService {
       location: input.location,
       autoStart: input.autoStart,
       schedules: input.schedules,
+      additionalData: input.additionalData,
     };
 
     const response = await this.workflowsApi.v4WorkflowsPost({
@@ -112,25 +122,48 @@ export class WorkflowsCoreService {
     const response = await this.workflowsApi.v4WorkflowsWorkflowIdGet({
       workflowId: id,
     });
-    return response.data;
+    return response.data as GetWorkflowResponse;
   }
 
   async list(filters?: ListWorkflowsRequest): Promise<WorkflowResponse[]> {
     const response = await this.workflowsApi.v4WorkflowsGet(filters);
-    return response.data?.workflows ?? [];
+    return (response.data?.workflows ?? []) as WorkflowResponse[];
   }
 
   async getByName(name: string): Promise<WorkflowResponse | undefined> {
     const response = await this.workflowsApi.v4WorkflowsGet({
       search: name,
     });
-    return response.data?.workflows?.[0];
+    return response.data?.workflows?.[0] as WorkflowResponse | undefined;
   }
 
+  /**
+   * @deprecated Use delete(id) instead.
+   */
   async cancel(id: WorkflowId): Promise<void> {
+    console.warn(
+      "[Kadoa SDK] workflow.cancel(id) will be deprecated. Use workflow.delete(id).",
+    );
+    await this.delete(id);
+  }
+
+  async delete(id: WorkflowId): Promise<void> {
     await this.workflowsApi.v4WorkflowsWorkflowIdDelete({
       workflowId: id,
     });
+  }
+
+  async update(
+    id: WorkflowId,
+    input: UpdateWorkflowRequest,
+  ): Promise<UpdateWorkflowResponse> {
+    validateAdditionalData(input.additionalData);
+
+    const response = await this.workflowsApi.v4WorkflowsWorkflowIdMetadataPut({
+      workflowId: id,
+      v4WorkflowsWorkflowIdMetadataPutRequest: input,
+    });
+    return response.data;
   }
 
   async resume(id: WorkflowId): Promise<void> {
