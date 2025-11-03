@@ -1,6 +1,5 @@
 import assert from "node:assert";
 import { KadoaSdkException } from "../../../runtime/exceptions";
-import { ERROR_MESSAGES } from "../../../runtime/exceptions/base.exception";
 import { logger } from "../../../runtime/logger";
 import type {
   NotificationOptions,
@@ -142,6 +141,7 @@ export class ExtractionBuilderService {
     navigationMode,
     extraction,
     additionalData,
+    bypassPreview,
   }: ExtractOptions): PreparedExtraction {
     let entity: EntityConfig = "ai-detection";
 
@@ -164,7 +164,7 @@ export class ExtractionBuilderService {
       description,
       navigationMode: navigationMode || "single-page",
       entity,
-      bypassPreview: false,
+      bypassPreview: bypassPreview ?? false,
       additionalData,
     };
     return this;
@@ -242,6 +242,7 @@ export class ExtractionBuilderService {
       interval: this._options.interval,
       schedules: this._options.schedules,
       additionalData: this._options.additionalData,
+      bypassPreview: this._options.bypassPreview,
     });
 
     if (this._notificationOptions) {

@@ -5,8 +5,6 @@
  */
 
 import type {
-  CreateWorkflowWithCustomSchemaBody,
-  CreateWorkflowWithSchemaBody,
   MonitoringConfig,
   V4WorkflowsGet200ResponseWorkflowsInner,
   V4WorkflowsGet200ResponseWorkflowsInnerDisplayStateEnum,
@@ -25,6 +23,8 @@ import type {
   V4WorkflowsWorkflowIdRunPutRequest,
   WorkflowsApiInterface,
   WorkflowsApiV4WorkflowsGetRequest,
+  WorkflowWithEntityAndFields,
+  WorkflowWithExistingSchema,
 } from "../../generated";
 
 // ========================================
@@ -179,10 +179,9 @@ export class ListWorkflowsRequest implements WorkflowsApiV4WorkflowsGetRequest {
   format?: ResponseFormat;
 }
 
-export type CreateWorkflowRequest = CreateWorkflowWithSchemaBody;
+export type CreateWorkflowRequest = WorkflowWithExistingSchema;
 
-export type CreateWorkflowWithCustomSchemaRequest =
-  CreateWorkflowWithCustomSchemaBody;
+export type CreateWorkflowWithCustomSchemaRequest = WorkflowWithEntityAndFields;
 
 // ========================================
 // Response Types
