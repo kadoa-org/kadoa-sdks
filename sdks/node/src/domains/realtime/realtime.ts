@@ -3,7 +3,6 @@ import {
   REALTIME_API_URI,
   WSS_API_URI,
 } from "../../runtime/config";
-import { KadoaSdkException } from "../../runtime/exceptions";
 import { logger } from "../../runtime/logger";
 import { SDK_VERSION } from "../../version";
 
@@ -15,7 +14,7 @@ if (typeof WebSocket === "undefined") {
 }
 
 export interface RealtimeConfig {
-  teamApiKey: string;
+  apiKey: string;
   heartbeatInterval?: number;
   reconnectDelay?: number;
   missedHeartbeatsLimit?: number;
@@ -29,7 +28,7 @@ export class Realtime {
   private isConnecting: boolean = false;
   private missedHeartbeatsLimit: number;
   private missedHeartbeatCheckTimer?: ReturnType<typeof setInterval>;
-  private teamApiKey?: string;
+  private apiKey?: string;
   private eventListeners: Set<(event: unknown) => void> = new Set();
   private connectionListeners: Set<
     (connected: boolean, reason?: string) => void
@@ -37,17 +36,7 @@ export class Realtime {
   private errorListeners: Set<(error: unknown) => void> = new Set();
 
   constructor(config: RealtimeConfig) {
-    if (!config.teamApiKey.startsWith("tk-")) {
-      throw new KadoaSdkException(
-        "Realtime connection requires a team API key (starting with 'tk-'). " +
-          "Provided key does not appear to be a team API key.",
-        {
-          code: "AUTH_ERROR",
-          details: { providedKeyPrefix: config.teamApiKey.substring(0, 3) },
-        },
-      );
-    }
-    this.teamApiKey = config.teamApiKey;
+    this.apiKey = config.apiKey;
     this.heartbeatInterval = config.heartbeatInterval || 10000;
     this.reconnectDelay = config.reconnectDelay || 5000;
     this.missedHeartbeatsLimit = config.missedHeartbeatsLimit || 30000;
@@ -62,7 +51,7 @@ export class Realtime {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
-          "x-api-key": `${this.teamApiKey}`,
+          "x-api-key": `${this.apiKey}`,
           "x-sdk-version": SDK_VERSION,
         },
       });

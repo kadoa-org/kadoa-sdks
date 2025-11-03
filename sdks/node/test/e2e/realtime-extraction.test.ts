@@ -36,15 +36,12 @@ const toWorkflowId = (event: unknown): string | undefined => {
 };
 
 const env = getE2ETestEnv();
-const isTeamKey = env.KADOA_API_KEY.startsWith("tk-");
 
 describe("Realtime extraction lifecycle", () => {
   let client: KadoaClient | undefined;
   let unsubscribe: (() => void) | undefined;
 
   beforeAll(() => {
-    if (!isTeamKey) return;
-
     client = new KadoaClient({
       apiKey: env.KADOA_API_KEY,
       timeout: 30000,
@@ -53,8 +50,6 @@ describe("Realtime extraction lifecycle", () => {
   });
 
   afterAll(async () => {
-    if (!isTeamKey) return;
-
     unsubscribe?.();
     if (client) {
       try {
@@ -68,13 +63,6 @@ describe("Realtime extraction lifecycle", () => {
   test(
     "creates a realtime workflow and waits for preview",
     async () => {
-      if (!isTeamKey) {
-        console.warn(
-          "Skipping realtime extraction e2e test: requires a team API key with realtime monitoring enabled.",
-        );
-        return;
-      }
-
       if (!client) {
         throw new Error("Client not initialised");
       }

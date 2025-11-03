@@ -40,7 +40,7 @@ echo 'eval "$(direnv hook bash)"' >> ~/.bashrc
    ```bash
    # Required for tests
    KADOA_API_KEY=your-api-key-here
-   TEST_USER_API_KEY=your-api-key-here  # Same as KADOA_API_KEY for Node features (must start with tk-)
+   TEST_USER_API_KEY=your-api-key-here  # Same as KADOA_API_KEY for Node features (personal or team API key)
    ```
 
 3. Allow direnv to load the environment:
