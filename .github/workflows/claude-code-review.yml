@@ -5,9 +5,15 @@ on:
         types: [opened, synchronize]
         # Only review code changes, skip docs-only PRs
         paths:
-            - "sdks/**/*.ts"
-            - "tools/**/*.ts"
+            - "sdks/**"
+            - "tools/**"
             - ".github/workflows/**"
+        paths-ignore:
+            - "sdks/node/src/generated/**"
+            - "sdks/python/openapi_client/**"
+            - "sdks/python/.generated_temp/**"
+            - "**/__pycache__/**"
+            - "**/*.egg-info/**"
 permissions:
     contents: read
     pull-requests: write
@@ -45,10 +51,11 @@ jobs:
                       --model claude-sonnet-4-5-20250929
                       --max-turns 10
                       --allowedTools "mcp__github_inline_comment__create_inline_comment,Bash(gh pr comment:*),Bash(gh pr diff:*),Bash(gh pr view:*)"
-                      --system-prompt "You are reviewing code for a TypeScript SDK monorepo. Follow @CLAUDE.md and @sdks/node/STYLEGUIDE.md strictly.
+                      --system-prompt "You are reviewing code for an SDK monorepo (TypeScript/Node.js and Python). Follow @CLAUDE.md strictly.
 
                       **Architecture (requires AI judgment):**
                       - API design: evaluate type safety, interface contracts, error handling patterns
+                      - Follow language-specific conventions in @sdks/node/STYLEGUIDE.md and @sdks/python/CLAUDE.md
 
                       **ACL Patterns (if '*.acl.ts' changed):**
                       - Explicit 'implements' over type aliases, proper naming ('VerbResourceRequest', 'ResourceResponse')
