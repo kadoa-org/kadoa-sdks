@@ -8,12 +8,6 @@ on:
             - "sdks/**"
             - "tools/**"
             - ".github/workflows/**"
-        paths-ignore:
-            - "sdks/node/src/generated/**"
-            - "sdks/python/openapi_client/**"
-            - "sdks/python/.generated_temp/**"
-            - "**/__pycache__/**"
-            - "**/*.egg-info/**"
 permissions:
     contents: read
     pull-requests: write
