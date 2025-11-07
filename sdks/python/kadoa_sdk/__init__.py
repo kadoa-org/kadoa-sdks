@@ -1,6 +1,5 @@
 from .client import KadoaClient, KadoaClientConfig
-from .core import KadoaHttpException, KadoaSdkException
-from .core.events import AnyKadoaEvent, KadoaEvent
+from .core import KadoaHttpError, KadoaSdkError
 from .extraction import (
     ExtractionModule,
     ExtractionOptions,
@@ -23,10 +22,8 @@ __all__ = [
     "KadoaClientConfig",
     "KadoaSdkConfig",
     "initialize_sdk",
-    "KadoaSdkException",
-    "KadoaHttpException",
-    "KadoaEvent",
-    "AnyKadoaEvent",
+    "KadoaSdkError",
+    "KadoaHttpError",
     "ExtractionModule",
     "ExtractionOptions",
     "ExtractionResult",

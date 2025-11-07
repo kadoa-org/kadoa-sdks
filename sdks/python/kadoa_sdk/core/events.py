@@ -1,9 +1,10 @@
 from __future__ import annotations
 
-from dataclasses import dataclass
 from datetime import datetime
 from threading import RLock
 from typing import Any, Dict, List, Literal, Optional, Protocol, TypedDict, Union
+
+from pydantic import BaseModel
 
 
 class EntityField(TypedDict, total=False):
@@ -49,12 +50,43 @@ class ExtractionCompletedPayload(TypedDict, total=False):
     error: Optional[str]
 
 
+class RealtimeConnectedPayload(TypedDict, total=False):
+    teamId: Optional[str]
+    connectedAt: datetime
+
+
+class RealtimeDisconnectedPayload(TypedDict):
+    reason: Optional[str]
+    willReconnect: bool
+
+
+class RealtimeEventPayload(TypedDict, total=False):
+    data: Any
+    id: Optional[str]
+    type: Optional[str]
+
+
+class RealtimeHeartbeatPayload(TypedDict):
+    timestamp: datetime
+
+
+class RealtimeErrorPayload(TypedDict, total=False):
+    message: str
+    code: Optional[str]
+    details: Optional[Any]
+
+
 EventPayloadMap = Union[
     EntityDetectedPayload,
     ExtractionStartedPayload,
     ExtractionStatusChangedPayload,
     ExtractionDataAvailablePayload,
     ExtractionCompletedPayload,
+    RealtimeConnectedPayload,
+    RealtimeDisconnectedPayload,
+    RealtimeEventPayload,
+    RealtimeHeartbeatPayload,
+    RealtimeErrorPayload,
 ]
 
 KadoaEventName = Literal[
@@ -63,11 +95,15 @@ KadoaEventName = Literal[
     "extraction:status_changed",
     "extraction:data_available",
     "extraction:completed",
+    "realtime:connected",
+    "realtime:disconnected",
+    "realtime:event",
+    "realtime:heartbeat",
+    "realtime:error",
 ]
 
 
-@dataclass
-class KadoaEvent:
+class KadoaEvent(BaseModel):
     type: KadoaEventName
     timestamp: datetime
     source: str
@@ -121,7 +157,9 @@ class KadoaEventEmitter:
 
     def off_event(self, listener: EventListener) -> None:
         with self._lock:
-            self._listeners = [l for l in self._listeners if l is not listener]
+            self._listeners = [
+                listener_item for listener_item in self._listeners if listener_item is not listener
+            ]
 
     def remove_all_event_listeners(self) -> None:
         with self._lock:

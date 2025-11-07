@@ -1,62 +1,145 @@
 from __future__ import annotations
 
-from dataclasses import dataclass
-from typing import Callable, Optional
+import asyncio
+from typing import Optional
 
-from openapi_client import ApiClient, Configuration
+from pydantic import BaseModel
 
-from .core.events import (
-    AnyKadoaEvent,
-    EventPayloadMap,
-    KadoaEventEmitter,
-    KadoaEventName,
+from .core.core_acl import ApiClient, Configuration
+from .core.http import (
+    get_notifications_api,
 )
+from .core.realtime import Realtime, RealtimeConfig
+from .core.settings import get_settings
 from .extraction import ExtractionModule
-from .version import __version__, SDK_NAME, SDK_LANGUAGE
+from .extraction.services.extraction_builder_service import (
+    ExtractionBuilderService,
+    PreparedExtraction,
+)
+from .extraction.types import ExtractOptions
+from .notifications import (
+    NotificationChannelsService,
+    NotificationOptions,
+    NotificationSettingsService,
+    NotificationSetupService,
+    SetupWorkflowNotificationSettingsRequest,
+    SetupWorkspaceNotificationSettingsRequest,
+)
+from .schemas import SchemasService
+from .user import UserService
+from .validation import ValidationCoreService, ValidationDomain, ValidationRulesService
+from .version import SDK_LANGUAGE, SDK_NAME, __version__
+from .workflows import WorkflowsCoreService
 
 
-@dataclass
-class KadoaClientConfig:
-    api_key: str
+class KadoaClientConfig(BaseModel):
+    api_key: Optional[str] = None
     base_url: Optional[str] = None
     timeout: Optional[int] = None
+    enable_realtime: bool = False
+    realtime_config: Optional[RealtimeConfig] = None
+
+
+class KadoaClientStatus(BaseModel):
+    """Status information for the Kadoa client"""
+
+    base_url: str
+    user: "KadoaUser"  # Forward reference to avoid circular import
+    realtime_connected: bool
 
 
 class KadoaClient:
     def __init__(self, config: KadoaClientConfig) -> None:
-        self._base_url = config.base_url or "https://api.kadoa.com"
-        self._timeout = config.timeout or 30
+        settings = get_settings()
+
+        self._base_url = config.base_url or settings.public_api_uri
+
+        if config.timeout is not None:
+            self._timeout = config.timeout
+        else:
+            self._timeout = settings.get_timeout_seconds()
+
+        self._api_key = config.api_key or settings.api_key or ""
 
         configuration = Configuration()
         configuration.host = self._base_url
-        configuration.api_key = {"ApiKeyAuth": config.api_key}
+        configuration.api_key = {"ApiKeyAuth": self._api_key}
+
+        if not self._api_key:
+            raise ValueError(
+                "API key is required. Provide it via config.api_key "
+                "or KADOA_API_KEY environment variable"
+            )
 
         self._configuration = configuration
         self._api_client = ApiClient(self._configuration)
 
-        # Set SDK identification headers
         self._api_client.default_headers["User-Agent"] = f"{SDK_NAME}/{__version__}"
         self._api_client.default_headers["X-SDK-Version"] = __version__
         self._api_client.default_headers["X-SDK-Language"] = SDK_LANGUAGE
 
-        self._events = KadoaEventEmitter()
+        self._realtime: Optional[Realtime] = None
 
         self.extraction = ExtractionModule(self)
+        self.user = UserService(self)
+        self.schema = SchemasService(self)
+        self.workflow = WorkflowsCoreService(self)
+        self._extraction_builder = ExtractionBuilderService(self)
 
-    def on_event(self, listener: Callable[[AnyKadoaEvent], None]) -> None:
-        self._events.on_event(listener)
+        notifications_api = get_notifications_api(self)
+        user_service = UserService(self)
+        channels_service = NotificationChannelsService(notifications_api, user_service)
+        settings_service = NotificationSettingsService(notifications_api)
+        setup_service = NotificationSetupService(channels_service, settings_service)
 
-    def off_event(self, listener: Callable[[AnyKadoaEvent], None]) -> None:
-        self._events.off_event(listener)
+        self.notification = NotificationDomain(
+            channels=channels_service,
+            settings=settings_service,
+            setup=setup_service,
+        )
 
-    def emit(
-        self,
-        event_name: KadoaEventName,
-        payload: EventPayloadMap,
-        source: Optional[str] = None,
-        metadata: Optional[dict] = None,
-    ) -> None:
-        self._events.emit(event_name, payload, source or "sdk", metadata)
+        core_service = ValidationCoreService(self)
+        rules_service = ValidationRulesService(self)
+
+        self.validation = ValidationDomain(
+            core=core_service,
+            rules=rules_service,
+        )
+
+        if config.enable_realtime:
+            self.connect_realtime()
+
+    def connect_realtime(self) -> Realtime:
+        """Connect to realtime WebSocket server
+
+        Note: This is a synchronous wrapper around async WebSocket connection.
+        The connection is established in a background task if an event loop is running,
+        otherwise it blocks until the connection is established.
+        """
+        if not self._realtime:
+            realtime_config = RealtimeConfig(api_key=self._api_key)
+            self._realtime = Realtime(realtime_config)
+
+            loop = self._realtime._get_or_create_loop()
+            if loop.is_running():
+                # If loop is already running, schedule connection as a task
+                # This allows the connection to happen asynchronously without blocking
+                asyncio.create_task(self._realtime.connect())
+            else:
+                # If no loop is running, run until complete (blocks until connected)
+                # This is acceptable for synchronous SDK usage
+                loop.run_until_complete(self._realtime.connect())
+        return self._realtime
+
+    def disconnect_realtime(self) -> None:
+        """Disconnect from realtime WebSocket server"""
+        if self._realtime:
+            self._realtime.close()
+            self._realtime = None
+
+    def is_realtime_connected(self) -> bool:
+        """Check if realtime WebSocket is connected"""
+        return self._realtime.is_connected() if self._realtime else False
 
     @property
     def configuration(self) -> Configuration:
@@ -71,8 +154,93 @@ class KadoaClient:
         return self._timeout
 
     @property
-    def events(self) -> KadoaEventEmitter:
-        return self._events
+    def api_key(self) -> str:
+        return self._api_key
 
     def dispose(self) -> None:
-        self._events.remove_all_event_listeners()
+        """Dispose of client resources including HTTP sessions and realtime connections"""
+        # Note: urllib3 manages connections automatically, no explicit cleanup needed
+        # Disconnect realtime
+        if self._realtime:
+            self.disconnect_realtime()
+
+    async def status(self) -> KadoaClientStatus:
+        """Get the status of the client
+
+        Returns:
+            KadoaClientStatus: Status information including base_url, user, and realtime_connected
+        """
+        from .user import KadoaUser
+
+        return KadoaClientStatus(
+            base_url=self._base_url,
+            user=await self.user.get_current_user(),
+            realtime_connected=self.is_realtime_connected(),
+        )
+
+    def extract(self, options: ExtractOptions) -> PreparedExtraction:
+        """
+        Create a prepared extraction using the fluent builder API
+
+        Args:
+            options: Extraction options including URLs and optional extraction builder
+
+        Returns:
+            PreparedExtraction that can be configured with notifications, monitoring, etc.
+
+        Example:
+            ```python
+            extraction = client.extract(
+                urls=["https://example.com"],
+                name="My Extraction"
+            ).create()
+            ```
+        """
+        return self._extraction_builder.extract(options)
+
+
+class NotificationDomain:
+    """Notification domain providing access to channels, settings, and setup services"""
+
+    def __init__(
+        self,
+        channels: NotificationChannelsService,
+        settings: NotificationSettingsService,
+        setup: NotificationSetupService,
+    ) -> None:
+        self.channels = channels
+        self.settings = settings
+        self.setup = setup
+
+    def configure(self, options: NotificationOptions) -> list:
+        """Configure notifications (convenience method)
+
+        Args:
+            options: Notification options
+
+        Returns:
+            List of created notification settings
+        """
+        return self.setup.setup(options)
+
+    def setup_for_workflow(self, request: SetupWorkflowNotificationSettingsRequest) -> list:
+        """Setup notifications for a specific workflow
+
+        Args:
+            request: Workflow notification setup request
+
+        Returns:
+            List of created notification settings
+        """
+        return self.setup.setup_for_workflow(request)
+
+    def setup_for_workspace(self, request: SetupWorkspaceNotificationSettingsRequest) -> list:
+        """Setup notifications for the workspace
+
+        Args:
+            request: Workspace notification setup request
+
+        Returns:
+            List of created notification settings
+        """
+        return self.setup.setup_for_workspace(request)

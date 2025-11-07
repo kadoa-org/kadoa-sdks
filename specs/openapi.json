@@ -1294,6 +1294,18 @@
                         }
                       },
                       "description": "Monitoring configuration"
+                    },
+                    "channelCounts": {
+                      "type": "object",
+                      "description": "Number of connected channels per event type",
+                      "additionalProperties": {
+                        "type": "integer"
+                      },
+                      "example": {
+                        "workflow_data_change": 3,
+                        "workflow_finished": 1,
+                        "workflow_failed": 2
+                      }
                     }
                   }
                 }
@@ -2806,10 +2818,6 @@
                             "type": "integer",
                             "description": "Maximum number of items to scrape"
                           },
-                          "additionalData": {
-                            "type": "object",
-                            "description": "Additional static data for the workflow"
-                          },
                           "finishedAt": {
                             "type": "string",
                             "format": "date-time",
@@ -3079,6 +3087,18 @@
                               }
                             },
                             "description": "Monitoring configuration"
+                          },
+                          "channelCounts": {
+                            "type": "object",
+                            "description": "Number of connected channels per event type",
+                            "additionalProperties": {
+                              "type": "integer"
+                            },
+                            "example": {
+                              "workflow_data_change": 3,
+                              "workflow_finished": 1,
+                              "workflow_failed": 2
+                            }
                           }
                         }
                       }
@@ -4174,6 +4194,15 @@
               "type": "string"
             },
             "description": "Workflow ID (optional, if provided returns channels linked to this workflow)"
+          },
+          {
+            "in": "query",
+            "name": "includeConfigurations",
+            "schema": {
+              "type": "boolean",
+              "default": true
+            },
+            "description": "Include linked notification configurations with workflow information"
           }
         ],
         "responses": {
@@ -4218,6 +4247,32 @@
                                     "$ref": "#/components/schemas/WebsocketChannelConfig"
                                   }
                                 ]
+                              },
+                              "linkedConfigurations": {
+                                "type": "array",
+                                "description": "List of notification configurations linked to this channel",
+                                "items": {
+                                  "type": "object",
+                                  "properties": {
+                                    "configurationId": {
+                                      "type": "string",
+                                      "description": "The configuration ID"
+                                    },
+                                    "workflowId": {
+                                      "type": "string",
+                                      "nullable": true,
+                                      "description": "Workflow ID if this is a workflow-specific configuration, null for workspace-level configurations"
+                                    },
+                                    "eventType": {
+                                      "type": "string",
+                                      "description": "Event type for this configuration (e.g., workflow_sample_finished, workflow_data_change)"
+                                    },
+                                    "enabled": {
+                                      "type": "boolean",
+                                      "description": "Whether this configuration is enabled"
+                                    }
+                                  }
+                                }
                               },
                               "createdAt": {
                                 "type": "string"
@@ -4365,6 +4420,15 @@
               "type": "string"
             },
             "description": "Channel ID"
+          },
+          {
+            "in": "query",
+            "name": "includeConfigurations",
+            "schema": {
+              "type": "boolean",
+              "default": true
+            },
+            "description": "Include linked notification configurations with workflow information"
           }
         ],
         "responses": {
@@ -4379,7 +4443,68 @@
                       "type": "object",
                       "properties": {
                         "channel": {
-                          "type": "object"
+                          "type": "object",
+                          "properties": {
+                            "id": {
+                              "type": "string"
+                            },
+                            "name": {
+                              "type": "string"
+                            },
+                            "channelType": {
+                              "type": "string"
+                            },
+                            "config": {
+                              "type": "object",
+                              "description": "Configuration object specific to the channel type",
+                              "oneOf": [
+                                {
+                                  "$ref": "#/components/schemas/EmailChannelConfig"
+                                },
+                                {
+                                  "$ref": "#/components/schemas/SlackChannelConfig"
+                                },
+                                {
+                                  "$ref": "#/components/schemas/WebhookChannelConfig"
+                                },
+                                {
+                                  "$ref": "#/components/schemas/WebsocketChannelConfig"
+                                }
+                              ]
+                            },
+                            "linkedConfigurations": {
+                              "type": "array",
+                              "description": "List of notification configurations linked to this channel",
+                              "items": {
+                                "type": "object",
+                                "properties": {
+                                  "configurationId": {
+                                    "type": "string",
+                                    "description": "The configuration ID"
+                                  },
+                                  "workflowId": {
+                                    "type": "string",
+                                    "nullable": true,
+                                    "description": "Workflow ID if this is a workflow-specific configuration, null for workspace-level configurations"
+                                  },
+                                  "eventType": {
+                                    "type": "string",
+                                    "description": "Event type for this configuration (e.g., workflow_sample_finished, workflow_data_change)"
+                                  },
+                                  "enabled": {
+                                    "type": "boolean",
+                                    "description": "Whether this configuration is enabled"
+                                  }
+                                }
+                              }
+                            },
+                            "createdAt": {
+                              "type": "string"
+                            },
+                            "updatedAt": {
+                              "type": "string"
+                            }
+                          }
                         }
                       }
                     },
@@ -15330,9 +15455,8 @@
             "description": "Enable data quality validation. When true, scraped data is validated against the schema and anomalies are detected"
           },
           "additionalData": {
-            "type": "object",
             "nullable": true,
-            "description": "Additional static data for the workflow (e.g. IDs from your system to link data)"
+            "description": "Additional data for the workflow (e.g. IDs from your system to link data)"
           },
           "userPrompt": {
             "type": "string",
@@ -15483,10 +15607,10 @@
             "description": "Enable data quality validation. When true, scraped data is validated against the schema and anomalies are detected"
           },
           "additionalData": {
-            "type": "object",
-            "description": "Additional static data for the workflow"
+            "nullable": true,
+            "description": "Additional data for the workflow (e.g. IDs from your system to link data)"
           },
-          "schemaId": {
+          "entity": {
             "type": "string",
             "minLength": 1,
             "description": "Entity name for extraction (e.g., 'Product', 'JobListing')"
@@ -15627,13 +15751,8 @@
             "description": "Enable data quality validation. When true, scraped data is validated against the schema and anomalies are detected"
           },
           "additionalData": {
-            "type": "object",
-            "description": "Additional static data for the workflow"
-          },
-          "entity": {
-            "type": "string",
-            "minLength": 1,
-            "description": "Entity name for extraction"
+            "nullable": true,
+            "description": "Additional data for the workflow (e.g. IDs from your system to link data)"
           },
           "schemaId": {
             "type": "string",
