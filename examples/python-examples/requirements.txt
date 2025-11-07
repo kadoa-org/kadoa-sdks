@@ -1,4 +1,0 @@
-# Python example dependencies
-python-dotenv>=1.0.0
-# Install the local SDK package in development mode
-kadoa-sdk @ file:../../sdks/python

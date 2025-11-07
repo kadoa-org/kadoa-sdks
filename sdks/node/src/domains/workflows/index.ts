@@ -35,4 +35,8 @@ export type {
   WorkflowId,
 } from "./workflows-core.service";
 // Service class
-export { WorkflowsCoreService } from "./workflows-core.service";
+export {
+  TERMINAL_JOB_STATES,
+  TERMINAL_RUN_STATES,
+  WorkflowsCoreService,
+} from "./workflows-core.service";
