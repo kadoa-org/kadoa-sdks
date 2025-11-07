@@ -91,41 +91,13 @@ bun kadoa-codegen generate
 3. Test changes:
 ```bash
 cd sdks/node && bun test
-cd sdks/python && make test
+cd sdks/python && uv run pytest
 ```
 
 4. Commit spec and generated code:
 ```bash
 git add specs/openapi.json sdks/*/src/generated
 git commit -m "feat: update API client to latest spec"
-```
-
-## SDK Development
-
-### Node SDK Structure
-```
-sdks/node/
-├── src/
-│   ├── index.ts             # Public API exports
-│   ├── app.ts              # Application initialization
-│   ├── extraction/         # Extraction module
-│   └── generated/          # Auto-generated API client
-├── test/
-│   └── e2e/
-└── tsup.config.ts
-```
-
-### Python SDK Structure
-```
-sdks/python/
-├── kadoa_sdk/
-│   ├── __init__.py          # Public API exports
-│   ├── app.py               # Application initialization
-│   ├── extraction/          # Extraction module
-│   └── generated/           # Auto-generated API client
-├── tests/
-│   └── e2e/
-└── pyproject.toml
 ```
 
 ## Testing
@@ -141,9 +113,9 @@ bun test:watch         # Watch mode
 ### Python SDK
 ```bash
 cd sdks/python
-make test              # Run all tests
-make test-e2e          # Run E2E tests only
-make test-coverage     # With coverage report
+uv run pytest              # Run all tests
+uv run pytest -m e2e       # Run E2E tests only
+uv run pytest --cov=kadoa_sdk --cov-report=term-missing  # With coverage report
 ```
 
 ## Release Process

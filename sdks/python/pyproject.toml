@@ -7,7 +7,7 @@ name = "kadoa_sdk"
 version = "0.7.0"
 description = "Official Kadoa SDK for Python - Web data extraction and automation"
 readme = "README.md"
-requires-python = ">=3.8"
+requires-python = ">=3.11"
 license = "MIT"
 authors = [
     {name = "Kadoa", email = "support@kadoa.com"}
@@ -17,34 +17,36 @@ classifiers = [
     "Development Status :: 4 - Beta",
     "Intended Audience :: Developers",
     "Programming Language :: Python :: 3",
-    "Programming Language :: Python :: 3.8",
-    "Programming Language :: Python :: 3.9",
-    "Programming Language :: Python :: 3.10",
     "Programming Language :: Python :: 3.11",
     "Programming Language :: Python :: 3.12",
 ]
 dependencies = [
-    "urllib3>=1.26.0,<3.0.0",
-    "python-dateutil>=2.8.2",
-    "pydantic>=2.0.0",
-    "typing-extensions>=4.0.0",
-    "requests>=2.25.0",
+    "python-dateutil",
+    "python-dotenv",
+    "pydantic",
+    "pydantic-settings",
+    "urllib3",
+    "websockets",
+    "aiohttp",
+    "aiohttp-retry",
 ]
 
 [project.optional-dependencies]
 dev = [
-    "pytest>=7.0.0",
-    "pytest-cov>=4.0.0",
-    "pytest-timeout>=2.0.0",
-    "black>=23.0.0",
-    "mypy>=1.0.0",
-    "ruff>=0.1.0",
-    "pip-audit>=2.0.0",
+    "pytest",
+    "pytest-cov",
+    "pytest-timeout",
+    "pytest-asyncio",
+    "black",
+    "mypy",
+    "ruff",
+    "pip-audit",
 ]
 test = [
-    "pytest>=7.0.0",
-    "pytest-timeout>=2.0.0",
-    "python-dotenv>=1.0.0",
+    "pytest",
+    "pytest-cov",
+    "pytest-timeout",
+    "pytest-asyncio",
 ]
 
 [project.urls]
@@ -60,19 +62,68 @@ exclude = ["tests*", "kadoa_sdk.tests*"]
 [tool.setuptools.package-data]
 kadoa_sdk = ["py.typed"]
 
-[tool.black]
-line-length = 100
-target-version = ['py38']
 
 [tool.ruff]
 line-length = 100
-target-version = "py38"
+target-version = "py311"
+include = ["*.py"]
+exclude = [
+    ".git",
+    "__pycache__",
+    "build",
+    "dist",
+    "*.egg-info",
+    ".venv",
+    "venv",
+    "openapi_client",
+]
 
 [tool.ruff.lint]
 select = ["E", "F", "I", "N", "W"]
 
+[tool.ruff.format]
+quote-style = "double"
+indent-style = "space"
+skip-magic-trailing-comma = false
+line-ending = "auto"
+
 [tool.mypy]
-python_version = "3.8"
+python_version = "3.11"
 warn_return_any = true
 warn_unused_configs = true
 disallow_untyped_defs = true
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+python_files = ["test_*.py"]
+python_classes = ["Test*"]
+python_functions = ["test_*"]
+addopts = "-v --tb=short --strict-markers"
+markers = [
+    "e2e: End-to-end tests",
+    "integration: Integration tests",
+    "unit: Unit tests",
+    "timeout: Test timeout in seconds",
+]
+log_cli = true
+log_cli_level = "INFO"
+
+[tool.coverage.run]
+source = ["kadoa_sdk"]
+omit = [
+    "*/tests/*",
+    "*/test_*",
+    "*/__pycache__/*",
+    "*/openapi_client/*",
+]
+
+[tool.coverage.report]
+exclude_lines = [
+    "pragma: no cover",
+    "def __repr__",
+    "raise AssertionError",
+    "raise NotImplementedError",
+    "if __name__ == .__main__.:",
+    "if TYPE_CHECKING:",
+    "@abstractmethod",
+]

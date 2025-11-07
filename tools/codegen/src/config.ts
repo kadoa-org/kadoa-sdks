@@ -2,6 +2,7 @@ import path from "node:path";
 import { fileURLToPath } from "node:url";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
+export const CODEGEN_DIR = path.resolve(__dirname, "..");
 export const ROOT_DIR = path.resolve(__dirname, "../../../");
 export const SPECS_DIR = path.join(ROOT_DIR, "specs");
 export const NODE_SDK_DIR = path.join(ROOT_DIR, "sdks/node");
@@ -38,6 +39,7 @@ export const GENERATORS: Record<string, GeneratorConfig> = {
       generateSourceCodeOnly: true,
       projectName: "kadoa_sdk",
       packageName: "openapi_client",
+      pythonVersion: "3.11",
     },
   },
 };

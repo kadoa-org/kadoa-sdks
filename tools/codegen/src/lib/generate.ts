@@ -1,7 +1,7 @@
 import { execSync } from "node:child_process";
 import fs from "node:fs";
 import path from "node:path";
-import { GENERATORS, type GeneratorConfig, OPENAPI_SPEC_PATH } from "../config";
+import { CODEGEN_DIR, GENERATORS, type GeneratorConfig, OPENAPI_SPEC_PATH } from "../config";
 
 export function ensureDirectoryExists(dirPath: string): void {
   if (!fs.existsSync(dirPath)) {
@@ -57,7 +57,7 @@ export function generateClient(_name: string, config: GeneratorConfig): void {
 
   execSync(command, {
     stdio: "inherit",
-    cwd: process.cwd(),
+    cwd: CODEGEN_DIR,
   });
 }
 

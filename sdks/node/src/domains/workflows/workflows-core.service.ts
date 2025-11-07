@@ -58,14 +58,14 @@ export interface CreateWorkflowInput {
   additionalData?: Record<string, unknown>;
 }
 
-const TERMINAL_JOB_STATES: Set<JobStateEnum> = new Set([
+export const TERMINAL_JOB_STATES: Set<JobStateEnum> = new Set([
   JobStateEnum.Finished,
   JobStateEnum.Failed,
   JobStateEnum.NotSupported,
   JobStateEnum.FailedInsufficientFunds,
 ]);
 
-const TERMINAL_RUN_STATES: Set<string> = new Set([
+export const TERMINAL_RUN_STATES: Set<string> = new Set([
   "FINISHED",
   "SUCCESS",
   "FAILED",
