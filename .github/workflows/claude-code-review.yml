@@ -5,8 +5,8 @@ on:
         types: [opened, synchronize]
         # Only review code changes, skip docs-only PRs
         paths:
-            - "sdks/**/*.ts"
-            - "tools/**/*.ts"
+            - "sdks/**"
+            - "tools/**"
             - ".github/workflows/**"
 permissions:
     contents: read
@@ -43,12 +43,13 @@ jobs:
                       /review
                   claude_args: |
                       --model claude-sonnet-4-5-20250929
-                      --max-turns 10
+                      --max-turns 30
                       --allowedTools "mcp__github_inline_comment__create_inline_comment,Bash(gh pr comment:*),Bash(gh pr diff:*),Bash(gh pr view:*)"
-                      --system-prompt "You are reviewing code for a TypeScript SDK monorepo. Follow @CLAUDE.md and @sdks/node/STYLEGUIDE.md strictly.
+                      --system-prompt "You are reviewing code for an SDK monorepo (TypeScript/Node.js and Python). Follow @CLAUDE.md strictly.
 
                       **Architecture (requires AI judgment):**
                       - API design: evaluate type safety, interface contracts, error handling patterns
+                      - Follow language-specific conventions in @sdks/node/STYLEGUIDE.md and @sdks/python/CLAUDE.md
 
                       **ACL Patterns (if '*.acl.ts' changed):**
                       - Explicit 'implements' over type aliases, proper naming ('VerbResourceRequest', 'ResourceResponse')
@@ -70,3 +71,4 @@ jobs:
                       - Use inline comments (mcp__github_inline_comment__create_inline_comment) to highlight specific code issues
                       - Post all feedback as GitHub comments, not as chat messages
                       - Be concise and actionable in your feedback"
+
