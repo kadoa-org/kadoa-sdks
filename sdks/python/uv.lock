@@ -570,6 +570,7 @@ source = { editable = "." }
 dependencies = [
     { name = "aiohttp" },
     { name = "aiohttp-retry" },
+    { name = "certifi" },
     { name = "pydantic" },
     { name = "pydantic-settings" },
     { name = "python-dateutil" },
@@ -601,6 +602,7 @@ requires-dist = [
     { name = "aiohttp" },
     { name = "aiohttp-retry" },
     { name = "black", marker = "extra == 'dev'" },
+    { name = "certifi" },
     { name = "mypy", marker = "extra == 'dev'" },
     { name = "pip-audit", marker = "extra == 'dev'" },
     { name = "pydantic" },
