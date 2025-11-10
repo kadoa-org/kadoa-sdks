@@ -196,3 +196,10 @@ password = pypi-<your-token>
 gh secret set NPM_TOKEN --body "$NPM_TOKEN"
 gh secret set PYPI_API_TOKEN --body "$PYPI_API_TOKEN"
 ```
+
+## Troubleshooting
+
+If release-please is not working correctly, ensure that:
+- Git tags exist for all released versions (e.g., `node-sdk-v0.16.2`)
+- The `.release-please-manifest.json` matches the latest released version
+- Commit messages follow conventional commit format (`feat:`, `fix:`, etc.)
