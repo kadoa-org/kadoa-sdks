@@ -5,7 +5,7 @@ from typing import Any, Callable, Dict, List, Literal, Optional, Union
 from pydantic import BaseModel
 
 from ..core.pagination import PageInfo
-from ..extraction.extraction_acl import V4WorkflowsWorkflowIdGet200Response
+from ..extraction.extraction_acl import GetWorkflowResponse
 from ..schemas.schema_builder import SchemaBuilder
 
 NavigationMode = Literal[
@@ -53,7 +53,7 @@ class ExtractionOptions(BaseModel):
 
 class ExtractionResult(BaseModel):
     workflow_id: Optional[str]
-    workflow: Optional[V4WorkflowsWorkflowIdGet200Response] = None
+    workflow: Optional[GetWorkflowResponse] = None
     data: Optional[List[dict]] = None
     pagination: Optional[PageInfo] = None
 
