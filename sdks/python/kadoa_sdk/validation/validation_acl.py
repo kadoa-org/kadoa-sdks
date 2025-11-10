@@ -24,7 +24,7 @@ from openapi_client.models.delete_rule_with_reason import DeleteRuleWithReason
 from openapi_client.models.disable_rule import DisableRule
 from openapi_client.models.generate_rule import GenerateRule
 from openapi_client.models.generate_rules import GenerateRules
-from openapi_client.models.rule_response import RuleResponse
+from openapi_client.models.rule import Rule as GeneratedRule
 from openapi_client.models.rules_list_response import RulesListResponse
 from openapi_client.models.schedule_validation_response import ScheduleValidationResponse
 from openapi_client.models.update_rule import UpdateRule
@@ -35,6 +35,10 @@ from openapi_client.models.validation_list_response import ValidationListRespons
 
 __all__ = ["DataValidationApi"]
 
+# ========================================
+# Enum Types
+# ========================================
+
 RuleStatus = Literal["preview", "enabled", "disabled"]
 
 RuleType = Literal["custom_sql"]
@@ -42,6 +46,39 @@ RuleType = Literal["custom_sql"]
 ValidationStrategy = Literal["ISOLATED", "LINKING_COLUMNS"]
 
 IncludeDeletedRules = Literal["true", "false"]
+
+# ========================================
+# Response Types with Enum Remapping
+# ========================================
+
+
+class Rule(GeneratedRule):
+    """Rule with SDK-curated enum types.
+    
+    Remaps generated enum fields to prevent type leakage.
+    """
+
+    status: RuleStatus
+    rule_type: Optional[RuleType] = None
+
+    @classmethod
+    def from_generated(cls, rule: GeneratedRule) -> "Rule":
+        """Create Rule from generated type."""
+        return cls.model_validate(rule.model_dump())
+
+
+class GetValidationResponse(DataValidationReport):
+    """Validation report with SDK-curated enum types.
+    
+    Remaps generated enum fields to prevent type leakage.
+    """
+
+    strategy: Optional[ValidationStrategy] = None
+
+    @classmethod
+    def from_generated(cls, report: DataValidationReport) -> "GetValidationResponse":
+        """Create GetValidationResponse from generated type."""
+        return cls.model_validate(report.model_dump())
 
 
 class ListRulesRequest(BaseModel):
@@ -89,8 +126,6 @@ class ListWorkflowValidationsRequest(BaseModel):
     model_config = ConfigDict(populate_by_name=True)
 
 
-Rule = RuleResponse
-
 ListRulesResponse = RulesListResponse
 
 BulkApproveRulesResponseData = BulkApproveRulesResponse
@@ -98,8 +133,6 @@ BulkDeleteRulesResponseData = BulkDeleteRulesResponse
 DeleteAllRulesResponseData = DeleteAllRulesResponse
 
 ListValidationsResponse = ValidationListResponse
-
-GetValidationResponse = DataValidationReport
 
 ToggleValidationResponse = TogglePut200Response
 

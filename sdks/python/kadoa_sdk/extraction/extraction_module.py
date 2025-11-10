@@ -202,9 +202,7 @@ class ExtractionModule:
         Returns:
             Response with job_id, message, and status
         """
-        variables = input.variables if input else None
-        limit = input.limit if input else None
-        return self.client.workflow.run_workflow(workflow_id, variables=variables, limit=limit)
+        return self.client.workflow.run_workflow(workflow_id, input=input)
 
     def run_job_and_wait(
         self, workflow_id: str, input: Optional[RunWorkflowOptions] = None

@@ -130,7 +130,12 @@ class ValidationCoreService:
                     message="Failed to get validation details",
                 )
 
-            return response.data if hasattr(response, "data") else response
+            validation_data = response.data if hasattr(response, "data") else response
+            # Convert to SDK GetValidationResponse type with enum remapping
+            from openapi_client.models.data_validation_report import DataValidationReport
+            if isinstance(validation_data, DataValidationReport):
+                return GetValidationResponse.from_generated(validation_data)
+            return validation_data
         except Exception as error:
             raise KadoaHttpError.wrap(
                 error,
@@ -280,7 +285,12 @@ class ValidationCoreService:
                     message="Failed to get latest validation",
                 )
 
-            return response.data if hasattr(response, "data") else response
+            validation_data = response.data if hasattr(response, "data") else response
+            # Convert to SDK GetValidationResponse type with enum remapping
+            from openapi_client.models.data_validation_report import DataValidationReport
+            if isinstance(validation_data, DataValidationReport):
+                return GetValidationResponse.from_generated(validation_data)
+            return validation_data
         except Exception as error:
             raise KadoaHttpError.wrap(
                 error,
