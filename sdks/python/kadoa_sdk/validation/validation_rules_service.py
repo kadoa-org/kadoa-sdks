@@ -140,13 +140,20 @@ class ValidationRulesService:
                     message="Failed to get validation rule by id",
                 )
 
-            return (
+            rule_data = (
                 response.data.data
                 if hasattr(response, "data") and hasattr(response.data, "data")
                 else response.data
                 if hasattr(response, "data")
                 else None
             )
+            if rule_data is None:
+                return None
+            # Convert to SDK Rule type with enum remapping
+            from openapi_client.models.rule import Rule as GeneratedRule
+            if isinstance(rule_data, GeneratedRule):
+                return Rule.from_generated(rule_data)
+            return rule_data
         except Exception as error:
             raise KadoaHttpError.wrap(
                 error,
@@ -198,10 +205,17 @@ class ValidationRulesService:
             )
 
             if rules_data:
+                from openapi_client.models.rule import Rule as GeneratedRule
                 for rule in rules_data:
-                    if hasattr(rule, "name") and rule.name == name:
-                        return rule
-                    elif isinstance(rule, dict) and rule.get("name") == name:
+                    rule_name = None
+                    if hasattr(rule, "name"):
+                        rule_name = rule.name
+                    elif isinstance(rule, dict):
+                        rule_name = rule.get("name")
+                    
+                    if rule_name == name:
+                        if isinstance(rule, GeneratedRule):
+                            return Rule.from_generated(rule)
                         return rule
 
             return None
@@ -254,13 +268,18 @@ class ValidationRulesService:
                     message=error_message,
                 )
 
-            return (
+            rule_data = (
                 response.data.data
                 if hasattr(response, "data") and hasattr(response.data, "data")
                 else response.data
                 if hasattr(response, "data")
                 else response
             )
+            # Convert to SDK Rule type with enum remapping
+            from openapi_client.models.rule import Rule as GeneratedRule
+            if isinstance(rule_data, GeneratedRule):
+                return Rule.from_generated(rule_data)
+            return rule_data
         except Exception as error:
             raise KadoaHttpError.wrap(
                 error,
@@ -312,13 +331,18 @@ class ValidationRulesService:
                     message=error_message,
                 )
 
-            return (
+            rule_data = (
                 response.data.data
                 if hasattr(response, "data") and hasattr(response.data, "data")
                 else response.data
                 if hasattr(response, "data")
                 else response
             )
+            # Convert to SDK Rule type with enum remapping
+            from openapi_client.models.rule import Rule as GeneratedRule
+            if isinstance(rule_data, GeneratedRule):
+                return Rule.from_generated(rule_data)
+            return rule_data
         except Exception as error:
             raise KadoaHttpError.wrap(
                 error,
@@ -370,13 +394,18 @@ class ValidationRulesService:
                     message=error_message,
                 )
 
-            return (
+            rule_data = (
                 response.data.data
                 if hasattr(response, "data") and hasattr(response.data, "data")
                 else response.data
                 if hasattr(response, "data")
                 else response
             )
+            # Convert to SDK Rule type with enum remapping
+            from openapi_client.models.rule import Rule as GeneratedRule
+            if isinstance(rule_data, GeneratedRule):
+                return Rule.from_generated(rule_data)
+            return rule_data
         except Exception as error:
             raise KadoaHttpError.wrap(
                 error,
@@ -428,13 +457,18 @@ class ValidationRulesService:
                     message=error_message,
                 )
 
-            return (
+            rule_data = (
                 response.data.data
                 if hasattr(response, "data") and hasattr(response.data, "data")
                 else response.data
                 if hasattr(response, "data")
                 else response
             )
+            # Convert to SDK Rule type with enum remapping
+            from openapi_client.models.rule import Rule as GeneratedRule
+            if isinstance(rule_data, GeneratedRule):
+                return Rule.from_generated(rule_data)
+            return rule_data
         except Exception as error:
             raise KadoaHttpError.wrap(
                 error,
@@ -485,13 +519,21 @@ class ValidationRulesService:
                     message=error_message,
                 )
 
-            return (
+            rules_data = (
                 response.data.data
                 if hasattr(response, "data") and hasattr(response.data, "data")
                 else response.data
                 if hasattr(response, "data")
                 else []
             )
+            # Convert list of rules to SDK Rule types with enum remapping
+            from openapi_client.models.rule import Rule as GeneratedRule
+            if isinstance(rules_data, list):
+                return [
+                    Rule.from_generated(rule) if isinstance(rule, GeneratedRule) else rule
+                    for rule in rules_data
+                ]
+            return rules_data
         except Exception as error:
             raise KadoaHttpError.wrap(
                 error,
@@ -542,13 +584,18 @@ class ValidationRulesService:
                     message=error_message,
                 )
 
-            return (
+            rule_data = (
                 response.data.data
                 if hasattr(response, "data") and hasattr(response.data, "data")
                 else response.data
                 if hasattr(response, "data")
                 else response
             )
+            # Convert to SDK Rule type with enum remapping
+            from openapi_client.models.rule import Rule as GeneratedRule
+            if isinstance(rule_data, GeneratedRule):
+                return Rule.from_generated(rule_data)
+            return rule_data
         except Exception as error:
             raise KadoaHttpError.wrap(
                 error,
@@ -599,13 +646,18 @@ class ValidationRulesService:
                     message=error_message,
                 )
 
-            return (
+            rule_data = (
                 response.data.data
                 if hasattr(response, "data") and hasattr(response.data, "data")
                 else response.data
                 if hasattr(response, "data")
                 else response
             )
+            # Convert to SDK Rule type with enum remapping
+            from openapi_client.models.rule import Rule as GeneratedRule
+            if isinstance(rule_data, GeneratedRule):
+                return Rule.from_generated(rule_data)
+            return rule_data
         except Exception as error:
             raise KadoaHttpError.wrap(
                 error,
@@ -656,13 +708,18 @@ class ValidationRulesService:
                     message=error_message,
                 )
 
-            return (
+            rule_data = (
                 response.data.data
                 if hasattr(response, "data") and hasattr(response.data, "data")
                 else response.data
                 if hasattr(response, "data")
                 else response
             )
+            # Convert to SDK Rule type with enum remapping
+            from openapi_client.models.rule import Rule as GeneratedRule
+            if isinstance(rule_data, GeneratedRule):
+                return Rule.from_generated(rule_data)
+            return rule_data
         except Exception as error:
             raise KadoaHttpError.wrap(
                 error,
