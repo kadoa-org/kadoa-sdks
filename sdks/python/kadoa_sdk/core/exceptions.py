@@ -209,6 +209,39 @@ class KadoaHttpError(KadoaSdkError):
             return error
         if isinstance(error, ApiException):
             return KadoaHttpError.from_api_exception(error, message=message, details=details)
+        
+        # Check for SSL certificate errors and provide user-friendly message
+        error_str = str(error).lower()
+        error_type = type(error).__name__
+        if (
+            "ssl" in error_str
+            or "certificate" in error_str
+            or "cert" in error_str
+            or "SSLError" in error_type
+            or "CERTIFICATE_VERIFY_FAILED" in str(error)
+        ):
+            return KadoaHttpError(
+                "SSL certificate verification failed. This usually happens when Python cannot verify "
+                "the server's SSL certificate. The SDK uses certifi for certificate verification. "
+                "If this error persists, try: pip install --upgrade certifi",
+                code=KadoaErrorCode.NETWORK_ERROR,
+                details={
+                    "issue": "SSL certificate verification failed",
+                    "common_causes": [
+                        "Python installation doesn't have access to system certificates",
+                        "certifi package is outdated or corrupted",
+                        "Network proxy or firewall interfering with SSL",
+                    ],
+                    "solutions": [
+                        "Upgrade certifi: pip install --upgrade certifi",
+                        "Reinstall certifi: pip install --force-reinstall certifi",
+                        "Check your network/proxy settings",
+                    ],
+                    "original_error": str(error),
+                },
+                cause=error,
+            )
+        
         return KadoaSdkError.wrap(error, message=message, details=details)
 
     def to_json(self) -> Dict[str, Any]:
