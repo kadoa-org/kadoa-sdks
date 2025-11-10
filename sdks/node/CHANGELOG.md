@@ -5,6 +5,25 @@
 
 * **workflows:** add `workflow.update` helper and new `workflow.delete` method; mark `workflow.cancel` deprecated with runtime warning
 
+## [0.17.0](https://github.com/kadoa-org/kadoa-sdks/compare/node-sdk-v0.16.2...node-sdk-v0.17.0) (2025-11-10)
+
+
+### Features
+
+* add version check on client initialization ([698e02b](https://github.com/kadoa-org/kadoa-sdks/commit/698e02bc9904048a28313e815e3085ee2fed075b))
+* make workflow name optional ([7796292](https://github.com/kadoa-org/kadoa-sdks/commit/77962921cb7edd336cfd84d8a0ed1fa727735b07))
+* Modernize Python SDK and align with Node.js functionality ([#133](https://github.com/kadoa-org/kadoa-sdks/issues/133)) ([6794c9f](https://github.com/kadoa-org/kadoa-sdks/commit/6794c9fdbf76a6c01ac2b15f350abd66f7780e6e))
+
+
+### Miscellaneous Chores
+
+* **deps-dev:** bump @types/node in /sdks/node in the development group ([#123](https://github.com/kadoa-org/kadoa-sdks/issues/123)) ([7b06281](https://github.com/kadoa-org/kadoa-sdks/commit/7b06281f8e71d2bd0582f9555bedc76fb4198c44))
+* **deps:** bump axios in /sdks/node in the production group ([#132](https://github.com/kadoa-org/kadoa-sdks/issues/132)) ([5437461](https://github.com/kadoa-org/kadoa-sdks/commit/54374610df8a3e01ca311d5ca21755a3e0d4dd75))
+* **main:** release node-sdk 0.17.0 ([#130](https://github.com/kadoa-org/kadoa-sdks/issues/130)) ([d8d10b2](https://github.com/kadoa-org/kadoa-sdks/commit/d8d10b2ec988da311155182e26f835bdf62fa257))
+* **node-sdk:** release 0.17.0 ([523a17e](https://github.com/kadoa-org/kadoa-sdks/commit/523a17e6e449676bdbd67568f1b116af2c1cba49))
+* **python-sdk:** prepare 0.8.0rc3 release ([3ff8d10](https://github.com/kadoa-org/kadoa-sdks/commit/3ff8d1049c63e4791a5f3f00693edac5ceea5413))
+* update Node.js version requirement to 24 ([d96e596](https://github.com/kadoa-org/kadoa-sdks/commit/d96e596052479277624cedecf3189a68e9380bf5))
+
 ## [0.16.2](https://github.com/kadoa-org/kadoa-sdks/compare/node-sdk-v0.16.1...node-sdk-v0.16.2) (2025-11-03)
 
 
