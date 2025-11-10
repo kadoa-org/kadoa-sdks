@@ -1,5 +1,5 @@
 # x-release-please-start-version
-__version__ = "0.8.0rc3"
+__version__ = "0.8.0rc4"
 # x-release-please-end
 
 SDK_NAME = "kadoa-python-sdk"
