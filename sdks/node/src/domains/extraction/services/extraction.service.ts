@@ -41,7 +41,7 @@ export interface ExtractionOptionsInternal {
   prompt?: string;
   mode: "run" | "submit";
   navigationMode: NavigationMode;
-  name: string;
+  name?: string;
   description?: string;
   location: LocationConfig;
   bypassPreview?: boolean;
@@ -84,7 +84,6 @@ export const DEFAULT_OPTIONS: Omit<
   maxWaitTime: 300000,
   navigationMode: "single-page",
   location: { type: "auto" },
-  name: "Untitled Workflow",
   bypassPreview: true,
   autoStart: true,
 } as const;

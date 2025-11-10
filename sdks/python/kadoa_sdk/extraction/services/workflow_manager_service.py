@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import json
 import time
+from urllib.parse import urlparse
 from typing import TYPE_CHECKING, Any, Dict, List, Optional
 
 from pydantic import ValidationError
@@ -80,6 +81,8 @@ class WorkflowManagerService:
 
         api = get_workflows_api(self.client)
 
+        domain_name = urlparse(config.urls[0]).hostname
+        print("domain_name: ", domain_name)
         schema_fields = []
         for field in fields:
             if isinstance(field, SchemaResponseSchemaInner):
@@ -122,7 +125,7 @@ class WorkflowManagerService:
             urls=config.urls,
             navigation_mode=(config.navigation_mode or DEFAULTS["navigation_mode"]),
             entity=entity,
-            name=(config.name or DEFAULTS["name"]),
+            name=(config.name or domain_name),
             fields=schema_fields,
             location=config.location,
             bypass_preview=True,
@@ -132,7 +135,6 @@ class WorkflowManagerService:
         )
         try:
             wrapper = CreateWorkflowBody(inner)
-
             resp = api.v4_workflows_post(create_workflow_body=wrapper)
 
             workflow_id = getattr(resp, "workflow_id", None) or getattr(resp, "workflowId", None)

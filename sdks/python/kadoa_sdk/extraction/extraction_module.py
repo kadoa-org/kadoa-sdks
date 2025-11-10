@@ -45,7 +45,7 @@ class ExtractionModule:
             location=options.location or DEFAULTS["location"],
             max_records=options.max_records or DEFAULTS["max_records"],
             max_wait_time=options.max_wait_time or DEFAULTS["max_wait_time"],
-            name=options.name or DEFAULTS["name"],
+            name=options.name,
             navigation_mode=options.navigation_mode or DEFAULTS["navigation_mode"],
             polling_interval=options.polling_interval or DEFAULTS["polling_interval"],
         )
@@ -113,7 +113,7 @@ class ExtractionModule:
             location=options.location or DEFAULTS["location"],
             max_records=options.max_records or DEFAULTS["max_records"],
             max_wait_time=options.max_wait_time or DEFAULTS["max_wait_time"],
-            name=options.name or DEFAULTS["name"],
+            name=options.name,
             navigation_mode=options.navigation_mode or DEFAULTS["navigation_mode"],
             polling_interval=options.polling_interval or DEFAULTS["polling_interval"],
         )

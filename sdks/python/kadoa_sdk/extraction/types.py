@@ -127,6 +127,5 @@ DEFAULTS = {
     "max_wait_time": 300.0,  # seconds
     "navigation_mode": "single-page",
     "location": {"type": "auto"},
-    "name": "Untitled Workflow",
     "max_records": 1000,
 }

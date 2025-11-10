@@ -43,7 +43,7 @@ export interface JobWaitOptions extends PollingOptions {
 export interface CreateWorkflowInput {
   urls: string[];
   navigationMode: NavigationMode;
-  name: string;
+  name?: string;
   description?: string;
   schemaId?: string;
   entity?: string;
@@ -82,15 +82,17 @@ export class WorkflowsCoreService {
   async create(input: CreateWorkflowInput): Promise<{ id: WorkflowId }> {
     validateAdditionalData(input.additionalData);
 
+    const domainName = new URL(input.urls[0]).hostname;
+
     const request:
       | CreateWorkflowRequest
       | CreateWorkflowWithCustomSchemaRequest = {
       urls: input.urls,
-      name: input.name,
+      name: input.name ?? domainName,
       schemaId: input.schemaId,
       description: input.description,
       navigationMode: input.navigationMode,
-      entity: input.entity,
+      entity: input.entity ?? "",
       fields: input.fields,
       bypassPreview: input.bypassPreview ?? true,
       tags: input.tags,
