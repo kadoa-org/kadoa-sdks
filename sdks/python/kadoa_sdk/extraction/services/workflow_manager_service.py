@@ -70,7 +70,6 @@ class WorkflowManagerService:
         api = get_workflows_api(self.client)
 
         domain_name = urlparse(config.urls[0]).hostname
-        print("domain_name: ", domain_name)
         schema_fields = []
         for field in fields:
             if isinstance(field, SchemaResponseSchemaInner):
