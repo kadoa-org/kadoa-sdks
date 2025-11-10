@@ -1,12 +1,13 @@
 from __future__ import annotations
 
 import asyncio
-from typing import Optional
+import json
+from typing import Any, Optional
 
 from pydantic import BaseModel
 
-from .core.core_acl import ApiClient, Configuration
-from .core.exceptions import KadoaErrorCode, KadoaSdkError
+from .core.core_acl import ApiClient, Configuration, RESTClientObject
+from .core.exceptions import KadoaErrorCode, KadoaHttpError, KadoaSdkError
 from .core.http import (
     get_notifications_api,
 )
@@ -227,6 +228,87 @@ class KadoaClient:
             ```
         """
         return self._extraction_builder.extract(options)
+
+    def _build_auth_headers(self) -> dict[str, str]:
+        """Build authentication headers from client configuration.
+        
+        Returns:
+            Headers dictionary with x-api-key
+            
+        Raises:
+            KadoaSdkError: If API key is not found
+        """
+        api_key = None
+        if getattr(self._configuration, "api_key", None):
+            api_key = self._configuration.api_key.get("ApiKeyAuth")
+        if not api_key:
+            raise KadoaSdkError(
+                KadoaSdkError.ERROR_MESSAGES["NO_API_KEY"],
+                code=KadoaErrorCode.AUTH_ERROR,
+            )
+        return {"x-api-key": api_key}
+
+    def make_raw_request(
+        self,
+        method: str,
+        endpoint: str,
+        *,
+        body: Optional[dict[str, Any]] = None,
+        headers: Optional[dict[str, str]] = None,
+        error_message: str = "Request failed",
+    ) -> dict[str, Any]:
+        """Make a raw HTTP request and return parsed JSON response.
+        
+        Useful for workarounds or when bypassing the generated OpenAPI client.
+        
+        Args:
+            method: HTTP method (GET, POST, PUT, DELETE)
+            endpoint: API endpoint path (e.g., "/v4/schemas")
+            body: Optional request body (for POST/PUT)
+            headers: Optional additional headers
+            error_message: Custom error message for failures
+            
+        Returns:
+            Parsed JSON response as dict
+            
+        Raises:
+            KadoaHttpError: If request fails or returns error status
+        """
+        url = f"{self._base_url}{endpoint}"
+        auth_headers = self._build_auth_headers()
+        request_headers = {"Content-Type": "application/json", **auth_headers}
+        if headers:
+            request_headers.update(headers)
+
+        rest = RESTClientObject(self._configuration)
+        try:
+            response = rest.request(
+                method,
+                url,
+                headers=request_headers,
+                body=body,
+            )
+
+            if response.status >= 400:
+                response_data = response.read()
+                try:
+                    error_data = json.loads(response_data) if response_data else {}
+                except json.JSONDecodeError:
+                    error_data = {}
+
+                raise KadoaHttpError(
+                    f"HTTP {response.status}: {error_message}",
+                    http_status=response.status,
+                    endpoint=url,
+                    method=method,
+                    response_body=error_data,
+                    code=KadoaHttpError.map_status_to_code(response.status),
+                )
+
+            response_data = response.read()
+            return json.loads(response_data) if response_data else {}
+        finally:
+            pass  # RESTClientObject doesn't have a close method
 
 
 class NotificationDomain:

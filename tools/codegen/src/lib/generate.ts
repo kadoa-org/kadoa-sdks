@@ -1,7 +1,13 @@
 import { execSync } from "node:child_process";
 import fs from "node:fs";
 import path from "node:path";
-import { CODEGEN_DIR, GENERATORS, type GeneratorConfig, OPENAPI_SPEC_PATH } from "../config";
+import {
+  CODEGEN_DIR,
+  GENERATORS,
+  type GeneratorConfig,
+  OPENAPI_SPEC_PATH,
+} from "../config";
+import { applyAllPatches } from "./patches";
 
 export function ensureDirectoryExists(dirPath: string): void {
   if (!fs.existsSync(dirPath)) {
@@ -76,6 +82,9 @@ export function postProcessPythonClient(outputDir: string): void {
 
     // Move the generated openapi_client to SDK root
     fs.renameSync(tempOpenapiClientDir, targetOpenapiClientDir);
+
+    // Apply all patches to fix generated code issues
+    applyAllPatches(targetOpenapiClientDir);
 
     // Clean up the temporary directory
     fs.rmSync(outputDir, { recursive: true, force: true });
