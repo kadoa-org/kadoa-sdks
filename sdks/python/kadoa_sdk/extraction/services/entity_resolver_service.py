@@ -1,13 +1,11 @@
 from __future__ import annotations
 
-import json
 from typing import TYPE_CHECKING, Any, Dict, List, Optional
 
 from pydantic import BaseModel
 
 if TYPE_CHECKING:  # pragma: no cover
     from ...client import KadoaClient
-from ...core.core_acl import RESTClientObject
 from ...core.exceptions import KadoaErrorCode, KadoaHttpError, KadoaSdkError
 from ..types import EntityConfig, LocationConfig
 
@@ -124,8 +122,6 @@ class EntityResolverService:
                 details={"link": link},
             )
 
-        url = f"{self.client.base_url}{ENTITY_API_ENDPOINT}"
-        headers = self._build_headers()
         body: Dict[str, Any] = {"link": link, "selectorMode": selector_mode}
         if location is not None:
             body["location"] = location
@@ -133,18 +129,12 @@ class EntityResolverService:
             body["navigationMode"] = navigation_mode
 
         try:
-            rest = RESTClientObject(self.client.configuration)
-            try:
-                response = rest.request(
+            data = self.client.make_raw_request(
                     "POST",
-                    url,
-                    headers={"Content-Type": "application/json", **headers},
+                ENTITY_API_ENDPOINT,
                     body=body,
+                error_message=KadoaSdkError.ERROR_MESSAGES["ENTITY_FETCH_FAILED"],
                 )
-                response_data = response.read()
-                data = json.loads(response_data)
-            finally:
-                pass  # RESTClientObject doesn't have a close method
 
             if (
                 not data.get("success")
@@ -162,23 +152,11 @@ class EntityResolverService:
                     },
                 )
             return data["entityPrediction"][0]
+        except KadoaSdkError:
+            raise
         except Exception as error:
             raise KadoaHttpError.wrap(
                 error,
                 message=KadoaSdkError.ERROR_MESSAGES["ENTITY_FETCH_FAILED"],
-                details={"url": url, "link": link},
+                details={"link": link},
             )
-
-    def _build_headers(self) -> Dict[str, str]:
-        """Build authentication headers"""
-        config = self.client.configuration
-        api_key = None
-        if getattr(config, "api_key", None):
-            api_key = config.api_key.get("ApiKeyAuth")
-        if not api_key:
-            raise KadoaSdkError(
-                KadoaSdkError.ERROR_MESSAGES["NO_API_KEY"],
-                code=KadoaErrorCode.AUTH_ERROR,
-                details={"hasApiKey": bool(api_key)},
-            )
-        return {"x-api-key": api_key}

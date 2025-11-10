@@ -2,12 +2,10 @@
 
 from __future__ import annotations
 
-import json
 from typing import TYPE_CHECKING, List
 
 from pydantic import BaseModel
 
-from ..core.core_acl import RESTClientObject
 from ..core.exceptions import KadoaErrorCode, KadoaHttpError, KadoaSdkError
 
 if TYPE_CHECKING:  # pragma: no cover
@@ -40,40 +38,12 @@ class UserService:
             KadoaHttpError: If API request fails
             KadoaSdkError: If user data is invalid
         """
-        url = f"{self.client.base_url}{USER_API_ENDPOINT}"
-        headers = self._build_headers()
-
         try:
-            rest = RESTClientObject(self.client.configuration)
-            try:
-                response = rest.request(
+            data = self.client.make_raw_request(
                     "GET",
-                    url,
-                    headers={"Content-Type": "application/json", **headers},
-                )
-
-                # Check HTTP status code
-                if response.status >= 400:
-                    response_data = response.read()
-                    try:
-                        error_data = json.loads(response_data) if response_data else {}
-                    except json.JSONDecodeError:
-                        error_data = {}
-
-                    raise KadoaHttpError(
-                        f"HTTP {response.status}: Failed to get current user",
-                        http_status=response.status,
-                        endpoint=url,
-                        method="GET",
-                        response_body=error_data,
-                        code=KadoaHttpError.map_status_to_code(response.status),
-                        details={"url": url, "status": response.status},
-                    )
-
-                response_data = response.read()
-                data = json.loads(response_data)
-            finally:
-                pass  # RESTClientObject doesn't have a close method
+                USER_API_ENDPOINT,
+                error_message="Failed to get current user",
+            )
 
             if not data or not data.get("userId"):
                 raise KadoaSdkError(
@@ -102,19 +72,4 @@ class UserService:
             raise KadoaHttpError.wrap(
                 error,
                 message="Failed to get current user",
-                details={"url": url},
             )
-
-    def _build_headers(self) -> dict[str, str]:
-        """Build authentication headers"""
-        config = self.client.configuration
-        api_key = None
-        if getattr(config, "api_key", None):
-            api_key = config.api_key.get("ApiKeyAuth")
-        if not api_key:
-            raise KadoaSdkError(
-                KadoaSdkError.ERROR_MESSAGES["NO_API_KEY"],
-                code=KadoaErrorCode.AUTH_ERROR,
-                details={"hasApiKey": bool(api_key)},
-            )
-        return {"x-api-key": api_key}

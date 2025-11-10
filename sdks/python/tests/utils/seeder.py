@@ -5,7 +5,7 @@ from typing import TYPE_CHECKING, Optional
 
 if TYPE_CHECKING:  # pragma: no cover
     from kadoa_sdk import KadoaClient
-from kadoa_sdk.extraction.types import ExtractOptions
+from kadoa_sdk.extraction.types import ExtractOptions, RunWorkflowOptions
 from kadoa_sdk.validation import CreateRuleRequest
 
 
@@ -59,7 +59,9 @@ def seed_workflow(
 
             if not existing_job_id:
                 # Run a new job
-                job_result = client.workflow.run_workflow(workflow_id, limit=10)
+                job_result = client.workflow.run_workflow(
+                    workflow_id, input=RunWorkflowOptions(limit=10)
+                )
                 job_id = job_result.get("job_id") or job_result.get("jobId")
                 print(f"[Seeder] Job {name} seeded: {job_id}")
                 return {"workflow_id": workflow_id, "job_id": job_id}
@@ -86,7 +88,9 @@ def seed_workflow(
 
     if run_job:
         # Run the workflow
-        job_result = client.workflow.run_workflow(workflow_id, limit=10)
+        job_result = client.workflow.run_workflow(
+            workflow_id, input=RunWorkflowOptions(limit=10)
+        )
         job_id = job_result.get("job_id") or job_result.get("jobId")
         print(f"[Seeder] Job {name} seeded: {job_id}")
         return {"workflow_id": workflow_id, "job_id": job_id}
