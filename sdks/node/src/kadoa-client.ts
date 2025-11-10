@@ -36,6 +36,7 @@ import { ValidationRulesService } from "./domains/validation/validation-rules.se
 import { WorkflowsCoreService } from "./domains/workflows/workflows-core.service";
 import { PUBLIC_API_URI } from "./runtime/config";
 import { KadoaErrorCode, KadoaHttpException } from "./runtime/exceptions";
+import { checkForUpdates } from "./runtime/utils/version-check";
 import { SDK_LANGUAGE, SDK_NAME, SDK_VERSION } from "./version";
 
 export interface KadoaClientStatus {
@@ -237,6 +238,11 @@ export class KadoaClient {
     if (config.enableRealtime && config.realtimeConfig?.autoConnect !== false) {
       this.connectRealtime();
     }
+
+    // Check for updates in the background (non-blocking)
+    checkForUpdates().catch(() => {
+      // Silently ignore errors - version check should not affect client initialization
+    });
   }
 
   /**
