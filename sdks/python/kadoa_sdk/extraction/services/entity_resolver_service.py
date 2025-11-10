@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, Any, Dict, List, Optional
+from typing import TYPE_CHECKING, Any, Dict, List, Optional, TypedDict
 
 from pydantic import BaseModel
 
@@ -10,6 +10,22 @@ from ...core.exceptions import KadoaErrorCode, KadoaHttpError, KadoaSdkError
 from ..types import EntityConfig, LocationConfig
 
 ENTITY_API_ENDPOINT = "/v4/entity"
+
+
+class EntityDetectionRequest(TypedDict, total=False):
+    """Request body for entity detection API"""
+
+    link: str
+    selectorMode: bool
+    location: Optional[LocationConfig]
+    navigationMode: Optional[str]
+
+
+class EntityPrediction(TypedDict, total=False):
+    """Entity prediction structure from AI detection"""
+
+    entity: Optional[str]
+    fields: List[Dict[str, Any]]
 
 
 class ResolvedEntity(BaseModel):
@@ -102,7 +118,7 @@ class EntityResolverService:
         location: Optional[LocationConfig] = None,
         navigation_mode: Optional[str] = None,
         selector_mode: bool = False,
-    ) -> Dict[str, Any]:
+    ) -> EntityPrediction:
         """
         Fetches entity fields dynamically from the /v4/entity endpoint
 
@@ -122,7 +138,7 @@ class EntityResolverService:
                 details={"link": link},
             )
 
-        body: Dict[str, Any] = {"link": link, "selectorMode": selector_mode}
+        body: EntityDetectionRequest = {"link": link, "selectorMode": selector_mode}
         if location is not None:
             body["location"] = location
         if navigation_mode is not None:

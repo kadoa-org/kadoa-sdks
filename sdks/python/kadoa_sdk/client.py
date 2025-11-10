@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import asyncio
 import json
-from typing import Any, Optional
+from typing import Any, List, Optional
 
 from pydantic import BaseModel
 
@@ -51,6 +51,31 @@ class KadoaClientStatus(BaseModel):
 
 
 class KadoaClient:
+    """Main client for interacting with the Kadoa API.
+
+    Provides access to extraction, schemas, workflows, notifications, validation,
+    and user services. Supports both synchronous and asynchronous operations.
+
+    Args:
+        config: Client configuration including API key, timeout, and realtime settings
+
+    Example:
+        ```python
+        from kadoa_sdk import KadoaClient, KadoaClientConfig
+
+        client = KadoaClient(
+            KadoaClientConfig(
+                api_key="your-api-key",
+                timeout=30,
+                enable_realtime=True
+            )
+        )
+
+        # Use client services
+        result = client.extraction.run(...)
+        ```
+    """
+
     def __init__(self, config: KadoaClientConfig) -> None:
         settings = get_settings()
 
@@ -142,11 +167,21 @@ class KadoaClient:
         check_for_updates()
 
     def connect_realtime(self) -> Realtime:
-        """Connect to realtime WebSocket server
+        """Connect to realtime WebSocket server.
 
-        Note: This is a synchronous wrapper around async WebSocket connection.
+        Establishes a WebSocket connection for real-time event notifications.
+        This is a synchronous wrapper around async WebSocket connection.
         The connection is established in a background task if an event loop is running,
         otherwise it blocks until the connection is established.
+
+        Returns:
+            Realtime: The realtime connection instance
+
+        Example:
+            ```python
+            realtime = client.connect_realtime()
+            realtime.on_event(lambda event: print(f"Event: {event}"))
+            ```
         """
         if not self._realtime:
             realtime_config = RealtimeConfig(api_key=self._api_key)
@@ -164,43 +199,88 @@ class KadoaClient:
         return self._realtime
 
     def disconnect_realtime(self) -> None:
-        """Disconnect from realtime WebSocket server"""
+        """Disconnect from realtime WebSocket server.
+
+        Closes the WebSocket connection and cleans up resources.
+        Safe to call even if not connected.
+        """
         if self._realtime:
             self._realtime.close()
             self._realtime = None
 
     def is_realtime_connected(self) -> bool:
-        """Check if realtime WebSocket is connected"""
+        """Check if realtime WebSocket is connected.
+
+        Returns:
+            bool: True if connected, False otherwise
+        """
         return self._realtime.is_connected() if self._realtime else False
 
     @property
     def configuration(self) -> Configuration:
+        """Get the underlying API client configuration.
+
+        Returns:
+            Configuration: The API client configuration object
+        """
         return self._configuration
 
     @property
     def base_url(self) -> str:
+        """Get the base URL for API requests.
+
+        Returns:
+            str: The base URL (e.g., "https://api.kadoa.com")
+        """
         return self._base_url
 
     @property
     def timeout(self) -> int:
+        """Get the request timeout in seconds.
+
+        Returns:
+            int: Timeout in seconds
+        """
         return self._timeout
 
     @property
     def api_key(self) -> str:
+        """Get the API key used for authentication.
+
+        Returns:
+            str: The API key
+        """
         return self._api_key
 
     def dispose(self) -> None:
-        """Dispose of client resources including HTTP sessions and realtime connections"""
+        """Dispose of client resources including HTTP sessions and realtime connections.
+
+        Cleans up all resources associated with the client. Should be called
+        when the client is no longer needed. Safe to call multiple times.
+        """
         # Note: urllib3 manages connections automatically, no explicit cleanup needed
         # Disconnect realtime
         if self._realtime:
             self.disconnect_realtime()
 
     async def status(self) -> KadoaClientStatus:
-        """Get the status of the client
+        """Get the status of the client.
+
+        Retrieves current client status including base URL, user information,
+        and realtime connection state.
 
         Returns:
-            KadoaClientStatus: Status information including base_url, user, and realtime_connected
+            KadoaClientStatus: Status information including:
+                - base_url: The API base URL
+                - user: Current user information
+                - realtime_connected: Whether realtime is connected
+
+        Example:
+            ```python
+            status = await client.status()
+            print(f"Connected to {status.base_url}")
+            print(f"User: {status.user.email}")
+            ```
         """
 
         return KadoaClientStatus(
@@ -324,7 +404,7 @@ class NotificationDomain:
         self.settings = settings
         self.setup = setup
 
-    def configure(self, options: NotificationOptions) -> list:
+    def configure(self, options: NotificationOptions) -> List["NotificationSettings"]:
         """Configure notifications (convenience method)
 
         Args:
@@ -333,9 +413,13 @@ class NotificationDomain:
         Returns:
             List of created notification settings
         """
+        from .notifications.notifications_acl import NotificationSettings
+
         return self.setup.setup(options)
 
-    def setup_for_workflow(self, request: SetupWorkflowNotificationSettingsRequest) -> list:
+    def setup_for_workflow(
+        self, request: SetupWorkflowNotificationSettingsRequest
+    ) -> List["NotificationSettings"]:
         """Setup notifications for a specific workflow
 
         Args:
@@ -344,9 +428,13 @@ class NotificationDomain:
         Returns:
             List of created notification settings
         """
+        from .notifications.notifications_acl import NotificationSettings
+
         return self.setup.setup_for_workflow(request)
 
-    def setup_for_workspace(self, request: SetupWorkspaceNotificationSettingsRequest) -> list:
+    def setup_for_workspace(
+        self, request: SetupWorkspaceNotificationSettingsRequest
+    ) -> List["NotificationSettings"]:
         """Setup notifications for the workspace
 
         Args:
@@ -355,4 +443,6 @@ class NotificationDomain:
         Returns:
             List of created notification settings
         """
+        from .notifications.notifications_acl import NotificationSettings
+
         return self.setup.setup_for_workspace(request)

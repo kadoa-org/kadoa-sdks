@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 import re
-from typing import List, Optional, Union
+from typing import Any, Dict, List, Optional, TypedDict, Union
 
 from pydantic import BaseModel, field_validator
 
@@ -24,6 +24,13 @@ RawFormat = str  # HTML, MARKDOWN, PAGE_URL
 SchemaField = Union[DataField, ClassificationField, RawContentField]
 
 
+class BuiltSchema(TypedDict, total=False):
+    """Built schema structure returned by SchemaBuilder.build()"""
+
+    entityName: Optional[str]
+    fields: List[SchemaField]
+
+
 class FieldOptions(BaseModel):
     """Optional configuration for schema fields"""
 
@@ -32,7 +39,7 @@ class FieldOptions(BaseModel):
 
     @field_validator("example", mode="before")
     @classmethod
-    def convert_example(cls, v):
+    def convert_example(cls, v: Any) -> Optional[Union[str, List[str], FieldExample]]:
         """Convert string/list examples to DataFieldExample instances"""
         if v is None:
             return None
@@ -163,12 +170,12 @@ class SchemaBuilder:
             self.fields.append(field)
         return self
 
-    def build(self) -> dict:
+    def build(self) -> BuiltSchema:
         """
         Build schema with validation
 
         Returns:
-            Dictionary with entityName and fields
+            BuiltSchema with entityName and fields
         """
         if self._has_schema_fields() and not self.entity_name:
             raise KadoaSdkError(

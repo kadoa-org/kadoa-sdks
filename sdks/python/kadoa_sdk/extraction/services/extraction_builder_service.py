@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 from collections.abc import AsyncGenerator
-from typing import TYPE_CHECKING, Any, Dict, List, Optional
+from typing import TYPE_CHECKING, Any, Dict, List, Optional, TypedDict, Union
 
 from ..extraction_acl import (
     ClassificationField,
@@ -41,8 +41,41 @@ from .entity_resolver_service import EntityResolverService
 debug = logger
 
 
+class RunWorkflowRequest(TypedDict, total=False):
+    """Request body for running a workflow"""
+
+    variables: Dict[str, Any]  # User-defined variables
+    limit: int
+
+
+class IntervalOptions(TypedDict):
+    """Options for setting workflow interval"""
+
+    interval: WorkflowInterval
+
+
+class SchedulesOptions(TypedDict):
+    """Options for setting workflow schedules"""
+
+    schedules: List[str]
+
+
 class PreparedExtraction:
-    """Prepared extraction that can be configured before creation"""
+    """Prepared extraction that can be configured before creation.
+
+    Provides a fluent API for configuring extraction options before creating
+    the workflow. Supports method chaining for convenient configuration.
+
+    Example:
+        ```python
+        extraction = client.extract(
+            ExtractOptions(
+                urls=["https://example.com"],
+                name="My Extraction"
+            )
+        ).with_notifications(...).set_interval(...).create()
+        ```
+    """
 
     def __init__(
         self,
@@ -57,27 +90,77 @@ class PreparedExtraction:
         return self._options
 
     def with_notifications(self, options: NotificationOptions) -> "PreparedExtraction":
-        """Configure notifications for this extraction
+        """Configure notifications for this extraction.
+
+        Sets up notification channels and events that will be triggered
+        when the workflow runs.
 
         Args:
-            options: Notification options including events and channels
+            options: Notification options including:
+                - workflow_id: Optional workflow ID (auto-set on creation)
+                - events: List of event types or "all"
+                - channels: Channel configuration dictionary
 
         Returns:
-            PreparedExtraction for method chaining
+            PreparedExtraction: Self for method chaining
+
+        Example:
+            ```python
+            from kadoa_sdk.notifications import NotificationOptions
+
+            extraction.with_notifications(
+                NotificationOptions(
+                    events=["workflow_finished", "workflow_failed"],
+                    channels={"email": True}
+                )
+            )
+            ```
         """
         self._builder._notification_options = options
         return self
 
     def with_monitoring(self, options: WorkflowMonitoringConfig) -> "PreparedExtraction":
-        """Configure monitoring"""
+        """Configure workflow monitoring.
+
+        Sets monitoring configuration for the workflow.
+
+        Args:
+            options: Monitoring configuration dictionary
+
+        Returns:
+            PreparedExtraction: Self for method chaining
+        """
         self._builder._monitoring_options = options
         return self
 
     def set_interval(
         self,
-        options: Dict[str, Any],  # {interval: WorkflowInterval} | {schedules: List[str]}
+        options: Union[IntervalOptions, SchedulesOptions],
     ) -> "PreparedExtraction":
-        """Set workflow interval or schedules"""
+        """Set workflow interval or schedules.
+
+        Configures how often the workflow should run. Can set a simple interval
+        or custom schedules.
+
+        Args:
+            options: Either:
+                - IntervalOptions: {"interval": WorkflowInterval}
+                - SchedulesOptions: {"schedules": List[str]}
+
+        Returns:
+            PreparedExtraction: Self for method chaining
+
+        Example:
+            ```python
+            # Set hourly interval
+            extraction.set_interval({"interval": "HOURLY"})
+
+            # Set custom schedules
+            extraction.set_interval({
+                "schedules": ["0 9 * * *", "0 17 * * *"]  # 9 AM and 5 PM daily
+            })
+            ```
+        """
         if "interval" in options:
             self._options.interval = options["interval"]
         elif "schedules" in options:
@@ -172,7 +255,7 @@ class FinishedExtraction:
     def fetch_all_data(
         self,
         options: Optional[Dict[str, Any]] = None,
-    ) -> List[dict]:
+    ) -> List[Dict[str, Any]]:
         """Fetch all data (auto-pagination)"""
         fetch_options = FetchDataOptions(
             workflow_id=self._workflow_id,
@@ -229,14 +312,42 @@ class ExtractionBuilderService:
             )
 
     def extract(self, options: ExtractOptions) -> PreparedExtraction:
-        """
-        Create a prepared extraction with fluent API
+        """Create a prepared extraction with fluent API.
+
+        Creates a PreparedExtraction instance that can be configured with
+        notifications, monitoring, intervals, and other options before
+        creating the workflow.
 
         Args:
-            options: Extraction options including URLs and optional extraction builder
+            options: Extraction options including:
+                - urls: List of URLs to extract from
+                - name: Extraction name
+                - description: Optional description
+                - navigation_mode: Optional navigation mode
+                - extraction: Optional schema builder callback
+                - additional_data: Optional additional metadata
+                - bypass_preview: Whether to skip preview mode
 
         Returns:
-            PreparedExtraction that can be configured
+            PreparedExtraction: Prepared extraction ready for configuration
+
+        Example:
+            ```python
+            from kadoa_sdk.extraction.types import ExtractOptions
+            from kadoa_sdk.schemas.schema_builder import SchemaBuilder
+
+            extraction = builder.extract(
+                ExtractOptions(
+                    urls=["https://example.com/products"],
+                    name="Product Extraction",
+                    extraction=lambda schema: (
+                        schema.entity("Product")
+                        .field("title", "Product title", "STRING")
+                        .field("price", "Product price", "MONEY", example="$99.99")
+                    )
+                )
+            ).create()
+            ```
         """
         entity: EntityConfig = "ai-detection"
 
@@ -522,7 +633,7 @@ class ExtractionBuilderService:
         options: Optional[RunWorkflowOptions] = None,
     ) -> str:
         """Run workflow via API"""
-        run_request: Dict[str, Any] = {}
+        run_request: RunWorkflowRequest = {}
         if options:
             if options.variables:
                 run_request["variables"] = options.variables
@@ -555,7 +666,7 @@ class ExtractionBuilderService:
         max_wait_time_ms = 300000  # 5 minutes default
         poll_interval_ms = 5000  # 5 seconds
 
-        def poll_fn() -> Any:
+        def poll_fn() -> Optional[str]:
             workflow = self._get_workflow_status(workflow_id)
             return workflow.run_state
 
@@ -593,6 +704,6 @@ class ExtractionBuilderService:
         """Fetch data with pagination"""
         return self._data_fetcher.fetch_data(options)
 
-    def _fetch_all_data(self, options: FetchDataOptions) -> List[dict]:
+    def _fetch_all_data(self, options: FetchDataOptions) -> List[Dict[str, Any]]:
         """Fetch all data (auto-pagination)"""
         return self._data_fetcher.fetch_all_data(options)

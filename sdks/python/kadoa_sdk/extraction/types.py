@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from typing import Any, Callable, Dict, List, Literal, Optional, Union
+from typing import Any, Callable, Dict, List, Literal, Optional, TypedDict, Union
 
 from pydantic import BaseModel
 
@@ -25,7 +25,13 @@ WorkflowInterval = Literal[
     "CUSTOM",
 ]
 
-LocationConfig = Dict[str, Any]
+
+class LocationConfig(TypedDict, total=False):
+    """Location configuration for extraction workflows"""
+
+    type: str  # e.g., "auto"
+    # Other fields may exist but are not documented
+
 
 WorkflowMonitoringConfig = Dict[str, Any]
 
@@ -54,7 +60,7 @@ class ExtractionOptions(BaseModel):
 class ExtractionResult(BaseModel):
     workflow_id: Optional[str]
     workflow: Optional[GetWorkflowResponse] = None
-    data: Optional[List[dict]] = None
+    data: Optional[List[Dict[str, Any]]] = None
     pagination: Optional[PageInfo] = None
 
 
@@ -77,7 +83,7 @@ class FetchDataOptions(BaseModel):
 class FetchDataResult(BaseModel):
     """Result of fetching workflow data with pagination"""
 
-    data: List[dict]
+    data: List[Dict[str, Any]]
     workflow_id: str
     run_id: Optional[str] = None
     executed_at: Optional[str] = None

@@ -64,7 +64,9 @@ class WorkflowManagerService:
     def is_terminal_run_state(self, run_state: Optional[str]) -> bool:
         return bool(run_state and run_state.upper() in TERMINAL_RUN_STATES)
 
-    def create_workflow(self, *, entity: str, fields: List[dict], config: ExtractionOptions) -> str:
+    def create_workflow(
+        self, *, entity: str, fields: List[Dict[str, Any]], config: ExtractionOptions
+    ) -> str:
         self._validate_additional_data(config.additional_data)
 
         api = get_workflows_api(self.client)
