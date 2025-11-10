@@ -1,8 +1,10 @@
 import pytest
+from pydantic import ValidationError
 
 from kadoa_sdk import KadoaClient, KadoaClientConfig
 from kadoa_sdk.core.exceptions import KadoaHttpError, KadoaSdkError
 from kadoa_sdk.core.settings import get_settings
+from kadoa_sdk.extraction.extraction_acl import ListWorkflowsRequest, UpdateWorkflowRequest
 from tests.utils.seeder import seed_workflow
 
 
@@ -35,7 +37,7 @@ class TestWorkflows:
     @pytest.mark.timeout(60)
     def test_should_update_limit(self, client, workflow_id):
         """Should update limit."""
-        result = client.workflow.update(workflow_id, limit=100)
+        result = client.workflow.update(workflow_id, input=UpdateWorkflowRequest(limit=100))
 
         assert result.success is True
         # Verify limit was updated - check config.limit if available, or other structure
@@ -48,7 +50,9 @@ class TestWorkflows:
     @pytest.mark.timeout(60)
     def test_should_update_name(self, client, workflow_id):
         """Should update name."""
-        result = client.workflow.update(workflow_id, name="Updated Workflow Name")
+        result = client.workflow.update(
+            workflow_id, input=UpdateWorkflowRequest(name="Updated Workflow Name")
+        )
 
         assert result.success is True
 
@@ -65,23 +69,16 @@ class TestWorkflows:
     @pytest.mark.timeout(60)
     def test_should_validate_additional_data_on_update(self, client, workflow_id):
         """Should validate additionalData on update."""
-        # Test invalid additionalData (array)
-        with pytest.raises(KadoaSdkError):
-            client.workflow.update(
-                workflow_id,
-                additional_data=["invalid"],  # type: ignore
-            )
+        # Test invalid additionalData (array) - Pydantic validates on object creation
+        # This ensures type safety: additional_data must be a dict, not a list
+        with pytest.raises(ValidationError):
+            UpdateWorkflowRequest(additional_data=["invalid"])  # type: ignore
 
-        # Test invalid additionalData (null)
-        with pytest.raises(KadoaSdkError):
-            client.workflow.update(
-                workflow_id,
-                additional_data=None,  # type: ignore
-            )
-
-        # Test valid additionalData
+        # Test valid additionalData (dict)
         valid_data = {"testKey": "testValue", "nested": {"count": 1}}
-        result = client.workflow.update(workflow_id, additional_data=valid_data)
+        result = client.workflow.update(
+            workflow_id, input=UpdateWorkflowRequest(additional_data=valid_data)
+        )
 
         assert result.success is True
 
@@ -117,7 +114,7 @@ class TestWorkflows:
         assert workflow_state == "DELETED"
 
         # Verify workflow is not returned in list (by default, deleted workflows are excluded)
-        workflows = client.workflow.list()
+        workflows = client.workflow.list(filters=None)
         found_workflow = next(
             (
                 w

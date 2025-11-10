@@ -5,8 +5,6 @@ import time
 from urllib.parse import urlparse
 from typing import TYPE_CHECKING, Any, Dict, List, Optional
 
-from pydantic import ValidationError
-
 from kadoa_sdk.core.logger import workflow as logger
 
 from ..extraction_acl import (
@@ -14,6 +12,7 @@ from ..extraction_acl import (
     CreateWorkflowBody,
     DataField,
     DataFieldExample,
+    GetWorkflowResponse,
     RawContentField,
     SchemaResponseSchemaInner,
     V4WorkflowsWorkflowIdGet200Response,
@@ -22,7 +21,6 @@ from ..extraction_acl import (
 
 if TYPE_CHECKING:  # pragma: no cover
     from ...client import KadoaClient
-from ...core.core_acl import RESTClientObject
 from ...core.exceptions import KadoaErrorCode, KadoaHttpError, KadoaSdkError
 from ...core.http import get_workflows_api
 from ...core.utils import PollingOptions, poll_until
@@ -42,16 +40,6 @@ class WorkflowManagerService:
     def __init__(self, client: "KadoaClient") -> None:
         self.client = client
         self._logger = logger
-
-    def _auth_headers(self) -> dict:
-        headers: dict = {}
-        config = self.client.configuration
-        api_key = getattr(config, "api_key", None)
-        if isinstance(api_key, dict):
-            key = api_key.get("ApiKeyAuth")
-            if key:
-                headers["x-api-key"] = key
-        return headers
 
     def _validate_additional_data(self, additional_data: Optional[Dict[str, Any]]) -> None:
         if additional_data is None:
@@ -154,47 +142,12 @@ class WorkflowManagerService:
                 details={"entity": entity, "fields": fields},
             )
 
-    def get_workflow_status(self, workflow_id: str) -> V4WorkflowsWorkflowIdGet200Response:
+    def get_workflow_status(self, workflow_id: str) -> GetWorkflowResponse:
         api = get_workflows_api(self.client)
         try:
             resp = api.v4_workflows_workflow_id_get(workflow_id=workflow_id)
-            return resp
+            return GetWorkflowResponse.from_generated(resp)
         except Exception as error:
-            # TODO: This is a temporary fix to handle the case where the API returns entity as string instead of dict.
-            # Handle case where API returns entity as string instead of dict
-            # Check if this is a ValidationError about entity field
-            validation_error = None
-            if isinstance(error, ValidationError):
-                validation_error = error
-            elif hasattr(error, "__cause__") and isinstance(error.__cause__, ValidationError):
-                validation_error = error.__cause__
-            elif hasattr(error, "cause") and isinstance(error.cause, ValidationError):
-                validation_error = error.cause
-
-            if validation_error:
-                # Check if error is about entity field expecting dict but getting string
-                entity_error = any(
-                    err.get("type") == "dict_type"
-                    and any("entity" in str(loc) for loc in err.get("loc", []))
-                    for err in validation_error.errors()
-                )
-                if entity_error:
-                    # Fetch raw response and normalize entity field
-                    url = f"{self.client.base_url}/v4/workflows/{workflow_id}"
-                    headers = self._auth_headers()
-                    rest = RESTClientObject(self.client.configuration)
-                    try:
-                        response = rest.request("GET", url, headers=headers)
-                        response_data = response.read()
-                        data = json.loads(response_data)
-                        # Normalize entity field: convert string to None
-                        # Model expects dict or None, but API returns string
-                        if "entity" in data and isinstance(data["entity"], str):
-                            data["entity"] = None
-                        return V4WorkflowsWorkflowIdGet200Response.from_dict(data)
-                    finally:
-                        pass  # RESTClientObject doesn't have a close method
-
             raise KadoaHttpError.wrap(
                 error,
                 message=KadoaSdkError.ERROR_MESSAGES["PROGRESS_CHECK_FAILED"],
@@ -206,10 +159,10 @@ class WorkflowManagerService:
         workflow_id: str,
         polling_interval: float,
         max_wait_time: float,
-    ) -> V4WorkflowsWorkflowIdGet200Response:
+    ) -> GetWorkflowResponse:
         """Wait for workflow to complete using polling utility"""
         start = time.time()
-        last_status: Optional[V4WorkflowsWorkflowIdGet200Response] = None
+        last_status: Optional[GetWorkflowResponse] = None
         self._logger.debug(
             "poll start: id=%s intervalSec=%s maxWaitSec=%s",
             workflow_id,
@@ -217,7 +170,7 @@ class WorkflowManagerService:
             max_wait_time,
         )
 
-        def poll_fn() -> V4WorkflowsWorkflowIdGet200Response:
+        def poll_fn() -> GetWorkflowResponse:
             nonlocal last_status
             current = self.get_workflow_status(workflow_id)
             if (
@@ -236,7 +189,7 @@ class WorkflowManagerService:
             last_status = current
             return current
 
-        def is_complete(workflow: V4WorkflowsWorkflowIdGet200Response) -> bool:
+        def is_complete(workflow: GetWorkflowResponse) -> bool:
             if self.is_terminal_run_state(workflow.run_state):
                 self._logger.debug(
                     "terminal: id=%s state=%s runState=%s",
