@@ -1,13 +1,18 @@
 from __future__ import annotations
 
-from typing import Any, Callable, Dict, List, Literal, Optional, TypedDict, Union
+from typing import Any, Callable, Dict, List, Literal, Optional, Union
 
 from pydantic import BaseModel
+
+from openapi_client.models.location import Location
+from openapi_client.models.monitoring_config import MonitoringConfig
 
 from ..core.pagination import PageInfo
 from ..extraction.extraction_acl import GetWorkflowResponse
 from ..schemas.schema_builder import SchemaBuilder
 
+# Navigation mode enum - matches WorkflowWithEntityAndFields.navigation_mode validator
+# Python's OpenAPI generator doesn't create enum classes, so we use Literal types
 NavigationMode = Literal[
     "single-page",
     "paginated-page",
@@ -15,25 +20,37 @@ NavigationMode = Literal[
     "agentic-navigation",
 ]
 
+# Workflow interval enum - matches WorkflowWithEntityAndFields.interval validator
+# Python's OpenAPI generator doesn't create enum classes, so we use Literal types
 WorkflowInterval = Literal[
     "ONLY_ONCE",
-    "REAL_TIME",
+    "EVERY_10_MINUTES",
+    "HALF_HOURLY",
     "HOURLY",
+    "THREE_HOURLY",
+    "SIX_HOURLY",
+    "TWELVE_HOURLY",
+    "EIGHTEEN_HOURLY",
     "DAILY",
+    "TWO_DAY",
+    "THREE_DAY",
     "WEEKLY",
+    "BIWEEKLY",
+    "TRIWEEKLY",
+    "FOUR_WEEKS",
     "MONTHLY",
+    "REAL_TIME",
     "CUSTOM",
 ]
 
 
-class LocationConfig(TypedDict, total=False):
-    """Location configuration for extraction workflows"""
+# Type alias for location configuration - uses generated Location model
+# Pydantic models accept dicts, so dict literals like {"type": "auto"} are compatible
+LocationConfig = Location
 
-    type: str  # e.g., "auto"
-    # Other fields may exist but are not documented
-
-
-WorkflowMonitoringConfig = Dict[str, Any]
+# Type alias for monitoring configuration - uses generated MonitoringConfig model
+# Pydantic models accept dicts, so dict literals are compatible
+WorkflowMonitoringConfig = MonitoringConfig
 
 # Entity config can be "ai-detection", {schemaId: str}, or {name?: str, fields: List}
 EntityConfig = Union[
