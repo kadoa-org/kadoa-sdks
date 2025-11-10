@@ -17,6 +17,7 @@ from .logger import (
     wss,
 )
 from .realtime import Realtime, RealtimeConfig
+from .settings import KadoaSettings, get_settings
 from .utils import PollingOptions, poll_until
 
 __all__ = [
@@ -38,4 +39,6 @@ __all__ = [
     "RealtimeConfig",
     "PollingOptions",
     "poll_until",
+    "KadoaSettings",
+    "get_settings",
 ]

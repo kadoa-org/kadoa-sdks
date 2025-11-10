@@ -31,6 +31,7 @@ from .user import UserService
 from .validation import ValidationCoreService, ValidationDomain, ValidationRulesService
 from .version import SDK_LANGUAGE, SDK_NAME, __version__
 from .workflows import WorkflowsCoreService
+from .core.version_check import check_for_updates
 
 
 class KadoaClientConfig(BaseModel):
@@ -135,6 +136,9 @@ class KadoaClient:
 
         if config.enable_realtime:
             self.connect_realtime()
+
+        # Check for updates in the background (non-blocking)
+        check_for_updates()
 
     def connect_realtime(self) -> Realtime:
         """Connect to realtime WebSocket server
