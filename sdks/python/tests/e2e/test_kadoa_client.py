@@ -2,8 +2,6 @@
 E2E tests for KadoaClient status functionality matching Node.js structure.
 """
 
-import os
-
 import pytest
 import pytest_asyncio
 
@@ -19,15 +17,9 @@ class TestKadoaClient:
     async def client(self):
         """Initialize client for all tests in this class."""
         settings = get_settings()
-        base_url = (
-            settings.public_api_uri
-            if os.getenv("KADOA_PUBLIC_API_URI")
-            else "http://localhost:12380"
-        )
         client = KadoaClient(
             KadoaClientConfig(
                 api_key=settings.api_key,
-                base_url=base_url,
                 timeout=30,
             )
         )
@@ -44,13 +36,8 @@ class TestKadoaClient:
         # This test verifies basic client functionality
         # When status() is implemented, update this test
         settings = get_settings()
-        base_url = (
-            settings.public_api_uri
-            if os.getenv("KADOA_PUBLIC_API_URI")
-            else "http://localhost:12380"
-        )
 
-        assert client.base_url == base_url
+        assert client.base_url == settings.public_api_uri
         assert client.api_key is not None
 
         # Verify user can be retrieved (indirect status check)

@@ -4,6 +4,7 @@ Run extraction with notifications example for Kadoa SDK.
 """
 
 import sys
+import time
 
 from kadoa_sdk import KadoaClient, KadoaClientConfig
 from kadoa_sdk.core.settings import get_settings
@@ -17,17 +18,29 @@ def main():
     client = KadoaClient(
         KadoaClientConfig(
             api_key=settings.api_key,
-            base_url=settings.public_api_uri,
             enable_realtime=True,
         )
     )
 
     try:
         print("Running extraction with notifications...")
+        print(f"WebSocket events URL: {settings.wss_api_uri}")
         # Set up event listener
         realtime = client.connect_realtime()
         if realtime:
             realtime.on_event(lambda event: print("event: ", event))
+            
+            # Wait for WebSocket connection to be established
+            print("Waiting for WebSocket connection...")
+            max_wait = 10  # seconds
+            waited = 0
+            while not client.is_realtime_connected() and waited < max_wait:
+                time.sleep(0.5)
+                waited += 0.5
+            if client.is_realtime_connected():
+                print("WebSocket connected")
+            else:
+                print("Warning: WebSocket connection timeout, events may not be received")
 
         available_events = client.notification.settings.list_all_events()
         print("availableEvents: ", available_events)
@@ -54,6 +67,10 @@ def main():
         result = created_extraction.run()
 
         print(f"Extraction completed: {result.workflow_id}")
+        
+        # Wait a bit for events to arrive before disposing
+        print("Waiting for events (10 seconds)...")
+        time.sleep(10)
     finally:
         client.dispose()
 

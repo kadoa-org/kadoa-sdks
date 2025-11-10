@@ -2,8 +2,6 @@
 E2E tests for user functionality matching Node.js structure.
 """
 
-import os
-
 import pytest
 import pytest_asyncio
 
@@ -20,15 +18,9 @@ class TestUser:
     async def client(self):
         """Initialize client for all tests in this class."""
         settings = get_settings()
-        base_url = (
-            settings.public_api_uri
-            if os.getenv("KADOA_PUBLIC_API_URI")
-            else "http://localhost:12380"
-        )
         client = KadoaClient(
             KadoaClientConfig(
                 api_key=settings.api_key,
-                base_url=base_url,
                 timeout=30,
             )
         )
@@ -52,16 +44,9 @@ class TestUser:
     @pytest.mark.asyncio
     async def test_should_throw_error_for_invalid_api_key(self):
         """Should throw error for invalid api key."""
-        settings = get_settings()
-        base_url = (
-            settings.public_api_uri
-            if os.getenv("KADOA_PUBLIC_API_URI")
-            else "http://localhost:12380"
-        )
         client = KadoaClient(
             KadoaClientConfig(
                 api_key="invalid-api-key",
-                base_url=base_url,
                 timeout=30,
             )
         )

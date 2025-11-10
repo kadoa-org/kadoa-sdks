@@ -1,5 +1,3 @@
-import os
-
 import pytest
 
 from kadoa_sdk import KadoaClient, KadoaClientConfig
@@ -16,15 +14,9 @@ class TestWorkflows:
     def client(self):
         """Initialize client for all tests in this class."""
         settings = get_settings()
-        base_url = (
-            settings.public_api_uri
-            if os.getenv("KADOA_PUBLIC_API_URI")
-            else "http://localhost:12380"
-        )
         client = KadoaClient(
             KadoaClientConfig(
                 api_key=settings.api_key,
-                base_url=base_url,
                 timeout=30,
             )
         )
