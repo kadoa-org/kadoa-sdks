@@ -1,11 +1,12 @@
 from __future__ import annotations
 
 from collections.abc import AsyncGenerator
-from typing import TYPE_CHECKING, Any, Dict, Optional
+from typing import TYPE_CHECKING, Any, Dict, List, Optional
 
 if TYPE_CHECKING:  # pragma: no cover
     from ..client import KadoaClient
 from ..core.exceptions import KadoaErrorCode, KadoaHttpError, KadoaSdkError
+from .extraction_acl import GetJobResponse, RunWorkflowResponse
 from .services import (
     DataFetcherService,
     EntityDetectorService,
@@ -25,6 +26,16 @@ SUCCESSFUL_RUN_STATES = {"FINISHED", "SUCCESS"}
 
 
 class ExtractionModule:
+    """Module for running and managing data extractions.
+
+    Provides methods to run extractions, submit workflows, fetch data,
+    and manage extraction workflows. Supports both synchronous execution
+    and asynchronous data fetching with pagination.
+
+    Args:
+        client: The KadoaClient instance for API access
+    """
+
     def __init__(self, client: "KadoaClient") -> None:
         self.client = client
         self.data_fetcher = DataFetcherService(client)
@@ -38,6 +49,37 @@ class ExtractionModule:
             )
 
     def run(self, options: ExtractionOptions) -> ExtractionResult:
+        """Run an extraction workflow and wait for completion.
+
+        Automatically detects entities from the provided URLs, creates a workflow,
+        waits for it to complete, and returns the extracted data.
+
+        Args:
+            options: Extraction options including URLs, name, and configuration
+
+        Returns:
+            ExtractionResult: Result containing:
+                - workflow_id: The created workflow ID
+                - workflow: Workflow status information
+                - data: List of extracted records (Dict[str, Any] for each record)
+                - pagination: Pagination information if applicable
+
+        Raises:
+            KadoaSdkError: If validation fails or extraction encounters errors
+            KadoaHttpError: If API requests fail
+
+        Example:
+            ```python
+            result = client.extraction.run(
+                ExtractionOptions(
+                    urls=["https://example.com/products"],
+                    name="Product Extraction",
+                    max_records=100
+                )
+            )
+            print(f"Extracted {len(result.data)} products")
+            ```
+        """
         self._validate_options(options)
 
         config = ExtractionOptions(
@@ -67,7 +109,7 @@ class ExtractionModule:
                 float(config.max_wait_time or DEFAULTS["max_wait_time"]),
             )
 
-            data: Optional[list] = None
+            data: Optional[List[Dict[str, Any]]] = None
             is_success = bool(
                 workflow.run_state and workflow.run_state.upper() in SUCCESSFUL_RUN_STATES
             )
@@ -105,7 +147,37 @@ class ExtractionModule:
             )
 
     def submit(self, options: ExtractionOptions) -> SubmitExtractionResult:
-        """Submit an extraction workflow for asynchronous processing"""
+        """Submit an extraction workflow for asynchronous processing.
+
+        Creates a workflow and starts execution without waiting for completion.
+        Use this when you want to check status or fetch data later.
+
+        Args:
+            options: Extraction options including URLs, name, and configuration
+
+        Returns:
+            SubmitExtractionResult: Result containing:
+                - workflow_id: The created workflow ID
+                - needs_notification_setup: Whether notification setup is required
+
+        Raises:
+            KadoaSdkError: If validation fails or workflow creation fails
+            KadoaHttpError: If API requests fail
+
+        Example:
+            ```python
+            result = client.extraction.submit(
+                ExtractionOptions(
+                    urls=["https://example.com"],
+                    name="Async Extraction"
+                )
+            )
+            # Check status later or fetch data when ready
+            data = client.extraction.fetch_data(
+                FetchDataOptions(workflow_id=result.workflow_id)
+            )
+            ```
+        """
         self._validate_options(options)
 
         config = ExtractionOptions(
@@ -151,74 +223,185 @@ class ExtractionModule:
             )
 
     def fetch_data(self, options: FetchDataOptions) -> FetchDataResult:
-        """
-        Fetch a page of workflow data with pagination support
+        """Fetch a page of workflow data with pagination support.
+
+        Retrieves a single page of extracted data from a workflow.
+        Use pagination info to fetch additional pages if needed.
 
         Args:
-            options: Fetch data options including workflow_id, run_id, pagination, etc.
+            options: Fetch data options including:
+                - workflow_id: The workflow ID (required)
+                - run_id: Optional specific run ID
+                - page: Page number (default: 1)
+                - limit: Records per page (default: 100)
+                - sort_by: Field to sort by
+                - order: Sort order ("asc" or "desc")
+                - filters: Filter string
+                - include_anomalies: Whether to include anomaly data
 
         Returns:
-            FetchDataResult with data and pagination info
+            FetchDataResult: Result containing:
+                - data: List of extracted records for this page
+                - workflow_id: The workflow ID
+                - run_id: The run ID if specified
+                - executed_at: Execution timestamp
+                - pagination: Pagination information (total_count, page, total_pages, limit)
+
+        Raises:
+            KadoaHttpError: If API request fails
+
+        Example:
+            ```python
+            # Fetch first page
+            result = client.extraction.fetch_data(
+                FetchDataOptions(
+                    workflow_id="workflow-123",
+                    page=1,
+                    limit=50
+                )
+            )
+            print(f"Page {result.pagination.page} of {result.pagination.total_pages}")
+            print(f"Total records: {result.pagination.total_count}")
+
+            # Fetch next page
+            if result.pagination.page < result.pagination.total_pages:
+                next_page = client.extraction.fetch_data(
+                    FetchDataOptions(
+                        workflow_id="workflow-123",
+                        page=result.pagination.page + 1,
+                        limit=50
+                    )
+                )
+            ```
         """
         return self.data_fetcher.fetch_data(options)
 
-    def fetch_all_data(self, options: FetchDataOptions) -> list[dict]:
-        """
-        Fetch all pages of workflow data (auto-pagination)
+    def fetch_all_data(self, options: FetchDataOptions) -> List[Dict[str, Any]]:
+        """Fetch all pages of workflow data (auto-pagination).
+
+        Automatically fetches all pages of data from a workflow and returns
+        a combined list. This is a convenience method that handles pagination
+        internally.
 
         Args:
-            options: Fetch data options (page and limit will be overridden)
+            options: Fetch data options. Note that page will be overridden
+                to fetch all pages. Limit controls records per page request.
 
         Returns:
-            List of all data items across all pages
+            List[Dict[str, Any]]: Combined list of all extracted records
+                across all pages. Each record is a dictionary with extracted fields.
+
+        Raises:
+            KadoaHttpError: If API requests fail
+
+        Example:
+            ```python
+            # Fetch all data automatically
+            all_data = client.extraction.fetch_all_data(
+                FetchDataOptions(
+                    workflow_id="workflow-123",
+                    limit=100  # Records per page request
+                )
+            )
+            print(f"Total records fetched: {len(all_data)}")
+            ```
         """
         return self.data_fetcher.fetch_all_data(options)
 
     async def fetch_data_pages(
         self, options: FetchDataOptions
     ) -> AsyncGenerator[FetchDataResult, None]:
-        """
-        Async generator for paginated workflow data pages
+        """Async generator for paginated workflow data pages.
+
+        Provides an async generator that yields pages of data as they're fetched.
+        Useful for processing large datasets without loading everything into memory.
 
         Args:
-            options: Fetch data options
+            options: Fetch data options. Limit controls records per page.
 
         Yields:
-            FetchDataResult for each page
+            FetchDataResult: Each page of data with pagination info
+
+        Raises:
+            KadoaHttpError: If API requests fail
+
+        Example:
+            ```python
+            async for page in client.extraction.fetch_data_pages(
+                FetchDataOptions(workflow_id="workflow-123", limit=100)
+            ):
+                print(f"Processing page {page.pagination.page}")
+                for record in page.data:
+                    process_record(record)
+            ```
         """
         async for page in self.data_fetcher.fetch_data_pages(options):
             yield page
 
     def run_job(
         self, workflow_id: str, input: Optional[RunWorkflowOptions] = None
-    ) -> Dict[str, Optional[str]]:
-        """
-        Trigger a workflow run without waiting
+    ) -> RunWorkflowResponse:
+        """Trigger a workflow run without waiting.
+
+        Starts a workflow execution and returns immediately with job information.
+        Use this when you want to check status or fetch data asynchronously.
 
         Args:
-            workflow_id: Workflow ID
-            input: Optional run workflow options (variables, limit)
+            workflow_id: The workflow ID to run
+            input: Optional run options including:
+                - variables: Dictionary of workflow variables
+                - limit: Maximum records to extract
 
         Returns:
-            Response with job_id, message, and status
+            RunWorkflowResponse: Response containing job_id, message, and status
+
+        Raises:
+            KadoaHttpError: If API request fails
+
+        Example:
+            ```python
+            response = client.extraction.run_job(
+                "workflow-123",
+                RunWorkflowOptions(variables={"category": "electronics"}, limit=100)
+            )
+            print(f"Job ID: {response.job_id}")
+            ```
         """
         return self.client.workflow.run_workflow(workflow_id, input=input)
 
     def run_job_and_wait(
         self, workflow_id: str, input: Optional[RunWorkflowOptions] = None
-    ) -> Dict[str, Any]:
-        """
-        Trigger a workflow run and wait for completion
+    ) -> GetJobResponse:
+        """Trigger a workflow run and wait for completion.
+
+        Starts a workflow execution and polls until it reaches a terminal state
+        (FINISHED, SUCCESS, FAILED, etc.). This is a blocking operation.
 
         Args:
-            workflow_id: Workflow ID
-            input: Optional run workflow options (variables, limit)
+            workflow_id: The workflow ID to run
+            input: Optional run options including:
+                - variables: Dictionary of workflow variables
+                - limit: Maximum records to extract
 
         Returns:
-            Job response when terminal state is reached
+            GetJobResponse: Job response when terminal state is reached,
+                containing state, run_state, and other job information
+
+        Raises:
+            KadoaSdkError: If timeout occurs or job fails
+            KadoaHttpError: If API requests fail
+
+        Example:
+            ```python
+            job = client.extraction.run_job_and_wait(
+                "workflow-123",
+                RunWorkflowOptions(limit=50)
+            )
+            print(f"Job completed with state: {job.state}")
+            ```
         """
         result = self.run_job(workflow_id, input)
-        job_id = result.get("job_id") or result.get("jobId")
+        job_id = getattr(result, "job_id", None) or getattr(result, "jobId", None)
         if not job_id:
             raise KadoaSdkError(
                 "No job ID returned from run workflow",
@@ -229,14 +412,26 @@ class ExtractionModule:
         return self.client.workflow.wait_for_job_completion(workflow_id, job_id)
 
     def resume_workflow(self, workflow_id: str) -> ExtractionResult:
-        """
-        Resume a workflow after notification setup
+        """Resume a workflow after notification setup.
+
+        Resumes a paused workflow (typically paused for notification setup)
+        and waits for completion, then returns the extracted data.
 
         Args:
-            workflow_id: Workflow ID
+            workflow_id: The workflow ID to resume
 
         Returns:
-            ExtractionResult with workflow, data, and pagination
+            ExtractionResult: Result containing workflow, data, and pagination
+
+        Raises:
+            KadoaSdkError: If workflow fails or times out
+            KadoaHttpError: If API requests fail
+
+        Example:
+            ```python
+            result = client.extraction.resume_workflow("workflow-123")
+            print(f"Resumed workflow extracted {len(result.data)} records")
+            ```
         """
         self.client.workflow.resume(workflow_id)
 
@@ -246,7 +441,7 @@ class ExtractionModule:
             timeout_ms=int(DEFAULTS["max_wait_time"] * 1000),
         )
 
-        data: Optional[list] = None
+        data: Optional[List[Dict[str, Any]]] = None
         pagination = None
         is_success = bool(
             workflow.run_state and workflow.run_state.upper() in SUCCESSFUL_RUN_STATES
@@ -272,33 +467,58 @@ class ExtractionModule:
             workflow_id=workflow_id, workflow=workflow, data=data, pagination=pagination
         )
 
-    def get_notification_channels(self, workflow_id: str) -> list:
-        """
-        List notification channels for a workflow
+    def get_notification_channels(self, workflow_id: str) -> List["NotificationChannel"]:
+        """List notification channels for a workflow.
+
+        Retrieves all notification channels configured for a specific workflow.
 
         Args:
-            workflow_id: Workflow ID
+            workflow_id: The workflow ID
 
         Returns:
-            List of notification channels
+            List[NotificationChannel]: List of notification channel objects
+                containing channel type, ID, name, and configuration
+
+        Raises:
+            KadoaHttpError: If API request fails
+
+        Example:
+            ```python
+            channels = client.extraction.get_notification_channels("workflow-123")
+            for channel in channels:
+                print(f"Channel: {channel.channel_type} - {channel.name}")
+            ```
         """
-        from ..notifications.notifications_acl import ListChannelsRequest
+        from ..notifications.notifications_acl import ListChannelsRequest, NotificationChannel
 
         return self.client.notification.channels.list_channels(
             ListChannelsRequest(workflow_id=workflow_id)
         )
 
-    def get_notification_settings(self, workflow_id: str) -> list:
-        """
-        List notification settings for a workflow
+    def get_notification_settings(self, workflow_id: str) -> List["NotificationSettings"]:
+        """List notification settings for a workflow.
+
+        Retrieves all notification settings configured for a specific workflow,
+        including which events trigger notifications and which channels are used.
 
         Args:
-            workflow_id: Workflow ID
+            workflow_id: The workflow ID
 
         Returns:
-            List of notification settings
+            List[NotificationSettings]: List of notification settings objects
+                containing event types, channel IDs, and enabled status
+
+        Raises:
+            KadoaHttpError: If API request fails
+
+        Example:
+            ```python
+            settings = client.extraction.get_notification_settings("workflow-123")
+            for setting in settings:
+                print(f"Event: {setting.event_type}, Enabled: {setting.enabled}")
+            ```
         """
-        from ..notifications.notifications_acl import ListSettingsRequest
+        from ..notifications.notifications_acl import ListSettingsRequest, NotificationSettings
 
         return self.client.notification.settings.list_settings(
             ListSettingsRequest(workflow_id=workflow_id)

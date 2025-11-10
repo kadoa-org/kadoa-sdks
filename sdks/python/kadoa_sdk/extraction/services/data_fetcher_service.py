@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from collections.abc import AsyncGenerator
 from datetime import datetime
-from typing import TYPE_CHECKING, List
+from typing import TYPE_CHECKING, Any, Dict, List
 
 from ..extraction_acl import V4WorkflowsWorkflowIdDataGet200Response
 
@@ -15,11 +15,20 @@ from ..types import FetchDataOptions, FetchDataResult
 
 
 class DataFetcherService:
+    """Service for fetching extracted data from workflows.
+
+    Provides methods to retrieve paginated data from completed workflows,
+    with support for filtering, sorting, and pagination.
+
+    Args:
+        client: The KadoaClient instance for API access
+    """
+
     def __init__(self, client: "KadoaClient") -> None:
         self.client = client
         self._default_limit = 100
 
-    def fetch_workflow_data(self, workflow_id: str, limit: int) -> List[dict]:
+    def fetch_workflow_data(self, workflow_id: str, limit: int) -> List[Dict[str, Any]]:
         """Legacy method for backward compatibility"""
         api = get_workflows_api(self.client)
         try:
@@ -42,14 +51,27 @@ class DataFetcherService:
             )
 
     def fetch_data(self, options: FetchDataOptions) -> FetchDataResult:
-        """
-        Fetch a page of workflow data with pagination support
+        """Fetch a page of workflow data with pagination support.
+
+        Retrieves a single page of extracted data from a workflow with
+        support for filtering, sorting, and pagination.
 
         Args:
-            options: Fetch data options including workflow_id, run_id, pagination, etc.
+            options: Fetch data options including:
+                - workflow_id: The workflow ID (required)
+                - run_id: Optional specific run ID
+                - page: Page number (default: 1)
+                - limit: Records per page (default: 100)
+                - sort_by: Field name to sort by
+                - order: Sort order, "asc" or "desc"
+                - filters: Filter string for data filtering
+                - include_anomalies: Whether to include anomaly records
 
         Returns:
-            FetchDataResult with data and pagination info
+            FetchDataResult: Result containing data page and pagination info
+
+        Raises:
+            KadoaHttpError: If API request fails or workflow not found
         """
         api = get_workflows_api(self.client)
         try:
@@ -113,15 +135,23 @@ class DataFetcherService:
                 },
             )
 
-    def fetch_all_data(self, options: FetchDataOptions) -> List[dict]:
-        """
-        Fetch all pages of workflow data (auto-pagination)
+    def fetch_all_data(self, options: FetchDataOptions) -> List[Dict[str, Any]]:
+        """Fetch all pages of workflow data (auto-pagination).
+
+        Automatically fetches all pages of data by making multiple requests.
+        Convenient for small to medium datasets where loading all data at once
+        is acceptable.
 
         Args:
-            options: Fetch data options (page and limit will be overridden)
+            options: Fetch data options. The page parameter is ignored as
+                all pages are fetched. Limit controls records per page request.
 
         Returns:
-            List of all data items across all pages
+            List[Dict[str, Any]]: Combined list of all records across all pages.
+                Each record is a dictionary containing extracted field values.
+
+        Raises:
+            KadoaHttpError: If API requests fail
         """
         iterator = PagedIterator(
             lambda page_options: self.fetch_data(
@@ -143,18 +173,32 @@ class DataFetcherService:
     async def fetch_data_pages(
         self, options: FetchDataOptions
     ) -> AsyncGenerator[FetchDataResult, None]:
-        """
-        Async generator for paginated workflow data pages
+        """Async generator for paginated workflow data pages.
+
+        Provides an async generator that yields pages of data sequentially.
+        Memory-efficient for large datasets as only one page is held in memory
+        at a time.
 
         Args:
-            options: Fetch data options
+            options: Fetch data options. Limit controls records per page.
 
         Yields:
-            FetchDataResult for each page
+            FetchDataResult: Each page of data with pagination information
+
+        Raises:
+            KadoaHttpError: If API requests fail
+
+        Example:
+            ```python
+            async for page in data_fetcher.fetch_data_pages(
+                FetchDataOptions(workflow_id="workflow-123", limit=100)
+            ):
+                process_page(page.data)
+            ```
         """
         from ...core.pagination import PagedResponse
 
-        def fetch_page(page_options: PageOptions) -> PagedResponse[dict]:
+        def fetch_page(page_options: PageOptions) -> PagedResponse[Dict[str, Any]]:
             fetch_result = self.fetch_data(
                 FetchDataOptions(
                     workflow_id=options.workflow_id,

@@ -296,7 +296,7 @@ requires-dist = [
 
 [[package]]
 name = "kadoa-sdk"
-version = "0.8.0rc5"
+version = "0.8.0rc6"
 source = { directory = "../../sdks/python" }
 dependencies = [
     { name = "aiohttp" },
