@@ -2,8 +2,6 @@
 E2E tests for schemas functionality matching Node.js structure.
 """
 
-import os
-
 import pytest
 import pytest_asyncio
 
@@ -41,15 +39,9 @@ class TestSchemas:
         TestSchemas.created_schema_ids.clear()
 
         settings = get_settings()
-        base_url = (
-            settings.public_api_uri
-            if os.getenv("KADOA_PUBLIC_API_URI")
-            else "http://localhost:12380"
-        )
         client = KadoaClient(
             KadoaClientConfig(
                 api_key=settings.api_key,
-                base_url=base_url,
                 timeout=30,
             )
         )

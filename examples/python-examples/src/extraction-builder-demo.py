@@ -20,7 +20,6 @@ def main():
     client = KadoaClient(
         KadoaClientConfig(
             api_key=settings.api_key,
-            base_url=settings.public_api_uri,
             timeout=300000,
         )
     )

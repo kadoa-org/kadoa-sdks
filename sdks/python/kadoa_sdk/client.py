@@ -6,6 +6,7 @@ from typing import Optional
 from pydantic import BaseModel
 
 from .core.core_acl import ApiClient, Configuration
+from .core.exceptions import KadoaErrorCode, KadoaSdkError
 from .core.http import (
     get_notifications_api,
 )
@@ -34,7 +35,6 @@ from .workflows import WorkflowsCoreService
 
 class KadoaClientConfig(BaseModel):
     api_key: Optional[str] = None
-    base_url: Optional[str] = None
     timeout: Optional[int] = None
     enable_realtime: bool = False
     realtime_config: Optional[RealtimeConfig] = None
@@ -52,7 +52,7 @@ class KadoaClient:
     def __init__(self, config: KadoaClientConfig) -> None:
         settings = get_settings()
 
-        self._base_url = config.base_url or settings.public_api_uri
+        self._base_url = settings.public_api_uri
 
         if config.timeout is not None:
             self._timeout = config.timeout
@@ -64,6 +64,33 @@ class KadoaClient:
         configuration = Configuration()
         configuration.host = self._base_url
         configuration.api_key = {"ApiKeyAuth": self._api_key}
+        # Configure SSL certificate verification using certifi
+        # This ensures SSL works on systems where Python doesn't have access to system certificates
+        try:
+            import certifi
+
+            configuration.ssl_ca_cert = certifi.where()
+        except ImportError:
+            raise KadoaSdkError(
+                "SSL certificate bundle not available. Please install certifi: pip install certifi",
+                code=KadoaErrorCode.CONFIG_ERROR,
+                details={
+                    "issue": "certifi package is required for SSL certificate verification",
+                    "solution": "Install certifi by running: pip install certifi",
+                },
+            )
+        except Exception as e:
+            raise KadoaSdkError(
+                f"Failed to configure SSL certificates: {str(e)}. "
+                "Please ensure certifi is properly installed: pip install certifi",
+                code=KadoaErrorCode.CONFIG_ERROR,
+                details={
+                    "issue": "Failed to locate SSL certificate bundle",
+                    "solution": "Reinstall certifi by running: pip install --force-reinstall certifi",
+                    "error": str(e),
+                },
+                cause=e,
+            )
 
         if not self._api_key:
             raise ValueError(
@@ -170,7 +197,6 @@ class KadoaClient:
         Returns:
             KadoaClientStatus: Status information including base_url, user, and realtime_connected
         """
-        from .user import KadoaUser
 
         return KadoaClientStatus(
             base_url=self._base_url,

@@ -12,10 +12,12 @@ Supported Environment Variables:
     DEBUG (str, optional): Enable debug logging (e.g., "kadoa:*", "kadoa:extraction")
 
 Configuration Precedence:
-    1. Explicit config parameter (e.g., KadoaClientConfig)
-    2. Environment variables (highest priority)
-    3. .env file (fallback if env var not set)
-    4. Default value
+    1. Environment variables (highest priority)
+    2. .env file (fallback if env var not set)
+    3. Default value
+
+Note: API URIs (public_api_uri, wss_api_uri, realtime_api_uri) can only be configured via
+environment variables, not through KadoaClientConfig.
 
 The SDK automatically loads variables from:
     - System environment variables (checked first)
