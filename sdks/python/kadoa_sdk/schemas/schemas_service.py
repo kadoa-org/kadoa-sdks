@@ -86,6 +86,9 @@ class SchemasService:
 
         Returns:
             List of SchemaResponse objects
+
+        Raises:
+            KadoaHttpError: If request fails
         """
         response = self.schemas_api.v4_schemas_get()
         return response.data

@@ -3,7 +3,6 @@
 from __future__ import annotations
 
 import asyncio
-import json
 import re
 from typing import TYPE_CHECKING, Optional
 
@@ -17,7 +16,6 @@ from openapi_client.models.v5_notifications_channels_get200_response_data_channe
     V5NotificationsChannelsGet200ResponseDataChannelsInnerConfig,
 )
 
-from ..core.core_acl import RESTClientObject
 from ..core.exceptions import KadoaErrorCode, KadoaHttpError, KadoaSdkError
 from ..user import UserService
 from .notifications_acl import (
@@ -77,109 +75,11 @@ class NotificationChannelsService:
                 return []
 
             return channels
-        except ValueError as error:
-            # Handle deserialization errors when config objects have ambiguous oneOf schemas
-            # This happens when API returns configs with None values for required fields
-            if "Multiple matches found when deserializing" in str(error):
-                return self._list_channels_with_fallback(request_params)
-            raise
         except Exception as error:
             raise KadoaHttpError.wrap(
                 error,
                 message="Failed to list channels",
             )
-
-    def _list_channels_with_fallback(self, request_params: dict) -> list[NotificationChannel]:
-        """Fallback method to list channels by fetching raw response and normalizing configs"""
-        # Build URL
-        url = f"{self._api.api_client.configuration.host}/v5/notifications/channels"
-        if request_params.get("workflow_id"):
-            url += f"?workflowId={request_params['workflow_id']}"
-
-        # Get auth headers
-        headers = {}
-        config = self._api.api_client.configuration
-        api_key = config.api_key.get("ApiKeyAuth") if config.api_key else None
-        if api_key:
-            headers["x-api-key"] = api_key
-
-        # Fetch raw response
-        rest = RESTClientObject(config)
-        try:
-            response = rest.request("GET", url, headers=headers)
-            response_data = response.read()
-            data = json.loads(response_data)
-
-            # Normalize config objects based on channelType
-            if "data" in data and "channels" in data["data"]:
-                channels = data["data"]["channels"]
-                for channel in channels:
-                    if "config" in channel and channel["config"]:
-                        channel_type = channel.get("channelType") or channel.get("channel_type")
-                        config_data = channel["config"]
-
-                        # Normalize config based on channel type to avoid oneOf ambiguity
-                        # Keep only fields relevant to the channel type
-                        if channel_type == "EMAIL":
-                            # Email config: only keep recipients and from fields
-                            normalized_config = {}
-                            if "recipients" in config_data:
-                                normalized_config["recipients"] = config_data["recipients"]
-                            if "from" in config_data:
-                                normalized_config["from"] = config_data["from"]
-                            channel["config"] = normalized_config
-                        elif channel_type == "SLACK":
-                            # Slack config: only keep slack-specific fields
-                            normalized_config = {}
-                            if (
-                                "slackChannelId" in config_data
-                                and config_data["slackChannelId"] is not None
-                            ):
-                                normalized_config["slackChannelId"] = config_data["slackChannelId"]
-                            if (
-                                "slackChannelName" in config_data
-                                and config_data["slackChannelName"] is not None
-                            ):
-                                normalized_config["slackChannelName"] = config_data[
-                                    "slackChannelName"
-                                ]
-                            channel["config"] = normalized_config
-                        elif channel_type == "WEBHOOK":
-                            # Webhook config: only keep webhook-specific fields
-                            normalized_config = {}
-                            if (
-                                "webhookUrl" in config_data
-                                and config_data["webhookUrl"] is not None
-                            ):
-                                normalized_config["webhookUrl"] = config_data["webhookUrl"]
-                            if (
-                                "httpMethod" in config_data
-                                and config_data["httpMethod"] is not None
-                            ):
-                                normalized_config["httpMethod"] = config_data["httpMethod"]
-                            channel["config"] = normalized_config
-                        elif channel_type == "WEBSOCKET":
-                            # WebSocket config: typically empty or minimal
-                            if not config_data or all(v is None for v in config_data.values()):
-                                channel["config"] = {}
-                        else:
-                            # Unknown channel type: remove None values
-                            channel["config"] = {
-                                k: v for k, v in config_data.items() if v is not None
-                            }
-
-            # Deserialize normalized response
-            response_obj = V5NotificationsChannelsGet200Response.from_dict(data)
-            if not response_obj.data:
-                return []
-
-            channels = response_obj.data.channels
-            if channels is None:
-                return []
-
-            return channels
-        finally:
-            pass  # RESTClientObject doesn't have a close method
 
     def list_all_channels(self, workflow_id: Optional[str] = None) -> list[NotificationChannel]:
         """List all channels (both workflow-specific and workspace-level)
