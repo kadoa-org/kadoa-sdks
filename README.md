@@ -84,16 +84,59 @@ Example:
 git commit -m "feat(sdks/python): add retry logic to API client"
 ```
 
-### Manual Releases
 
-Infrastructure changes (`chore:`, `ci:`, `refactor:`, `docs:`, `test:`) don't trigger releases automatically. Use manual release for critical updates:
+### Pre-Release (RC) Releases
 
-```bash
-gh workflow run "Manual Release" \
-  -f sdk="python" \
-  -f bump-type="patch" \
-  -f reason="Critical CI fixes"
-```
+To create a release candidate for testing before the final release:
+
+#### Python SDK
+
+1. Update version numbers in two locations:
+   - `sdks/python/pyproject.toml`: Change `version = "X.Y.Z"` to `version = "X.Y.Zrc1"`
+   - `sdks/python/kadoa_sdk/version.py`: Change `__version__ = "X.Y.Z"` to `__version__ = "X.Y.Zrc1"`
+
+2. Build the package:
+   ```bash
+   cd sdks/python
+   uv build
+   ```
+
+3. Publish to PyPI:
+   ```bash
+   uvx uv-publish
+   ```
+   Note: Requires PyPI credentials configured in `~/.pypirc` (see [Publishing Setup](#publishing-setup))
+
+4. Install the pre-release:
+   ```bash
+   uv pip install --pre kadoa-sdk==X.Y.Zrc1
+   # or with pip
+   pip install --pre kadoa-sdk==X.Y.Zrc1
+   ```
+
+#### Node.js SDK
+
+1. Update version in `sdks/node/package.json`: Change `"version": "X.Y.Z"` to `"version": "X.Y.Z-rc.1"`
+
+2. Build the package:
+   ```bash
+   cd sdks/node
+   bun run build
+   ```
+
+3. Publish to npm with the `rc` tag:
+   ```bash
+   npm publish --tag rc
+   ```
+
+4. Install the pre-release:
+   ```bash
+   npm install @kadoa/node-sdk@rc
+   # or specific version
+   npm install @kadoa/node-sdk@X.Y.Z-rc.1
+   ```
+
+**Note:** Pre-releases are automatically marked as prerelease versions and won't be installed by default unless explicitly requested with `--pre` flag (Python) or `@rc` tag (Node.js).
 
 ### Monitoring
 
