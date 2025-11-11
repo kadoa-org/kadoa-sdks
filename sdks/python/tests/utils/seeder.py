@@ -62,7 +62,7 @@ def seed_workflow(
                 job_result = client.workflow.run_workflow(
                     workflow_id, input=RunWorkflowOptions(limit=10)
                 )
-                job_id = job_result.get("job_id") or job_result.get("jobId")
+                job_id = getattr(job_result, "job_id", None) or getattr(job_result, "jobId", None)
                 print(f"[Seeder] Job {name} seeded: {job_id}")
                 return {"workflow_id": workflow_id, "job_id": job_id}
 
@@ -91,7 +91,7 @@ def seed_workflow(
         job_result = client.workflow.run_workflow(
             workflow_id, input=RunWorkflowOptions(limit=10)
         )
-        job_id = job_result.get("job_id") or job_result.get("jobId")
+        job_id = getattr(job_result, "job_id", None) or getattr(job_result, "jobId", None)
         print(f"[Seeder] Job {name} seeded: {job_id}")
         return {"workflow_id": workflow_id, "job_id": job_id}
 
