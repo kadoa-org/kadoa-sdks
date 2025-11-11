@@ -1,11 +1,12 @@
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, Any, Dict
+from typing import TYPE_CHECKING, Any, Dict, Optional, Union
 
 from ...core.exceptions import KadoaErrorCode, KadoaHttpError, KadoaSdkError
 
 if TYPE_CHECKING:  # pragma: no cover
     from ...client import KadoaClient
+    from ..types import LocationConfig
 
 ENTITY_API_ENDPOINT = "/v4/entity"
 
@@ -15,7 +16,7 @@ class EntityDetectorService:
         self.client = client
 
     def fetch_entity_fields(
-        self, *, link: str, location: Dict[str, Any], navigation_mode: str
+        self, *, link: str, location: Union[Dict[str, Any], "LocationConfig"], navigation_mode: str
     ) -> Dict[str, Any]:
         if not link:
             raise KadoaSdkError(
@@ -24,7 +25,18 @@ class EntityDetectorService:
                 details={"link": link},
             )
 
-        body = {"link": link, "location": location, "navigationMode": navigation_mode}
+        # Convert Location Pydantic model to dict if needed
+        location_dict: Dict[str, Any]
+        if location is None:
+            location_dict = {"type": "auto"}
+        elif hasattr(location, "model_dump"):
+            location_dict = location.model_dump(by_alias=True)
+        elif isinstance(location, dict):
+            location_dict = location
+        else:
+            location_dict = {"type": "auto"}
+
+        body = {"link": link, "location": location_dict, "navigationMode": navigation_mode}
 
         try:
             data = self.client.make_raw_request(
