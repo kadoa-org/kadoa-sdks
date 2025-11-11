@@ -10,7 +10,7 @@ if TYPE_CHECKING:  # pragma: no cover
     from ...client import KadoaClient
 from ...core.exceptions import KadoaHttpError, KadoaSdkError
 from ...core.http import get_workflows_api
-from ...core.pagination import PagedIterator, PageInfo, PageOptions
+from ...core.pagination import PagedIterator, PageInfo, PageOptions, PagedResponse
 from ..types import FetchDataOptions, FetchDataResult
 
 
@@ -34,14 +34,17 @@ class DataFetcherService:
         try:
             resp = api.v4_workflows_workflow_id_data_get(workflow_id=workflow_id, limit=limit)
 
-            container = getattr(resp, "data", resp)
+            container: Any = getattr(resp, "data", resp)
             if isinstance(container, list):
-                return container
-            inner = getattr(container, "data", None)
+                data_list: List[Dict[str, Any]] = container
+                return data_list
+            inner: Any = getattr(container, "data", None)
             if isinstance(inner, list):
-                return inner
+                inner_list: List[Dict[str, Any]] = inner
+                return inner_list
             if isinstance(container, dict) and isinstance(container.get("data"), list):
-                return container["data"]
+                data: List[Dict[str, Any]] = container["data"]
+                return data
             return []
         except Exception as error:
             raise KadoaHttpError.wrap(
@@ -107,7 +110,7 @@ class DataFetcherService:
                     limit=options.limit or self._default_limit,
                 )
 
-            data = getattr(result, "data", [])
+            data: List[Dict[str, Any]] = getattr(result, "data", [])
             if not isinstance(data, list):
                 data = []
 
@@ -153,8 +156,9 @@ class DataFetcherService:
         Raises:
             KadoaHttpError: If API requests fail
         """
-        iterator = PagedIterator(
-            lambda page_options: self.fetch_data(
+
+        def fetch_page(page_options: PageOptions) -> PagedResponse[Dict[str, Any]]:
+            fetch_result = self.fetch_data(
                 FetchDataOptions(
                     workflow_id=options.workflow_id,
                     run_id=options.run_id,
@@ -166,9 +170,16 @@ class DataFetcherService:
                     limit=page_options.limit or options.limit or self._default_limit,
                 )
             )
-        )
+            return PagedResponse(
+                data=fetch_result.data,
+                pagination=fetch_result.pagination or PageInfo(),
+            )
 
-        return iterator.fetch_all(PageOptions(limit=options.limit or self._default_limit))
+        iterator = PagedIterator(fetch_page)
+        all_data: List[Dict[str, Any]] = iterator.fetch_all(
+            PageOptions(limit=options.limit or self._default_limit)
+        )
+        return all_data
 
     async def fetch_data_pages(
         self, options: FetchDataOptions
@@ -220,8 +231,9 @@ class DataFetcherService:
 
         async for page in iterator.pages(PageOptions(limit=options.limit or self._default_limit)):
             # Convert PagedResponse back to FetchDataResult
+            page_data: List[Dict[str, Any]] = page.data
             yield FetchDataResult(
-                data=page.data,
+                data=page_data,
                 workflow_id=options.workflow_id,
                 run_id=options.run_id,
                 pagination=page.pagination,
