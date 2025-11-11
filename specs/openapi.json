@@ -974,7 +974,8 @@
                         "COMPLIANCE_REJECTED",
                         "QUEUED",
                         "SETUP",
-                        "RUNNING"
+                        "RUNNING",
+                        "DELETED"
                       ],
                       "description": "Display state for frontend"
                     },
@@ -2794,7 +2795,8 @@
                               "QUEUED",
                               "SETUP",
                               "RUNNING",
-                              "FAILED"
+                              "FAILED",
+                              "DELETED"
                             ],
                             "description": "Display state for frontend"
                           },

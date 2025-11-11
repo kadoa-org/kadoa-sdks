@@ -140,7 +140,13 @@ class EntityResolverService:
 
         body: EntityDetectionRequest = {"link": link, "selectorMode": selector_mode}
         if location is not None:
-            body["location"] = location
+            # Convert Location Pydantic model to dict if needed
+            if hasattr(location, "model_dump"):
+                body["location"] = location.model_dump(by_alias=True)
+            elif isinstance(location, dict):
+                body["location"] = location
+            else:
+                body["location"] = {"type": "auto"}
         if navigation_mode is not None:
             body["navigationMode"] = navigation_mode
 

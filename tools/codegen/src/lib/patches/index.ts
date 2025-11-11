@@ -1,6 +1,5 @@
 import { patchDataTypeEnumValidator } from "./data-type-enum";
 import { patchNotificationChannelConfigDeserialization } from "./notification-channel-config";
-import { patchWorkflowDisplayStateEnum } from "./workflow-display-state-enum";
 import { patchWorkflowEntityField } from "./workflow-entity-field";
 
 /**
@@ -15,7 +14,6 @@ const PYTHON_PATCHERS: Patcher[] = [
   patchNotificationChannelConfigDeserialization,
   patchDataTypeEnumValidator,
   patchWorkflowEntityField,
-  patchWorkflowDisplayStateEnum,
 ];
 
 /**
@@ -32,5 +30,4 @@ export function applyAllPatches(openapiClientDir: string): void {
 export { patchDataTypeEnumValidator } from "./data-type-enum";
 // Export individual patchers for potential direct use
 export { patchNotificationChannelConfigDeserialization } from "./notification-channel-config";
-export { patchWorkflowDisplayStateEnum } from "./workflow-display-state-enum";
 export { patchWorkflowEntityField } from "./workflow-entity-field";
