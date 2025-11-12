@@ -11526,16 +11526,7 @@
         ],
         "responses": {
           "200": {
-            "description": "200",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "type": "string",
-                  "description": "CSV file content",
-                  "example": "timestamp,event,interface,userId,resourceType,resourceId,workflowId,details\n2024-01-15T10:00:00Z,RUN_COMPLETED,SYSTEM,user123,RUN,run456,wf789,{}"
-                }
-              }
-            }
+            "description": "200"
           },
           "401": {
             "description": "401",
@@ -11655,16 +11646,7 @@
         ],
         "responses": {
           "200": {
-            "description": "200",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "type": "string",
-                  "description": "CSV file containing workflow metadata",
-                  "example": "id,name,state,urls,created_at,last_run,update_interval,user_id,user_email,team_id,tags,monitoring\nwf123,My Workflow,ACTIVE,https://example.com,2024-01-15T10:00:00Z,2024-01-20T15:00:00Z,24h,user123,user@example.com,team456,tag1; tag2,Yes"
-                }
-              }
-            }
+            "description": "200"
           },
           "401": {
             "description": "401",
