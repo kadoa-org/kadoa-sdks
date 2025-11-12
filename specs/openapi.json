@@ -4065,118 +4065,6 @@
         ]
       }
     },
-    "/v5/compliance/auditlog": {
-      "get": {
-        "summary": "Export audit log for compliance (CSV format)",
-        "description": "Returns a CSV export of audit log entries for compliance officers.\nProvides comprehensive audit trail data including user actions, timestamps, and changes.\nAccess restricted to compliance officers (team-scoped) and super admins (all data).\n",
-        "tags": [
-          "Compliance"
-        ],
-        "parameters": [
-          {
-            "name": "timeFilter",
-            "in": "query",
-            "required": false,
-            "description": "Filter audit logs by creation time",
-            "schema": {
-              "type": "string",
-              "enum": [
-                "last-week",
-                "last-month",
-                "all-time"
-              ],
-              "default": "all-time"
-            }
-          }
-        ],
-        "security": [
-          {
-            "ApiKeyAuth": []
-          },
-          {
-            "BearerAuth": []
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "CSV file with audit log entries",
-            "content": {
-              "text/csv": {
-                "schema": {
-                  "type": "string",
-                  "format": "binary"
-                }
-              }
-            }
-          },
-          "401": {
-            "description": "Unauthorized - Authentication required"
-          },
-          "403": {
-            "description": "Forbidden - Compliance officer access required"
-          },
-          "500": {
-            "description": "Internal server error"
-          }
-        }
-      }
-    },
-    "/v5/compliance/workflows": {
-      "get": {
-        "summary": "Export workflows for compliance (CSV format)",
-        "description": "Returns a CSV export of workflows for compliance officers.\nIncludes deleted workflows and supports time-based filtering.\nAccess restricted to compliance officers only.\n",
-        "tags": [
-          "Compliance"
-        ],
-        "parameters": [
-          {
-            "name": "timeFilter",
-            "in": "query",
-            "required": false,
-            "description": "Filter workflows by creation time",
-            "schema": {
-              "type": "string",
-              "enum": [
-                "last-week",
-                "last-month",
-                "all-time"
-              ],
-              "default": "all-time"
-            }
-          }
-        ],
-        "security": [
-          {
-            "ApiKeyAuth": []
-          },
-          {
-            "BearerAuth": []
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "CSV file with workflows",
-            "content": {
-              "text/csv": {
-                "schema": {
-                  "type": "string",
-                  "format": "binary"
-                }
-              }
-            }
-          },
-          "401": {
-            "description": "Unauthorized - Authentication required"
-          },
-          "403": {
-            "description": "Forbidden - Compliance officer access required"
-          },
-          "500": {
-            "description": "Internal server error"
-          }
-        }
-      }
-    },
     "/v5/notifications/channels": {
       "get": {
         "summary": "Retrieve all notification channels",
@@ -11376,6 +11264,499 @@
           }
         ]
       }
+    },
+    "/v4/activity/": {
+      "get": {
+        "description": "Retrieve activity events with filtering and pagination. Returns workflow runs, configuration changes, user actions, and notifications.",
+        "summary": "List activity events",
+        "tags": [
+          "Activity"
+        ],
+        "parameters": [
+          {
+            "name": "limit",
+            "in": "query",
+            "schema": {
+              "default": 100,
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 1000
+            }
+          },
+          {
+            "name": "offset",
+            "in": "query",
+            "schema": {
+              "default": 0,
+              "type": "integer",
+              "minimum": 0,
+              "nullable": true
+            }
+          },
+          {
+            "name": "workflowId",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "minLength": 1
+            }
+          },
+          {
+            "name": "userId",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "minLength": 1
+            }
+          },
+          {
+            "name": "startDate",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "format": "date-time",
+              "nullable": true
+            }
+          },
+          {
+            "name": "endDate",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "format": "date-time",
+              "nullable": true
+            }
+          },
+          {
+            "name": "eventTypes",
+            "in": "query",
+            "description": "Comma-separated list of event types to filter by",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "interfaces",
+            "in": "query",
+            "description": "Comma-separated list of interfaces to filter by (e.g., SYSTEM, USER, API)",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "200",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ActivityListResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "401",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "error": {
+                      "type": "boolean",
+                      "description": "Indicates an error occurred"
+                    },
+                    "message": {
+                      "type": "string",
+                      "description": "Error message"
+                    },
+                    "details": {
+                      "nullable": true,
+                      "description": "Additional error details (e.g., validation errors)"
+                    }
+                  },
+                  "required": [
+                    "error",
+                    "message"
+                  ]
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "403",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "error": {
+                      "type": "boolean",
+                      "description": "Indicates an error occurred"
+                    },
+                    "message": {
+                      "type": "string",
+                      "description": "Error message"
+                    },
+                    "details": {
+                      "nullable": true,
+                      "description": "Additional error details (e.g., validation errors)"
+                    }
+                  },
+                  "required": [
+                    "error",
+                    "message"
+                  ]
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "500",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "error": {
+                      "type": "boolean",
+                      "description": "Indicates an error occurred"
+                    },
+                    "message": {
+                      "type": "string",
+                      "description": "Error message"
+                    },
+                    "details": {
+                      "nullable": true,
+                      "description": "Additional error details (e.g., validation errors)"
+                    }
+                  },
+                  "required": [
+                    "error",
+                    "message"
+                  ]
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "ApiKeyAuth": []
+          }
+        ]
+      }
+    },
+    "/v4/activity/export": {
+      "get": {
+        "description": "Export activity events to CSV format for compliance reviews and audit purposes. Returns up to 10,000 events.",
+        "summary": "Export activity events as CSV",
+        "tags": [
+          "Activity"
+        ],
+        "parameters": [
+          {
+            "name": "limit",
+            "in": "query",
+            "schema": {
+              "default": 1000,
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 10000
+            }
+          },
+          {
+            "name": "offset",
+            "in": "query",
+            "schema": {
+              "default": 0,
+              "type": "integer",
+              "minimum": 0,
+              "nullable": true
+            }
+          },
+          {
+            "name": "workflowId",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "minLength": 1
+            }
+          },
+          {
+            "name": "userId",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "minLength": 1
+            }
+          },
+          {
+            "name": "startDate",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "format": "date-time",
+              "nullable": true
+            }
+          },
+          {
+            "name": "endDate",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "format": "date-time",
+              "nullable": true
+            }
+          },
+          {
+            "name": "eventTypes",
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "interfaces",
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "200",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "string",
+                  "description": "CSV file content",
+                  "example": "timestamp,event,interface,userId,resourceType,resourceId,workflowId,details\n2024-01-15T10:00:00Z,RUN_COMPLETED,SYSTEM,user123,RUN,run456,wf789,{}"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "401",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "error": {
+                      "type": "boolean",
+                      "description": "Indicates an error occurred"
+                    },
+                    "message": {
+                      "type": "string",
+                      "description": "Error message"
+                    },
+                    "details": {
+                      "nullable": true,
+                      "description": "Additional error details (e.g., validation errors)"
+                    }
+                  },
+                  "required": [
+                    "error",
+                    "message"
+                  ]
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "403",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "error": {
+                      "type": "boolean",
+                      "description": "Indicates an error occurred"
+                    },
+                    "message": {
+                      "type": "string",
+                      "description": "Error message"
+                    },
+                    "details": {
+                      "nullable": true,
+                      "description": "Additional error details (e.g., validation errors)"
+                    }
+                  },
+                  "required": [
+                    "error",
+                    "message"
+                  ]
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "500",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "error": {
+                      "type": "boolean",
+                      "description": "Indicates an error occurred"
+                    },
+                    "message": {
+                      "type": "string",
+                      "description": "Error message"
+                    },
+                    "details": {
+                      "nullable": true,
+                      "description": "Additional error details (e.g., validation errors)"
+                    }
+                  },
+                  "required": [
+                    "error",
+                    "message"
+                  ]
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "ApiKeyAuth": []
+          }
+        ]
+      }
+    },
+    "/v4/activity/workflows/export": {
+      "get": {
+        "description": "Export workflow configurations and metadata as CSV for portfolio reviews and compliance reporting. Includes notification channel details.",
+        "summary": "Export workflow metadata",
+        "tags": [
+          "Activity"
+        ],
+        "parameters": [
+          {
+            "name": "timeFilter",
+            "in": "query",
+            "description": "Time range filter for workflow export",
+            "schema": {
+              "default": "all-time",
+              "type": "string",
+              "enum": [
+                "last-week",
+                "last-month",
+                "last-6-months",
+                "all-time"
+              ]
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "200",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "string",
+                  "description": "CSV file containing workflow metadata",
+                  "example": "id,name,state,urls,created_at,last_run,update_interval,user_id,user_email,team_id,tags,monitoring\nwf123,My Workflow,ACTIVE,https://example.com,2024-01-15T10:00:00Z,2024-01-20T15:00:00Z,24h,user123,user@example.com,team456,tag1; tag2,Yes"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "401",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "error": {
+                      "type": "boolean",
+                      "description": "Indicates an error occurred"
+                    },
+                    "message": {
+                      "type": "string",
+                      "description": "Error message"
+                    },
+                    "details": {
+                      "nullable": true,
+                      "description": "Additional error details (e.g., validation errors)"
+                    }
+                  },
+                  "required": [
+                    "error",
+                    "message"
+                  ]
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "403",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "error": {
+                      "type": "boolean",
+                      "description": "Indicates an error occurred"
+                    },
+                    "message": {
+                      "type": "string",
+                      "description": "Error message"
+                    },
+                    "details": {
+                      "nullable": true,
+                      "description": "Additional error details (e.g., validation errors)"
+                    }
+                  },
+                  "required": [
+                    "error",
+                    "message"
+                  ]
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "500",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "error": {
+                      "type": "boolean",
+                      "description": "Indicates an error occurred"
+                    },
+                    "message": {
+                      "type": "string",
+                      "description": "Error message"
+                    },
+                    "details": {
+                      "nullable": true,
+                      "description": "Additional error details (e.g., validation errors)"
+                    }
+                  },
+                  "required": [
+                    "error",
+                    "message"
+                  ]
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "ApiKeyAuth": []
+          }
+        ]
+      }
     }
   },
   "components": {
@@ -15814,6 +16195,153 @@
         ],
         "title": "CreateWorkflowResponse",
         "description": "Response for workflow creation"
+      },
+      "ActivityEventSource": {
+        "type": "object",
+        "properties": {
+          "interface": {
+            "type": "string",
+            "description": "Interface that triggered the event (SYSTEM, USER, API)"
+          },
+          "userId": {
+            "type": "string",
+            "description": "User ID who triggered the event"
+          }
+        },
+        "title": "ActivityEventSource",
+        "description": "Source information for an activity event"
+      },
+      "ActivityEventResource": {
+        "type": "object",
+        "properties": {
+          "type": {
+            "type": "string",
+            "description": "Resource type (RUN, WORKFLOW, NOTIFICATION, etc.)"
+          },
+          "workflowId": {
+            "type": "string",
+            "description": "Associated workflow ID"
+          },
+          "resourceId": {
+            "type": "string",
+            "description": "Resource identifier"
+          },
+          "name": {
+            "type": "string",
+            "description": "Resource name"
+          },
+          "runId": {
+            "type": "string",
+            "description": "Run ID for workflow executions"
+          }
+        },
+        "required": [
+          "type"
+        ],
+        "title": "ActivityEventResource",
+        "description": "Resource information for an activity event"
+      },
+      "ActivityEventDetails": {
+        "type": "object",
+        "additionalProperties": {},
+        "title": "ActivityEventDetails",
+        "description": "Additional details about the activity event (varies by event type)"
+      },
+      "ActivityEvent": {
+        "type": "object",
+        "properties": {
+          "title": {
+            "type": "string",
+            "description": "Event title/type"
+          },
+          "dateTime": {
+            "type": "string",
+            "format": "date-time",
+            "description": "ISO 8601 timestamp of the event"
+          },
+          "source": {
+            "$ref": "#/components/schemas/ActivityEventSource"
+          },
+          "resource": {
+            "$ref": "#/components/schemas/ActivityEventResource"
+          },
+          "details": {
+            "$ref": "#/components/schemas/ActivityEventDetails"
+          }
+        },
+        "required": [
+          "title",
+          "dateTime"
+        ],
+        "title": "ActivityEvent",
+        "description": "A single activity event"
+      },
+      "ActivityPaginationMeta": {
+        "type": "object",
+        "properties": {
+          "total": {
+            "type": "integer",
+            "minimum": 0,
+            "description": "Total number of events"
+          },
+          "limit": {
+            "type": "integer",
+            "minimum": 1,
+            "description": "Number of events per page"
+          },
+          "offset": {
+            "type": "integer",
+            "minimum": 0,
+            "description": "Offset for pagination"
+          },
+          "hasMore": {
+            "type": "boolean",
+            "description": "Whether there are more events available"
+          }
+        },
+        "required": [
+          "total",
+          "limit",
+          "offset",
+          "hasMore"
+        ],
+        "title": "ActivityPaginationMeta",
+        "description": "Pagination metadata for activity events"
+      },
+      "ActivityListResponse": {
+        "type": "object",
+        "properties": {
+          "error": {
+            "type": "boolean",
+            "enum": [
+              false
+            ]
+          },
+          "data": {
+            "type": "object",
+            "properties": {
+              "events": {
+                "type": "array",
+                "items": {
+                  "$ref": "#/components/schemas/ActivityEvent"
+                }
+              },
+              "pagination": {
+                "$ref": "#/components/schemas/ActivityPaginationMeta"
+              }
+            },
+            "required": [
+              "events",
+              "pagination"
+            ]
+          }
+        },
+        "required": [
+          "error",
+          "data"
+        ],
+        "title": "ActivityListResponse",
+        "description": "Successful response containing activity events and pagination"
       }
     },
     "securitySchemes": {
