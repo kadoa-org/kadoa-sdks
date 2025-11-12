@@ -5,6 +5,17 @@
 
 * **workflows:** add `workflow.update` helper and new `workflow.delete` method; mark `workflow.cancel` deprecated with runtime warning
 
+## [0.17.0](https://github.com/kadoa-org/kadoa-sdks/compare/node-sdk-v0.18.0...node-sdk-v0.17.0) (2025-11-12)
+
+
+### Miscellaneous Chores
+
+* **deps-dev:** bump @types/node in /sdks/node in the development group ([#147](https://github.com/kadoa-org/kadoa-sdks/issues/147)) ([a2c2d82](https://github.com/kadoa-org/kadoa-sdks/commit/a2c2d8203639b98c9ca194f9d31ce1b61efa43d1))
+* **main:** release node-sdk 0.17.0 ([#146](https://github.com/kadoa-org/kadoa-sdks/issues/146)) ([8c03b39](https://github.com/kadoa-org/kadoa-sdks/commit/8c03b3987f7b93cf661139b3065e0e3527dfce12))
+* **node-sdk:** release 0.17.0 ([523a17e](https://github.com/kadoa-org/kadoa-sdks/commit/523a17e6e449676bdbd67568f1b116af2c1cba49))
+* **spec:** update OpenAPI spec ([#148](https://github.com/kadoa-org/kadoa-sdks/issues/148)) ([3b855fe](https://github.com/kadoa-org/kadoa-sdks/commit/3b855fe6197e22f36e6fe86e308a13596db38f7f))
+* update Node.js version requirement to 24 ([d96e596](https://github.com/kadoa-org/kadoa-sdks/commit/d96e596052479277624cedecf3189a68e9380bf5))
+
 ## [0.17.0](https://github.com/kadoa-org/kadoa-sdks/compare/node-sdk-v0.16.2...node-sdk-v0.17.0) (2025-11-10)
 
 
