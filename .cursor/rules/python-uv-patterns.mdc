@@ -1,0 +1,45 @@
+---
+description: Use UV and follow Python patterns configured in this repository
+alwaysApply: true
+---
+
+# Python Development with UV
+
+**UV** is the primary Python package manager. Always use `uv` instead of `pip`, `poetry`, or other package managers. Python 3.12+ required.
+
+## Essential Commands
+
+```bash
+# Install/sync dependencies
+uv sync
+uv add package-name
+uv add --dev package-name
+
+# Run Python scripts (always use uv run)
+uv run python script.py
+
+# Build and publish
+cd sdks/python && uv build
+uvx uv-publish
+```
+
+## Code Quality
+
+- **Ruff**: Format with `ruff format .`, lint with `ruff check --fix .`
+- **MyPy**: Type check with `uv run mypy kadoa_sdk` (strict mode, type hints required)
+- **Pytest**: Run with `uv run pytest`, use markers: `@pytest.mark.e2e`, `@pytest.mark.unit`
+
+## Key Rules
+
+1. **Always use `uv run python`** instead of `python` directly
+2. **Never use `pip` directly** - use `uv pip` or `uv add` instead
+3. **Type hints required** - mypy strict mode (`disallow_untyped_defs = true`)
+4. **Formatting**: 100 char line length, double quotes, spaces (ruff config)
+5. **Python 3.12+ syntax**: Use `list[str]` not `List[str]`
+6. **Generated code**: `openapi_client/` excluded from linting
+
+## Project Structure
+
+- SDK: `sdks/python/kadoa_sdk/`
+- Tests: `sdks/python/tests/` (e2e, unit markers)
+- Examples: `examples/python-examples/` (use `uv sync` then `uv run python`)
