@@ -4,7 +4,7 @@ from __future__ import annotations
 
 import asyncio
 import re
-from typing import TYPE_CHECKING, Optional
+from typing import TYPE_CHECKING, Any, Optional
 
 if TYPE_CHECKING:  # pragma: no cover
     pass
@@ -37,6 +37,7 @@ class NotificationChannelsService:
     """Service for managing notification channels"""
 
     DEFAULT_CHANNEL_NAME = "default"
+    CONFIG_WRAPPER = V5NotificationsChannelsGet200ResponseDataChannelsInnerConfig
 
     def __init__(
         self,
@@ -148,43 +149,23 @@ class NotificationChannelsService:
             KadoaHttpError: If API request fails
             KadoaSdkError: If channel config is invalid
         """
-        # Create a placeholder config if None - will be replaced in _build_payload
-        placeholder_config = (
-            V5NotificationsChannelsGet200ResponseDataChannelsInnerConfig(actual_instance={})
-            if not config
-            else config
-        )
+        # Prepare config wrapper for _build_payload
+        wrapped_config = self._prepare_config_for_build(config)
 
+        # Build payload with validated config
         payload = self._build_payload(
             CreateChannelRequest(
                 name=name or self.DEFAULT_CHANNEL_NAME,
                 channel_type=channel_type,
-                config=placeholder_config,
+                config=wrapped_config,
             )
         )
 
-        # Get the raw config from payload (before wrapping)
-        # We need to extract the actual_instance from the wrapped config
-        config_obj = payload.config
-        if isinstance(config_obj, V5NotificationsChannelsGet200ResponseDataChannelsInnerConfig):
-            # Extract the actual config instance
-            raw_config = config_obj.actual_instance
-        else:
-            raw_config = config_obj
+        # Extract and prepare config instance for API request
+        config_instance = self._prepare_config_instance(payload)
 
-        # Convert payload to dict with proper field names (channelType instead of channel_type)
-        payload_dict = payload.model_dump(by_alias=True)
-
-        # Create request with proper field names and raw config
-        # V5NotificationsChannelsPostRequest expects the config to be wrapped
-        # in V5NotificationsChannelsGet200ResponseDataChannelsInnerConfig
-        request = V5NotificationsChannelsPostRequest(
-            name=payload_dict["name"],
-            channelType=payload_dict["channelType"],
-            config=V5NotificationsChannelsGet200ResponseDataChannelsInnerConfig(
-                actual_instance=raw_config
-            ),
-        )
+        # Create API request with properly serialized config
+        request = self._create_api_request(payload, config_instance)
 
         try:
             response = self._api.v5_notifications_channels_post(
@@ -197,9 +178,7 @@ class NotificationChannelsService:
                     message="Failed to create channel",
                 )
 
-            # Convert dict to NotificationChannel
-            channel_dict = response.data.channel
-            return NotificationChannel(**channel_dict)
+            return NotificationChannel(**response.data.channel)
         except Exception as error:
             if isinstance(error, KadoaHttpError):
                 raise
@@ -208,95 +187,230 @@ class NotificationChannelsService:
                 message="Failed to create channel",
             )
 
+    def _prepare_config_for_build(
+        self, config: Optional[NotificationChannelConfig]
+    ) -> V5NotificationsChannelsGet200ResponseDataChannelsInnerConfig:
+        """Prepare config for _build_payload by wrapping it if needed.
+
+        Args:
+            config: Config dict, model object, or None
+
+        Returns:
+            Wrapped config that _build_payload can process
+        """
+        if config is None:
+            return self.CONFIG_WRAPPER(actual_instance={})
+        elif isinstance(config, dict):
+            return self.CONFIG_WRAPPER(actual_instance=config)
+        else:
+            return config
+
+    def _extract_config_from_payload(
+        self, payload: CreateChannelRequest
+    ) -> tuple[str, Any]:
+        """Extract channel type and raw config from payload.
+
+        Args:
+            payload: Built payload request
+
+        Returns:
+            Tuple of (channel_type, raw_config)
+        """
+        config_obj = payload.config
+        if isinstance(config_obj, self.CONFIG_WRAPPER):
+            raw_config = config_obj.actual_instance
+        else:
+            raw_config = config_obj
+
+        payload_dict = payload.model_dump(by_alias=True)
+        channel_type = payload_dict["channelType"]
+
+        return channel_type, raw_config
+
+    def _prepare_config_instance(self, payload: CreateChannelRequest) -> Any:
+        """Prepare config instance for API request serialization.
+
+        Ensures the config is a model object so its to_dict() method
+        will use by_alias=True for proper camelCase conversion.
+
+        Args:
+            payload: Built payload request
+
+        Returns:
+            Config instance ready for API serialization
+        """
+        channel_type, raw_config = self._extract_config_from_payload(payload)
+
+        # If raw_config is already a model object, use it directly
+        if hasattr(raw_config, "model_dump"):
+            return raw_config
+
+        # If it's a dict, convert to appropriate model type
+        if isinstance(raw_config, dict):
+            return self._dict_to_config_model(channel_type, raw_config)
+
+        # Fallback for other types (e.g., WEBSOCKET uses dict)
+        return raw_config
+
+    def _dict_to_config_model(
+        self, channel_type: str, config_dict: dict
+    ) -> EmailChannelConfig | SlackChannelConfig | WebhookChannelConfig | dict:
+        """Convert dict config to appropriate model type.
+
+        Args:
+            channel_type: Channel type (EMAIL, SLACK, WEBHOOK, etc.)
+            config_dict: Config dictionary
+
+        Returns:
+            Model instance or dict for WEBSOCKET
+        """
+        type_to_model = {
+            "EMAIL": EmailChannelConfig,
+            "SLACK": SlackChannelConfig,
+            "WEBHOOK": WebhookChannelConfig,
+        }
+
+        model_class = type_to_model.get(channel_type)
+        if model_class:
+            return model_class(**config_dict)
+
+        # WEBSOCKET and other types use dict directly
+        return config_dict
+
+    def _create_api_request(
+        self, payload: CreateChannelRequest, config_instance: Any
+    ) -> V5NotificationsChannelsPostRequest:
+        """Create API request with properly serialized config.
+
+        Args:
+            payload: Built payload request
+            config_instance: Prepared config instance
+
+        Returns:
+            API request ready to send
+        """
+        payload_dict = payload.model_dump(by_alias=True)
+
+        return V5NotificationsChannelsPostRequest(
+            name=payload_dict["name"],
+            channelType=payload_dict["channelType"],
+            config=self.CONFIG_WRAPPER(actual_instance=config_instance),
+        )
+
     def _build_payload(self, request: CreateChannelRequest) -> CreateChannelRequest:
-        """Build channel payload with validated config"""
-        config_raw: NotificationChannelConfig
+        """Build channel payload with validated config.
 
-        # Check if config is already wrapped or None
-        if request.config is None:
-            unwrapped_config = None
-        elif isinstance(
-            request.config, V5NotificationsChannelsGet200ResponseDataChannelsInnerConfig
-        ):
-            # Config is already wrapped, extract the actual instance
-            unwrapped_config = request.config.actual_instance
-        else:
-            unwrapped_config = request.config
+        Args:
+            request: Channel creation request
 
-        if request.channel_type == "EMAIL":
-            # Convert config to EmailChannelConfig if needed
-            email_config = None
-            if unwrapped_config:
-                if isinstance(unwrapped_config, dict):
-                    email_config = (
-                        EmailChannelConfig(**unwrapped_config) if unwrapped_config else None
-                    )
-                elif isinstance(unwrapped_config, EmailChannelConfig):
-                    email_config = unwrapped_config
-            config_raw = self._build_email_channel_config_sync(email_config)
-            # Wrap EmailChannelConfig in V5NotificationsChannelsGet200ResponseDataChannelsInnerConfig
-            config = V5NotificationsChannelsGet200ResponseDataChannelsInnerConfig(
-                actual_instance=config_raw
-            )
-        elif request.channel_type == "SLACK":
-            slack_config = unwrapped_config
-            if isinstance(slack_config, dict):
-                slack_config = (
-                    SlackChannelConfig(**slack_config)
-                    if slack_config
-                    else SlackChannelConfig(slack_channel_id="", slack_channel_name="")
-                )
-            elif not isinstance(slack_config, SlackChannelConfig):
-                slack_config = SlackChannelConfig(slack_channel_id="", slack_channel_name="")
-            config_raw = self._build_slack_channel_config(slack_config)
-            # Wrap SlackChannelConfig in V5NotificationsChannelsGet200ResponseDataChannelsInnerConfig
-            config = V5NotificationsChannelsGet200ResponseDataChannelsInnerConfig(
-                actual_instance=config_raw
-            )
-        elif request.channel_type == "WEBHOOK":
-            webhook_config = unwrapped_config
-            if isinstance(webhook_config, dict):
-                webhook_config = (
-                    WebhookChannelConfig(**webhook_config)
-                    if webhook_config
-                    else WebhookChannelConfig(webhook_url="", http_method="POST")
-                )
-            elif not isinstance(webhook_config, WebhookChannelConfig):
-                webhook_config = WebhookChannelConfig(webhook_url="", http_method="POST")
-            config_raw = self._build_webhook_channel_config(webhook_config)
-            # Wrap WebhookChannelConfig in V5NotificationsChannelsGet200ResponseDataChannelsInnerConfig
-            config = V5NotificationsChannelsGet200ResponseDataChannelsInnerConfig(
-                actual_instance=config_raw
-            )
-        elif request.channel_type == "WEBSOCKET":
-            config_dict = self._build_websocket_channel_config(unwrapped_config or {})
-            # For WEBSOCKET, empty dict should work with "object" schema
-            # If unwrapped_config was None/empty, use empty dict
-            if unwrapped_config is None or (
-                isinstance(unwrapped_config, dict) and not unwrapped_config
-            ):
-                config_dict = {}
-            # Wrap WebSocket dict in V5NotificationsChannelsGet200ResponseDataChannelsInnerConfig
-            # Empty dict should match "object" schema in oneOf
-            try:
-                config = V5NotificationsChannelsGet200ResponseDataChannelsInnerConfig(
-                    actual_instance=config_dict
-                )
-            except Exception:
-                # If empty dict doesn't work, try with a minimal object
-                config = V5NotificationsChannelsGet200ResponseDataChannelsInnerConfig(
-                    actual_instance={"type": "websocket"}
-                )
-        else:
-            config = V5NotificationsChannelsGet200ResponseDataChannelsInnerConfig(
-                actual_instance={}
-            )
+        Returns:
+            Request with validated and wrapped config
+        """
+        unwrapped_config = self._unwrap_config(request.config)
+        built_config = self._build_channel_config(request.channel_type, unwrapped_config)
 
         return CreateChannelRequest(
             name=request.name or "Default Channel",
             channel_type=request.channel_type,
-            config=config,
+            config=self.CONFIG_WRAPPER(actual_instance=built_config),
         )
+
+    def _unwrap_config(self, config: Any) -> Any:
+        """Extract actual config instance from wrapper.
+
+        Args:
+            config: Config wrapper, dict, model, or None
+
+        Returns:
+            Unwrapped config instance
+        """
+        if config is None:
+            return None
+        elif isinstance(config, self.CONFIG_WRAPPER):
+            return config.actual_instance
+        else:
+            return config
+
+    def _build_channel_config(
+        self, channel_type: NotificationChannelType, unwrapped_config: Any
+    ) -> Any:
+        """Build validated config for the given channel type.
+
+        Args:
+            channel_type: Type of channel
+            unwrapped_config: Raw config (dict, model, or None)
+
+        Returns:
+            Built and validated config instance
+        """
+        builders = {
+            "EMAIL": self._build_email_config,
+            "SLACK": self._build_slack_config,
+            "WEBHOOK": self._build_webhook_config,
+            "WEBSOCKET": self._build_websocket_config,
+        }
+
+        builder = builders.get(channel_type)
+        if builder:
+            return builder(unwrapped_config)
+
+        # Unknown channel type - return empty dict
+        return {}
+
+    def _build_email_config(
+        self, unwrapped_config: Any
+    ) -> EmailChannelConfig:
+        """Build email channel config with validation."""
+        email_config = None
+        if unwrapped_config:
+            if isinstance(unwrapped_config, dict):
+                email_config = EmailChannelConfig(**unwrapped_config) if unwrapped_config else None
+            elif isinstance(unwrapped_config, EmailChannelConfig):
+                email_config = unwrapped_config
+
+        return self._build_email_channel_config_sync(email_config)
+
+    def _build_slack_config(self, unwrapped_config: Any) -> SlackChannelConfig:
+        """Build Slack channel config."""
+        if isinstance(unwrapped_config, dict):
+            slack_config = (
+                SlackChannelConfig(**unwrapped_config)
+                if unwrapped_config
+                else SlackChannelConfig(slack_channel_id="", slack_channel_name="")
+            )
+        elif isinstance(unwrapped_config, SlackChannelConfig):
+            slack_config = unwrapped_config
+        else:
+            slack_config = SlackChannelConfig(slack_channel_id="", slack_channel_name="")
+
+        return self._build_slack_channel_config(slack_config)
+
+    def _build_webhook_config(self, unwrapped_config: Any) -> WebhookChannelConfig:
+        """Build webhook channel config."""
+        if isinstance(unwrapped_config, dict):
+            webhook_config = (
+                WebhookChannelConfig(**unwrapped_config)
+                if unwrapped_config
+                else WebhookChannelConfig(webhook_url="", http_method="POST")
+            )
+        elif isinstance(unwrapped_config, WebhookChannelConfig):
+            webhook_config = unwrapped_config
+        else:
+            webhook_config = WebhookChannelConfig(webhook_url="", http_method="POST")
+
+        return self._build_webhook_channel_config(webhook_config)
+
+    def _build_websocket_config(self, unwrapped_config: Any) -> dict:
+        """Build WebSocket channel config."""
+        config_dict = self._build_websocket_channel_config(unwrapped_config or {})
+
+        # Ensure empty dict for WebSocket (no config needed)
+        if unwrapped_config is None or (
+            isinstance(unwrapped_config, dict) and not unwrapped_config
+        ):
+            config_dict = {}
+
+        return config_dict
 
     def _build_email_channel_config_sync(
         self, defaults: EmailChannelConfig | dict | None
