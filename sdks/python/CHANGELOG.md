@@ -1,5 +1,35 @@
 # Changelog
 
+## [0.17.0](https://github.com/kadoa-org/kadoa-sdks/compare/python-sdk-v0.8.0...python-sdk-v0.17.0) (2025-11-12)
+
+
+### Bug Fixes
+
+* **python-sdk:** remove workflow displayState enum patch ([0bf8b0e](https://github.com/kadoa-org/kadoa-sdks/commit/0bf8b0ebfb37f8e8b799f6faba2114b65ed0da4e))
+* **python-sdk:** use getattr instead of .get() for Pydantic response objects in seeder ([6ce43e0](https://github.com/kadoa-org/kadoa-sdks/commit/6ce43e0d747eff61b0e9b25781123c8871ea07fd))
+* **python-sdk:** webhook channel config serialization issue ([f9b1972](https://github.com/kadoa-org/kadoa-sdks/commit/f9b1972dbcf998974d4846a6c365b53d5799d909))
+
+
+### Miscellaneous Chores
+
+* bump Python SDK version to 0.8.0rc6 ([ce1a18e](https://github.com/kadoa-org/kadoa-sdks/commit/ce1a18e374bc7f76e34ad1e0d1c35cbb0b9dd368))
+* **node-sdk:** release 0.17.0 ([523a17e](https://github.com/kadoa-org/kadoa-sdks/commit/523a17e6e449676bdbd67568f1b116af2c1cba49))
+* **python-sdk:** bump version to 0.8.0rc12 ([bd4d8fe](https://github.com/kadoa-org/kadoa-sdks/commit/bd4d8fee85e1974a17fbee601e904104461192bd))
+* **python-sdk:** bump version to 0.8.0rc13 ([9f96326](https://github.com/kadoa-org/kadoa-sdks/commit/9f9632674915e335dc1ea3082abd0784fe533ab6))
+* **python-sdk:** bump version to 0.8.0rc13 ([4e4f585](https://github.com/kadoa-org/kadoa-sdks/commit/4e4f5851b64656dace91f3ce0cbb294eb7252ebf))
+* **python-sdk:** bump version to 0.8.0rc7 ([2bcfd41](https://github.com/kadoa-org/kadoa-sdks/commit/2bcfd41698671e1ee5f98fec9180e23720b53c64))
+* **python-sdk:** bump version to 0.8.0rc9 ([fd30388](https://github.com/kadoa-org/kadoa-sdks/commit/fd303887b2c337c2109589c5025373ff2d46e371))
+* **python-sdk:** improve type annotations in data fetcher service and bump version to 0.8.0rc11 ([26939be](https://github.com/kadoa-org/kadoa-sdks/commit/26939bed5a2ca156a9b8aea6861d1fb95c4a5f3f))
+* **python-sdk:** update Python requirement to 3.12+ and bump version to 0.8.0rc8 ([989d001](https://github.com/kadoa-org/kadoa-sdks/commit/989d0016b885e90910578fa47f9e5ec8c4240c48))
+* **python-sdk:** update SDK with py.typed and improvements ([09e4d1f](https://github.com/kadoa-org/kadoa-sdks/commit/09e4d1f0b8b75c63202301ed172da545162bb0b7))
+* remove debug print statement from workflow manager service ([770bec9](https://github.com/kadoa-org/kadoa-sdks/commit/770bec994ef104856f6fa285496cd2f86442de0b))
+* **spec:** update OpenAPI spec ([#148](https://github.com/kadoa-org/kadoa-sdks/issues/148)) ([3b855fe](https://github.com/kadoa-org/kadoa-sdks/commit/3b855fe6197e22f36e6fe86e308a13596db38f7f))
+
+
+### Code Refactoring
+
+* **python-sdk:** replace manual types with generated models ([4257a05](https://github.com/kadoa-org/kadoa-sdks/commit/4257a055b9c25d57fa10db59feb41501249d6729))
+
 ## [0.7.0](https://github.com/kadoa-org/kadoa-sdks/compare/python-sdk-v0.6.1...python-sdk-v0.7.0) (2025-09-09)
 
 
