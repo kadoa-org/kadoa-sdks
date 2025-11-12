@@ -1,0 +1,30 @@
+---
+description: Understanding .envrc files and direnv for environment variable management
+alwaysApply: true
+---
+
+# .envrc and direnv
+
+The `.envrc` file is used by **direnv** (https://direnv.net/), a shell extension that automatically loads/unloads environment variables based on the current directory.
+## Current Project Setup
+
+The project's `.envrc` contains `dotenv_if_exists .env`, which conditionally loads a `.env` file if it exists.
+
+## Security
+**Authorization required**: Run `direnv allow .` after creating/modifying `.envrc`.
+## Common Functions
+
+- `dotenv_if_exists .env`: Load `.env` if it exists
+- `PATH_add <path>`: Prepend to `$PATH`
+- `use <program>`: Load tool environments (e.g., `use node`, `use python`)
+See [direnv stdlib docs](https://direnv.net/man/direnv-stdlib.1.html) for complete list.
+
+## Best Practices
+
+- **`.envrc`**: Use for logic and direnv functions (commit to git)
+- **`.env`**: Store secrets/API keys (gitignored)
+- Load `.env` from `.envrc` using `dotenv` or `dotenv_if_exists`
+## Troubleshooting
+
+- Not loading: Run `direnv allow .`
+- Changes not applying: Run `direnv reload` or `direnv allow .`

@@ -1,0 +1,170 @@
+---
+description: Check local scripts folder before creating new scripts
+alwaysApply: true
+---
+
+# Local Scripts Folder
+
+## Purpose
+
+The `scripts/.local/` folder contains agent-generated scripts that are:
+
+- **Gitignored**: Not tracked in version control (personal/local use)
+- **Cursor-visible**: Available for Cursor to read and reference
+- **Reusable**: Can be referenced and reused across sessions
+
+## When Creating Scripts
+
+**Before creating a new script, always check `scripts/.local/` first:**
+
+1. **Explore existing scripts**: List and read scripts in `scripts/.local/` to discover reusable functions and patterns
+
+2. **Search for similar functionality**: Check if a similar script or reusable function already exists
+
+3. **Reuse and compose**: Import and reuse functions from existing scripts rather than duplicating code
+
+   - Extract common utilities to `scripts/.local/utils/` or `scripts/.local/lib/`
+
+   - Create reusable "skills" (functions) that can be imported by multiple scripts
+
+4. **Avoid duplication**: If a script exists that can be extended, modify it or import its functions instead of creating a new one
+
+5. **Use descriptive names**: Scripts must have clear, descriptive names that indicate their purpose
+
+   - ✅ Good: `seed-org-team.ts`, `backup-database.ts`, `migrate-user-data.ts`
+
+   - ❌ Bad: `script.ts`, `test.ts`, `helper.ts`, `temp.ts`
+
+   - Use kebab-case: lowercase with hyphens separating words
+
+   - Include action verb: `create-`, `seed-`, `migrate-`, `backup-`, `validate-`, etc.
+
+   - Be specific: `seed-org-team.ts` is better than `seed.ts`
+
+6. **Save new scripts here**: When creating agent-generated scripts for local use, save them to `scripts/.local/`
+
+7. **Document reusable functions**: For reusable functions/skills, add a comment header describing purpose, parameters, and usage
+
+## Script Location Guidelines
+
+- **`scripts/.local/`**: Agent-generated scripts for local/personal use (gitignored)
+
+- **`scripts/.local/utils/`**: Reusable utility functions that can be imported by other scripts
+
+- **`scripts/.local/lib/`**: Reusable library modules and "skills" (optional, for complex reusable code)
+
+- **`scripts/.local/workspace/`**: Temporary files and intermediate results (gitignored)
+
+- **`scripts/`**: Shared scripts that should be version controlled
+
+- **Service-specific scripts**: Keep in their respective service directories
+
+## Progressive Discovery Pattern
+
+When creating a new script:
+
+1. **List directory**: First, list `scripts/.local/` to see what exists
+
+2. **Read relevant scripts**: Read scripts that might have reusable functions
+
+3. **Import and compose**: Import functions from existing scripts rather than rewriting
+
+4. **Extract utilities**: If creating reusable logic, extract to `utils/` or `lib/` for future use
+
+Example:
+
+```typescript
+// Instead of rewriting database connection logic:
+import { getSupabaseClient } from '../utils/database.ts';
+import { createOrganization } from './seed-org-team.ts';
+
+// Reuse existing functions
+const supabase = getSupabaseClient();
+const org = await createOrganization(...);
+```
+
+## Examples
+
+Common types of scripts that belong in `scripts/.local/`:
+
+- One-off automation scripts
+
+- Personal utility scripts
+
+- Test/debug scripts
+
+- Scripts generated during development sessions
+
+- Scripts that reference local environment variables or personal credentials
+
+## State Persistence
+
+Scripts can write intermediate results to `scripts/.local/workspace/` to:
+
+- Resume work across sessions
+
+- Cache expensive operations
+
+- Store temporary data files
+
+- Track progress in long-running operations
+
+Example:
+
+```typescript
+import { writeFile, readFile } from 'fs/promises';
+
+// Save intermediate results
+await writeFile('./scripts/.local/workspace/leads.json', JSON.stringify(leads));
+
+// Resume later
+const savedLeads = JSON.parse(await readFile('./scripts/.local/workspace/leads.json', 'utf-8'));
+```
+
+## Localhost-Only Enforcement
+
+**CRITICAL**: All local scripts MUST only connect to localhost systems and databases. Never connect to production, staging, or other remote environments.
+
+## Post-Completion Review
+
+**After a script is successfully created and working, always review and refactor it before considering it complete:**
+
+1. **Check compliance with all guidelines** in this rule:
+
+   - Verify naming conventions (kebab-case, descriptive, action verb)
+
+   - Ensure proper script location (`scripts/.local/`)
+
+   - Confirm documentation is present for reusable functions
+
+2. **Extract reusable functions**:
+
+   - Identify functions that could be reused by other scripts
+
+   - Move them to `scripts/.local/utils/` or `scripts/.local/lib/`
+
+   - Update imports in the original script to use the extracted utilities
+
+3. **Remove duplicate code**:
+
+   - Check `scripts/.local/utils/` and `scripts/.local/lib/` for existing utilities
+
+   - Replace duplicate implementations with imports from existing utilities
+
+   - Ensure the script follows the progressive discovery pattern
+
+4. **Verify imports and composition**:
+
+   - Ensure all imports use existing utilities where possible
+
+   - Check that the script composes functions rather than duplicating logic
+
+   - Verify that database connections, API clients, and other common operations use shared utilities
+
+5. **Run linting and formatting**:
+
+   - Ensure the script passes all linting checks
+
+   - Verify code formatting is consistent
+
+**This review should be done automatically before marking the script as complete.** Use the `/optimize-script` command if you need to review an existing script.
