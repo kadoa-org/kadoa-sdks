@@ -43,7 +43,7 @@
     "@types/debug": "^4.1.12",
     "@types/node": "24.10.1",
     "@types/uuid": "^11.0.0",
-    "tsup": "8.5.0",
+    "tsup": "8.5.1",
     "typescript": "5.9.3"
   },
   "engines": {
