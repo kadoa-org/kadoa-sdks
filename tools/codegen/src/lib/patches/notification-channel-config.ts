@@ -187,4 +187,3 @@ export function patchNotificationChannelConfigDeserialization(
     `⚠️  Could not find or patch from_json method in ${configFilePath}`,
   );
 }
-

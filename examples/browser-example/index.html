@@ -124,7 +124,7 @@
         }
 
         // Check SDK on page load
-        window.addEventListener('load', function() {
+        window.addEventListener('load', () => {
             console.log('Page loaded, checking for KadoaSDK...');
             console.log('typeof KadoaSDK:', typeof KadoaSDK);
             console.log('KadoaSDK object:', KadoaSDK);
@@ -136,7 +136,7 @@
             }
         });
 
-        document.getElementById('apiForm').addEventListener('submit', async function(e) {
+        document.getElementById('apiForm').addEventListener('submit', async (e) => {
             e.preventDefault();
             
             const apiKey = document.getElementById('apiKey').value.trim();

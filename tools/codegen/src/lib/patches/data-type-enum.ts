@@ -82,4 +82,3 @@ export function patchDataTypeEnumValidator(openapiClientDir: string): void {
     `⚠️  Could not find or patch data_type_validate_enum method in ${dataFieldPath}`,
   );
 }
-
