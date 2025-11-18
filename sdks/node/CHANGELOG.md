@@ -5,6 +5,27 @@
 
 * **workflows:** add `workflow.update` helper and new `workflow.delete` method; mark `workflow.cancel` deprecated with runtime warning
 
+## [0.19.0](https://github.com/kadoa-org/kadoa-sdks/compare/node-sdk-v0.18.1...node-sdk-v0.19.0) (2025-11-18)
+
+
+### Features
+
+* **node-sdk:** make name optional in ExtractOptionsInternal ([767e395](https://github.com/kadoa-org/kadoa-sdks/commit/767e395b7eb01886150504b0821d8d7b660fdd6a))
+
+
+### Bug Fixes
+
+* skip entity detection for agentic-navigation and require userPrompt ([#167](https://github.com/kadoa-org/kadoa-sdks/issues/167)) ([403a884](https://github.com/kadoa-org/kadoa-sdks/commit/403a884210f45682b643a8fd893d2424ccdf346e))
+
+
+### Miscellaneous Chores
+
+* **deps-dev:** bump tsup from 8.5.0 to 8.5.1 ([#161](https://github.com/kadoa-org/kadoa-sdks/issues/161)) ([e96994c](https://github.com/kadoa-org/kadoa-sdks/commit/e96994c6dc58de63808413e59987e4301015bd84))
+* **deps:** bump es-toolkit from 1.41.0 to 1.42.0 ([#160](https://github.com/kadoa-org/kadoa-sdks/issues/160)) ([2a4c0ea](https://github.com/kadoa-org/kadoa-sdks/commit/2a4c0ea5f547f940acc39aa56fa8000f931aed0f))
+* **deps:** bump es-toolkit in /sdks/node in the production group ([#164](https://github.com/kadoa-org/kadoa-sdks/issues/164)) ([f4a7951](https://github.com/kadoa-org/kadoa-sdks/commit/f4a7951c747df83d5da5d1656fb30e0c977a1712))
+* regenerate SDKs after PR [#156](https://github.com/kadoa-org/kadoa-sdks/issues/156) breaking changes ([0d73a3a](https://github.com/kadoa-org/kadoa-sdks/commit/0d73a3a00ab12c84520de5813bf9d1c2d7e6b7c6))
+* **spec:** update OpenAPI spec ([#156](https://github.com/kadoa-org/kadoa-sdks/issues/156)) ([f1ca2b9](https://github.com/kadoa-org/kadoa-sdks/commit/f1ca2b9b395842abd727460e28624a52a71535cb))
+
 ## [0.18.1](https://github.com/kadoa-org/kadoa-sdks/compare/node-sdk-v0.18.0...node-sdk-v0.18.1) (2025-11-12)
 
 
