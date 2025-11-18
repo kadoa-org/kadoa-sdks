@@ -12,6 +12,7 @@ import type {
   SchemaField,
   WorkflowInterval,
 } from "../extraction/extraction.acl";
+import type { AgenticWorkflow } from "../../generated";
 import {
   type CreateWorkflowRequest,
   type CreateWorkflowWithCustomSchemaRequest,
@@ -56,6 +57,7 @@ export interface CreateWorkflowInput {
   autoStart?: boolean;
   schedules?: string[];
   additionalData?: Record<string, unknown>;
+  userPrompt?: string;
 }
 
 export const TERMINAL_JOB_STATES: Set<JobStateEnum> = new Set([
@@ -83,6 +85,53 @@ export class WorkflowsCoreService {
     validateAdditionalData(input.additionalData);
 
     const domainName = new URL(input.urls[0]).hostname;
+
+    // For agentic-navigation, use AgenticWorkflow type
+    if (input.navigationMode === "agentic-navigation") {
+      if (!input.userPrompt) {
+        throw new KadoaSdkException(
+          "userPrompt is required when navigationMode is 'agentic-navigation'",
+          {
+            code: "VALIDATION_ERROR",
+            details: { navigationMode: input.navigationMode },
+          },
+        );
+      }
+
+      const agenticRequest: AgenticWorkflow = {
+        urls: input.urls,
+        navigationMode: "agentic-navigation",
+        name: input.name ?? domainName,
+        description: input.description,
+        userPrompt: input.userPrompt,
+        schemaId: input.schemaId,
+        entity: input.entity,
+        fields: input.fields,
+        bypassPreview: input.bypassPreview ?? true,
+        tags: input.tags,
+        interval: input.interval,
+        monitoring: input.monitoring,
+        location: input.location,
+        autoStart: input.autoStart,
+        schedules: input.schedules,
+        additionalData: input.additionalData,
+      };
+
+      const response = await this.workflowsApi.v4WorkflowsPost({
+        createWorkflowBody: agenticRequest,
+      });
+      const workflowId = response.data?.workflowId;
+
+      if (!workflowId) {
+        throw new KadoaSdkException(ERROR_MESSAGES.NO_WORKFLOW_ID, {
+          code: "INTERNAL_ERROR",
+          details: {
+            response: response.data,
+          },
+        });
+      }
+      return { id: workflowId };
+    }
 
     const request:
       | CreateWorkflowRequest

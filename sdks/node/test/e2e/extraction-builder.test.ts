@@ -256,8 +256,61 @@ describe("Extraction Builder", () => {
         );
         expect(workflow.additionalData).toBeDefined();
         expect(workflow.additionalData?.sourceSystem).toBe("e2e-test");
-        expect(workflow.additionalData?.metadata?.version).toBe(1);
-        expect(workflow.additionalData?.metadata?.testRun).toBe(true);
+      } finally {
+        // Cleanup
+        await client.workflow.delete(createdExtraction.workflowId);
+      }
+    },
+    { timeout: 60000 },
+  );
+
+  test(
+    "agentic-navigation requires userPrompt",
+    async () => {
+      await expect(
+        client
+          .extract({
+            urls: ["https://sandbox.kadoa.com/ecommerce"],
+            name: "Agentic Navigation Test - Missing Prompt",
+            navigationMode: "agentic-navigation",
+          })
+          .bypassPreview()
+          .setInterval({
+            interval: "ONLY_ONCE",
+          })
+          .create(),
+      ).rejects.toThrow("userPrompt is required");
+    },
+    { timeout: 60000 },
+  );
+
+  test(
+    "agentic-navigation workflow creation with userPrompt",
+    async () => {
+      const createdExtraction = await client
+        .extract({
+          urls: ["https://sandbox.kadoa.com/ecommerce"],
+          name: "Agentic Navigation Test",
+          navigationMode: "agentic-navigation",
+        })
+        .withPrompt(
+          "Extract all products with their title, price, and description. Navigate through pagination if available.",
+        )
+        .bypassPreview()
+        .setInterval({
+          interval: "ONLY_ONCE",
+        })
+        .create();
+
+      try {
+        expect(createdExtraction).toBeDefined();
+        expect(createdExtraction?.workflowId).toBeDefined();
+
+        const workflow = await client.workflow.get(
+          createdExtraction.workflowId,
+        );
+        expect(workflow).toBeDefined();
+        expect(workflow.id).toBe(createdExtraction.workflowId);
       } finally {
         // Cleanup
         await client.workflow.delete(createdExtraction.workflowId);

@@ -12,6 +12,7 @@ import type {
   FetchDataOptions,
   LocationConfig,
   NavigationMode,
+  SchemaField,
   WorkflowInterval,
   WorkflowMonitoringConfig,
 } from "../extraction.acl";
@@ -37,6 +38,7 @@ export interface ExtractOptionsInternal {
   schedules?: string[];
   location?: LocationConfig;
   additionalData?: Record<string, unknown>;
+  userPrompt?: string;
 }
 
 export interface ExtractOptions
@@ -58,6 +60,8 @@ export interface PreparedExtraction {
   bypassPreview: () => PreparedExtraction;
 
   setLocation: (options: LocationConfig) => PreparedExtraction;
+
+  withPrompt: (prompt: string) => PreparedExtraction;
 
   create: () => Promise<CreatedExtraction>;
 }
@@ -103,6 +107,7 @@ export class ExtractionBuilderService {
   private _jobId: string | undefined;
   private _notificationOptions: NotificationOptions | undefined;
   private _monitoringOptions: WorkflowMonitoringConfig | undefined;
+  private _userPrompt: string | undefined;
 
   get options(): ExtractOptionsInternal {
     assert(this._options, "Options are not set");
@@ -208,23 +213,53 @@ export class ExtractionBuilderService {
     return this;
   }
 
+  withPrompt(prompt: string): PreparedExtraction {
+    assert(this._options, "Options are not set");
+    this._userPrompt = prompt;
+    this._options.userPrompt = prompt;
+    return this;
+  }
+
   async create(): Promise<CreatedExtraction> {
     assert(this._options, "Options are not set");
     const { urls, name, description, navigationMode, entity } = this.options;
+
+    // For agentic-navigation, skip entity resolution and require userPrompt
+    const isAgenticNavigation = navigationMode === "agentic-navigation";
+    if (isAgenticNavigation) {
+      if (!this._userPrompt) {
+        throw new KadoaSdkException(
+          "userPrompt is required when navigationMode is 'agentic-navigation'",
+          {
+            code: "VALIDATION_ERROR",
+            details: { navigationMode },
+          },
+        );
+      }
+    }
 
     // For real-time workflows with AI detection, use selector mode
     const isRealTime = this._options.interval === "REAL_TIME";
     const useSelectorMode = isRealTime && entity === "ai-detection";
 
-    const resolvedEntity = await this.entityResolverService.resolveEntity(
-      entity,
-      {
-        link: urls[0],
-        location: this._options.location,
-        navigationMode,
-        selectorMode: useSelectorMode,
-      },
-    );
+    let resolvedEntity: { entity?: string; fields: Array<SchemaField> };
+    if (isAgenticNavigation) {
+      // Skip entity resolution for agentic-navigation
+      resolvedEntity = {
+        entity: typeof entity === "object" && "name" in entity ? entity.name : undefined,
+        fields: typeof entity === "object" && "fields" in entity ? entity.fields : [],
+      };
+    } else {
+      resolvedEntity = await this.entityResolverService.resolveEntity(
+        entity,
+        {
+          link: urls[0],
+          location: this._options.location,
+          navigationMode,
+          selectorMode: useSelectorMode,
+        },
+      );
+    }
 
     const workflow = await this.workflowsCoreService.create({
       urls,
@@ -243,6 +278,7 @@ export class ExtractionBuilderService {
       schedules: this._options.schedules,
       additionalData: this._options.additionalData,
       bypassPreview: this._options.bypassPreview,
+      userPrompt: this._userPrompt,
     });
 
     if (this._notificationOptions) {
