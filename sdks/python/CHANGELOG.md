@@ -1,5 +1,19 @@
 # Changelog
 
+## [0.17.1](https://github.com/kadoa-org/kadoa-sdks/compare/python-sdk-v0.17.0...python-sdk-v0.17.1) (2025-11-18)
+
+
+### Bug Fixes
+
+* skip entity detection for agentic-navigation and require userPrompt ([#167](https://github.com/kadoa-org/kadoa-sdks/issues/167)) ([403a884](https://github.com/kadoa-org/kadoa-sdks/commit/403a884210f45682b643a8fd893d2424ccdf346e))
+
+
+### Miscellaneous Chores
+
+* **main:** release python-sdk 0.17.0 ([#154](https://github.com/kadoa-org/kadoa-sdks/issues/154)) ([5477e06](https://github.com/kadoa-org/kadoa-sdks/commit/5477e06d36a44e3121972847e6e43fad7439b20c))
+* regenerate SDKs after PR [#156](https://github.com/kadoa-org/kadoa-sdks/issues/156) breaking changes ([0d73a3a](https://github.com/kadoa-org/kadoa-sdks/commit/0d73a3a00ab12c84520de5813bf9d1c2d7e6b7c6))
+* **spec:** update OpenAPI spec ([#156](https://github.com/kadoa-org/kadoa-sdks/issues/156)) ([f1ca2b9](https://github.com/kadoa-org/kadoa-sdks/commit/f1ca2b9b395842abd727460e28624a52a71535cb))
+
 ## [0.17.0](https://github.com/kadoa-org/kadoa-sdks/compare/python-sdk-v0.7.0...python-sdk-v0.17.0) (2025-11-12)
 
 
