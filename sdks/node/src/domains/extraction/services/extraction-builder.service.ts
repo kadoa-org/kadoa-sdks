@@ -28,7 +28,7 @@ const debug = logger.extraction;
 
 export interface ExtractOptionsInternal {
   urls: string[];
-  name: string;
+  name?: string;
   description?: string;
   navigationMode: NavigationMode;
   entity: EntityConfig;
