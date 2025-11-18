@@ -13,6 +13,7 @@ from ..extraction_acl import (
     V4WorkflowsWorkflowIdGet200Response,
     WorkflowWithEntityAndFields,
 )
+from openapi_client.models.agentic_workflow import AgenticWorkflow
 
 if TYPE_CHECKING:  # pragma: no cover
     from ...client import KadoaClient
@@ -36,7 +37,7 @@ from ..types import (
     WorkflowMonitoringConfig,
 )
 from .data_fetcher_service import DataFetcherService
-from .entity_resolver_service import EntityResolverService
+from .entity_resolver_service import EntityResolverService, ResolvedEntity
 
 debug = logger
 
@@ -178,6 +179,12 @@ class PreparedExtraction:
         self._options.location = options
         return self
 
+    def with_prompt(self, prompt: str) -> "PreparedExtraction":
+        """Set user prompt for agentic navigation"""
+        self._builder._user_prompt = prompt
+        self._options.user_prompt = prompt
+        return self
+
     def create(self) -> "CreatedExtraction":
         """Create the workflow"""
         return self._builder._create(self._options)
@@ -295,6 +302,7 @@ class ExtractionBuilderService:
         self._data_fetcher = DataFetcherService(client)
         self._notification_options: Optional[NotificationOptions] = None
         self._monitoring_options: Optional[WorkflowMonitoringConfig] = None
+        self._user_prompt: Optional[str] = None
 
     def _get_workflow_status(self, workflow_id: str) -> V4WorkflowsWorkflowIdGet200Response:
         """Get workflow status"""
@@ -374,6 +382,7 @@ class ExtractionBuilderService:
             entity=entity,
             bypass_preview=options.bypass_preview or False,
             additional_data=options.additional_data,
+            user_prompt=options.user_prompt,
         )
 
         return PreparedExtraction(self, internal_options)
@@ -385,20 +394,46 @@ class ExtractionBuilderService:
         description = options.description
         navigation_mode = options.navigation_mode
         entity = options.entity
+        user_prompt = options.user_prompt or self._user_prompt
+
+        # For agentic-navigation, skip entity resolution and require userPrompt
+        is_agentic_navigation = navigation_mode == "agentic-navigation"
+        if is_agentic_navigation:
+            if not user_prompt:
+                raise KadoaSdkError(
+                    "user_prompt is required when navigation_mode is 'agentic-navigation'",
+                    code=KadoaErrorCode.VALIDATION_ERROR,
+                    details={"navigation_mode": navigation_mode},
+                )
 
         # For real-time workflows with AI detection, use selector mode
         is_real_time = options.interval == "REAL_TIME"
         use_selector_mode = is_real_time and entity == "ai-detection"
 
-        resolved_entity = self._entity_resolver.resolve_entity(
-            entity,
-            {
-                "link": urls[0],
-                "location": options.location,
-                "navigationMode": navigation_mode,
-                "selectorMode": use_selector_mode,
-            },
-        )
+        if is_agentic_navigation:
+            # Skip entity resolution for agentic-navigation
+            resolved_entity = ResolvedEntity(
+                entity=(
+                    entity.get("name")
+                    if isinstance(entity, dict) and "name" in entity
+                    else None
+                ),
+                fields=(
+                    entity.get("fields", [])
+                    if isinstance(entity, dict) and "fields" in entity
+                    else []
+                ),
+            )
+        else:
+            resolved_entity = self._entity_resolver.resolve_entity(
+                entity,
+                {
+                    "link": urls[0],
+                    "location": options.location,
+                    "navigationMode": navigation_mode,
+                    "selectorMode": use_selector_mode,
+                },
+            )
 
         fields_list = []
         for field in resolved_entity.fields:
@@ -433,6 +468,7 @@ class ExtractionBuilderService:
             location=options.location,
             bypass_preview=options.bypass_preview,
             additional_data=options.additional_data,
+            user_prompt=user_prompt,
         )
 
         if self._notification_options:
@@ -461,6 +497,7 @@ class ExtractionBuilderService:
         location: Optional[LocationConfig],
         bypass_preview: bool,
         additional_data: Optional[Dict[str, Any]],
+        user_prompt: Optional[str] = None,
     ) -> str:
         """Create workflow via API"""
         api = get_workflows_api(self.client)
@@ -511,27 +548,58 @@ class ExtractionBuilderService:
                     field_obj = DataField(**field_dict)
                     schema_fields.append(SchemaResponseSchemaInner(actual_instance=field_obj))
 
-        inner = WorkflowWithEntityAndFields(
-            urls=urls,
-            navigation_mode=navigation_mode,
-            entity=entity,
-            name=name,
-            description=description,
-            fields=schema_fields,
-            location=location,
-            bypass_preview=bypass_preview,
-            tags=["sdk"],
-            additional_data=additional_data,
-        )
+        # For agentic-navigation, use AgenticWorkflow type
+        if navigation_mode == "agentic-navigation":
+            if not user_prompt:
+                raise KadoaSdkError(
+                    "user_prompt is required when navigation_mode is 'agentic-navigation'",
+                    code=KadoaErrorCode.VALIDATION_ERROR,
+                    details={"navigation_mode": navigation_mode},
+                )
 
-        if schema_id:
-            inner.schema_id = schema_id
-        if monitoring:
-            inner.monitoring = monitoring
-        if interval:
-            inner.interval = interval
-        if schedules:
-            inner.schedules = schedules
+            inner = AgenticWorkflow(
+                urls=urls,
+                navigation_mode="agentic-navigation",
+                name=name,
+                description=description,
+                user_prompt=user_prompt,
+                schema_id=schema_id,
+                entity=entity,
+                fields=schema_fields,
+                location=location,
+                bypass_preview=bypass_preview,
+                tags=["sdk"],
+                additional_data=additional_data,
+            )
+
+            if monitoring:
+                inner.monitoring = monitoring
+            if interval:
+                inner.interval = interval
+            if schedules:
+                inner.schedules = schedules
+        else:
+            inner = WorkflowWithEntityAndFields(
+                urls=urls,
+                navigation_mode=navigation_mode,
+                entity=entity,
+                name=name,
+                description=description,
+                fields=schema_fields,
+                location=location,
+                bypass_preview=bypass_preview,
+                tags=["sdk"],
+                additional_data=additional_data,
+            )
+
+            if schema_id:
+                inner.schema_id = schema_id
+            if monitoring:
+                inner.monitoring = monitoring
+            if interval:
+                inner.interval = interval
+            if schedules:
+                inner.schedules = schedules
 
         try:
             wrapper = CreateWorkflowBody(inner)

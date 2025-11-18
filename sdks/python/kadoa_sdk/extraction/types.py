@@ -72,6 +72,7 @@ class ExtractionOptions(BaseModel):
     max_wait_time: Optional[float] = None  # seconds
     max_records: Optional[int] = None
     additional_data: Optional[Dict[str, Any]] = None
+    user_prompt: Optional[str] = None
 
 
 class ExtractionResult(BaseModel):
@@ -117,6 +118,7 @@ class ExtractOptions(BaseModel):
     extraction: Optional[ExtractCallback] = None
     additional_data: Optional[Dict[str, Any]] = None
     bypass_preview: Optional[bool] = None
+    user_prompt: Optional[str] = None
 
 
 class ExtractOptionsInternal(BaseModel):
@@ -132,6 +134,7 @@ class ExtractOptionsInternal(BaseModel):
     schedules: Optional[List[str]] = None
     location: Optional[LocationConfig] = None
     additional_data: Optional[Dict[str, Any]] = None
+    user_prompt: Optional[str] = None
 
 
 class RunWorkflowOptions(BaseModel):

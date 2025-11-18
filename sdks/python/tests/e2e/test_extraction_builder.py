@@ -250,3 +250,61 @@ class TestExtractionBuilder:
             # Cleanup - Note: workflow.delete() not yet implemented
             # This will be added when workflow service is available
             pass
+
+    @pytest.mark.integration
+    @pytest.mark.timeout(60)
+    @pytest.mark.asyncio
+    async def test_agentic_navigation_requires_user_prompt(self, client):
+        """Agentic-navigation requires userPrompt."""
+        from kadoa_sdk.core.exceptions import KadoaSdkError
+
+        with pytest.raises(KadoaSdkError) as exc_info:
+            (
+                client.extract(
+                    ExtractOptions(
+                        urls=["https://sandbox.kadoa.com/ecommerce"],
+                        name="Agentic Navigation Test - Missing Prompt",
+                        navigation_mode="agentic-navigation",
+                    )
+                )
+                .bypass_preview()
+                .set_interval({"interval": "ONLY_ONCE"})
+                .create()
+            )
+
+        assert "user_prompt is required" in str(exc_info.value).lower()
+
+    @pytest.mark.integration
+    @pytest.mark.timeout(60)
+    @pytest.mark.asyncio
+    async def test_agentic_navigation_workflow_creation_with_user_prompt(
+        self, client
+    ):
+        """Agentic-navigation workflow creation with userPrompt."""
+        created_extraction = (
+            client.extract(
+                ExtractOptions(
+                    urls=["https://sandbox.kadoa.com/ecommerce"],
+                    name="Agentic Navigation Test",
+                    navigation_mode="agentic-navigation",
+                )
+            )
+            .with_prompt(
+                "Extract all products with their title, price, and description. Navigate through pagination if available."
+            )
+            .bypass_preview()
+            .set_interval({"interval": "ONLY_ONCE"})
+            .create()
+        )
+
+        try:
+            assert created_extraction is not None
+            assert created_extraction.workflow_id is not None
+
+            # Note: Workflow.get() not yet implemented in Python SDK
+            # This test will be updated when workflow service is available
+            # For now, we just verify the extraction was created successfully
+        finally:
+            # Cleanup - Note: workflow.delete() not yet implemented
+            # This will be added when workflow service is available
+            pass

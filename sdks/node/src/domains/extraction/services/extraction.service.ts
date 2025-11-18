@@ -21,6 +21,7 @@ import type {
   FetchDataOptions,
   LocationConfig,
   NavigationMode,
+  SchemaField,
   WorkflowDetailsResponse,
   WorkflowInterval,
   WorkflowMonitoringConfig,
@@ -54,6 +55,7 @@ export interface ExtractionOptionsInternal {
   notifications?: NotificationOptions;
   autoStart?: boolean;
   additionalData?: Record<string, unknown>;
+  userPrompt?: string;
 }
 
 export type ExtractionOptions = {
@@ -218,14 +220,44 @@ export class ExtractionService {
 
     let workflowId: string;
 
-    const resolvedEntity = await this.entityResolverService.resolveEntity(
-      options.entity || "ai-detection",
-      {
-        link: config.urls[0],
-        location: config.location,
-        navigationMode: config.navigationMode,
-      },
-    );
+    // For agentic-navigation, skip entity resolution and require userPrompt
+    const isAgenticNavigation = config.navigationMode === "agentic-navigation";
+    if (isAgenticNavigation) {
+      if (!config.userPrompt) {
+        throw new KadoaSdkException(
+          "userPrompt is required when navigationMode is 'agentic-navigation'",
+          {
+            code: "VALIDATION_ERROR",
+            details: { navigationMode: config.navigationMode },
+          },
+        );
+      }
+    }
+
+    let resolvedEntity: { entity?: string; fields: Array<SchemaField> };
+    if (isAgenticNavigation) {
+      // Skip entity resolution for agentic-navigation
+      const entityConfig = options.entity || "ai-detection";
+      resolvedEntity = {
+        entity:
+          typeof entityConfig === "object" && "name" in entityConfig
+            ? entityConfig.name
+            : undefined,
+        fields:
+          typeof entityConfig === "object" && "fields" in entityConfig
+            ? entityConfig.fields
+            : [],
+      };
+    } else {
+      resolvedEntity = await this.entityResolverService.resolveEntity(
+        options.entity || "ai-detection",
+        {
+          link: config.urls[0],
+          location: config.location,
+          navigationMode: config.navigationMode,
+        },
+      );
+    }
 
     const hasNotifications = !!config.notifications;
 
@@ -235,6 +267,7 @@ export class ExtractionService {
       ...(resolvedEntity.entity !== undefined
         ? { entity: resolvedEntity.entity }
         : {}),
+      ...(config.userPrompt ? { userPrompt: config.userPrompt } : {}),
     };
 
     const result = await this.workflowsCoreService.create(workflowRequest);
