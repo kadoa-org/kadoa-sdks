@@ -1,7 +1,3 @@
-## OpenAPI Spec Update
-
-This PR updates `specs/openapi.json` and `specs/openapi-metadata.json` with the latest version from `https://api.kadoa.com/openapi`.
-
 # OpenAPI Spec Changes Analysis
 
 ## Summary
@@ -45,4 +41,3 @@ Schema improvements to activity event filtering and alert rule conditions with n
 - **Backward Compatible:** No
 - **Requires SDK Regeneration:** Yes
 - **Client Action Required:** Required
-

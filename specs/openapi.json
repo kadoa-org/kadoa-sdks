@@ -11328,6 +11328,15 @@
             }
           },
           {
+            "name": "relativeTime",
+            "in": "query",
+            "description": "Relative time window counted backwards from now (e.g., 6h, 1d, 2w)",
+            "schema": {
+              "type": "string",
+              "pattern": "^\\d+(m|h|d|w)$"
+            }
+          },
+          {
             "name": "eventTypes",
             "in": "query",
             "description": "Comma-separated list of event types to filter by",
@@ -11338,7 +11347,7 @@
           {
             "name": "interfaces",
             "in": "query",
-            "description": "Comma-separated list of interfaces to filter by (e.g., SYSTEM, USER, API)",
+            "description": "Comma-separated list of request sources to filter by (e.g., SYSTEM, UI, SDK, API) - filters by requestSource field",
             "schema": {
               "type": "string"
             }
@@ -11507,6 +11516,15 @@
               "type": "string",
               "format": "date-time",
               "nullable": true
+            }
+          },
+          {
+            "name": "relativeTime",
+            "in": "query",
+            "description": "Relative time window counted backwards from now (e.g., 6h, 1d, 2w)",
+            "schema": {
+              "type": "string",
+              "pattern": "^\\d+(m|h|d|w)$"
             }
           },
           {
@@ -15529,22 +15547,7 @@
             "description": "Notification channels"
           },
           "conditions": {
-            "type": "array",
-            "items": {
-              "oneOf": [
-                {},
-                {}
-              ]
-            },
-            "description": "Array of conditions"
-          },
-          "logicalOperator": {
-            "type": "string",
-            "enum": [
-              "AND",
-              "OR"
-            ],
-            "description": "Logical operator for conditions"
+            "description": "Condition group with logical operator and conditions"
           }
         },
         "required": [
@@ -16181,13 +16184,17 @@
       "ActivityEventSource": {
         "type": "object",
         "properties": {
-          "interface": {
+          "requestSource": {
             "type": "string",
-            "description": "Interface that triggered the event (SYSTEM, USER, API)"
+            "description": "Request source that triggered the event (SYSTEM, UI, SDK, API)"
           },
           "userId": {
             "type": "string",
             "description": "User ID who triggered the event"
+          },
+          "userEmail": {
+            "type": "string",
+            "description": "User email who triggered the event"
           }
         },
         "title": "ActivityEventSource",
