@@ -65,4 +65,3 @@ function isNewerVersion(version1: string, version2: string): boolean {
 
   return false;
 }
-

@@ -256,8 +256,11 @@ describe("Extraction Builder", () => {
         );
         expect(workflow.additionalData).toBeDefined();
         expect(workflow.additionalData?.sourceSystem).toBe("e2e-test");
-        expect(workflow.additionalData?.metadata?.version).toBe(1);
-        expect(workflow.additionalData?.metadata?.testRun).toBe(true);
+        const metadata = workflow.additionalData?.metadata as
+          | { version?: number; testRun?: boolean }
+          | undefined;
+        expect(metadata?.version).toBe(1);
+        expect(metadata?.testRun).toBe(true);
       } finally {
         // Cleanup
         await client.workflow.delete(createdExtraction.workflowId);
