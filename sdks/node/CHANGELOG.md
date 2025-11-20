@@ -5,6 +5,14 @@
 
 * **workflows:** add `workflow.update` helper and new `workflow.delete` method; mark `workflow.cancel` deprecated with runtime warning
 
+## [0.19.1](https://github.com/kadoa-org/kadoa-sdks/compare/node-sdk-v0.19.0...node-sdk-v0.19.1) (2025-11-20)
+
+
+### Miscellaneous Chores
+
+* set minimum Node.js version to 22 ([dd99871](https://github.com/kadoa-org/kadoa-sdks/commit/dd9987142f29e99d638b535ea84f176bb173e249))
+* **spec:** update OpenAPI spec ([#168](https://github.com/kadoa-org/kadoa-sdks/issues/168)) ([99d1116](https://github.com/kadoa-org/kadoa-sdks/commit/99d111653d888bc37f98e97871d4fdc7a5a11a1e))
+
 ## [0.19.0](https://github.com/kadoa-org/kadoa-sdks/compare/node-sdk-v0.18.1...node-sdk-v0.19.0) (2025-11-18)
 
 
