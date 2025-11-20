@@ -147,6 +147,10 @@ export class ExtractionBuilderService {
     extraction,
     additionalData,
     bypassPreview,
+    userPrompt,
+    interval,
+    schedules,
+    location,
   }: ExtractOptions): PreparedExtraction {
     let entity: EntityConfig = "ai-detection";
 
@@ -163,6 +167,10 @@ export class ExtractionBuilderService {
       }
     }
 
+    if (userPrompt) {
+      this._userPrompt = userPrompt;
+    }
+
     this._options = {
       urls,
       name,
@@ -171,6 +179,10 @@ export class ExtractionBuilderService {
       entity,
       bypassPreview: bypassPreview ?? false,
       additionalData,
+      userPrompt,
+      interval,
+      schedules,
+      location,
     };
     return this;
   }
@@ -246,19 +258,20 @@ export class ExtractionBuilderService {
     if (isAgenticNavigation) {
       // Skip entity resolution for agentic-navigation
       resolvedEntity = {
-        entity: typeof entity === "object" && "name" in entity ? entity.name : undefined,
-        fields: typeof entity === "object" && "fields" in entity ? entity.fields : [],
+        entity:
+          typeof entity === "object" && "name" in entity
+            ? entity.name
+            : undefined,
+        fields:
+          typeof entity === "object" && "fields" in entity ? entity.fields : [],
       };
     } else {
-      resolvedEntity = await this.entityResolverService.resolveEntity(
-        entity,
-        {
-          link: urls[0],
-          location: this._options.location,
-          navigationMode,
-          selectorMode: useSelectorMode,
-        },
-      );
+      resolvedEntity = await this.entityResolverService.resolveEntity(entity, {
+        link: urls[0],
+        location: this._options.location,
+        navigationMode,
+        selectorMode: useSelectorMode,
+      });
     }
 
     const workflow = await this.workflowsCoreService.create({
