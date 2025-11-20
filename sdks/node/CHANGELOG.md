@@ -5,6 +5,13 @@
 
 * **workflows:** add `workflow.update` helper and new `workflow.delete` method; mark `workflow.cancel` deprecated with runtime warning
 
+## [0.19.2](https://github.com/kadoa-org/kadoa-sdks/compare/node-sdk-v0.19.1...node-sdk-v0.19.2) (2025-11-20)
+
+
+### Bug Fixes
+
+* properly destructure extract() parameters (userPrompt, interval, schedules, location) ([#171](https://github.com/kadoa-org/kadoa-sdks/issues/171)) ([2ab149b](https://github.com/kadoa-org/kadoa-sdks/commit/2ab149b0fed38d1ad71d30c140f90333744c7ada))
+
 ## [0.19.1](https://github.com/kadoa-org/kadoa-sdks/compare/node-sdk-v0.19.0...node-sdk-v0.19.1) (2025-11-20)
 
 
