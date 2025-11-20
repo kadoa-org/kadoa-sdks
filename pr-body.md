@@ -6,43 +6,33 @@ This PR updates `specs/openapi.json` and `specs/openapi-metadata.json` with the 
 
 ## Summary
 
-Schema improvements to activity event filtering and alert rule conditions with no breaking changes. Added relative time filtering support and clarified request source terminology.
+Added new crawler configuration options and enhanced navigation mode support for workflow management. All changes are backward compatible additions to existing schemas.
 
 ### Endpoints
 
-| Status | Method | Path | Description |
-|--------|--------|------|-------------|
-| **Modified** | `GET` | `/v4/activity-events` | Added optional `relativeTime` query parameter for time window filtering |
-| **Modified** | `GET` | `/v4/notifications/activity-events` | Added optional `relativeTime` query parameter for time window filtering |
+No endpoint changes.
 
 ### Schema Changes
 
 | Schema | Change | Details |
 |--------|--------|---------|
-| `ActivityEventSource` | Modified | Renamed `interface` property to `requestSource`; added `userEmail` property |
-| `AlertRule` | Modified | Simplified `conditions` from array to single object; removed `logicalOperator` property |
-| Query Parameters | Modified | Updated `interfaces` parameter description to reference `requestSource` field with new values (SYSTEM, UI, SDK, API) |
-
-### Breaking Changes
-
-> **WARNING: This update contains breaking changes that may affect existing clients.**
-
-**What breaks:**
-- `ActivityEventSource.interface` renamed to `ActivityEventSource.requestSource` - clients accessing this property will fail
-- `AlertRule.conditions` changed from array to object - clients expecting array structure will break
-- `AlertRule.logicalOperator` removed - clients accessing this property will fail
-- Interface filter values changed from (SYSTEM, USER, API) to (SYSTEM, UI, SDK, API) - clients using "USER" will need to use "UI"
-
-**Migration guide:**
-1. Update all references from `ActivityEventSource.interface` to `ActivityEventSource.requestSource`
-2. Update activity event filtering to use new source values: replace "USER" with "UI", add support for "SDK"
-3. Refactor `AlertRule.conditions` handling from array iteration to single object access
-4. Remove references to `AlertRule.logicalOperator` - logic is now embedded in the conditions object
-5. Optionally adopt new `relativeTime` parameter (e.g., "6h", "1d", "2w") for simpler time-based filtering
+| `WorkflowCreateRequest` | Modified | Added optional crawler properties: `maxPages`, `maxDepth`, `pathsFilterIn`, `pathsFilterOut` |
+| `WorkflowUpdateRequest` | Modified | Added optional crawler properties: `maxPages`, `maxDepth`, `pathsFilterIn`, `pathsFilterOut` |
+| `WorkflowRunRequest` | Modified | Added optional crawler properties: `maxPages`, `maxDepth`, `pathsFilterIn`, `pathsFilterOut` |
+| `NavigationMode` enum | Modified | Added new value: `all-pages` for crawler-based navigation |
 
 ### Impact Assessment
 
-- **Backward Compatible:** No
+- **Backward Compatible:** Yes
 - **Requires SDK Regeneration:** Yes
-- **Client Action Required:** Required
+- **Client Action Required:** Optional
+
+**Details:**
+- New crawler configuration properties (`maxPages`, `maxDepth`, `pathsFilterIn`, `pathsFilterOut`) are optional and only apply when `navigationMode` is set to `all-pages`
+- `maxPages` allows configuring maximum pages to crawl (1-100,000, default: 10,000)
+- `maxDepth` controls maximum crawl depth (1-200, default: 50)
+- `pathsFilterIn` and `pathsFilterOut` enable regex-based path filtering during crawling
+- The new `all-pages` navigation mode enables comprehensive site crawling functionality
+- Existing workflows continue to function without modification
+- SDK regeneration recommended to access new crawler configuration options
 
