@@ -4,7 +4,7 @@ import weakref
 from typing import TYPE_CHECKING
 
 from ..notifications.notifications_acl import NotificationsApi
-from .core_acl import ApiClient
+from .core_acl import create_api_client
 
 if TYPE_CHECKING:  # pragma: no cover
     from ..client import KadoaClient
@@ -31,7 +31,7 @@ def get_crawl_api(client: "KadoaClient") -> "CrawlApi":
 
     api = _crawl_cache.get(client)
     if api is None:
-        api = CrawlApi(ApiClient(client.configuration))
+        api = CrawlApi(create_api_client(client.configuration))
         _crawl_cache[client] = api
     return api
 
@@ -41,7 +41,7 @@ def get_workflows_api(client: "KadoaClient") -> "WorkflowsApi":
 
     api = _workflows_cache.get(client)
     if api is None:
-        api = WorkflowsApi(ApiClient(client.configuration))
+        api = WorkflowsApi(create_api_client(client.configuration))
         _workflows_cache[client] = api
     return api
 
@@ -49,7 +49,7 @@ def get_workflows_api(client: "KadoaClient") -> "WorkflowsApi":
 def get_notifications_api(client: "KadoaClient") -> NotificationsApi:
     api = _notifications_cache.get(client)
     if api is None:
-        api = NotificationsApi(ApiClient(client.configuration))
+        api = NotificationsApi(create_api_client(client.configuration))
         _notifications_cache[client] = api
     return api
 
@@ -59,7 +59,7 @@ def get_schemas_api(client: "KadoaClient") -> "SchemasApi":
 
     api = _schemas_cache.get(client)
     if api is None:
-        api = SchemasApi(ApiClient(client.configuration))
+        api = SchemasApi(create_api_client(client.configuration))
         _schemas_cache[client] = api
     return api
 
@@ -69,6 +69,6 @@ def get_validation_api(client: "KadoaClient") -> "DataValidationApi":
 
     api = _validation_cache.get(client)
     if api is None:
-        api = DataValidationApi(ApiClient(client.configuration))
+        api = DataValidationApi(create_api_client(client.configuration))
         _validation_cache[client] = api
     return api

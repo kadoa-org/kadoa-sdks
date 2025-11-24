@@ -6,7 +6,7 @@ from typing import Any, List, Optional
 
 from pydantic import BaseModel
 
-from .core.core_acl import ApiClient, Configuration, RESTClientObject
+from .core.core_acl import Configuration, RESTClientObject, create_api_client
 from .core.exceptions import KadoaErrorCode, KadoaHttpError, KadoaSdkError
 from .core.http import (
     get_notifications_api,
@@ -30,7 +30,6 @@ from .notifications import (
 from .schemas import SchemasService
 from .user import UserService
 from .validation import ValidationCoreService, ValidationDomain, ValidationRulesService
-from .version import SDK_LANGUAGE, SDK_NAME, __version__
 from .workflows import WorkflowsCoreService
 from .core.version_check import check_for_updates
 
@@ -126,11 +125,7 @@ class KadoaClient:
             )
 
         self._configuration = configuration
-        self._api_client = ApiClient(self._configuration)
-
-        self._api_client.default_headers["User-Agent"] = f"{SDK_NAME}/{__version__}"
-        self._api_client.default_headers["X-SDK-Version"] = __version__
-        self._api_client.default_headers["X-SDK-Language"] = SDK_LANGUAGE
+        self._api_client = create_api_client(self._configuration)
 
         self._realtime: Optional[Realtime] = None
 

@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.17.3](https://github.com/kadoa-org/kadoa-sdks/compare/python-sdk-v0.17.2...python-sdk-v0.17.3) (2025-11-24)
+
+
+### Bug Fixes
+
+* **python-sdk:** update core HTTP and ACL handling ([061577c](https://github.com/kadoa-org/kadoa-sdks/commit/061577c372226e71b3a3792432de16ed339a4f8b))
+
 ## [0.17.2](https://github.com/kadoa-org/kadoa-sdks/compare/python-sdk-v0.17.1...python-sdk-v0.17.2) (2025-11-20)
 
 
