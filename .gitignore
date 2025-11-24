@@ -67,3 +67,5 @@ specs/openapi.previous.json
 
 # Manual release trigger files
 .release-trigger
+
+scripts/.local
