@@ -2,7 +2,7 @@
 name = "kadoa-python-examples"
 version = "0.1.0"
 description = "Example scripts for Kadoa Python SDK"
-requires-python = ">=3.11"
+requires-python = ">=3.14"
 dependencies = [
     "python-dotenv>=1.0.0",
     "kadoa-sdk @ file:///Users/branislavbellovic/WebstormProjects/kadoa-sdks/sdks/python",
