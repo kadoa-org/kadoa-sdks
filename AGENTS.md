@@ -1,11 +1,10 @@
-# CLAUDE.md
+# AGENTS.md
 
-This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
+This file provides guidance to AI coding assistants when working with code in this repository.
 
 ## SDK-Specific Instructions
 
-@sdks/node/CLAUDE.md
-@sdks/python/CLAUDE.md
+@sdks/node/AGENTS.md
 
 ## Package Manager
 
@@ -105,10 +104,14 @@ The repository enforces conventional commits with these scopes:
 - `release` - Release configuration
 - `docs` - Documentation
 
+### Commit Types and Changelog Visibility
+
 Commit types that trigger releases:
 - `feat:` - New features (minor version bump)
 - `fix:` - Bug fixes (patch version bump)
 - `feat!:` or `fix!:` - Breaking changes (major version bump)
+
+**Changelog visibility**: Only `feat`, `fix`, `perf`, and `revert` commits appear in public changelogs. Other types (`chore`, `docs`, `refactor`, `test`, `ci`, `build`, `style`) are hidden to reduce noise.
 
 Example: `git commit -m "feat(node-sdk): add retry logic to API client"`
 
@@ -119,3 +122,4 @@ Example: `git commit -m "feat(node-sdk): add retry logic to API client"`
 - Both SDKs follow similar architectural patterns for consistency
 - Generated code should never be manually edited - always regenerate from specs
 - Production builds use committed specs only (never use `--fetch-latest` in CI)
+

@@ -127,19 +127,12 @@ jobs:
             --allowedTools "Read,Write,Bash(git diff:*)"
             --model claude-sonnet-4-5-20250929
 
-      - name: Upload analysis artifact
+      - name: Update spec fingerprint
         if: steps.diff.outputs.changed == 'true'
-        uses: actions/upload-artifact@v5
-        with:
-          name: openapi-analysis
-          path: analysis.md
-          retention-days: 1
-
-      - name: Download analysis artifact
-        if: steps.diff.outputs.changed == 'true'
-        uses: actions/download-artifact@v6
-        with:
-          name: openapi-analysis
+        run: |
+          sha=$(sha256sum specs/openapi.json | cut -d' ' -f1)
+          echo "$sha" > sdks/node/SPEC_SHA256
+          echo "$sha" > sdks/python/SPEC_SHA256
 
       - name: Prepare PR body
         if: steps.diff.outputs.changed == 'true'
@@ -170,6 +163,8 @@ jobs:
             chore(spec): update OpenAPI spec
 
             Updates specs/openapi.json and specs/openapi-metadata.json with the latest version from https://api.kadoa.com/openapi.
+
+            release-please:force-release
 
           title: "chore(spec): update OpenAPI spec"
           body-path: pr-body.md

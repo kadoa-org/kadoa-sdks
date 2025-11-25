@@ -1,10 +1,5 @@
 # Changelog
 
-
-### Features
-
-* **workflows:** add `workflow.update` helper and new `workflow.delete` method; mark `workflow.cancel` deprecated with runtime warning
-
 ## [0.19.2](https://github.com/kadoa-org/kadoa-sdks/compare/node-sdk-v0.19.1...node-sdk-v0.19.2) (2025-11-24)
 
 

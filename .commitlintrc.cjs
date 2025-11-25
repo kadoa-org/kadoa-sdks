@@ -12,13 +12,15 @@ module.exports = {
         "codegen", // Code generation tooling
         "node-examples", // Node example code
         "python-examples", // Python example code
+        "browser-examples", // Browser example code
         "ci", // CI/CD changes
         "deps", // Dependency updates
         "release", // Release configuration
         "docs", // Documentation
-        "*", // Allow wildcard for cross-cutting changes
       ],
     ],
+    // Allow commits without scope for cross-cutting changes
+    "scope-empty": [0, "never"],
     // Ensure type matches what Release Please expects
     "type-enum": [
       2,
@@ -37,5 +39,9 @@ module.exports = {
         "revert", // Revert commits
       ],
     ],
+    // Enforce reasonable header length
+    "header-max-length": [2, "always", 100],
+    // Enforce lowercase subject for consistency
+    "subject-case": [2, "always", "lower-case"],
   },
 };

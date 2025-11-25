@@ -7,14 +7,15 @@
   "changelog-sections": [
     { "type": "feat", "section": "Features" },
     { "type": "fix", "section": "Bug Fixes" },
-    { "type": "chore", "section": "Miscellaneous Chores" },
-    { "type": "refactor", "section": "Code Refactoring" },
-    { "type": "ci", "section": "Continuous Integration" },
-    { "type": "docs", "section": "Documentation" },
-    { "type": "test", "section": "Tests" },
     { "type": "perf", "section": "Performance Improvements" },
     { "type": "revert", "section": "Reverts" },
-    { "type": "style", "section": "Styles" }
+    { "type": "docs", "section": "Documentation", "hidden": true },
+    { "type": "style", "section": "Styles", "hidden": true },
+    { "type": "chore", "section": "Miscellaneous Chores", "hidden": true },
+    { "type": "refactor", "section": "Code Refactoring", "hidden": true },
+    { "type": "test", "section": "Tests", "hidden": true },
+    { "type": "build", "section": "Build System", "hidden": true },
+    { "type": "ci", "section": "Continuous Integration", "hidden": true }
   ],
   "packages": {
     "sdks/node": {
@@ -22,14 +23,16 @@
       "changelog-path": "CHANGELOG.md",
       "package-name": "@kadoa/node-sdk",
       "component": "node-sdk",
-      "extra-files": ["src/version.ts"]
+      "extra-files": ["src/version.ts"],
+      "exclude-paths": ["sdks/python", "examples/python-examples"]
     },
     "sdks/python": {
       "release-type": "python",
       "changelog-path": "CHANGELOG.md",
       "package-name": "kadoa-python-sdk",
       "component": "python-sdk",
-      "extra-files": ["kadoa_sdk/__init__.py", "kadoa_sdk/version.py"]
+      "extra-files": ["kadoa_sdk/version.py"],
+      "exclude-paths": ["sdks/node", "examples/node-examples"]
     }
   }
 }
