@@ -1,9 +1,6 @@
 # Dependabot configuration for Kadoa SDKs monorepo
-# Checks for updates to dependencies and creates PRs automatically
+# Uses aggressive grouping to minimize PR noise
 version: 2
-
-# Enable security updates for all ecosystems
-enable-beta-ecosystems: true
 
 updates:
   # Root package (Bun/npm ecosystem)
@@ -13,121 +10,145 @@ updates:
       interval: "weekly"
       day: "monday"
       time: "09:00"
+      timezone: "UTC"
     labels:
       - "dependencies"
-      - "root"
     commit-message:
-      prefix: "chore"
-      prefix-development: "chore"
-      include: "scope"
-    open-pull-requests-limit: 5
+      prefix: "chore(deps)"
+    open-pull-requests-limit: 3
+    rebase-strategy: "auto"
+    groups:
+      all-dependencies:
+        patterns:
+          - "*"
+    ignore:
+      # Ignore major version bumps for build tools (review manually)
+      - dependency-name: "turbo"
+        update-types: ["version-update:semver-major"]
+      - dependency-name: "typescript"
+        update-types: ["version-update:semver-major"]
 
-  # Node.js SDK
+  # Node.js SDK - most critical, check weekly
   - package-ecosystem: "npm"
     directory: "/sdks/node"
     schedule:
-      interval: "daily"
-      time: "03:00"
+      interval: "weekly"
+      day: "tuesday"
+      time: "09:00"
+      timezone: "UTC"
     labels:
       - "dependencies"
       - "node-sdk"
-      - "security"
     commit-message:
-      prefix: "chore"
-      prefix-development: "chore"
-      include: "scope"
-    open-pull-requests-limit: 5
-    # Group updates to reduce PR noise
+      prefix: "chore(deps)"
+    open-pull-requests-limit: 3
+    rebase-strategy: "auto"
     groups:
       production:
         dependency-type: "production"
+        patterns:
+          - "*"
       development:
         dependency-type: "development"
+        patterns:
+          - "*"
+    ignore:
+      # Ignore major TypeScript bumps
+      - dependency-name: "typescript"
+        update-types: ["version-update:semver-major"]
 
-  # Python SDK
+  # Python SDK - most critical, check weekly
   - package-ecosystem: "pip"
     directory: "/sdks/python"
     schedule:
-      interval: "daily"
-      time: "03:00"
+      interval: "weekly"
+      day: "tuesday"
+      time: "09:00"
       timezone: "UTC"
     labels:
       - "dependencies"
       - "python-sdk"
-      - "security"
     commit-message:
-      prefix: "chore"
-      prefix-development: "chore"
-      include: "scope"
-    open-pull-requests-limit: 5
-    # Group updates to reduce PR noise
+      prefix: "chore(deps)"
+    open-pull-requests-limit: 3
+    rebase-strategy: "auto"
     groups:
-      production:
-        dependency-type: "production"
-      development:
-        dependency-type: "development"
+      all-dependencies:
+        patterns:
+          - "*"
+    ignore:
+      # Ignore major version bumps for core tools
+      - dependency-name: "mypy"
+        update-types: ["version-update:semver-major"]
+      - dependency-name: "ruff"
+        update-types: ["version-update:semver-major"]
 
-  # Node examples
+  # Examples - less critical, check monthly
   - package-ecosystem: "npm"
     directory: "/examples/node-examples"
     schedule:
-      interval: "weekly"
-      day: "monday"
-      time: "09:00"
+      interval: "monthly"
     labels:
       - "dependencies"
       - "examples"
-      - "node"
     commit-message:
-      prefix: "chore"
-      prefix-development: "chore"
-      include: "scope"
-    open-pull-requests-limit: 3
+      prefix: "chore(deps)"
+    open-pull-requests-limit: 2
+    rebase-strategy: "auto"
+    groups:
+      all-dependencies:
+        patterns:
+          - "*"
 
-  # Python examples
   - package-ecosystem: "pip"
     directory: "/examples/python-examples"
     schedule:
-      interval: "weekly"
-      day: "monday"
-      time: "09:00"
+      interval: "monthly"
     labels:
       - "dependencies"
       - "examples"
-      - "python"
     commit-message:
-      prefix: "chore"
-      prefix-development: "chore"
-      include: "scope"
-    open-pull-requests-limit: 3
+      prefix: "chore(deps)"
+    open-pull-requests-limit: 2
+    rebase-strategy: "auto"
+    groups:
+      all-dependencies:
+        patterns:
+          - "*"
 
-  # Codegen tool
+  # Codegen tool - less critical, check monthly
   - package-ecosystem: "npm"
     directory: "/tools/codegen"
     schedule:
-      interval: "weekly"
-      day: "monday"
-      time: "09:00"
+      interval: "monthly"
     labels:
       - "dependencies"
       - "tooling"
     commit-message:
-      prefix: "chore"
-      prefix-development: "chore"
-      include: "scope"
-    open-pull-requests-limit: 3
+      prefix: "chore(deps)"
+    open-pull-requests-limit: 2
+    rebase-strategy: "auto"
+    groups:
+      all-dependencies:
+        patterns:
+          - "*"
 
-  # GitHub Actions
+  # GitHub Actions - check weekly (security-sensitive)
   - package-ecosystem: "github-actions"
     directory: "/"
     schedule:
       interval: "weekly"
-      day: "monday"
+      day: "wednesday"
       time: "09:00"
+      timezone: "UTC"
     labels:
       - "dependencies"
       - "ci"
     commit-message:
-      prefix: "ci"
-      include: "scope"
-    open-pull-requests-limit: 3
+      prefix: "ci(deps)"
+    open-pull-requests-limit: 2
+    rebase-strategy: "auto"
+    groups:
+      all-actions:
+        patterns:
+          - "*"

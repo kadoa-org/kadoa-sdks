@@ -1,6 +1,6 @@
 # Node SDK
 
-This file provides Node.js SDK-specific guidance to Claude Code.
+This file provides Node.js SDK-specific guidance to AI coding assistants.
 
 ## Style Guide
 
@@ -80,3 +80,4 @@ Follows conventional commits with `node-sdk` scope:
 - `feat(node-sdk)!:` or `fix(node-sdk)!:` - Breaking changes (major version bump)
 
 Example: `git commit -m "feat(node-sdk): add retry logic to API client"`
+
