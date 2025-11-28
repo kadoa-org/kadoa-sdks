@@ -10,7 +10,7 @@ updates:
       interval: "weekly"
       day: "monday"
       time: "09:00"
-      timezone: "UTC"
+      timezone: "Europe/Zurich"
     labels:
       - "dependencies"
     commit-message:
@@ -35,7 +35,7 @@ updates:
       interval: "weekly"
       day: "tuesday"
       time: "09:00"
-      timezone: "UTC"
+      timezone: "Europe/Zurich"
     labels:
       - "dependencies"
       - "node-sdk"
@@ -64,7 +64,7 @@ updates:
       interval: "weekly"
       day: "tuesday"
       time: "09:00"
-      timezone: "UTC"
+      timezone: "Europe/Zurich"
     labels:
       - "dependencies"
       - "python-sdk"
@@ -140,7 +140,7 @@ updates:
       interval: "weekly"
       day: "wednesday"
       time: "09:00"
-      timezone: "UTC"
+      timezone: "Europe/Zurich"
     labels:
       - "dependencies"
       - "ci"
