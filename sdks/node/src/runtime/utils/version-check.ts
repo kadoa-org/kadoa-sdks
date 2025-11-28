@@ -38,7 +38,7 @@ export async function checkForUpdates(): Promise<void> {
         `⚠️  A new version of ${SDK_NAME} is available: ${latestVersion} (current: ${SDK_VERSION}). Update with: npm install ${PACKAGE_NAME}@latest`,
       );
     }
-  } catch (error) {
+  } catch {
     // Silently fail - version check should not break client initialization
   }
 }

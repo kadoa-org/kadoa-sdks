@@ -12,8 +12,8 @@ import type {
   SchemaField,
   WorkflowInterval,
 } from "../extraction/extraction.acl";
-import type { AgenticWorkflow } from "../../generated";
 import {
+  type AgenticWorkflow,
   type CreateWorkflowRequest,
   type CreateWorkflowWithCustomSchemaRequest,
   type GetJobResponse,
