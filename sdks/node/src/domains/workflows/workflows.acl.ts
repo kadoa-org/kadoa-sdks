@@ -5,6 +5,7 @@
  */
 
 import type {
+  AgenticWorkflow,
   MonitoringConfig,
   V4WorkflowsGet200ResponseWorkflowsInner,
   V4WorkflowsGet200ResponseWorkflowsInnerDisplayStateEnum,
@@ -183,6 +184,8 @@ export class ListWorkflowsRequest implements WorkflowsApiV4WorkflowsGetRequest {
 export type CreateWorkflowRequest = WorkflowWithExistingSchema;
 
 export type CreateWorkflowWithCustomSchemaRequest = WorkflowWithEntityAndFields;
+
+export type { AgenticWorkflow };
 
 // ========================================
 // Response Types

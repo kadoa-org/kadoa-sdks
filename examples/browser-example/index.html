@@ -105,15 +105,6 @@
     <script src="/sdks/node/dist/browser/index.global.js" onload="console.log('SDK script loaded')" onerror="console.error('Failed to load SDK script')"></script>
     
     <script>
-        // Check if SDK is available
-        function checkSDK() {
-            const sdkScript = document.querySelector('script[src*="index.global.js"]');
-            if (!sdkScript) {
-                showError('SDK script not found. Please ensure the SDK is built.');
-                return false;
-            }
-            return true;
-        }
 
         // Show error message
         function showError(message) {
