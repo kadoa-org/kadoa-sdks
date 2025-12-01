@@ -69,3 +69,7 @@ specs/openapi.previous.json
 .release-trigger
 
 scripts/.local
+
+.mcp.json
+
+sdks/node/src/playground.ts
