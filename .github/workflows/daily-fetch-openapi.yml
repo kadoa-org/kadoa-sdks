@@ -171,6 +171,10 @@ jobs:
           branch: ci/daily-openapi-update
           delete-branch: true
           labels: ci
+          add-paths: |
+            specs/
+            sdks/node/SPEC_SHA256
+            sdks/python/SPEC_SHA256
 
       - name: No changes
         if: steps.diff.outputs.changed != 'true'
