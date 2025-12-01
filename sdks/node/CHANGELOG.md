@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.19.3](https://github.com/kadoa-org/kadoa-sdks/compare/node-sdk-v0.19.2...node-sdk-v0.19.3) (2025-12-01)
+
+
+### Bug Fixes
+
+* **node-sdk:** remove zod from production dependencies for monorepo compatibility ([#180](https://github.com/kadoa-org/kadoa-sdks/issues/180)) ([2174cd0](https://github.com/kadoa-org/kadoa-sdks/commit/2174cd09b0ccdccb85bdfed26b189836768eba4a))
+
 ## [0.19.2](https://github.com/kadoa-org/kadoa-sdks/compare/node-sdk-v0.19.1...node-sdk-v0.19.2) (2025-11-24)
 
 
