@@ -1,5 +1,4 @@
 import { merge } from "es-toolkit";
-import { z } from "zod";
 import {
   KadoaErrorCode,
   KadoaHttpException,
@@ -19,18 +18,40 @@ import {
   type WebsocketChannelConfig,
 } from "./notifications.acl";
 
-const emailChannelConfigSchema = z.object({
-  recipients: z
-    .array(z.email())
-    .min(1, "Recipients are required for email channel"),
-  from: z
-    .email()
-    .refine(
-      (email) => email.endsWith("@kadoa.com"),
-      "From email address must end with @kadoa.com",
-    )
-    .optional(),
-});
+const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+
+function validateEmailChannelConfig(
+  config: EmailChannelConfig,
+): EmailChannelConfig {
+  const issues: Array<{ message: string }> = [];
+
+  if (!config.recipients?.length) {
+    issues.push({ message: "Recipients are required for email channel" });
+  } else {
+    for (const email of config.recipients) {
+      if (!EMAIL_REGEX.test(email)) {
+        issues.push({ message: `Invalid email address: ${email}` });
+      }
+    }
+  }
+
+  if (config.from !== undefined) {
+    if (!EMAIL_REGEX.test(config.from)) {
+      issues.push({ message: `Invalid from email address: ${config.from}` });
+    } else if (!config.from.endsWith("@kadoa.com")) {
+      issues.push({ message: "From email address must end with @kadoa.com" });
+    }
+  }
+
+  if (issues.length > 0) {
+    throw new KadoaSdkException("Invalid email channel config", {
+      code: KadoaErrorCode.VALIDATION_ERROR,
+      details: { issues },
+    });
+  }
+
+  return config;
+}
 
 export class NotificationChannelsService {
   /**
@@ -180,17 +201,7 @@ export class NotificationChannelsService {
       recipients = [user.email];
     }
     const config = merge(defaults, { recipients });
-    const result = emailChannelConfigSchema.safeParse(config);
-    if (!result.success) {
-      throw new KadoaSdkException(`Invalid email channel config`, {
-        code: KadoaErrorCode.VALIDATION_ERROR,
-        details: {
-          issues: result.error.issues,
-        },
-      });
-    }
-
-    return result.data;
+    return validateEmailChannelConfig(config);
   }
 
   private async buildSlackChannelConfig(
