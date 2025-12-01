@@ -974,8 +974,7 @@
                         "COMPLIANCE_REJECTED",
                         "QUEUED",
                         "SETUP",
-                        "RUNNING",
-                        "DELETED"
+                        "RUNNING"
                       ],
                       "description": "Display state for frontend"
                     },
@@ -1295,18 +1294,6 @@
                         }
                       },
                       "description": "Monitoring configuration"
-                    },
-                    "channelCounts": {
-                      "type": "object",
-                      "description": "Number of connected channels per event type",
-                      "additionalProperties": {
-                        "type": "integer"
-                      },
-                      "example": {
-                        "workflow_data_change": 3,
-                        "workflow_finished": 1,
-                        "workflow_failed": 2
-                      }
                     }
                   }
                 }
@@ -2703,15 +2690,6 @@
             }
           },
           {
-            "name": "userId",
-            "in": "query",
-            "description": "Filter workflows by user ID (only works in team context)",
-            "required": false,
-            "schema": {
-              "type": "string"
-            }
-          },
-          {
             "name": "includeDeleted",
             "in": "query",
             "description": "Include deleted workflows (for compliance officers)",
@@ -2795,8 +2773,7 @@
                               "QUEUED",
                               "SETUP",
                               "RUNNING",
-                              "FAILED",
-                              "DELETED"
+                              "FAILED"
                             ],
                             "description": "Display state for frontend"
                           },
@@ -3089,18 +3066,6 @@
                               }
                             },
                             "description": "Monitoring configuration"
-                          },
-                          "channelCounts": {
-                            "type": "object",
-                            "description": "Number of connected channels per event type",
-                            "additionalProperties": {
-                              "type": "integer"
-                            },
-                            "example": {
-                              "workflow_data_change": 3,
-                              "workflow_finished": 1,
-                              "workflow_failed": 2
-                            }
                           }
                         }
                       }
@@ -11494,10 +11459,8 @@
             "name": "limit",
             "in": "query",
             "schema": {
-              "default": 1000,
               "type": "integer",
-              "minimum": 1,
-              "maximum": 10000
+              "minimum": 1
             }
           },
           {
@@ -11685,6 +11648,377 @@
                 "last-6-months",
                 "all-time"
               ]
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "200"
+          },
+          "401": {
+            "description": "401",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "error": {
+                      "type": "boolean",
+                      "description": "Indicates an error occurred"
+                    },
+                    "message": {
+                      "type": "string",
+                      "description": "Error message"
+                    },
+                    "details": {
+                      "nullable": true,
+                      "description": "Additional error details (e.g., validation errors)"
+                    }
+                  },
+                  "required": [
+                    "error",
+                    "message"
+                  ]
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "403",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "error": {
+                      "type": "boolean",
+                      "description": "Indicates an error occurred"
+                    },
+                    "message": {
+                      "type": "string",
+                      "description": "Error message"
+                    },
+                    "details": {
+                      "nullable": true,
+                      "description": "Additional error details (e.g., validation errors)"
+                    }
+                  },
+                  "required": [
+                    "error",
+                    "message"
+                  ]
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "500",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "error": {
+                      "type": "boolean",
+                      "description": "Indicates an error occurred"
+                    },
+                    "message": {
+                      "type": "string",
+                      "description": "Error message"
+                    },
+                    "details": {
+                      "nullable": true,
+                      "description": "Additional error details (e.g., validation errors)"
+                    }
+                  },
+                  "required": [
+                    "error",
+                    "message"
+                  ]
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "ApiKeyAuth": []
+          }
+        ]
+      }
+    },
+    "/v4/activity/neo": {
+      "get": {
+        "description": "Retrieve activity events from audit_logs table with basic filtering and pagination.",
+        "summary": "List activity events (new implementation)",
+        "tags": [
+          "Activity"
+        ],
+        "parameters": [
+          {
+            "name": "limit",
+            "in": "query",
+            "schema": {
+              "default": 100,
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 1000
+            }
+          },
+          {
+            "name": "offset",
+            "in": "query",
+            "schema": {
+              "default": 0,
+              "type": "integer",
+              "minimum": 0,
+              "nullable": true
+            }
+          },
+          {
+            "name": "workflowId",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "minLength": 1
+            }
+          },
+          {
+            "name": "userId",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "minLength": 1
+            }
+          },
+          {
+            "name": "startDate",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "format": "date-time",
+              "nullable": true
+            }
+          },
+          {
+            "name": "endDate",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "format": "date-time",
+              "nullable": true
+            }
+          },
+          {
+            "name": "relativeTime",
+            "in": "query",
+            "description": "Relative time window counted backwards from now (e.g., 6h, 1d, 2w)",
+            "schema": {
+              "type": "string",
+              "pattern": "^\\d+(m|h|d|w)$"
+            }
+          },
+          {
+            "name": "eventTypes",
+            "in": "query",
+            "description": "Comma-separated list of event types to filter by",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "interfaces",
+            "in": "query",
+            "description": "Comma-separated list of request sources to filter by (e.g., SYSTEM, UI, SDK, API) - filters by requestSource field",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "200",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ActivityListResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "401",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "error": {
+                      "type": "boolean",
+                      "description": "Indicates an error occurred"
+                    },
+                    "message": {
+                      "type": "string",
+                      "description": "Error message"
+                    },
+                    "details": {
+                      "nullable": true,
+                      "description": "Additional error details (e.g., validation errors)"
+                    }
+                  },
+                  "required": [
+                    "error",
+                    "message"
+                  ]
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "403",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "error": {
+                      "type": "boolean",
+                      "description": "Indicates an error occurred"
+                    },
+                    "message": {
+                      "type": "string",
+                      "description": "Error message"
+                    },
+                    "details": {
+                      "nullable": true,
+                      "description": "Additional error details (e.g., validation errors)"
+                    }
+                  },
+                  "required": [
+                    "error",
+                    "message"
+                  ]
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "500",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "error": {
+                      "type": "boolean",
+                      "description": "Indicates an error occurred"
+                    },
+                    "message": {
+                      "type": "string",
+                      "description": "Error message"
+                    },
+                    "details": {
+                      "nullable": true,
+                      "description": "Additional error details (e.g., validation errors)"
+                    }
+                  },
+                  "required": [
+                    "error",
+                    "message"
+                  ]
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "ApiKeyAuth": []
+          }
+        ]
+      }
+    },
+    "/v4/activity/neo/export": {
+      "get": {
+        "description": "Export activity events from audit_logs table to CSV format for compliance and audit purposes.",
+        "summary": "Export activity events as CSV (new implementation)",
+        "tags": [
+          "Activity"
+        ],
+        "parameters": [
+          {
+            "name": "limit",
+            "in": "query",
+            "schema": {
+              "type": "integer",
+              "minimum": 1
+            }
+          },
+          {
+            "name": "offset",
+            "in": "query",
+            "schema": {
+              "default": 0,
+              "type": "integer",
+              "minimum": 0,
+              "nullable": true
+            }
+          },
+          {
+            "name": "workflowId",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "minLength": 1
+            }
+          },
+          {
+            "name": "userId",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "minLength": 1
+            }
+          },
+          {
+            "name": "startDate",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "format": "date-time",
+              "nullable": true
+            }
+          },
+          {
+            "name": "endDate",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "format": "date-time",
+              "nullable": true
+            }
+          },
+          {
+            "name": "relativeTime",
+            "in": "query",
+            "description": "Relative time window counted backwards from now (e.g., 6h, 1d, 2w)",
+            "schema": {
+              "type": "string",
+              "pattern": "^\\d+(m|h|d|w)$"
+            }
+          },
+          {
+            "name": "eventTypes",
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "interfaces",
+            "in": "query",
+            "schema": {
+              "type": "string"
             }
           }
         ],
@@ -15922,6 +16256,153 @@
         "title": "AgenticWorkflow",
         "description": "Create an AI-powered workflow that uses natural language instructions to intelligently extract and adapt data extraction based on page content. The agent can navigate complex sites and understand context.\n\nExample: `{\"urls\": [\"https://example.com\"], \"navigationMode\": \"agentic-navigation\", \"userPrompt\": \"Extract all job listings with title, company, salary, and location. Click on each listing to get full details.\"}`"
       },
+      "WorkflowWithExistingSchema": {
+        "type": "object",
+        "properties": {
+          "urls": {
+            "type": "array",
+            "items": {
+              "type": "string",
+              "format": "uri"
+            },
+            "minItems": 1,
+            "description": "List of URLs to scrape. Can be a single URL or multiple URLs to scrape across different pages or domains."
+          },
+          "navigationMode": {
+            "default": "single-page",
+            "type": "string",
+            "enum": [
+              "single-page",
+              "paginated-page",
+              "page-and-detail",
+              "agentic-navigation",
+              "all-pages"
+            ],
+            "description": "Navigation mode for scraping"
+          },
+          "name": {
+            "type": "string",
+            "minLength": 1,
+            "description": "Human-readable name for this workflow (e.g., 'Product Catalog Scraper')"
+          },
+          "description": {
+            "type": "string",
+            "maxLength": 500,
+            "description": "Detailed description of what this workflow does and why it was created (maximum 500 characters)"
+          },
+          "tags": {
+            "type": "array",
+            "items": {
+              "type": "string",
+              "minLength": 3
+            },
+            "description": "Tags for organizing and categorizing workflows (minimum 3 characters per tag)"
+          },
+          "limit": {
+            "type": "integer",
+            "minimum": 1,
+            "description": "Maximum number of items to scrape. Useful for limiting scope during development or cost control"
+          },
+          "location": {
+            "$ref": "#/components/schemas/Location"
+          },
+          "monitoring": {
+            "$ref": "#/components/schemas/MonitoringConfig"
+          },
+          "interval": {
+            "type": "string",
+            "enum": [
+              "ONLY_ONCE",
+              "EVERY_10_MINUTES",
+              "HALF_HOURLY",
+              "HOURLY",
+              "THREE_HOURLY",
+              "SIX_HOURLY",
+              "TWELVE_HOURLY",
+              "EIGHTEEN_HOURLY",
+              "DAILY",
+              "TWO_DAY",
+              "THREE_DAY",
+              "WEEKLY",
+              "BIWEEKLY",
+              "TRIWEEKLY",
+              "FOUR_WEEKS",
+              "MONTHLY",
+              "REAL_TIME",
+              "CUSTOM"
+            ],
+            "description": "How frequently this workflow should run (ONLY_ONCE, HOURLY, DAILY, WEEKLY, etc.)"
+          },
+          "schedules": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "description": "Cron expressions for custom schedules. Overrides the interval setting for fine-grained control"
+          },
+          "bypassPreview": {
+            "default": false,
+            "type": "boolean",
+            "description": "Skip preview and validation, deploy scraper immediately. Use with caution - set to true only when you're confident the configuration is correct"
+          },
+          "autoStart": {
+            "default": true,
+            "type": "boolean",
+            "description": "Automatically start the workflow after creation. Set to false if you want to test/review before starting"
+          },
+          "interactions": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/Interaction"
+            },
+            "description": "Browser interactions to perform before scraping (e.g., clicking buttons, filling forms, scrolling). See Interaction schema for available action types"
+          },
+          "dataValidationEnabled": {
+            "type": "boolean",
+            "description": "Enable data quality validation. When true, scraped data is validated against the schema and anomalies are detected"
+          },
+          "additionalData": {
+            "nullable": true,
+            "description": "Additional data for the workflow (e.g. IDs from your system to link data)"
+          },
+          "maxPages": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 100000,
+            "description": "Maximum pages to crawl (default: 10,000, max: 100,000). Only used when navigationMode is 'all-pages'"
+          },
+          "maxDepth": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 200,
+            "description": "Maximum crawl depth (default: 50, max: 200). Only used when navigationMode is 'all-pages'"
+          },
+          "pathsFilterIn": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "description": "Regex patterns to include specific paths during crawling. Only used when navigationMode is 'all-pages'"
+          },
+          "pathsFilterOut": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "description": "Regex patterns to exclude specific paths during crawling. Only used when navigationMode is 'all-pages'"
+          },
+          "schemaId": {
+            "type": "string",
+            "description": "ID of an existing schema configuration. Use this to reference a previously defined schema without re-defining extraction fields"
+          }
+        },
+        "required": [
+          "urls",
+          "schemaId"
+        ],
+        "title": "WorkflowWithExistingSchema",
+        "description": "Create a workflow using a pre-defined schema configuration. Reference an existing schema by ID to extract data without re-defining fields. Perfect when you have multiple workflows using the same data structure.\n\nExample: `{\"urls\": [\"https://example.com\"], \"schemaId\": \"schema-abc123\", \"interval\": \"DAILY\"}`"
+      },
       "WorkflowWithEntityAndFields": {
         "type": "object",
         "properties": {
@@ -16093,163 +16574,16 @@
         "title": "WorkflowWithEntityAndFields",
         "description": "Create a workflow by defining extraction entity and fields directly in the request. Inline your schema definition to quickly set up custom data extraction without creating a schema separately.\n\nExample: `{\"urls\": [\"https://example.com\"], \"entity\": \"Product\", \"fields\": [{\"name\": \"title\", \"description\": \"Product title\", \"fieldType\": \"SCHEMA\", \"dataType\": \"STRING\"}, {\"name\": \"price\", \"description\": \"Product price\", \"fieldType\": \"SCHEMA\", \"dataType\": \"NUMBER\"}]}`"
       },
-      "WorkflowWithExistingSchema": {
-        "type": "object",
-        "properties": {
-          "urls": {
-            "type": "array",
-            "items": {
-              "type": "string",
-              "format": "uri"
-            },
-            "minItems": 1,
-            "description": "List of URLs to scrape. Can be a single URL or multiple URLs to scrape across different pages or domains."
-          },
-          "navigationMode": {
-            "default": "single-page",
-            "type": "string",
-            "enum": [
-              "single-page",
-              "paginated-page",
-              "page-and-detail",
-              "agentic-navigation",
-              "all-pages"
-            ],
-            "description": "Navigation mode for scraping"
-          },
-          "name": {
-            "type": "string",
-            "minLength": 1,
-            "description": "Human-readable name for this workflow (e.g., 'Product Catalog Scraper')"
-          },
-          "description": {
-            "type": "string",
-            "maxLength": 500,
-            "description": "Detailed description of what this workflow does and why it was created (maximum 500 characters)"
-          },
-          "tags": {
-            "type": "array",
-            "items": {
-              "type": "string",
-              "minLength": 3
-            },
-            "description": "Tags for organizing and categorizing workflows (minimum 3 characters per tag)"
-          },
-          "limit": {
-            "type": "integer",
-            "minimum": 1,
-            "description": "Maximum number of items to scrape. Useful for limiting scope during development or cost control"
-          },
-          "location": {
-            "$ref": "#/components/schemas/Location"
-          },
-          "monitoring": {
-            "$ref": "#/components/schemas/MonitoringConfig"
-          },
-          "interval": {
-            "type": "string",
-            "enum": [
-              "ONLY_ONCE",
-              "EVERY_10_MINUTES",
-              "HALF_HOURLY",
-              "HOURLY",
-              "THREE_HOURLY",
-              "SIX_HOURLY",
-              "TWELVE_HOURLY",
-              "EIGHTEEN_HOURLY",
-              "DAILY",
-              "TWO_DAY",
-              "THREE_DAY",
-              "WEEKLY",
-              "BIWEEKLY",
-              "TRIWEEKLY",
-              "FOUR_WEEKS",
-              "MONTHLY",
-              "REAL_TIME",
-              "CUSTOM"
-            ],
-            "description": "How frequently this workflow should run (ONLY_ONCE, HOURLY, DAILY, WEEKLY, etc.)"
-          },
-          "schedules": {
-            "type": "array",
-            "items": {
-              "type": "string"
-            },
-            "description": "Cron expressions for custom schedules. Overrides the interval setting for fine-grained control"
-          },
-          "bypassPreview": {
-            "default": false,
-            "type": "boolean",
-            "description": "Skip preview and validation, deploy scraper immediately. Use with caution - set to true only when you're confident the configuration is correct"
-          },
-          "autoStart": {
-            "default": true,
-            "type": "boolean",
-            "description": "Automatically start the workflow after creation. Set to false if you want to test/review before starting"
-          },
-          "interactions": {
-            "type": "array",
-            "items": {
-              "$ref": "#/components/schemas/Interaction"
-            },
-            "description": "Browser interactions to perform before scraping (e.g., clicking buttons, filling forms, scrolling). See Interaction schema for available action types"
-          },
-          "dataValidationEnabled": {
-            "type": "boolean",
-            "description": "Enable data quality validation. When true, scraped data is validated against the schema and anomalies are detected"
-          },
-          "additionalData": {
-            "nullable": true,
-            "description": "Additional data for the workflow (e.g. IDs from your system to link data)"
-          },
-          "maxPages": {
-            "type": "integer",
-            "minimum": 1,
-            "maximum": 100000,
-            "description": "Maximum pages to crawl (default: 10,000, max: 100,000). Only used when navigationMode is 'all-pages'"
-          },
-          "maxDepth": {
-            "type": "integer",
-            "minimum": 1,
-            "maximum": 200,
-            "description": "Maximum crawl depth (default: 50, max: 200). Only used when navigationMode is 'all-pages'"
-          },
-          "pathsFilterIn": {
-            "type": "array",
-            "items": {
-              "type": "string"
-            },
-            "description": "Regex patterns to include specific paths during crawling. Only used when navigationMode is 'all-pages'"
-          },
-          "pathsFilterOut": {
-            "type": "array",
-            "items": {
-              "type": "string"
-            },
-            "description": "Regex patterns to exclude specific paths during crawling. Only used when navigationMode is 'all-pages'"
-          },
-          "schemaId": {
-            "type": "string",
-            "description": "ID of an existing schema configuration. Use this to reference a previously defined schema without re-defining extraction fields"
-          }
-        },
-        "required": [
-          "urls",
-          "schemaId"
-        ],
-        "title": "WorkflowWithExistingSchema",
-        "description": "Create a workflow using a pre-defined schema configuration. Reference an existing schema by ID to extract data without re-defining fields. Perfect when you have multiple workflows using the same data structure.\n\nExample: `{\"urls\": [\"https://example.com\"], \"schemaId\": \"schema-abc123\", \"interval\": \"DAILY\"}`"
-      },
       "CreateWorkflowBody": {
         "oneOf": [
           {
             "$ref": "#/components/schemas/AgenticWorkflow"
           },
           {
-            "$ref": "#/components/schemas/WorkflowWithEntityAndFields"
+            "$ref": "#/components/schemas/WorkflowWithExistingSchema"
           },
           {
-            "$ref": "#/components/schemas/WorkflowWithExistingSchema"
+            "$ref": "#/components/schemas/WorkflowWithEntityAndFields"
           }
         ],
         "title": "CreateWorkflowBody",
