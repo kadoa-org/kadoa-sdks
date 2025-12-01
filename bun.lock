@@ -34,7 +34,6 @@
         "es-toolkit": "1.42.0",
         "uuid": "13.0.0",
         "ws": "8.18.3",
-        "zod": "4.1.13",
       },
       "devDependencies": {
         "@types/debug": "^4.1.12",
@@ -42,6 +41,7 @@
         "@types/uuid": "^11.0.0",
         "tsup": "8.5.1",
         "typescript": "5.9.3",
+        "zod": "4.1.13",
       },
     },
     "tools/codegen": {
