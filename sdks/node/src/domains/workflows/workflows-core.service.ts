@@ -188,16 +188,6 @@ export class WorkflowsCoreService {
     return response.data?.workflows?.[0] as WorkflowResponse | undefined;
   }
 
-  /**
-   * @deprecated Use delete(id) instead.
-   */
-  async cancel(id: WorkflowId): Promise<void> {
-    console.warn(
-      "[Kadoa SDK] workflow.cancel(id) will be deprecated. Use workflow.delete(id).",
-    );
-    await this.delete(id);
-  }
-
   async delete(id: WorkflowId): Promise<void> {
     await this.workflowsApi.v4WorkflowsWorkflowIdDelete({
       workflowId: id,
@@ -230,26 +220,12 @@ export class WorkflowsCoreService {
     id: WorkflowId,
     options?: WaitOptions,
   ): Promise<GetWorkflowResponse> {
-    let last: GetWorkflowResponse | undefined;
-
     const result = await pollUntil(
       async () => {
         const current = await this.get(id);
 
-        // Log state changes
-        if (
-          last?.state !== current.state ||
-          last?.runState !== current.runState
-        ) {
-          debug(
-            "workflow %s state: [workflowState: %s, jobState: %s]",
-            id,
-            current.state,
-            current.runState,
-          );
-        }
+        debug("workflow %s state: %s", id, current.runState);
 
-        last = current;
         return current;
       },
       (current) => {
@@ -329,18 +305,12 @@ export class WorkflowsCoreService {
     jobId: JobId,
     options?: JobWaitOptions,
   ): Promise<GetJobResponse> {
-    let last: GetJobResponse | undefined;
-
     const result = await pollUntil(
       async () => {
         const current = await this.getJobStatus(workflowId, jobId);
 
-        // Log state changes
-        if (last?.state !== current.state) {
-          debug("job %s state: %s", jobId, current.state);
-        }
+        debug("workflow run %s state: %s", jobId, current.state);
 
-        last = current;
         return current;
       },
       (current) => {

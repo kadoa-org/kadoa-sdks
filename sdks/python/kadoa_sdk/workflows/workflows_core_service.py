@@ -317,7 +317,7 @@ class WorkflowsCoreService:
         Args:
             workflow_id: Workflow ID
             target_state: Target state to wait for (optional)
-            poll_interval_ms: Polling interval in milliseconds (default: 1000)
+            poll_interval_ms: Polling interval in milliseconds (default: 10000)
             timeout_ms: Timeout in milliseconds (default: 300000)
 
         Returns:
@@ -328,24 +328,15 @@ class WorkflowsCoreService:
         """
         options = PollingOptions(poll_interval_ms=poll_interval_ms, timeout_ms=timeout_ms)
 
-        last: Optional[GetWorkflowResponse] = None
-
         def poll_fn() -> GetWorkflowResponse:
-            nonlocal last
             current = self.get(workflow_id)
 
-            if last is not None and (
-                getattr(last, "state", None) != getattr(current, "state", None)
-                or getattr(last, "run_state", None) != getattr(current, "run_state", None)
-            ):
-                debug(
-                    "workflow %s state: [workflowState: %s, jobState: %s]",
-                    workflow_id,
-                    getattr(current, "state", None),
-                    getattr(current, "run_state", None),
-                )
+            debug(
+                "workflow %s state: %s",
+                workflow_id,
+                getattr(current, "run_state", None),
+            )
 
-            last = current
             return current
 
         def is_complete(current: GetWorkflowResponse) -> bool:
@@ -380,7 +371,7 @@ class WorkflowsCoreService:
             workflow_id: Workflow ID
             job_id: Job ID
             target_status: Target status to wait for (optional)
-            poll_interval_ms: Polling interval in milliseconds (default: 1000)
+            poll_interval_ms: Polling interval in milliseconds (default: 10000)
             timeout_ms: Timeout in milliseconds (default: 300000)
 
         Returns:
@@ -391,19 +382,11 @@ class WorkflowsCoreService:
         """
         options = PollingOptions(poll_interval_ms=poll_interval_ms, timeout_ms=timeout_ms)
 
-        last: Optional[GetJobResponse] = None
-
         def poll_fn() -> GetJobResponse:
-            nonlocal last
             current = self.get_job_status(workflow_id, job_id)
 
-            current_state = getattr(current, "state", None)
-            if last is not None:
-                last_state = getattr(last, "state", None)
-                if last_state != current_state:
-                    debug("job %s state: %s", job_id, current_state)
+            debug("workflow run %s state: %s", job_id, getattr(current, "state", None))
 
-            last = current
             return current
 
         def is_complete(current: GetJobResponse) -> bool:

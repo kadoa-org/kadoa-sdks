@@ -5,8 +5,8 @@ import { KadoaSdkException } from "../exceptions";
  */
 export interface PollingOptions {
   /**
-   * Polling interval in milliseconds (minimum 250ms)
-   * @default 1000
+   * Polling interval in milliseconds (minimum 10000ms)
+   * @default 10000
    */
   pollIntervalMs?: number;
   /**
@@ -32,7 +32,7 @@ export interface PollingOptionsInternal
  * Default polling options
  */
 export const DEFAULT_POLLING_OPTIONS: PollingOptionsInternal = {
-  pollIntervalMs: 1000,
+  pollIntervalMs: 10_000,
   timeoutMs: 5 * 60 * 1000,
 };
 
@@ -89,7 +89,7 @@ export async function pollUntil<T>(
     ...options,
   };
 
-  const pollInterval = Math.max(250, internalOptions.pollIntervalMs);
+  const pollInterval = Math.max(10_000, internalOptions.pollIntervalMs);
   const timeoutMs = internalOptions.timeoutMs;
   const start = Date.now();
   let attempts = 0;

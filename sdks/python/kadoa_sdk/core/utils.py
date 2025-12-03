@@ -20,10 +20,10 @@ class PollingOptions:
     ) -> None:
         """
         Args:
-            poll_interval_ms: Polling interval in milliseconds (minimum 250ms). Default: 1000
+            poll_interval_ms: Polling interval in milliseconds (minimum 10000ms). Default: 10000
             timeout_ms: Timeout in milliseconds. Default: 300000 (5 minutes)
         """
-        self.poll_interval_ms = poll_interval_ms or 1000
+        self.poll_interval_ms = poll_interval_ms or 10_000
         self.timeout_ms = timeout_ms or (5 * 60 * 1000)
 
 
@@ -75,7 +75,7 @@ def poll_until(
     if options is None:
         options = PollingOptions()
 
-    poll_interval_ms = max(250, options.poll_interval_ms)
+    poll_interval_ms = max(10_000, options.poll_interval_ms)
     timeout_ms = options.timeout_ms
     start = time.time() * 1000  # Convert to milliseconds
     attempts = 0
