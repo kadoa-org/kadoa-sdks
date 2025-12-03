@@ -57,7 +57,7 @@ def main():
                 ListRulesRequest(workflow_id=result.workflow_id)
             ),
             lambda result: len(result.data if hasattr(result, "data") else result) > 0,
-            PollingOptions(poll_interval_ms=1000, timeout_ms=30000),
+            PollingOptions(poll_interval_ms=10000, timeout_ms=30000),
         )
         rules = rules_result.result
         rules_data = rules.data if hasattr(rules, "data") else rules

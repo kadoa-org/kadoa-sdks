@@ -73,16 +73,16 @@ describe("Workflows", () => {
       );
 
       // Test invalid additionalData (array)
-      await expect(
+      expect(
         client.workflow.update(workflowId, {
-          additionalData: ["invalid"] as unknown as Record<string, unknown>,
+          additionalData: ["invalid"],
         }),
       ).rejects.toThrow(KadoaSdkException);
 
       // Test invalid additionalData (null)
-      await expect(
+      expect(
         client.workflow.update(workflowId, {
-          additionalData: null as unknown as Record<string, unknown>,
+          additionalData: null,
         }),
       ).rejects.toThrow(KadoaSdkException);
 
@@ -127,7 +127,7 @@ describe("Workflows", () => {
   test(
     "should handle delete non-existent workflow",
     async () => {
-      await expect(
+      expect(
         client.workflow.delete("5f9f1b9b9c9d1b9b9c9d1b9b"),
       ).rejects.toThrow(KadoaHttpException);
     },

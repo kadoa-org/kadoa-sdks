@@ -142,7 +142,7 @@ class ValidationDomain:
 
         Args:
             validation_id: Validation ID
-            poll_interval_ms: Polling interval in milliseconds (default: 1000)
+            poll_interval_ms: Polling interval in milliseconds (default: 10000)
             timeout_ms: Timeout in milliseconds (default: 300000)
 
         Returns:

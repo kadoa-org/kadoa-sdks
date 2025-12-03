@@ -267,7 +267,7 @@ const rules = await pollUntil(
     workflowId: result.workflowId
   }),
   (result) => result.data.length > 0,
-  { pollIntervalMs: 1000, timeoutMs: 30000 }
+  { pollIntervalMs: 10000, timeoutMs: 30000 }
 );
 
 // 3. Approve and run validation

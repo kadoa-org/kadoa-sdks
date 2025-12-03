@@ -34,7 +34,7 @@ async function main() {
     },
     (result) => result.data.length > 0,
     {
-      pollIntervalMs: 1000,
+      pollIntervalMs: 10000,
       timeoutMs: 30000,
     },
   );
