@@ -2434,153 +2434,6 @@
         }
       }
     },
-    "/v4/workflows/{workflowId}/jobs/{jobId}": {
-      "get": {
-        "summary": "Get job status and telemetry",
-        "tags": [
-          "Workflows"
-        ],
-        "parameters": [
-          {
-            "name": "workflowId",
-            "in": "path",
-            "required": true,
-            "description": "The ID of the workflow",
-            "schema": {
-              "type": "string"
-            }
-          },
-          {
-            "name": "jobId",
-            "in": "path",
-            "required": true,
-            "description": "The ID of the job",
-            "schema": {
-              "type": "string"
-            }
-          }
-        ],
-        "security": [
-          {
-            "ApiKeyAuth": []
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "Job status and telemetry retrieved successfully",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "type": "object",
-                  "properties": {
-                    "id": {
-                      "type": "string",
-                      "description": "The job ID"
-                    },
-                    "state": {
-                      "type": "string",
-                      "enum": [
-                        "IN_PROGRESS",
-                        "FINISHED",
-                        "FAILED",
-                        "NOT_SUPPORTED",
-                        "FAILED_INSUFFICIENT_FUNDS"
-                      ],
-                      "description": "Current state of the job"
-                    },
-                    "startedAt": {
-                      "type": "string",
-                      "format": "date-time",
-                      "description": "Start date and time of the job"
-                    },
-                    "finishedAt": {
-                      "type": "string",
-                      "format": "date-time",
-                      "description": "Finish date and time of the job (if completed)"
-                    },
-                    "limit": {
-                      "type": "integer",
-                      "nullable": true,
-                      "description": "Record limit for the job"
-                    },
-                    "workflowId": {
-                      "type": "string",
-                      "description": "ID of the workflow/scraper"
-                    },
-                    "variables": {
-                      "type": "object",
-                      "description": "Job variables (optional)"
-                    },
-                    "protocol": {
-                      "type": "object",
-                      "description": "Protocol information (optional)",
-                      "properties": {
-                        "decision": {
-                          "type": "string",
-                          "description": "State of the run if it FAILED"
-                        },
-                        "reasoning": {
-                          "type": "string",
-                          "description": "Description why the run failed"
-                        }
-                      }
-                    }
-                  }
-                }
-              }
-            }
-          },
-          "400": {
-            "description": "Bad request (invalid job ID)",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "type": "object",
-                  "properties": {
-                    "error": {
-                      "type": "string"
-                    }
-                  }
-                }
-              }
-            }
-          },
-          "401": {
-            "description": "x-api-key missing or not authorized"
-          },
-          "404": {
-            "description": "Job not found",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "type": "object",
-                  "properties": {
-                    "error": {
-                      "type": "string"
-                    }
-                  }
-                }
-              }
-            }
-          },
-          "500": {
-            "description": "Internal server error",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "type": "object",
-                  "properties": {
-                    "error": {
-                      "type": "string"
-                    }
-                  }
-                }
-              }
-            }
-          }
-        }
-      }
-    },
     "/v4/workflows": {
       "get": {
         "summary": "Get a list of workflows",
@@ -4054,6 +3907,62 @@
             "source": "import requests\n\nurl = \"https://api.kadoa.com/v5/changes/123456789\"\nheaders = {\n    \"x-api-key\": \"YOUR_API_KEY\"\n}\n\nresponse = requests.get(url, headers=headers)\ndata = response.json()\nprint(data)\n"
           }
         ]
+      }
+    },
+    "/v5/compliance/workflows": {
+      "get": {
+        "summary": "Export workflows for compliance (CSV format)",
+        "description": "Returns a CSV export of workflows for compliance officers.\nIncludes deleted workflows and supports time-based filtering.\nAccess restricted to compliance officers only.\n",
+        "tags": [
+          "Compliance"
+        ],
+        "parameters": [
+          {
+            "name": "timeFilter",
+            "in": "query",
+            "required": false,
+            "description": "Filter workflows by creation time",
+            "schema": {
+              "type": "string",
+              "enum": [
+                "last-week",
+                "last-month",
+                "all-time"
+              ],
+              "default": "all-time"
+            }
+          }
+        ],
+        "security": [
+          {
+            "ApiKeyAuth": []
+          },
+          {
+            "BearerAuth": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "CSV file with workflows",
+            "content": {
+              "text/csv": {
+                "schema": {
+                  "type": "string",
+                  "format": "binary"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized - Authentication required"
+          },
+          "403": {
+            "description": "Forbidden - Compliance officer access required"
+          },
+          "500": {
+            "description": "Internal server error"
+          }
+        }
       }
     },
     "/v5/notifications/channels": {
@@ -11256,92 +11165,31 @@
         ]
       }
     },
-    "/v4/activity/": {
+    "/v4/workflows/{workflowId}/jobs/{jobId}": {
       "get": {
-        "description": "Retrieve activity events with filtering and pagination. Returns workflow runs, configuration changes, user actions, and notifications.",
-        "summary": "List activity events",
+        "description": "Retrieve the current status and telemetry information for a specific job",
+        "summary": "Get job status and telemetry",
         "tags": [
-          "Activity"
+          "Workflows"
         ],
         "parameters": [
           {
-            "name": "limit",
-            "in": "query",
-            "schema": {
-              "default": 100,
-              "type": "integer",
-              "minimum": 1,
-              "maximum": 1000
-            }
-          },
-          {
-            "name": "offset",
-            "in": "query",
-            "schema": {
-              "default": 0,
-              "type": "integer",
-              "minimum": 0,
-              "nullable": true
-            }
-          },
-          {
             "name": "workflowId",
-            "in": "query",
-            "schema": {
-              "type": "string",
-              "minLength": 1
-            }
-          },
-          {
-            "name": "userId",
-            "in": "query",
-            "schema": {
-              "type": "string",
-              "minLength": 1
-            }
-          },
-          {
-            "name": "startDate",
-            "in": "query",
-            "schema": {
-              "type": "string",
-              "format": "date-time",
-              "nullable": true
-            }
-          },
-          {
-            "name": "endDate",
-            "in": "query",
-            "schema": {
-              "type": "string",
-              "format": "date-time",
-              "nullable": true
-            }
-          },
-          {
-            "name": "relativeTime",
-            "in": "query",
-            "description": "Relative time window counted backwards from now (e.g., 6h, 1d, 2w)",
-            "schema": {
-              "type": "string",
-              "pattern": "^\\d+(m|h|d|w)$"
-            }
-          },
-          {
-            "name": "eventTypes",
-            "in": "query",
-            "description": "Comma-separated list of event types to filter by",
+            "in": "path",
+            "required": true,
             "schema": {
               "type": "string"
-            }
+            },
+            "description": "The ID of the workflow"
           },
           {
-            "name": "interfaces",
-            "in": "query",
-            "description": "Comma-separated list of request sources to filter by (e.g., SYSTEM, UI, SDK, API) - filters by requestSource field",
+            "name": "jobId",
+            "in": "path",
+            "required": true,
             "schema": {
               "type": "string"
-            }
+            },
+            "description": "The ID of the job"
           }
         ],
         "responses": {
@@ -11350,7 +11198,17 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/ActivityListResponse"
+                  "$ref": "#/components/schemas/JobStatusResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "400",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/JobStatusErrorResponse"
                 }
               }
             }
@@ -11360,53 +11218,17 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "type": "object",
-                  "properties": {
-                    "error": {
-                      "type": "boolean",
-                      "description": "Indicates an error occurred"
-                    },
-                    "message": {
-                      "type": "string",
-                      "description": "Error message"
-                    },
-                    "details": {
-                      "nullable": true,
-                      "description": "Additional error details (e.g., validation errors)"
-                    }
-                  },
-                  "required": [
-                    "error",
-                    "message"
-                  ]
+                  "$ref": "#/components/schemas/JobStatusErrorResponse"
                 }
               }
             }
           },
-          "403": {
-            "description": "403",
+          "404": {
+            "description": "404",
             "content": {
               "application/json": {
                 "schema": {
-                  "type": "object",
-                  "properties": {
-                    "error": {
-                      "type": "boolean",
-                      "description": "Indicates an error occurred"
-                    },
-                    "message": {
-                      "type": "string",
-                      "description": "Error message"
-                    },
-                    "details": {
-                      "nullable": true,
-                      "description": "Additional error details (e.g., validation errors)"
-                    }
-                  },
-                  "required": [
-                    "error",
-                    "message"
-                  ]
+                  "$ref": "#/components/schemas/JobStatusErrorResponse"
                 }
               }
             }
@@ -11416,205 +11238,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "type": "object",
-                  "properties": {
-                    "error": {
-                      "type": "boolean",
-                      "description": "Indicates an error occurred"
-                    },
-                    "message": {
-                      "type": "string",
-                      "description": "Error message"
-                    },
-                    "details": {
-                      "nullable": true,
-                      "description": "Additional error details (e.g., validation errors)"
-                    }
-                  },
-                  "required": [
-                    "error",
-                    "message"
-                  ]
-                }
-              }
-            }
-          }
-        },
-        "security": [
-          {
-            "ApiKeyAuth": []
-          }
-        ]
-      }
-    },
-    "/v4/activity/export": {
-      "get": {
-        "description": "Export activity events to CSV format for compliance reviews and audit purposes. Returns up to 10,000 events.",
-        "summary": "Export activity events as CSV",
-        "tags": [
-          "Activity"
-        ],
-        "parameters": [
-          {
-            "name": "limit",
-            "in": "query",
-            "schema": {
-              "type": "integer",
-              "minimum": 1
-            }
-          },
-          {
-            "name": "offset",
-            "in": "query",
-            "schema": {
-              "default": 0,
-              "type": "integer",
-              "minimum": 0,
-              "nullable": true
-            }
-          },
-          {
-            "name": "workflowId",
-            "in": "query",
-            "schema": {
-              "type": "string",
-              "minLength": 1
-            }
-          },
-          {
-            "name": "userId",
-            "in": "query",
-            "schema": {
-              "type": "string",
-              "minLength": 1
-            }
-          },
-          {
-            "name": "startDate",
-            "in": "query",
-            "schema": {
-              "type": "string",
-              "format": "date-time",
-              "nullable": true
-            }
-          },
-          {
-            "name": "endDate",
-            "in": "query",
-            "schema": {
-              "type": "string",
-              "format": "date-time",
-              "nullable": true
-            }
-          },
-          {
-            "name": "relativeTime",
-            "in": "query",
-            "description": "Relative time window counted backwards from now (e.g., 6h, 1d, 2w)",
-            "schema": {
-              "type": "string",
-              "pattern": "^\\d+(m|h|d|w)$"
-            }
-          },
-          {
-            "name": "eventTypes",
-            "in": "query",
-            "schema": {
-              "type": "string"
-            }
-          },
-          {
-            "name": "interfaces",
-            "in": "query",
-            "schema": {
-              "type": "string"
-            }
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "200"
-          },
-          "401": {
-            "description": "401",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "type": "object",
-                  "properties": {
-                    "error": {
-                      "type": "boolean",
-                      "description": "Indicates an error occurred"
-                    },
-                    "message": {
-                      "type": "string",
-                      "description": "Error message"
-                    },
-                    "details": {
-                      "nullable": true,
-                      "description": "Additional error details (e.g., validation errors)"
-                    }
-                  },
-                  "required": [
-                    "error",
-                    "message"
-                  ]
-                }
-              }
-            }
-          },
-          "403": {
-            "description": "403",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "type": "object",
-                  "properties": {
-                    "error": {
-                      "type": "boolean",
-                      "description": "Indicates an error occurred"
-                    },
-                    "message": {
-                      "type": "string",
-                      "description": "Error message"
-                    },
-                    "details": {
-                      "nullable": true,
-                      "description": "Additional error details (e.g., validation errors)"
-                    }
-                  },
-                  "required": [
-                    "error",
-                    "message"
-                  ]
-                }
-              }
-            }
-          },
-          "500": {
-            "description": "500",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "type": "object",
-                  "properties": {
-                    "error": {
-                      "type": "boolean",
-                      "description": "Indicates an error occurred"
-                    },
-                    "message": {
-                      "type": "string",
-                      "description": "Error message"
-                    },
-                    "details": {
-                      "nullable": true,
-                      "description": "Additional error details (e.g., validation errors)"
-                    }
-                  },
-                  "required": [
-                    "error",
-                    "message"
-                  ]
+                  "$ref": "#/components/schemas/JobStatusErrorResponse"
                 }
               }
             }
@@ -11747,7 +11371,7 @@
         ]
       }
     },
-    "/v4/activity/neo": {
+    "/v4/activity/": {
       "get": {
         "description": "Retrieve activity events from audit_logs table with basic filtering and pagination.",
         "summary": "List activity events (new implementation)",
@@ -11830,6 +11454,14 @@
             "name": "interfaces",
             "in": "query",
             "description": "Comma-separated list of request sources to filter by (e.g., SYSTEM, UI, SDK, API) - filters by requestSource field",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "resourceTypes",
+            "in": "query",
+            "description": "Comma-separated list of resource types to filter by (e.g., WORKFLOW, DATA_QUALITY_RULE, SCHEMA, NOTIFICATION_CHANNEL)",
             "schema": {
               "type": "string"
             }
@@ -11938,7 +11570,7 @@
         ]
       }
     },
-    "/v4/activity/neo/export": {
+    "/v4/activity/export": {
       "get": {
         "description": "Export activity events from audit_logs table to CSV format for compliance and audit purposes.",
         "summary": "Export activity events as CSV (new implementation)",
@@ -12016,6 +11648,13 @@
           },
           {
             "name": "interfaces",
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "resourceTypes",
             "in": "query",
             "schema": {
               "type": "string"
@@ -16621,6 +16260,115 @@
         "title": "CreateWorkflowResponse",
         "description": "Response for workflow creation"
       },
+      "JobError": {
+        "type": "object",
+        "properties": {
+          "errorCode": {
+            "type": "string",
+            "description": "Error code identifying the type of error"
+          },
+          "message": {
+            "type": "string",
+            "description": "Human-readable error message"
+          },
+          "occurredAt": {
+            "type": "string",
+            "format": "date-time",
+            "description": "Timestamp when the error occurred"
+          },
+          "screenshot": {
+            "type": "string",
+            "description": "URL to error screenshot if available"
+          },
+          "context": {
+            "type": "object",
+            "additionalProperties": {
+              "nullable": true
+            },
+            "description": "Additional error context"
+          }
+        },
+        "required": [
+          "errorCode",
+          "message",
+          "occurredAt"
+        ],
+        "title": "JobError",
+        "description": "Error information for a job"
+      },
+      "JobStatusResponse": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "description": "The job ID"
+          },
+          "state": {
+            "type": "string",
+            "enum": [
+              "IN_PROGRESS",
+              "FINISHED",
+              "FAILED",
+              "NOT_SUPPORTED",
+              "FAILED_INSUFFICIENT_FUNDS"
+            ],
+            "description": "Current state of the job"
+          },
+          "startedAt": {
+            "type": "string",
+            "format": "date-time",
+            "description": "Start date and time of the job"
+          },
+          "finishedAt": {
+            "type": "string",
+            "format": "date-time",
+            "description": "Finish date and time of the job (if completed)"
+          },
+          "limit": {
+            "type": "integer",
+            "nullable": true,
+            "description": "Record limit for the job"
+          },
+          "workflowId": {
+            "type": "string",
+            "description": "ID of the workflow/scraper"
+          },
+          "variables": {
+            "type": "object",
+            "additionalProperties": {
+              "nullable": true
+            },
+            "description": "Job variables"
+          },
+          "errors": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/JobError"
+            },
+            "description": "List of errors if the job failed"
+          }
+        },
+        "required": [
+          "id",
+          "state"
+        ],
+        "title": "JobStatusResponse",
+        "description": "Job status and telemetry response"
+      },
+      "JobStatusErrorResponse": {
+        "type": "object",
+        "properties": {
+          "error": {
+            "type": "string",
+            "description": "Error message"
+          }
+        },
+        "required": [
+          "error"
+        ],
+        "title": "JobStatusErrorResponse",
+        "description": "Error response for job status endpoint"
+      },
       "ActivityEventSource": {
         "type": "object",
         "properties": {
@@ -16658,10 +16406,6 @@
           "name": {
             "type": "string",
             "description": "Resource name"
-          },
-          "runId": {
-            "type": "string",
-            "description": "Run ID for workflow executions"
           }
         },
         "required": [
