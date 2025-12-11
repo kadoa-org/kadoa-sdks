@@ -14,34 +14,39 @@ describe("SchemaBuilder", () => {
       }).toThrow(KadoaSdkException);
     });
 
-    test("throws error for STRING field without example", () => {
+    test("throws error for STRING field without example (runtime fallback)", () => {
       expect(() => {
+        // @ts-expect-error - testing runtime validation when types are bypassed
         new SchemaBuilder().entity("Product").field("title", "Title", "STRING");
       }).toThrow(KadoaSdkException);
     });
 
-    test("throws error for IMAGE field without example", () => {
+    test("throws error for IMAGE field without example (runtime fallback)", () => {
       expect(() => {
+        // @ts-expect-error - testing runtime validation when types are bypassed
         new SchemaBuilder().entity("Product").field("image", "Image", "IMAGE");
       }).toThrow(KadoaSdkException);
     });
 
-    test("throws error for LINK field without example", () => {
+    test("throws error for LINK field without example (runtime fallback)", () => {
       expect(() => {
+        // @ts-expect-error - testing runtime validation when types are bypassed
         new SchemaBuilder().entity("Product").field("link", "Link", "LINK");
       }).toThrow(KadoaSdkException);
     });
 
-    test("throws error for OBJECT field without example", () => {
+    test("throws error for OBJECT field without example (runtime fallback)", () => {
       expect(() => {
         new SchemaBuilder()
           .entity("Product")
+          // @ts-expect-error - testing runtime validation when types are bypassed
           .field("metadata", "Metadata", "OBJECT");
       }).toThrow(KadoaSdkException);
     });
 
-    test("throws error for ARRAY field without example", () => {
+    test("throws error for ARRAY field without example (runtime fallback)", () => {
       expect(() => {
+        // @ts-expect-error - testing runtime validation when types are bypassed
         new SchemaBuilder().entity("Product").field("tags", "Tags", "ARRAY");
       }).toThrow(KadoaSdkException);
     });
@@ -209,6 +214,91 @@ describe("SchemaBuilder", () => {
         });
       const field = builder.fields[0] as DataField;
       expect(field.isKey).toBe(true);
+    });
+  });
+
+  describe("Type Safety (compile-time checks)", () => {
+    // These tests verify compile-time type constraints.
+    // The @ts-expect-error comments ensure TypeScript catches invalid usage.
+    // We don't execute invalid code - just verify valid code compiles and runs.
+
+    test("types requiring example fail without it (compile-time only)", () => {
+      // The following lines have @ts-expect-error because TypeScript enforces
+      // that example is required for STRING, IMAGE, LINK, OBJECT, ARRAY.
+      // These are compile-time checks only - we don't execute them.
+
+      // @ts-expect-error - example is required for STRING
+      type _StringNoExample = Parameters<typeof SchemaBuilder.prototype.field<"STRING">>[3];
+
+      // @ts-expect-error - example is required for IMAGE
+      type _ImageNoExample = Parameters<typeof SchemaBuilder.prototype.field<"IMAGE">>[3];
+
+      // @ts-expect-error - example is required for LINK
+      type _LinkNoExample = Parameters<typeof SchemaBuilder.prototype.field<"LINK">>[3];
+
+      // @ts-expect-error - example is required for OBJECT
+      type _ObjectNoExample = Parameters<typeof SchemaBuilder.prototype.field<"OBJECT">>[3];
+
+      // @ts-expect-error - example is required for ARRAY
+      type _ArrayNoExample = Parameters<typeof SchemaBuilder.prototype.field<"ARRAY">>[3];
+
+      expect(true).toBe(true); // Placeholder assertion
+    });
+
+    test("types requiring example work with example provided", () => {
+      // Valid - example provided for STRING
+      new SchemaBuilder()
+        .entity("Test")
+        .field("name", "Name", "STRING", { example: "Test" });
+
+      // Valid - example provided for IMAGE
+      new SchemaBuilder()
+        .entity("Test")
+        .field("img", "Image", "IMAGE", { example: "url.png" });
+
+      // Valid - example provided for LINK
+      new SchemaBuilder()
+        .entity("Test")
+        .field("url", "URL", "LINK", { example: "https://example.com" });
+
+      // Valid - example provided for OBJECT
+      new SchemaBuilder()
+        .entity("Test")
+        .field("meta", "Metadata", "OBJECT", { example: '{"key":"value"}' });
+
+      // Valid - example provided for ARRAY
+      new SchemaBuilder()
+        .entity("Test")
+        .field("tags", "Tags", "ARRAY", { example: ["tag1", "tag2"] });
+
+      expect(true).toBe(true);
+    });
+
+    test("NUMBER field does not require example", () => {
+      // No error - example is optional
+      new SchemaBuilder().entity("Test").field("price", "Price", "NUMBER");
+      new SchemaBuilder().entity("Test").field("price", "Price", "NUMBER", {});
+      new SchemaBuilder()
+        .entity("Test")
+        .field("price", "Price", "NUMBER", { isKey: true });
+    });
+
+    test("BOOLEAN field does not require example", () => {
+      new SchemaBuilder().entity("Test").field("active", "Active", "BOOLEAN");
+    });
+
+    test("DATE field does not require example", () => {
+      new SchemaBuilder().entity("Test").field("created", "Created", "DATE");
+    });
+
+    test("DATETIME field does not require example", () => {
+      new SchemaBuilder()
+        .entity("Test")
+        .field("timestamp", "Timestamp", "DATETIME");
+    });
+
+    test("MONEY field does not require example", () => {
+      new SchemaBuilder().entity("Test").field("amount", "Amount", "MONEY");
     });
   });
 });

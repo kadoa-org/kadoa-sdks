@@ -4,12 +4,19 @@
  */
 
 // Schema builder types and class (owned by schema-builder.ts)
-export type { FieldOptions } from "./schema-builder";
+export type {
+  DataTypeRequiringExample,
+  DataTypeNotRequiringExample,
+  FieldOptions,
+  FieldOptionsWithExample,
+  FieldOptionsWithoutExample,
+} from "./schema-builder";
 export { SchemaBuilder } from "./schema-builder";
 // ACL types (owned by schemas.acl.ts)
 export type {
   Category,
   CreateSchemaRequest,
+  DataFieldFor,
   FieldExample,
   SchemaField as SchemaDefinitionField,
   SchemaResponse,

@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 import re
-from typing import Any, Dict, List, Optional, TypedDict, Union
+from typing import Any, Dict, List, Literal, Optional, TypedDict, Union
 
 from pydantic import BaseModel, field_validator
 
@@ -15,7 +15,17 @@ from .schemas_acl import (
     RawContentField,
 )
 
-# Data types that require examples
+# ========================================
+# Data Type Classifications
+# ========================================
+
+DataTypeRequiringExample = Literal["STRING", "IMAGE", "LINK", "OBJECT", "ARRAY"]
+"""Data types that require an example value"""
+
+DataTypeNotRequiringExample = Literal["NUMBER", "BOOLEAN", "DATE", "DATETIME", "MONEY"]
+"""Data types that do not require an example value"""
+
+# Data types that require examples (runtime check)
 TYPES_REQUIRING_EXAMPLE = ["STRING", "IMAGE", "LINK", "OBJECT", "ARRAY"]
 
 # Valid data types
@@ -29,6 +39,42 @@ class BuiltSchema(TypedDict, total=False):
 
     entityName: Optional[str]
     fields: List[SchemaField]
+
+
+class FieldOptionsWithExample(BaseModel):
+    """Field options when example is required"""
+
+    example: Union[str, List[str], FieldExample]
+    """Example value for the field (required)"""
+    is_key: Optional[bool] = None
+    """Whether this field is a primary key"""
+
+    @field_validator("example", mode="before")
+    @classmethod
+    def convert_example(cls, v: Any) -> Union[str, List[str], FieldExample]:
+        """Convert string/list examples to DataFieldExample instances"""
+        if isinstance(v, (str, list)):
+            return DataFieldExample(actual_instance=v)
+        return v
+
+
+class FieldOptionsWithoutExample(BaseModel):
+    """Field options when example is optional"""
+
+    example: Optional[Union[str, List[str], FieldExample]] = None
+    """Example value for the field (optional)"""
+    is_key: Optional[bool] = None
+    """Whether this field is a primary key"""
+
+    @field_validator("example", mode="before")
+    @classmethod
+    def convert_example(cls, v: Any) -> Optional[Union[str, List[str], FieldExample]]:
+        """Convert string/list examples to DataFieldExample instances"""
+        if v is None:
+            return None
+        if isinstance(v, (str, list)):
+            return DataFieldExample(actual_instance=v)
+        return v
 
 
 class FieldOptions(BaseModel):
@@ -72,6 +118,9 @@ class SchemaBuilder:
         description: str,
         data_type: DataType,
         options: Optional[FieldOptions] = None,
+        *,
+        example: Optional[Union[str, List[str], FieldExample]] = None,
+        is_key: Optional[bool] = None,
     ) -> "SchemaBuilder":
         """
         Add a structured field to the schema
@@ -80,32 +129,38 @@ class SchemaBuilder:
             name: Field name (alphanumeric only)
             description: Field description
             data_type: Data type (STRING, NUMBER, BOOLEAN, etc.)
-            options: Optional field configuration
+            options: Optional field configuration (deprecated, use kwargs)
+            example: Example value (required for STRING, IMAGE, LINK, OBJECT, ARRAY)
+            is_key: Whether this field is a primary key
         """
         self._validate_field_name(name)
 
+        # Merge options with kwargs (kwargs take precedence)
+        resolved_example = example if example is not None else (options.example if options else None)
+        resolved_is_key = is_key if is_key is not None else (options.is_key if options else None)
+
         requires_example = data_type in TYPES_REQUIRING_EXAMPLE
-        if requires_example and not (options and options.example):
+        if requires_example and not resolved_example:
             raise KadoaSdkError(
                 f'Field "{name}" with type {data_type} requires an example',
                 code=KadoaErrorCode.VALIDATION_ERROR,
                 details={"name": name, "dataType": data_type},
             )
 
-        example = None
-        if options and options.example:
-            if isinstance(options.example, (str, list)):
-                example = DataFieldExample(actual_instance=options.example)
+        example_value = None
+        if resolved_example:
+            if isinstance(resolved_example, (str, list)):
+                example_value = DataFieldExample(actual_instance=resolved_example)
             else:
-                example = options.example
+                example_value = resolved_example
 
         field = DataField(
             name=name,
             description=description,
             data_type=data_type,
             field_type="SCHEMA",
-            example=example,
-            is_key=options.is_key if options else None,
+            example=example_value,
+            is_key=resolved_is_key,
         )
         self.fields.append(field)
         return self

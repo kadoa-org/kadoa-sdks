@@ -6,6 +6,54 @@ import type { Category, FieldExample, SchemaField } from "./schemas.acl";
 export type { FieldExample, Category };
 
 /**
+ * Data types that require an example value
+ */
+export type DataTypeRequiringExample =
+  | "STRING"
+  | "IMAGE"
+  | "LINK"
+  | "OBJECT"
+  | "ARRAY";
+
+/**
+ * Data types that do not require an example value
+ */
+export type DataTypeNotRequiringExample =
+  | "NUMBER"
+  | "BOOLEAN"
+  | "DATE"
+  | "DATETIME"
+  | "MONEY";
+
+/**
+ * Field options when example is required
+ */
+export interface FieldOptionsWithExample {
+  /**
+   * Example value for the field (required)
+   */
+  example: FieldExample;
+  /**
+   * Whether this field is a primary key
+   */
+  isKey?: boolean;
+}
+
+/**
+ * Field options when example is optional
+ */
+export interface FieldOptionsWithoutExample {
+  /**
+   * Example value for the field (optional)
+   */
+  example?: FieldExample;
+  /**
+   * Whether this field is a primary key
+   */
+  isKey?: boolean;
+}
+
+/**
  * Optional configuration for schema fields
  */
 export interface FieldOptions {
@@ -50,8 +98,27 @@ export class SchemaBuilder {
    * @param name - Field name (alphanumeric only)
    * @param description - Field description
    * @param dataType - Data type (STRING, NUMBER, BOOLEAN, etc.)
+   * @param options - Field configuration (example required for STRING, IMAGE, LINK, OBJECT, ARRAY)
+   */
+  field<T extends DataTypeRequiringExample>(
+    name: string,
+    description: string,
+    dataType: T,
+    options: FieldOptionsWithExample,
+  ): this;
+  /**
+   * Add a structured field to the schema
+   * @param name - Field name (alphanumeric only)
+   * @param description - Field description
+   * @param dataType - Data type (STRING, NUMBER, BOOLEAN, etc.)
    * @param options - Optional field configuration
    */
+  field<T extends DataTypeNotRequiringExample>(
+    name: string,
+    description: string,
+    dataType: T,
+    options?: FieldOptionsWithoutExample,
+  ): this;
   field(
     name: string,
     description: string,
