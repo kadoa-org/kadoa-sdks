@@ -265,6 +265,16 @@
             "schema": {
               "type": "integer"
             }
+          },
+          {
+            "name": "exclude",
+            "in": "query",
+            "required": false,
+            "description": "Comma-separated list of fields to exclude from each change object (e.g., \"data,differences\")",
+            "schema": {
+              "type": "string",
+              "example": "data,differences"
+            }
           }
         ],
         "security": [
@@ -406,11 +416,11 @@
         "x-code-samples": [
           {
             "lang": "curl",
-            "source": "curl -X GET \"https://api.kadoa.com/v4/workflows/changes?workflowIds=123,456&startDate=2024-01-01T00:00:00Z&endDate=2024-03-01T00:00:00Z\" \\\n-H \"x-api-key: YOUR_API_KEY\"\n"
+            "source": "curl -X GET \"https://api.kadoa.com/v4/changes?workflowIds=123,456&startDate=2024-01-01T00:00:00Z&endDate=2024-03-01T00:00:00Z\" \\\n-H \"x-api-key: YOUR_API_KEY\"\n\n# Exclude data and differences fields for smaller response\ncurl -X GET \"https://api.kadoa.com/v4/changes?workflowIds=123,456&exclude=data,differences\" \\\n-H \"x-api-key: YOUR_API_KEY\"\n"
           },
           {
             "lang": "python",
-            "source": "import requests\n\nurl = \"https://api.kadoa.com/v4/workflows/changes\"\nheaders = {\n    \"x-api-key\": \"YOUR_API_KEY\"\n}\nparams = {\n    \"workflowIds\": \"123,456\",\n    \"startDate\": \"2024-01-01T00:00:00Z\",\n    \"endDate\": \"2024-03-01T00:00:00Z\"\n}\n\nresponse = requests.get(url, headers=headers, params=params)\ndata = response.json()\nprint(data)\n"
+            "source": "import requests\n\nurl = \"https://api.kadoa.com/v4/changes\"\nheaders = {\n    \"x-api-key\": \"YOUR_API_KEY\"\n}\nparams = {\n    \"workflowIds\": \"123,456\",\n    \"startDate\": \"2024-01-01T00:00:00Z\",\n    \"endDate\": \"2024-03-01T00:00:00Z\"\n}\n\nresponse = requests.get(url, headers=headers, params=params)\ndata = response.json()\nprint(data)\n\n# Exclude data and differences fields for smaller response\nparams[\"exclude\"] = \"data,differences\"\nresponse = requests.get(url, headers=headers, params=params)\ndata = response.json()\nprint(data)\n"
           }
         ]
       }
@@ -1144,6 +1154,29 @@
                           }
                         }
                       }
+                    },
+                    "navigationMode": {
+                      "type": "string",
+                      "enum": [
+                        "single-page",
+                        "paginated-page",
+                        "page-and-detail",
+                        "agentic-navigation",
+                        "all-pages"
+                      ],
+                      "description": "Navigation mode for scraping. Determines how the scraper navigates through pages"
+                    },
+                    "maxDepth": {
+                      "type": "integer",
+                      "minimum": 1,
+                      "maximum": 200,
+                      "description": "Maximum crawl depth (default: 50, max: 200). Only used when navigationMode is 'all-pages'"
+                    },
+                    "maxPages": {
+                      "type": "integer",
+                      "minimum": 1,
+                      "maximum": 100000,
+                      "description": "Maximum pages to crawl (default: 10,000, max: 100,000). Only used when navigationMode is 'all-pages'"
                     },
                     "schema": {
                       "type": "array",
@@ -1990,6 +2023,15 @@
             }
           },
           {
+            "name": "userId",
+            "in": "query",
+            "description": "Filter workflows by user ID (team members only)",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
             "name": "monitoring",
             "in": "query",
             "description": "Filter workflows by monitoring status",
@@ -2226,6 +2268,29 @@
                                 }
                               }
                             }
+                          },
+                          "navigationMode": {
+                            "type": "string",
+                            "enum": [
+                              "single-page",
+                              "paginated-page",
+                              "page-and-detail",
+                              "agentic-navigation",
+                              "all-pages"
+                            ],
+                            "description": "Navigation mode for scraping. Determines how the scraper navigates through pages"
+                          },
+                          "maxDepth": {
+                            "type": "integer",
+                            "minimum": 1,
+                            "maximum": 200,
+                            "description": "Maximum crawl depth (default: 50, max: 200). Only used when navigationMode is 'all-pages'"
+                          },
+                          "maxPages": {
+                            "type": "integer",
+                            "minimum": 1,
+                            "maximum": 100000,
+                            "description": "Maximum pages to crawl (default: 10,000, max: 100,000). Only used when navigationMode is 'all-pages'"
                           },
                           "schema": {
                             "type": "array",
