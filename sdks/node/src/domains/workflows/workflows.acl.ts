@@ -6,6 +6,8 @@
 
 import type {
   AgenticWorkflow,
+  JobStatusResponse,
+  JobStatusResponseStateEnum,
   MonitoringConfig,
   V4WorkflowsGet200ResponseWorkflowsInner,
   V4WorkflowsGet200ResponseWorkflowsInnerDisplayStateEnum,
@@ -16,8 +18,6 @@ import type {
   V4WorkflowsGetStateEnum,
   V4WorkflowsGetUpdateIntervalEnum,
   V4WorkflowsWorkflowIdGet200Response,
-  V4WorkflowsWorkflowIdJobsJobIdGet200Response,
-  V4WorkflowsWorkflowIdJobsJobIdGet200ResponseStateEnum,
   V4WorkflowsWorkflowIdMetadataPut200Response,
   V4WorkflowsWorkflowIdMetadataPutRequest,
   V4WorkflowsWorkflowIdRunPut200Response,
@@ -139,7 +139,6 @@ export const WorkflowDisplayStateEnum = {
   Setup: "SETUP",
   Running: "RUNNING",
   Failed: "FAILED",
-  Deleted: "DELETED",
 } as const satisfies Record<
   keyof typeof V4WorkflowsGet200ResponseWorkflowsInnerDisplayStateEnum,
   V4WorkflowsGet200ResponseWorkflowsInnerDisplayStateEnum
@@ -158,8 +157,8 @@ export const JobStateEnum = {
   NotSupported: "NOT_SUPPORTED",
   FailedInsufficientFunds: "FAILED_INSUFFICIENT_FUNDS",
 } as const satisfies Record<
-  keyof typeof V4WorkflowsWorkflowIdJobsJobIdGet200ResponseStateEnum,
-  V4WorkflowsWorkflowIdJobsJobIdGet200ResponseStateEnum
+  keyof typeof JobStatusResponseStateEnum,
+  JobStatusResponseStateEnum
 >;
 
 export type JobStateEnum = (typeof JobStateEnum)[keyof typeof JobStateEnum];
@@ -223,8 +222,7 @@ export type { MonitoringConfig };
 /**
  * Get job response with SDK-curated enum types.
  */
-export interface GetJobResponse
-  extends Omit<V4WorkflowsWorkflowIdJobsJobIdGet200Response, "state"> {
+export interface GetJobResponse extends Omit<JobStatusResponse, "state"> {
   state?: JobStateEnum;
 }
 

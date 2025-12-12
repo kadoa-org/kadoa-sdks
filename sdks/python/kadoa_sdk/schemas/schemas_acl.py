@@ -10,7 +10,7 @@ NOTE: This ACL uses type aliases instead of explicit classes/interfaces because:
 - The types are stable and unlikely to change in structure
 """
 
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Literal, Optional, TypedDict, Union
 
 from openapi_client.api.schemas_api import SchemasApi
 from openapi_client.models.classification_field import ClassificationField
@@ -40,6 +40,53 @@ FieldExample = DataFieldExample
 
 Category = ClassificationFieldCategoriesInner
 
+# ========================================
+# Type-Safe Field Construction
+# ========================================
+
+DataType = Literal[
+    "STRING", "NUMBER", "BOOLEAN", "DATE", "DATETIME", "MONEY", "IMAGE", "LINK", "OBJECT", "ARRAY"
+]
+
+DataTypeRequiringExample = Literal["STRING", "IMAGE", "LINK", "OBJECT", "ARRAY"]
+DataTypeNotRequiringExample = Literal["NUMBER", "BOOLEAN", "DATE", "DATETIME", "MONEY"]
+
+
+class _DataFieldBaseRequired(TypedDict):
+    """Required fields for DataFieldFor"""
+
+    dataType: DataType
+    name: str
+    description: str
+
+
+class _DataFieldBaseOptional(TypedDict, total=False):
+    """Optional fields for DataFieldFor"""
+
+    fieldType: str
+    isKey: bool
+
+
+class DataFieldForRequiringExample(_DataFieldBaseRequired, _DataFieldBaseOptional):
+    """DataField with required example"""
+
+    example: DataFieldExample
+
+
+class DataFieldForNotRequiringExample(_DataFieldBaseRequired, _DataFieldBaseOptional):
+    """DataField with optional example"""
+
+    example: Optional[DataFieldExample]
+
+
+DataFieldFor = Union[DataFieldForRequiringExample, DataFieldForNotRequiringExample]
+"""
+Type-safe DataField with conditional example requirement.
+- example is required for STRING, IMAGE, LINK, OBJECT, ARRAY
+- example is optional for NUMBER, BOOLEAN, DATE, DATETIME, MONEY
+"""
+
+
 __all__ = [
     "SchemasApi",
     "CreateSchemaRequest",
@@ -53,4 +100,8 @@ __all__ = [
     "RawContentField",
     "FieldExample",
     "Category",
+    "DataFieldFor",
+    "DataType",
+    "DataTypeRequiringExample",
+    "DataTypeNotRequiringExample",
 ]

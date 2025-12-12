@@ -35,9 +35,7 @@ from openapi_client.models.v4_workflows_workflow_id_metadata_put_request import 
 from openapi_client.models.v4_workflows_workflow_id_run_put200_response import (
     V4WorkflowsWorkflowIdRunPut200Response,
 )
-from openapi_client.models.v4_workflows_workflow_id_jobs_job_id_get200_response import (
-    V4WorkflowsWorkflowIdJobsJobIdGet200Response,
-)
+from openapi_client.models.job_status_response import JobStatusResponse
 from openapi_client.models.workflow_with_entity_and_fields import WorkflowWithEntityAndFields
 
 if TYPE_CHECKING:
@@ -80,7 +78,6 @@ WorkflowDisplayStateEnum = Literal[
     "SETUP",
     "RUNNING",
     "FAILED",
-    "DELETED",
 ]
 
 JobStateEnum = Literal[
@@ -132,18 +129,16 @@ class GetWorkflowResponse(V4WorkflowsWorkflowIdGet200Response):
         return cls.model_validate(response.model_dump())
 
 
-class GetJobResponse(V4WorkflowsWorkflowIdJobsJobIdGet200Response):
+class GetJobResponse(JobStatusResponse):
     """Get job response with SDK-curated enum types.
-    
+
     Remaps generated enum fields to prevent type leakage.
     """
 
     state: Optional[JobStateEnum] = None
 
     @classmethod
-    def from_generated(
-        cls, response: V4WorkflowsWorkflowIdJobsJobIdGet200Response
-    ) -> "GetJobResponse":
+    def from_generated(cls, response: JobStatusResponse) -> "GetJobResponse":
         """Create GetJobResponse from generated type."""
         return cls.model_validate(response.model_dump())
 
