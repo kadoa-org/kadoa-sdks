@@ -12,6 +12,7 @@
 
 import {
   type ClassificationFieldCategoriesInner,
+  type DataField,
   type DataFieldExample,
   type CreateSchemaBody as GeneratedCreateSchemaBody,
   type SchemaResponse as GeneratedSchemaResponse,
@@ -19,6 +20,11 @@ import {
   type SchemaResponseSchemaInner,
   SchemasApi,
 } from "../../generated";
+import type { DataType } from "../extraction/extraction.acl";
+import type {
+  DataTypeRequiringExample,
+  DataTypeNotRequiringExample,
+} from "./schema-builder";
 
 // ========================================
 // API Client
@@ -73,3 +79,24 @@ export type FieldExample = DataFieldExample;
  * Re-exported from generated ClassificationFieldCategoriesInner model.
  */
 export type Category = ClassificationFieldCategoriesInner;
+
+// ========================================
+// Type-Safe Field Construction
+// ========================================
+
+/**
+ * Type-safe DataField with conditional example requirement.
+ * - example is required for STRING, IMAGE, LINK, OBJECT, ARRAY
+ * - example is optional for NUMBER, BOOLEAN, DATE, DATETIME, MONEY
+ */
+export type DataFieldFor<T extends DataType> = T extends DataTypeRequiringExample
+  ? Omit<DataField, "example" | "dataType"> & {
+      dataType: T;
+      example: DataFieldExample;
+    }
+  : T extends DataTypeNotRequiringExample
+    ? Omit<DataField, "example" | "dataType"> & {
+        dataType: T;
+        example?: DataFieldExample;
+      }
+    : never;
