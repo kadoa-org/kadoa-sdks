@@ -32,6 +32,7 @@ from .user import UserService
 from .validation import ValidationCoreService, ValidationDomain, ValidationRulesService
 from .workflows import WorkflowsCoreService
 from .core.version_check import check_for_updates
+from .crawler import CrawlerConfigService, CrawlerSessionService
 
 
 class KadoaClientConfig(BaseModel):
@@ -128,6 +129,7 @@ class KadoaClient:
         self._api_client = create_api_client(self._configuration)
 
         self._realtime: Optional[Realtime] = None
+        self._realtime_config = config.realtime_config
 
         self.extraction = ExtractionModule(self)
         self.user = UserService(self)
@@ -155,6 +157,11 @@ class KadoaClient:
             rules=rules_service,
         )
 
+        self.crawler = CrawlerDomain(
+            config=CrawlerConfigService(self),
+            session=CrawlerSessionService(self),
+        )
+
         if config.enable_realtime:
             self.connect_realtime()
 
@@ -179,7 +186,10 @@ class KadoaClient:
             ```
         """
         if not self._realtime:
-            realtime_config = RealtimeConfig(api_key=self._api_key)
+            if self._realtime_config:
+                realtime_config = self._realtime_config.model_copy(update={"api_key": self._api_key})
+            else:
+                realtime_config = RealtimeConfig(api_key=self._api_key)
             self._realtime = Realtime(realtime_config)
 
             loop = self._realtime._get_or_create_loop()
@@ -441,3 +451,15 @@ class NotificationDomain:
         from .notifications.notifications_acl import NotificationSettings
 
         return self.setup.setup_for_workspace(request)
+
+
+class CrawlerDomain:
+    """Crawler domain providing access to config and session services."""
+
+    def __init__(
+        self,
+        config: CrawlerConfigService,
+        session: CrawlerSessionService,
+    ) -> None:
+        self.config = config
+        self.session = session

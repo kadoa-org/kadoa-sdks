@@ -83,7 +83,12 @@ class KadoaSettings(BaseSettings):
     wss_api_uri: str = Field(
         default="wss://realtime.kadoa.com",
         validation_alias="KADOA_WSS_API_URI",
-        description="WebSocket URL for realtime connections",
+        description="WebSocket URL for realtime connections (legacy)",
+    )
+    wss_neo_api_uri: str = Field(
+        default="wss://events.kadoa.com/events/ws",
+        validation_alias="KADOA_WSS_NEO_API_URI",
+        description="WebSocket URL for stream realtime connections",
     )
     realtime_api_uri: str = Field(
         default="https://realtime.kadoa.com",
@@ -102,7 +107,7 @@ class KadoaSettings(BaseSettings):
         # This is the standard Pydantic Settings behavior
     )
 
-    @field_validator("public_api_uri", "wss_api_uri", "realtime_api_uri")
+    @field_validator("public_api_uri", "wss_api_uri", "wss_neo_api_uri", "realtime_api_uri")
     @classmethod
     def validate_uri(cls, v: str) -> str:
         """Validate that URI fields are non-empty strings."""
