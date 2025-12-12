@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.20.0](https://github.com/kadoa-org/kadoa-sdks/compare/node-sdk-v0.19.3...node-sdk-v0.20.0) (2025-12-12)
+
+
+### Features
+
+* **node-sdk,python-sdk:** add type-safe schema field validation ([#188](https://github.com/kadoa-org/kadoa-sdks/issues/188)) ([2e81764](https://github.com/kadoa-org/kadoa-sdks/commit/2e81764fd2fd39fb1e5e1a0be2049729aa9c0e25))
+
 ## [0.19.3](https://github.com/kadoa-org/kadoa-sdks/compare/node-sdk-v0.19.2...node-sdk-v0.19.3) (2025-12-01)
 
 
