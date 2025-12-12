@@ -9132,7 +9132,12 @@
               }
             }
           }
-        }
+        },
+        "security": [
+          {
+            "ApiKeyAuth": []
+          }
+        ]
       }
     },
     "/v4/crawl/{sessionId}/pages": {
@@ -9728,6 +9733,147 @@
           },
           "404": {
             "description": "404",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "error": {
+                      "type": "boolean",
+                      "description": "Indicates an error occurred"
+                    },
+                    "message": {
+                      "type": "string",
+                      "description": "Error message"
+                    },
+                    "details": {
+                      "nullable": true,
+                      "description": "Additional error details (e.g., validation errors)"
+                    }
+                  },
+                  "required": [
+                    "error",
+                    "message"
+                  ]
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "500",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "error": {
+                      "type": "boolean",
+                      "description": "Indicates an error occurred"
+                    },
+                    "message": {
+                      "type": "string",
+                      "description": "Error message"
+                    },
+                    "details": {
+                      "nullable": true,
+                      "description": "Additional error details (e.g., validation errors)"
+                    }
+                  },
+                  "required": [
+                    "error",
+                    "message"
+                  ]
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "ApiKeyAuth": []
+          }
+        ]
+      }
+    },
+    "/v4/crawl/sessions": {
+      "get": {
+        "description": "Get paginated list of crawling sessions with optional filtering",
+        "summary": "List crawling sessions",
+        "tags": [
+          "Crawler"
+        ],
+        "parameters": [
+          {
+            "name": "page",
+            "in": "query",
+            "description": "Page number",
+            "schema": {
+              "default": 1,
+              "type": "number",
+              "minimum": 1
+            }
+          },
+          {
+            "name": "pageSize",
+            "in": "query",
+            "description": "Items per page",
+            "schema": {
+              "default": 25,
+              "type": "number",
+              "minimum": 1,
+              "maximum": 100
+            }
+          },
+          {
+            "name": "userId",
+            "in": "query",
+            "description": "Filter by user ID",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "200",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ListCrawlerSessionsResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "400",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "error": {
+                      "type": "boolean",
+                      "description": "Indicates an error occurred"
+                    },
+                    "message": {
+                      "type": "string",
+                      "description": "Error message"
+                    },
+                    "details": {
+                      "nullable": true,
+                      "description": "Additional error details (e.g., validation errors)"
+                    }
+                  },
+                  "required": [
+                    "error",
+                    "message"
+                  ]
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "401",
             "content": {
               "application/json": {
                 "schema": {
@@ -14633,6 +14779,115 @@
         ],
         "title": "GetCrawlerSessionDataListResponse",
         "description": "Response schema for getting a crawling session data list"
+      },
+      "CrawlerSessionItem": {
+        "type": "object",
+        "properties": {
+          "sessionId": {
+            "type": "string",
+            "description": "Session ID"
+          },
+          "configId": {
+            "type": "string",
+            "description": "Config ID"
+          },
+          "domain": {
+            "type": "string",
+            "description": "Domain being crawled"
+          },
+          "startUrls": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "description": "URLs used to start the crawl"
+          },
+          "userId": {
+            "type": "string",
+            "description": "User ID who created the session"
+          },
+          "createdAt": {
+            "type": "string",
+            "description": "Session creation timestamp"
+          },
+          "activeJobs": {
+            "type": "number",
+            "description": "Number of active jobs (live stat)"
+          },
+          "waitingJobs": {
+            "type": "number",
+            "description": "Number of waiting jobs (live stat)"
+          },
+          "crawledPages": {
+            "type": "number",
+            "description": "Number of crawled pages (live stat)"
+          },
+          "finished": {
+            "type": "boolean",
+            "description": "Whether session has finished"
+          }
+        },
+        "required": [
+          "sessionId",
+          "configId",
+          "domain",
+          "startUrls",
+          "userId",
+          "createdAt"
+        ],
+        "title": "CrawlerSessionItem",
+        "description": "Crawling session item"
+      },
+      "ListCrawlerSessionsResponse": {
+        "type": "object",
+        "properties": {
+          "data": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/CrawlerSessionItem"
+            },
+            "description": "List of sessions"
+          },
+          "pagination": {
+            "type": "object",
+            "properties": {
+              "page": {
+                "type": "number",
+                "description": "Current page number"
+              },
+              "pageSize": {
+                "type": "number",
+                "description": "Items per page"
+              },
+              "totalItems": {
+                "type": "number",
+                "description": "Total number of items"
+              },
+              "totalPages": {
+                "type": "number",
+                "description": "Total number of pages"
+              },
+              "hasMore": {
+                "type": "boolean",
+                "description": "Whether there are more pages"
+              }
+            },
+            "required": [
+              "page",
+              "pageSize",
+              "totalItems",
+              "totalPages",
+              "hasMore"
+            ],
+            "description": "Pagination metadata"
+          }
+        },
+        "required": [
+          "data",
+          "pagination"
+        ],
+        "title": "ListCrawlerSessionsResponse",
+        "description": "Response for listing crawling sessions"
       },
       "DataField": {
         "type": "object",

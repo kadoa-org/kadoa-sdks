@@ -6,6 +6,10 @@ import {
   NotificationsApi,
   WorkflowsApi,
 } from "./domains/apis.acl";
+import {
+  type CrawlerDomain,
+  createCrawlerDomain,
+} from "./domains/crawler/crawler.facade";
 import { DataFetcherService } from "./domains/extraction/services/data-fetcher.service";
 import { EntityResolverService } from "./domains/extraction/services/entity-resolver.service";
 import { ExtractionService } from "./domains/extraction/services/extraction.service";
@@ -62,6 +66,8 @@ export interface KadoaClientConfig {
     reconnectDelay?: number;
     /** Heartbeat interval in ms (default: 10000) */
     heartbeatInterval?: number;
+    /** Subscribe source mode. Use 'stream' for CloudEvents mode. */
+    source?: "stream";
   };
 }
 
@@ -105,6 +111,7 @@ export class KadoaClient {
   private readonly _apiKey: string;
 
   private _realtime?: Realtime;
+  private _realtimeConfig?: KadoaClientConfig["realtimeConfig"];
   private _extractionBuilderService: ExtractionBuilderService;
 
   public readonly extraction: ExtractionService;
@@ -113,6 +120,7 @@ export class KadoaClient {
   public readonly schema: SchemasService;
   public readonly user: UserService;
   public readonly validation: ValidationDomain;
+  public readonly crawler: CrawlerDomain;
 
   constructor(config: KadoaClientConfig) {
     this._baseUrl = PUBLIC_API_URI;
@@ -234,6 +242,8 @@ export class KadoaClient {
         channelSetupService.setupForWorkspace(request),
     };
     this.validation = createValidationDomain(coreService, rulesService);
+    this.crawler = createCrawlerDomain(this);
+    this._realtimeConfig = config.realtimeConfig;
 
     if (config.enableRealtime && config.realtimeConfig?.autoConnect !== false) {
       this.connectRealtime();
@@ -344,7 +354,18 @@ export class KadoaClient {
    */
   connectRealtime(): Realtime {
     if (!this._realtime) {
-      this._realtime = new Realtime({ apiKey: this._apiKey });
+      this._realtime = new Realtime({
+        apiKey: this._apiKey,
+        ...(this._realtimeConfig?.reconnectDelay != null && {
+          reconnectDelay: this._realtimeConfig.reconnectDelay,
+        }),
+        ...(this._realtimeConfig?.heartbeatInterval != null && {
+          heartbeatInterval: this._realtimeConfig.heartbeatInterval,
+        }),
+        ...(this._realtimeConfig?.source && {
+          source: this._realtimeConfig.source,
+        }),
+      });
       this._realtime.connect();
     }
     return this._realtime;

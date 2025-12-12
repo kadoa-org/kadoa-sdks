@@ -228,19 +228,29 @@ describe("SchemaBuilder", () => {
       // These are compile-time checks only - we don't execute them.
 
       // @ts-expect-error - example is required for STRING
-      type _StringNoExample = Parameters<typeof SchemaBuilder.prototype.field<"STRING">>[3];
+      type _StringNoExample = Parameters<
+        typeof SchemaBuilder.prototype.field<"STRING">
+      >[3];
 
       // @ts-expect-error - example is required for IMAGE
-      type _ImageNoExample = Parameters<typeof SchemaBuilder.prototype.field<"IMAGE">>[3];
+      type _ImageNoExample = Parameters<
+        typeof SchemaBuilder.prototype.field<"IMAGE">
+      >[3];
 
       // @ts-expect-error - example is required for LINK
-      type _LinkNoExample = Parameters<typeof SchemaBuilder.prototype.field<"LINK">>[3];
+      type _LinkNoExample = Parameters<
+        typeof SchemaBuilder.prototype.field<"LINK">
+      >[3];
 
       // @ts-expect-error - example is required for OBJECT
-      type _ObjectNoExample = Parameters<typeof SchemaBuilder.prototype.field<"OBJECT">>[3];
+      type _ObjectNoExample = Parameters<
+        typeof SchemaBuilder.prototype.field<"OBJECT">
+      >[3];
 
       // @ts-expect-error - example is required for ARRAY
-      type _ArrayNoExample = Parameters<typeof SchemaBuilder.prototype.field<"ARRAY">>[3];
+      type _ArrayNoExample = Parameters<
+        typeof SchemaBuilder.prototype.field<"ARRAY">
+      >[3];
 
       expect(true).toBe(true); // Placeholder assertion
     });
