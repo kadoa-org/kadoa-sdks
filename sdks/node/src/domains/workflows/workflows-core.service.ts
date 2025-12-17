@@ -58,6 +58,7 @@ export interface CreateWorkflowInput {
   schedules?: string[];
   additionalData?: Record<string, unknown>;
   userPrompt?: string;
+  limit?: number;
 }
 
 export const TERMINAL_JOB_STATES: Set<JobStateEnum> = new Set([
@@ -115,6 +116,7 @@ export class WorkflowsCoreService {
         autoStart: input.autoStart,
         schedules: input.schedules,
         additionalData: input.additionalData,
+        limit: input.limit,
       };
 
       const response = await this.workflowsApi.v4WorkflowsPost({
@@ -141,7 +143,7 @@ export class WorkflowsCoreService {
       schemaId: input.schemaId,
       description: input.description,
       navigationMode: input.navigationMode,
-      entity: input.entity ?? "",
+      entity: input.entity,
       fields: input.fields,
       bypassPreview: input.bypassPreview ?? true,
       tags: input.tags,
@@ -151,6 +153,7 @@ export class WorkflowsCoreService {
       autoStart: input.autoStart,
       schedules: input.schedules,
       additionalData: input.additionalData,
+      limit: input.limit,
     };
 
     const response = await this.workflowsApi.v4WorkflowsPost({

@@ -3,7 +3,10 @@
 from __future__ import annotations
 
 import json
-from typing import TYPE_CHECKING, Any, Dict, List, Optional
+from typing import TYPE_CHECKING, Any, Dict, List, Optional, Union
+from urllib.parse import urlparse
+
+from pydantic import BaseModel, ConfigDict, Field
 
 from kadoa_sdk.core.logger import workflow as logger
 from kadoa_sdk.core.utils import PollingOptions, poll_until
@@ -19,6 +22,7 @@ from openapi_client.models.v4_workflows_workflow_id_run_put_request import (
 )
 
 from ..extraction.extraction_acl import (
+    CreateWorkflowBody,
     GetJobResponse,
     GetWorkflowResponse,
     ListWorkflowsRequest,
@@ -27,7 +31,44 @@ from ..extraction.extraction_acl import (
     UpdateWorkflowResponse,
     WorkflowListItemResponse,
     WorkflowsApi,
+    WorkflowWithEntityAndFields,
 )
+from openapi_client.models.agentic_workflow import AgenticWorkflow
+from openapi_client.models.create_workflow_response import CreateWorkflowResponse
+from openapi_client.models.workflow_with_existing_schema import WorkflowWithExistingSchema
+from openapi_client.models.location import Location
+from openapi_client.models.monitoring_config import MonitoringConfig
+
+
+class CreateWorkflowInput(BaseModel):
+    """Input for creating a workflow."""
+
+    urls: List[str]
+    navigation_mode: str = Field(alias="navigationMode")
+    name: Optional[str] = None
+    description: Optional[str] = None
+    schema_id: Optional[str] = Field(default=None, alias="schemaId")
+    entity: Optional[str] = None
+    fields: Optional[List[Any]] = None
+    tags: Optional[List[str]] = None
+    interval: Optional[str] = None
+    monitoring: Optional[MonitoringConfig] = None
+    location: Optional[Location] = None
+    bypass_preview: Optional[bool] = Field(default=None, alias="bypassPreview")
+    auto_start: Optional[bool] = Field(default=None, alias="autoStart")
+    schedules: Optional[List[str]] = None
+    additional_data: Optional[Dict[str, Any]] = Field(default=None, alias="additionalData")
+    user_prompt: Optional[str] = Field(default=None, alias="userPrompt")
+    limit: Optional[int] = None
+
+    model_config = ConfigDict(populate_by_name=True)
+
+
+class CreateWorkflowResult(BaseModel):
+    """Result of creating a workflow."""
+
+    id: str
+
 
 TERMINAL_JOB_STATES = {
     "FINISHED",
@@ -83,6 +124,119 @@ class WorkflowsCoreService:
         except (TypeError, ValueError):
             raise KadoaSdkError(
                 "additional_data must be JSON-serializable", code=KadoaErrorCode.VALIDATION_ERROR
+            )
+
+    def create(self, input: CreateWorkflowInput) -> CreateWorkflowResult:
+        """
+        Create a new workflow.
+
+        Args:
+            input: Workflow creation input with urls, navigationMode, fields, etc.
+
+        Returns:
+            CreateWorkflowResult with workflow id
+
+        Raises:
+            KadoaSdkError: If validation fails or no workflow ID returned
+            KadoaHttpError: If creation fails
+        """
+        self._validate_additional_data(input.additional_data)
+
+        domain_name = urlparse(input.urls[0]).hostname
+
+        try:
+            # For agentic-navigation, use AgenticWorkflow type
+            if input.navigation_mode == "agentic-navigation":
+                if not input.user_prompt:
+                    raise KadoaSdkError(
+                        "userPrompt is required when navigationMode is 'agentic-navigation'",
+                        code=KadoaErrorCode.VALIDATION_ERROR,
+                        details={"navigationMode": input.navigation_mode},
+                    )
+
+                agentic_request = AgenticWorkflow(
+                    urls=input.urls,
+                    navigation_mode="agentic-navigation",
+                    name=input.name or domain_name,
+                    description=input.description,
+                    user_prompt=input.user_prompt,
+                    schema_id=input.schema_id,
+                    entity=input.entity,
+                    fields=input.fields,
+                    bypass_preview=input.bypass_preview if input.bypass_preview is not None else True,
+                    tags=input.tags,
+                    interval=input.interval,
+                    monitoring=input.monitoring,
+                    location=input.location,
+                    auto_start=input.auto_start,
+                    schedules=input.schedules,
+                    additional_data=input.additional_data,
+                    limit=input.limit,
+                )
+                wrapper = CreateWorkflowBody(agentic_request)
+            elif input.schema_id:
+                # Use existing schema
+                schema_request = WorkflowWithExistingSchema(
+                    urls=input.urls,
+                    navigation_mode=input.navigation_mode,
+                    name=input.name or domain_name,
+                    description=input.description,
+                    schema_id=input.schema_id,
+                    bypass_preview=input.bypass_preview if input.bypass_preview is not None else True,
+                    tags=input.tags,
+                    interval=input.interval,
+                    monitoring=input.monitoring,
+                    location=input.location,
+                    auto_start=input.auto_start,
+                    schedules=input.schedules,
+                    additional_data=input.additional_data,
+                    limit=input.limit,
+                )
+                wrapper = CreateWorkflowBody(schema_request)
+            else:
+                # Use entity and fields
+                workflow_request = WorkflowWithEntityAndFields(
+                    urls=input.urls,
+                    navigation_mode=input.navigation_mode,
+                    name=input.name or domain_name,
+                    description=input.description,
+                    entity=input.entity,
+                    fields=input.fields,
+                    bypass_preview=input.bypass_preview if input.bypass_preview is not None else True,
+                    tags=input.tags,
+                    interval=input.interval,
+                    monitoring=input.monitoring,
+                    location=input.location,
+                    auto_start=input.auto_start,
+                    schedules=input.schedules,
+                    additional_data=input.additional_data,
+                    limit=input.limit,
+                )
+                wrapper = CreateWorkflowBody(workflow_request)
+
+            response = self.workflows_api.v4_workflows_post(create_workflow_body=wrapper)
+            workflow_id = getattr(response, "workflow_id", None) or getattr(
+                response, "workflowId", None
+            )
+
+            if not workflow_id:
+                raise KadoaSdkError(
+                    KadoaSdkError.ERROR_MESSAGES["NO_WORKFLOW_ID"],
+                    code=KadoaErrorCode.INTERNAL_ERROR,
+                    details={
+                        "response": response.model_dump() if hasattr(response, "model_dump") else response
+                    },
+                )
+
+            return CreateWorkflowResult(id=workflow_id)
+
+        except KadoaSdkError:
+            raise
+        except Exception as error:
+            raise KadoaHttpError.wrap(
+                error,
+                message="Failed to create workflow",
+                details={"urls": input.urls},
             )
 
     def get(self, workflow_id: str) -> GetWorkflowResponse:

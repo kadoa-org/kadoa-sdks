@@ -5,8 +5,8 @@
 
 // Schema builder types and class (owned by schema-builder.ts)
 export type {
-  DataTypeRequiringExample,
   DataTypeNotRequiringExample,
+  DataTypeRequiringExample,
   FieldOptions,
   FieldOptionsWithExample,
   FieldOptionsWithoutExample,

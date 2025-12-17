@@ -1,2 +1,2 @@
-export type { RealtimeConfig } from "./realtime";
+export type { RealtimeConfig, RealtimeEvent } from "./realtime";
 export { Realtime } from "./realtime";

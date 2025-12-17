@@ -2,6 +2,11 @@
   "name": "kadoa-sdks",
   "private": true,
   "scripts": {
+    "sync-docs": "bun kadoa-codegen sync-docs",
+    "sync-docs:watch": "bun kadoa-codegen sync-docs --watch",
+    "sync-docs:check": "bun kadoa-codegen sync-docs --check",
+    "sync-docs:unused": "bun kadoa-codegen sync-docs --unused",
+    "sync-docs:untagged": "bun kadoa-codegen sync-docs --untagged",
     "format-and-lint": "biome check .",
     "format-and-lint:fix": "biome check . --write",
     "build": "turbo run build",

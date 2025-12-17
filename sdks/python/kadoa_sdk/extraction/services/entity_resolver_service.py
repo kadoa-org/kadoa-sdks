@@ -79,12 +79,23 @@ class EntityResolverService:
             )
         elif isinstance(entity_config, dict):
             if "schemaId" in entity_config:
-                # Schema ID resolution - not yet implemented in Python SDK
-                # TODO: Implement when schemas service is available
-                raise KadoaSdkError(
-                    "Schema ID resolution is not yet implemented in Python SDK",
-                    code="NOT_IMPLEMENTED",
-                    details={"schemaId": entity_config["schemaId"]},
+                # Fetch schema from API to get entity and fields
+                schema = self.client.schema.get_schema(entity_config["schemaId"])
+                # Convert schema fields to list of dicts
+                fields_list = []
+                schema_fields = getattr(schema, "var_schema", None) or getattr(schema, "schema", None) or []
+                for field in schema_fields:
+                    # Handle union types (SchemaResponseSchemaInner) - extract actual_instance
+                    actual_field = getattr(field, "actual_instance", None) or field
+                    if hasattr(actual_field, "model_dump"):
+                        fields_list.append(actual_field.model_dump(by_alias=True, exclude_none=True))
+                    elif isinstance(actual_field, dict):
+                        fields_list.append(actual_field)
+                    else:
+                        fields_list.append(dict(actual_field) if hasattr(actual_field, "__dict__") else actual_field)
+                return ResolvedEntity(
+                    entity=getattr(schema, "entity", None),
+                    fields=fields_list,
                 )
             elif "fields" in entity_config:
                 # Convert Pydantic field instances to dictionaries

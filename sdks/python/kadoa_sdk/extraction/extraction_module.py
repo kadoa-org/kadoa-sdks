@@ -74,7 +74,7 @@ class ExtractionModule:
                 ExtractionOptions(
                     urls=["https://example.com/products"],
                     name="Product Extraction",
-                    max_records=100
+                    limit=100
                 )
             )
             print(f"Extracted {len(result.data)} products")
@@ -85,7 +85,7 @@ class ExtractionModule:
         config = ExtractionOptions(
             urls=options.urls,
             location=options.location or DEFAULTS["location"],
-            max_records=options.max_records or DEFAULTS["max_records"],
+            limit=options.limit or DEFAULTS["limit"],
             max_wait_time=options.max_wait_time or DEFAULTS["max_wait_time"],
             name=options.name,
             navigation_mode=options.navigation_mode or DEFAULTS["navigation_mode"],
@@ -119,7 +119,7 @@ class ExtractionModule:
                 data_result = self.data_fetcher.fetch_data(
                     FetchDataOptions(
                         workflow_id=workflow_id,
-                        limit=config.max_records or DEFAULTS["max_records"],
+                        limit=config.limit or DEFAULTS["limit"],
                     )
                 )
                 data = data_result.data
@@ -183,7 +183,7 @@ class ExtractionModule:
         config = ExtractionOptions(
             urls=options.urls,
             location=options.location or DEFAULTS["location"],
-            max_records=options.max_records or DEFAULTS["max_records"],
+            limit=options.limit or DEFAULTS["limit"],
             max_wait_time=options.max_wait_time or DEFAULTS["max_wait_time"],
             name=options.name,
             navigation_mode=options.navigation_mode or DEFAULTS["navigation_mode"],
@@ -205,10 +205,13 @@ class ExtractionModule:
             from ...core.http import get_workflows_api
 
             api = get_workflows_api(self.client)
+            run_request = {}
+            if config.limit is not None:
+                run_request["limit"] = config.limit
             try:
                 api.v4_workflows_workflow_id_run_put(
                     workflow_id=workflow_id,
-                    v4_workflows_workflow_id_run_put_request={},
+                    v4_workflows_workflow_id_run_put_request=run_request,
                 )
             except Exception:
                 # If run fails, workflow is still created

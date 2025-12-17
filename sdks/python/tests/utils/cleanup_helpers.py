@@ -1,0 +1,66 @@
+"""Cleanup utilities for E2E tests."""
+
+from typing import TYPE_CHECKING
+
+if TYPE_CHECKING:
+    from kadoa_sdk import KadoaClient
+
+
+def delete_workflow_by_name(name: str, client: "KadoaClient") -> None:
+    """Delete a workflow by name if it exists."""
+    workflow = client.workflow.get_by_name(name)
+    if workflow:
+        workflow_id = (
+            getattr(workflow, "id", None)
+            or getattr(workflow, "_id", None)
+            or (workflow.get("id") if isinstance(workflow, dict) else None)
+            or (workflow.get("_id") if isinstance(workflow, dict) else None)
+        )
+        if workflow_id:
+            client.workflow.delete(workflow_id)
+
+
+def delete_schema_by_name(name: str, client: "KadoaClient") -> None:
+    """Delete a schema by name if it exists."""
+    schemas = client.schema.list_schemas()
+    existing = next(
+        (
+            s
+            for s in schemas
+            if (getattr(s, "name", None) or (s.get("name") if isinstance(s, dict) else None))
+            == name
+        ),
+        None,
+    )
+    if existing:
+        schema_id = (
+            getattr(existing, "id", None)
+            or getattr(existing, "_id", None)
+            or (existing.get("id") if isinstance(existing, dict) else None)
+            or (existing.get("_id") if isinstance(existing, dict) else None)
+        )
+        if schema_id:
+            client.schema.delete_schema(schema_id)
+
+
+def delete_channel_by_name(name: str, client: "KadoaClient") -> None:
+    """Delete a notification channel by name if it exists."""
+    channels = client.notification.channels.list_channels({})
+    existing = next(
+        (
+            c
+            for c in channels
+            if (getattr(c, "name", None) or (c.get("name") if isinstance(c, dict) else None))
+            == name
+        ),
+        None,
+    )
+    if existing:
+        channel_id = (
+            getattr(existing, "id", None)
+            or getattr(existing, "_id", None)
+            or (existing.get("id") if isinstance(existing, dict) else None)
+            or (existing.get("_id") if isinstance(existing, dict) else None)
+        )
+        if channel_id:
+            client.notification.channels.delete_channel(channel_id)
