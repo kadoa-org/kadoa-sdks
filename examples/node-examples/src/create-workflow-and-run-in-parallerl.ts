@@ -5,11 +5,9 @@ async function main() {
   const apiKey = process.env.KADOA_API_KEY;
   assert(apiKey, "KADOA_API_KEY is not set");
 
-  const client = new KadoaClient({
-    apiKey,
-    enableRealtime: true,
-  });
-  client.realtime?.onEvent((event) => {
+  const client = new KadoaClient({ apiKey });
+  const realtime = await client.connectRealtime();
+  realtime.onEvent((event) => {
     console.log("event: ", event);
   });
 

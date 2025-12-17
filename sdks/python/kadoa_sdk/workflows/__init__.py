@@ -7,12 +7,20 @@ from ..extraction.extraction_acl import (
     UpdateWorkflowResponse,
     WorkflowListItemResponse,
 )
-from .workflows_core_service import TERMINAL_JOB_STATES, TERMINAL_RUN_STATES, WorkflowsCoreService
+from .workflows_core_service import (
+    TERMINAL_JOB_STATES,
+    TERMINAL_RUN_STATES,
+    CreateWorkflowInput,
+    CreateWorkflowResult,
+    WorkflowsCoreService,
+)
 
 __all__ = [
     "WorkflowsCoreService",
     "TERMINAL_JOB_STATES",
     "TERMINAL_RUN_STATES",
+    "CreateWorkflowInput",
+    "CreateWorkflowResult",
     "ListWorkflowsRequest",
     "UpdateWorkflowRequest",
     "UpdateWorkflowResponse",

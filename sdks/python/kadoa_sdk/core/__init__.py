@@ -16,7 +16,7 @@ from .logger import (
     workflow,
     wss,
 )
-from .realtime import Realtime, RealtimeConfig
+from .realtime import Realtime, RealtimeConfig, RealtimeEvent
 from .settings import KadoaSettings, get_settings
 from .utils import PollingOptions, poll_until
 
@@ -37,6 +37,7 @@ __all__ = [
     "validation",
     "Realtime",
     "RealtimeConfig",
+    "RealtimeEvent",
     "PollingOptions",
     "poll_until",
     "KadoaSettings",

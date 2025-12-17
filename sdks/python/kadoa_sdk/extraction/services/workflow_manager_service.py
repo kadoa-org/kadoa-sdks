@@ -118,7 +118,7 @@ class WorkflowManagerService:
             fields=schema_fields,
             location=config.location,
             bypass_preview=True,
-            limit=(config.max_records or DEFAULTS["max_records"]),
+            limit=(config.limit or DEFAULTS["limit"]),
             tags=["sdk"],
             additional_data=config.additional_data,
         )

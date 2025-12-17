@@ -18,6 +18,7 @@ import {
   type V5NotificationsSettingsGet200ResponseDataSettingsInner,
   V5NotificationsSettingsGetEventTypeEnum,
   type V5NotificationsSettingsPostRequest,
+  type V5NotificationsSettingsSettingsIdPutRequest,
   type WebhookChannelConfig,
   type WebhookChannelConfigAuth,
   type WebhookChannelConfigHttpMethodEnum,
@@ -153,6 +154,11 @@ export interface CreateSettingsRequest
   extends Omit<V5NotificationsSettingsPostRequest, "eventType"> {
   eventType: NotificationSettingsEventType;
 }
+
+/**
+ * Request to update notification settings.
+ */
+export type UpdateSettingsRequest = V5NotificationsSettingsSettingsIdPutRequest;
 
 /**
  * Notification settings response.

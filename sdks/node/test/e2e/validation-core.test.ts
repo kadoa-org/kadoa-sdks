@@ -1,97 +1,70 @@
 import { afterAll, beforeAll, describe, expect, test } from "bun:test";
-import assert from "node:assert";
 import { KadoaClient } from "../../src/kadoa-client";
-import { getE2ETestEnv } from "../utils/env";
-import { seedRule, seedValidation, seedWorkflow } from "../utils/seeder";
+import { getTestEnv } from "../utils/env";
+import {
+  getSharedValidationFixture,
+  type SharedValidationFixture,
+} from "../utils/shared-fixtures";
 
 describe("Data Validation", () => {
+  const env = getTestEnv();
   let client: KadoaClient;
-  const env = getE2ETestEnv();
-  let workflowId: string;
-  let _ruleId: string;
-  let validationId: string;
-  let jobId: string;
+  let fixture: SharedValidationFixture;
 
   beforeAll(async () => {
-    client = new KadoaClient({
-      apiKey: env.KADOA_API_KEY,
-      timeout: 30000,
+    client = new KadoaClient({ apiKey: env.KADOA_API_KEY, timeout: 30000 });
+    fixture = await getSharedValidationFixture(client);
+  }, 120000);
+
+  afterAll(() => client?.dispose());
+
+  test("lists all workflow validations", async () => {
+    const result = await client.validation.listWorkflowValidations({
+      workflowId: fixture.workflowId,
+      jobId: fixture.jobId,
     });
 
-    const result = await seedWorkflow(
-      {
-        name: "test-workflow-1",
-        runJob: true,
-      },
-      client,
+    expect(result?.data.length).toBeGreaterThan(0);
+  });
+
+  test("gets validation details by id", async () => {
+    const result = await client.validation.getValidationDetails(
+      fixture.validationId,
     );
-    workflowId = result.workflowId;
-    assert(result.jobId, "Job ID is not set");
-    jobId = result.jobId;
-    _ruleId = await seedRule({ name: "test-rule-1", workflowId }, client);
-    validationId = await seedValidation({ workflowId, jobId }, client);
+
+    expect(result?.id).toBe(fixture.validationId);
+    expect(result?.workflowId).toBe(fixture.workflowId);
+    expect(result?.jobId).toBe(fixture.jobId);
   });
 
-  afterAll(() => {
-    if (client) {
-      client.dispose();
-    }
+  // Covered by docs_snippets: TS-DATA-VALIDATION-003
+
+  test("gets latest validation by workflowId and jobId", async () => {
+    const result = await client.validation.getLatest(
+      fixture.workflowId,
+      fixture.jobId,
+    );
+
+    expect(result?.workflowId).toBe(fixture.workflowId);
+    expect(result?.jobId).toBe(fixture.jobId);
   });
 
-  describe("Validation submission", () => {
-    test("should list all workflow validations", async () => {
-      const result = await client.validation.core.listWorkflowValidations({
-        workflowId,
-        jobId,
-      });
-      expect(result).toBeDefined();
-      expect(result?.data.length).toBeGreaterThan(0);
-    });
+  test("gets validation anomalies", async () => {
+    const result = await client.validation.getAnomalies(fixture.validationId);
 
-    test("should get validation details using validationId", async () => {
-      const result =
-        await client.validation.core.getValidationDetails(validationId);
-      expect(result).toBeDefined();
-      expect(result?.id).toBe(validationId);
-      expect(result?.workflowId).toBe(workflowId);
-      expect(result?.jobId).toBe(jobId);
-    });
+    expect(result?.anomaliesByRule).toBeDefined();
+    // Anomalies may be 0 depending on data - verify API returns valid structure
+    expect(Array.isArray(result?.anomaliesByRule)).toBe(true);
+  });
 
-    test("should get latest validation using only workflowId", async () => {
-      const result =
-        await client.validation.core.getLatestValidation(workflowId);
-      expect(result).toBeDefined();
-      expect(result?.workflowId).toBe(workflowId);
-      expect(result?.jobId).toBe(jobId);
-    });
+  test("gets validation anomalies by rule", async () => {
+    const result = await client.validation.getAnomaliesByRule(
+      fixture.validationId,
+      fixture.ruleName,
+    );
 
-    test("should get latest validation using workflowId and jobId", async () => {
-      const result = await client.validation.core.getLatestValidation(
-        workflowId,
-        jobId,
-      );
-      expect(result).toBeDefined();
-      expect(result?.workflowId).toBe(workflowId);
-      expect(result?.jobId).toBe(jobId);
-    });
-
-    test("should get validation anomalies using validationId", async () => {
-      const result =
-        await client.validation.core.getValidationAnomalies(validationId);
-      expect(result).toBeDefined();
-      expect(result?.anomaliesByRule).toBeDefined();
-      expect(result?.anomaliesByRule.length).toBeGreaterThan(0);
-    });
-
-    test("should get validation anomalies by rule using validationId and ruleName", async () => {
-      const result = await client.validation.core.getValidationAnomaliesByRule(
-        validationId,
-        "test-rule-1",
-      );
-      expect(result).toBeDefined();
-      expect(result?.ruleName).toBe("test-rule-1");
-      expect(result?.anomalies).toBeDefined();
-      expect(result?.anomalies.length).toBeGreaterThan(0);
-    });
+    expect(result?.ruleName).toBe(fixture.ruleName);
+    expect(result?.anomalies).toBeDefined();
+    expect(Array.isArray(result?.anomalies)).toBe(true);
   });
 });

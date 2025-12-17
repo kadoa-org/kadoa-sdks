@@ -6,6 +6,7 @@ import {
   type NotificationSettingsEventType,
   NotificationSettingsEventTypeEnum,
   type NotificationsApiInterface,
+  type UpdateSettingsRequest,
 } from "./notifications.acl";
 
 export class NotificationSettingsService {
@@ -45,6 +46,23 @@ export class NotificationSettingsService {
 
   async listAllEvents(): Promise<NotificationSettingsEventType[]> {
     return Object.values(NotificationSettingsEventTypeEnum);
+  }
+
+  async updateSettings(
+    settingsId: string,
+    data: UpdateSettingsRequest,
+  ): Promise<NotificationSettings> {
+    const response = await this.api.v5NotificationsSettingsSettingsIdPut({
+      settingsId,
+      v5NotificationsSettingsSettingsIdPutRequest: data,
+    });
+    const settings = response.data.data?.settings;
+    if (!settings) {
+      throw KadoaHttpException.wrap(response, {
+        message: "Failed to update notification settings",
+      });
+    }
+    return settings as NotificationSettings;
   }
 
   async deleteSettings(settingsId: string): Promise<void> {

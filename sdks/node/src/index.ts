@@ -1,5 +1,5 @@
 /**
- * @kadoa/sdk - Kadoa SDK for Node.js/TypeScript
+ * @kadoa/node-sdk - Kadoa SDK for Node.js/TypeScript
  *
  * Public API surface
  */
@@ -20,7 +20,10 @@ export * from "./domains/workflows";
 export {
   KadoaClient,
   type KadoaClientConfig,
+  type KadoaClientStatus,
   type NotificationDomain,
+  type TestNotificationRequest,
+  type TestNotificationResult,
   type ValidationDomain,
 } from "./kadoa-client";
 // ============================================================================

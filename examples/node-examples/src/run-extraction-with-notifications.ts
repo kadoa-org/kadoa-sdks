@@ -10,10 +10,9 @@ async function main() {
 
   const client = new KadoaClient({
     apiKey: process.env.KADOA_API_KEY,
-    enableRealtime: true,
   });
-
-  client.realtime?.onEvent((event) => {
+  const realtime = await client.connectRealtime();
+  realtime.onEvent((event) => {
     console.log("event: ", event);
   });
 

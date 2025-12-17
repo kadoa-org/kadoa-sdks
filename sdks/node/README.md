@@ -144,11 +144,8 @@ Monitor websites continuously and receive live updates when data changes.
 **Setup:**
 
 ```typescript
-// Enable real-time with API key
-const client = new KadoaClient({
-  apiKey: 'your-api-key',
-  enableRealtime: true
-});
+const client = new KadoaClient({ apiKey: 'your-api-key' });
+const realtime = await client.connectRealtime();
 
 // Verify connection
 if (client.isRealtimeConnected()) {
@@ -176,7 +173,7 @@ const monitor = await client
 await monitor.waitForReady();
 
 // Handle updates
-client.realtime?.onEvent((event) => {
+realtime.onEvent((event) => {
   if (event.workflowId === monitor.workflowId) {
     console.log('Update:', event.data);
   }
@@ -185,8 +182,8 @@ client.realtime?.onEvent((event) => {
 
 **Requirements:**
 - API key (personal or team)
-- `enableRealtime: true` in client configuration
-- Notifications enabled for at least one channel ( Webhook, Email, or Slack)
+- Call `await client.connectRealtime()` before subscribing to events
+- Notifications enabled for at least one channel (Webhook, Email, or Slack)
 
 **When to use:** Price tracking, inventory monitoring, live content updates.
 
@@ -321,13 +318,11 @@ const client = new KadoaClient({
 Enable realtime notifications using an API key:
 
 ```typescript
-const client = new KadoaClient({
-  apiKey: 'your-api-key',
-  enableRealtime: true
-});
+const client = new KadoaClient({ apiKey: 'your-api-key' });
+const realtime = await client.connectRealtime();
 
 // Listen to events
-client.realtime?.onEvent((event) => {
+realtime.onEvent((event) => {
   console.log('Event:', event);
 });
 

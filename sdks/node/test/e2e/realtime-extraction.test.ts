@@ -4,7 +4,7 @@ import type {
   CreatedExtraction,
   WaitForReadyOptions,
 } from "../../src/domains/extraction/services/extraction-builder.service";
-import { getE2ETestEnv } from "../utils/env";
+import { getTestEnv } from "../utils/env";
 
 type IntervalValidationError = {
   validationErrors?: {
@@ -35,18 +35,18 @@ const toWorkflowId = (event: unknown): string | undefined => {
   return fromNested("data") ?? fromNested("payload");
 };
 
-const env = getE2ETestEnv();
+const env = getTestEnv();
 
 describe("Realtime extraction lifecycle", () => {
   let client: KadoaClient | undefined;
   let unsubscribe: (() => void) | undefined;
 
-  beforeAll(() => {
+  beforeAll(async () => {
     client = new KadoaClient({
       apiKey: env.KADOA_API_KEY,
       timeout: 30000,
-      enableRealtime: true,
     });
+    await client.connectRealtime();
   });
 
   afterAll(async () => {
@@ -79,123 +79,138 @@ describe("Realtime extraction lifecycle", () => {
 
       let created: CreatedExtraction | undefined;
       let schemaType: "financial" | "changeDetection" | undefined;
+      let workflowId: string | undefined;
 
-      for (const url of urls) {
-        const extraction = client
-          .extract({
-            urls: [url],
-            name: `Realtime SDK Test ${Date.now()}`,
-            extraction: (schema) => {
-              if (url.includes("financial")) {
-                schemaType = "financial";
+      try {
+        for (const url of urls) {
+          const extraction = client
+            .extract({
+              urls: [url],
+              name: `Realtime SDK Test ${Date.now()}`,
+              extraction: (schema) => {
+                if (url.includes("financial")) {
+                  schemaType = "financial";
+                  return schema
+                    .entity("FinancialReport")
+                    .field(
+                      "title",
+                      "The title of the financial report.",
+                      "STRING",
+                      {
+                        example: "Q2 Report",
+                        isKey: true,
+                      },
+                    )
+                    .field(
+                      "postedDate",
+                      "The date the financial report was posted.",
+                      "DATE",
+                      { example: "2024-05-15", isKey: true },
+                    )
+                    .field(
+                      "link",
+                      "The link to view the financial report.",
+                      "LINK",
+                      { example: "https://dummy.com/q2" },
+                    );
+                }
+
+                schemaType = "changeDetection";
                 return schema
-                  .entity("FinancialReport")
+                  .entity("MarketChange")
+                  .field("title", "Title of the item", "STRING", {
+                    example: "Market Analysis Report",
+                    isKey: true,
+                  })
+                  .field("date", "Date associated with the item", "STRING", {
+                    example: "Date: 2024-01-15",
+                  })
+                  .field("link", "URL linking to the item details", "LINK", {
+                    example: "https://example.com/market-analysis-jan-2024",
+                  })
                   .field(
-                    "title",
-                    "The title of the financial report.",
+                    "text",
+                    "Brief description or content of the item",
                     "STRING",
                     {
-                      example: "Q2 Report",
-                      isKey: true,
+                      example:
+                        "Comprehensive analysis of global commodity markets",
                     },
-                  )
-                  .field(
-                    "postedDate",
-                    "The date the financial report was posted.",
-                    "DATE",
-                    { example: "2024-05-15", isKey: true },
-                  )
-                  .field(
-                    "link",
-                    "The link to view the financial report.",
-                    "LINK",
-                    { example: "https://dummy.com/q2" },
                   );
-              }
+              },
+            })
+            .setInterval({ interval: "REAL_TIME" });
 
-              schemaType = "changeDetection";
-              return schema
-                .entity("MarketChange")
-                .field("title", "Title of the item", "STRING", {
-                  example: "Market Analysis Report",
-                  isKey: true,
-                })
-                .field("date", "Date associated with the item", "STRING", {
-                  example: "Date: 2024-01-15",
-                })
-                .field("link", "URL linking to the item details", "LINK", {
-                  example: "https://example.com/market-analysis-jan-2024",
-                })
-                .field(
-                  "text",
-                  "Brief description or content of the item",
-                  "STRING",
-                  {
-                    example:
-                      "Comprehensive analysis of global commodity markets",
-                  },
-                );
-            },
-          })
-          .setInterval({ interval: "REAL_TIME" });
+          try {
+            created = await extraction.create();
+            workflowId = created.workflowId;
+            break;
+          } catch (error) {
+            if (
+              error instanceof KadoaHttpException &&
+              error.httpStatus === 400 &&
+              hasRealTimeIntervalError(error.responseBody)
+            ) {
+              console.warn(
+                "Skipping realtime extraction e2e test: interval REAL_TIME is not enabled for this team.",
+              );
+              return;
+            }
 
-        try {
-          created = await extraction.create();
-          break;
-        } catch (error) {
-          if (
-            error instanceof KadoaHttpException &&
-            error.httpStatus === 400 &&
-            hasRealTimeIntervalError(error.responseBody)
-          ) {
+            if (
+              error instanceof KadoaHttpException &&
+              (error.code === "NETWORK_ERROR" || error.code === "HTTP_ERROR")
+            ) {
+              console.warn(
+                "Skipping realtime extraction e2e test: network access to the public API is required.",
+              );
+              return;
+            }
+
+            // Try next URL if available
+            if (url === urls[0]) {
+              continue;
+            }
+
+            throw error;
+          }
+        }
+
+        if (!created) {
+          throw new Error(
+            "Failed to create realtime workflow for both scenarios",
+          );
+        }
+
+        console.log("Realtime schema used:", schemaType);
+
+        expect(created.workflowId).toBeTruthy();
+
+        unsubscribe = client.realtime?.onEvent((event) => {
+          const workflowId = created.workflowId;
+          const candidate = toWorkflowId(event);
+
+          if (candidate === workflowId) {
+            console.debug("Realtime event received for workflow %s", workflowId);
+          }
+        });
+
+        const workflow = await created.waitForReady(waitOptions);
+        expect(["PREVIEW", "ACTIVE"]).toContain(workflow.state);
+      } finally {
+        // Clean up workflow if it was created
+        if (workflowId && client) {
+          try {
+            await client.workflow.delete(workflowId);
+          } catch (error) {
+            // Log but don't fail test if cleanup fails
             console.warn(
-              "Skipping realtime extraction e2e test: interval REAL_TIME is not enabled for this team.",
+              `Failed to cleanup workflow ${workflowId}:`,
+              error,
             );
-            return;
           }
-
-          if (
-            error instanceof KadoaHttpException &&
-            (error.code === "NETWORK_ERROR" || error.code === "HTTP_ERROR")
-          ) {
-            console.warn(
-              "Skipping realtime extraction e2e test: network access to the public API is required.",
-            );
-            return;
-          }
-
-          // Try next URL if available
-          if (url === urls[0]) {
-            continue;
-          }
-
-          throw error;
         }
       }
-
-      if (!created) {
-        throw new Error(
-          "Failed to create realtime workflow for both scenarios",
-        );
-      }
-
-      console.log("Realtime schema used:", schemaType);
-
-      expect(created.workflowId).toBeTruthy();
-
-      unsubscribe = client.realtime?.onEvent((event) => {
-        const workflowId = created.workflowId;
-        const candidate = toWorkflowId(event);
-
-        if (candidate === workflowId) {
-          console.debug("Realtime event received for workflow %s", workflowId);
-        }
-      });
-
-      const workflow = await created.waitForReady(waitOptions);
-      expect(["PREVIEW", "ACTIVE"]).toContain(workflow.state);
-
-      // await client.workflow.delete(created.workflowId);
     },
     { timeout: 6 * 60 * 1000 },
   );

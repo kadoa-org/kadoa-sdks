@@ -1,17 +1,24 @@
-import { beforeAll, describe, expect, it } from "bun:test";
+import { afterAll, beforeAll, describe, expect, it } from "bun:test";
 import { KadoaClient } from "../../src/kadoa-client";
 import { KadoaHttpException } from "../../src/runtime/exceptions";
 import { getTestEnv } from "../utils/env";
 
 describe("User Module", () => {
-  let env: ReturnType<typeof getTestEnv>;
+  let client: KadoaClient;
+  let invalidClient: KadoaClient;
 
   beforeAll(() => {
-    env = getTestEnv();
+    const env = getTestEnv();
+    client = new KadoaClient({ apiKey: env.KADOA_API_KEY });
+    invalidClient = new KadoaClient({ apiKey: "invalid-api-key" });
+  });
+
+  afterAll(() => {
+    client?.dispose();
+    invalidClient?.dispose();
   });
 
   it("should get current user for valid api key", async () => {
-    const client = new KadoaClient({ apiKey: env.KADOA_API_KEY });
     const result = await client.user.getCurrentUser();
     expect(result).toBeDefined();
     expect(result.userId).toBeDefined();
@@ -20,7 +27,8 @@ describe("User Module", () => {
   });
 
   it("should throw error for invalid api key", async () => {
-    const client = new KadoaClient({ apiKey: "invalid-api-key" });
-    expect(client.user.getCurrentUser()).rejects.toThrow(KadoaHttpException);
+    expect(invalidClient.user.getCurrentUser()).rejects.toThrow(
+      KadoaHttpException,
+    );
   });
 });

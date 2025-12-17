@@ -212,9 +212,6 @@ def seed_validation(
 
     result = client.validation.schedule(workflow_id, job_id)
 
-    # Wait a bit for validation to process
-    time.sleep(1)
-
     validation_id = (
         result.validation_id
         if hasattr(result, "validation_id")
@@ -224,6 +221,16 @@ def seed_validation(
             else getattr(result, "validationId", None)
             or (result.get("validationId") if isinstance(result, dict) else None)
         )
+    )
+
+    # Wait for validation record to be created before polling
+    time.sleep(2)
+
+    # Wait for validation to complete (like Node.js SDK)
+    client.validation.wait_until_completed(
+        validation_id,
+        poll_interval_ms=2000,
+        timeout_ms=60000,
     )
 
     return validation_id
