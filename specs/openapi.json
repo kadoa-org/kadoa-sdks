@@ -2756,6 +2756,23 @@
                       "type": "string"
                     },
                     "description": "Regex patterns to exclude specific paths (only for crawler workflows)"
+                  },
+                  "navigationMode": {
+                    "type": "string",
+                    "enum": [
+                      "single-page",
+                      "paginated-page",
+                      "page-and-detail",
+                      "agentic-navigation",
+                      "all-pages"
+                    ],
+                    "description": "Navigation mode for scraping. Switching between modes may require additional fields:\n- To 'agentic-navigation': requires userPrompt (10-5000 characters)\n- From 'agentic-navigation' to other modes: requires schema and entity\n- To 'all-pages': requires all URLs to have the same hostname\n"
+                  },
+                  "userPrompt": {
+                    "type": "string",
+                    "minLength": 10,
+                    "maxLength": 5000,
+                    "description": "User prompt for agentic navigation mode (required when switching to agentic-navigation)"
                   }
                 }
               }
@@ -2836,7 +2853,7 @@
     "/v4/workflows/{workflowId}/resume": {
       "put": {
         "summary": "Resume a workflow",
-        "description": "Resumes a paused, preview, or error workflow. If the user's team/organization or any of the user's organizations has the COMPLIANCE_REVIEW rule enabled, the workflow will be sent for compliance review instead of being directly activated.",
+        "description": "Resumes/Activates a paused, preview, or error workflow.",
         "tags": [
           "Workflows"
         ],
@@ -2858,7 +2875,7 @@
         ],
         "responses": {
           "200": {
-            "description": "Workflow resumed successfully (may be sent for compliance review if rule is enabled)",
+            "description": "Workflow resumed successfully.",
             "content": {
               "application/json": {
                 "schema": {
@@ -14942,6 +14959,14 @@
           "isKey": {
             "type": "boolean",
             "description": "Whether the field is a key field"
+          },
+          "processing": {
+            "type": "string",
+            "enum": [
+              "UNKNOWN",
+              "PASSTHROUGH",
+              "SYNTHETIC"
+            ]
           }
         },
         "required": [
@@ -15843,8 +15868,8 @@
             "description": "Optional: Schema ID to use with agentic extraction"
           },
           "entity": {
-            "type": "string",
-            "description": "Optional: Entity name for agentic extraction"
+            "description": "Optional: Entity name for agentic extraction",
+            "type": "string"
           },
           "fields": {
             "type": "array",
@@ -16159,9 +16184,8 @@
             "description": "Regex patterns to exclude specific paths during crawling. Only used when navigationMode is 'all-pages'"
           },
           "entity": {
-            "type": "string",
-            "minLength": 1,
-            "description": "Entity name for extraction (e.g., 'Product', 'JobListing')"
+            "description": "Entity name for extraction. Required when schema contains structured data fields (SCHEMA type)",
+            "type": "string"
           },
           "fields": {
             "type": "array",
@@ -16188,7 +16212,6 @@
         },
         "required": [
           "urls",
-          "entity",
           "fields"
         ],
         "title": "WorkflowWithEntityAndFields",
