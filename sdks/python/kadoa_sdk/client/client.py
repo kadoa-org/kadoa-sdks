@@ -18,7 +18,7 @@ from ..schemas import SchemasService
 from ..user import UserService
 from ..workflows import WorkflowsCoreService
 from .models import KadoaClientConfig, KadoaClientStatus, RealtimeOptions
-from .wiring import create_notification_domain, create_validation_domain
+from .wiring import create_crawler_domain, create_notification_domain, create_validation_domain
 
 
 class KadoaClient:
@@ -110,6 +110,7 @@ class KadoaClient:
         self._extraction_builder = ExtractionBuilderService(self)
 
         # domains
+        self.crawler = create_crawler_domain(self)
         self.notification = create_notification_domain(self)
         self.validation = create_validation_domain(self)
 

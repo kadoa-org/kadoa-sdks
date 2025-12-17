@@ -11,7 +11,7 @@ export type {
   CreateConfigRequest,
   DeleteConfigRequest,
   DeleteConfigResult,
-  ExtractionOptions,
+  CrawlerExtractionOptions,
   GetAllDataOptions,
   GetBucketFileOptions,
   GetPageOptions,

@@ -2,7 +2,6 @@ import {
   PUBLIC_API_URI,
   REALTIME_API_URI,
   WSS_API_URI,
-  WSS_NEO_API_URI,
 } from "../../runtime/config";
 import { logger } from "../../runtime/logger";
 import { SDK_VERSION } from "../../version";
@@ -26,8 +25,6 @@ export interface RealtimeConfig {
   heartbeatInterval?: number;
   reconnectDelay?: number;
   missedHeartbeatsLimit?: number;
-  /** Subscribe source mode. Use 'stream' for CloudEvents mode. */
-  source?: "stream";
 }
 
 export class Realtime {
@@ -39,7 +36,6 @@ export class Realtime {
   private missedHeartbeatsLimit: number;
   private missedHeartbeatCheckTimer?: ReturnType<typeof setInterval>;
   private apiKey?: string;
-  private source?: "stream";
   private eventListeners: Set<(event: RealtimeEvent) => void> = new Set();
   private connectionListeners: Set<
     (connected: boolean, reason?: string) => void
@@ -51,7 +47,6 @@ export class Realtime {
     this.heartbeatInterval = config.heartbeatInterval || 10000;
     this.reconnectDelay = config.reconnectDelay || 5000;
     this.missedHeartbeatsLimit = config.missedHeartbeatsLimit || 30000;
-    this.source = config.source;
   }
 
   public async connect(): Promise<void> {
@@ -73,27 +68,27 @@ export class Realtime {
         team_id: string;
       };
 
-      const wssUri = this.source === "stream" ? WSS_NEO_API_URI : WSS_API_URI;
-      const tokenParam = this.source === "stream" ? "token" : "access_token";
-      this.socket = new WebSocket(`${wssUri}?${tokenParam}=${access_token}`);
+      await new Promise<void>((resolve, reject) => {
+        this.socket = new WebSocket(
+          `${WSS_API_URI}?access_token=${access_token}`,
+        );
 
         this.socket.onopen = () => {
           this.isConnecting = false;
           this.lastHeartbeat = Date.now();
 
-        if (this.socket?.readyState === WebSocket.OPEN) {
-          this.socket.send(
-            JSON.stringify({
-              action: "subscribe",
-              channel: team_id,
-              ...(this.source && { source: this.source }),
-            }),
-          );
-          debug("Connected to WebSocket");
-          this.notifyConnectionListeners(true);
-        }
-        this.startHeartbeatCheck();
-      resolve();
+          if (this.socket?.readyState === WebSocket.OPEN) {
+            this.socket.send(
+              JSON.stringify({
+                action: "subscribe",
+                channel: team_id,
+              }),
+            );
+            debug("Connected to WebSocket");
+            this.notifyConnectionListeners(true);
+          }
+          this.startHeartbeatCheck();
+          resolve();
         };
 
         this.socket.onmessage = (event) => {

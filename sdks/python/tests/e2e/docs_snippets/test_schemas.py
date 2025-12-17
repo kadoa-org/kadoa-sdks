@@ -13,7 +13,7 @@ from kadoa_sdk.schemas.schemas_acl import (
     SchemaField,
     UpdateSchemaRequest,
 )
-from .conftest import delete_schema_by_name, delete_workflow_by_name
+from tests.utils.cleanup_helpers import delete_schema_by_name, delete_workflow_by_name
 
 
 class TestSchemasSnippets:

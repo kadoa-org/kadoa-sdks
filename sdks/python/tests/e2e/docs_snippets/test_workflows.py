@@ -11,7 +11,7 @@ from kadoa_sdk.schemas.schemas_acl import (
     DataField,
     FieldExample,
 )
-from .conftest import delete_workflow_by_name, delete_schema_by_name
+from tests.utils.cleanup_helpers import delete_workflow_by_name, delete_schema_by_name
 
 
 class TestWorkflowsSnippets:

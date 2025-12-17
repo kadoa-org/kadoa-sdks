@@ -6,7 +6,7 @@ import asyncio
 import json
 import time
 from threading import Lock
-from typing import Any, Callable, Literal, NotRequired, Optional, TypedDict
+from typing import Any, Callable, NotRequired, Optional, TypedDict
 
 import aiohttp
 import websockets
@@ -36,8 +36,6 @@ class RealtimeConfig(BaseModel):
     heartbeat_interval: int = 10000  # milliseconds
     reconnect_delay: int = 5000  # milliseconds
     missed_heartbeats_limit: int = 30000  # milliseconds
-    source: Optional[Literal["stream"]] = None  # CloudEvents mode
-
 
 class Realtime:
     """WebSocket connection for real-time events"""
@@ -47,7 +45,6 @@ class Realtime:
         self._heartbeat_interval = config.heartbeat_interval
         self._reconnect_delay = config.reconnect_delay
         self._missed_heartbeats_limit = config.missed_heartbeats_limit
-        self._source = config.source
 
         self._ws: Optional[ClientConnection] = None
         self._last_heartbeat: float = time.time() * 1000  # milliseconds
@@ -236,14 +233,10 @@ class Realtime:
             access_token, team_id = await self._get_oauth_token()
 
             settings = get_settings()
-            wss_uri = settings.wss_neo_api_uri if self._source == "stream" else settings.wss_api_uri
-            token_param = "token" if self._source == "stream" else "access_token"
-            uri = f"{wss_uri}?{token_param}={access_token}"
+            uri = f"{settings.wss_api_uri}?access_token={access_token}"
             self._ws = await websockets.connect(uri)
 
             subscribe_msg = {"action": "subscribe", "channel": team_id}
-            if self._source:
-                subscribe_msg["source"] = self._source
             await self._ws.send(json.dumps(subscribe_msg))
 
             logger.debug("Connected to WebSocket")

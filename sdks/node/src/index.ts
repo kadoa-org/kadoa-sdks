@@ -7,6 +7,7 @@
 // ============================================================================
 // Domain Services & Types
 // ============================================================================
+export * from "./domains/crawler";
 export * from "./domains/extraction";
 export * from "./domains/notifications";
 export * from "./domains/realtime";

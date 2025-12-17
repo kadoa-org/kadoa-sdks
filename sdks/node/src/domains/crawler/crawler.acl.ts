@@ -71,7 +71,8 @@ export type DeleteConfigRequest = GeneratedDeleteConfigRequest;
 export type ArtifactOptions = CreateCrawlerConfigRequestArtifactOptions;
 export type BlueprintItem = CreateCrawlerConfigRequestBlueprintInner;
 export type CrawlMethod = CreateCrawlerConfigRequestCrawlMethod;
-export type ExtractionOptions = CreateCrawlerConfigRequestExtractionOptions;
+export type CrawlerExtractionOptions =
+  CreateCrawlerConfigRequestExtractionOptions;
 export type NavigationOptions = CreateCrawlerConfigRequestNavigationOptions;
 
 // ============================================================================
