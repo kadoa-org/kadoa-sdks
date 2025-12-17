@@ -10,12 +10,14 @@ import {
   DataValidationApi,
   type DeleteAllRulesRequest,
   type DeleteAllRulesResponseData,
+  type DeleteRuleRequest,
   type DisableRuleRequest,
   type GenerateRuleRequest,
   type GenerateRulesRequest,
   type ListRulesRequest,
   type ListRulesResponse,
   type Rule,
+  type RuleDeleteResponse,
   type UpdateRuleRequest,
 } from "./validation.acl";
 
@@ -94,6 +96,24 @@ export class ValidationRulesService {
       });
     }
     return response.data.data;
+  }
+
+  async deleteRule(data: DeleteRuleRequest): Promise<RuleDeleteResponse> {
+    const response = await this.validationApi.v4DataValidationRulesRuleIdDelete({
+      ruleId: data.ruleId,
+      ...(data.workflowId != null && {
+        deleteRuleWithReason: {
+          workflowId: data.workflowId,
+          ...(data.reason != null && { reason: data.reason }),
+        },
+      }),
+    });
+    if (response.status !== 200 || response.data.error) {
+      throw KadoaHttpException.wrap(response.data, {
+        message: response.data.message || "Failed to delete validation rule",
+      });
+    }
+    return response.data;
   }
 
   async disableRule(data: DisableRuleRequest): Promise<Rule> {

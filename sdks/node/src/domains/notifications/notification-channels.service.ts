@@ -129,11 +129,14 @@ export class NotificationChannelsService {
     config?: Pick<CreateChannelRequest, "name" | "config">,
   ): Promise<NotificationChannel> {
     const payload = await this.buildPayload(
-      merge(config || {}, {
-        name: NotificationChannelsService.DEFAULT_CHANNEL_NAME,
-        channelType: type,
-        config: {},
-      }),
+      merge(
+        {
+          name: NotificationChannelsService.DEFAULT_CHANNEL_NAME,
+          channelType: type,
+          config: {},
+        },
+        config || {},
+      ),
     );
 
     const response = await this.api.v5NotificationsChannelsPost({

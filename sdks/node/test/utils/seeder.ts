@@ -14,24 +14,24 @@ export const seedWorkflow = async (
 ): Promise<{ workflowId: string; jobId?: string }> => {
   console.log(`[Seeder] Seeding workflow: ${name}`);
   const existingWorkflow = await client.workflow.getByName(name);
-  if (existingWorkflow?._id) {
+  if (existingWorkflow?.id) {
     console.log(
-      `[Seeder] Workflow ${name} already exists: ${existingWorkflow._id}`,
+      `[Seeder] Workflow ${name} already exists: ${existingWorkflow.id}`,
     );
 
     if (runJob && !existingWorkflow.jobId) {
-      const job = await client.extraction.runJob(existingWorkflow._id, {
+      const job = await client.extraction.runJob(existingWorkflow.id, {
         limit: 10,
       });
       console.log(`[Seeder] Job ${name} seeded: ${job.jobId}`);
       return {
-        workflowId: existingWorkflow._id,
+        workflowId: existingWorkflow.id,
         jobId: job.jobId,
       };
     }
 
     return {
-      workflowId: existingWorkflow._id,
+      workflowId: existingWorkflow.id,
       jobId: existingWorkflow.jobId,
     };
   }
@@ -57,11 +57,11 @@ export const seedWorkflow = async (
     };
   } else {
     const createdWorkflow = await client.workflow.getByName(name);
-    if (!createdWorkflow?._id) {
+    if (!createdWorkflow?.id) {
       throw new Error(`[Seeder] This should never happen`);
     }
     return {
-      workflowId: createdWorkflow._id,
+      workflowId: createdWorkflow.id,
     };
   }
 };
@@ -98,10 +98,12 @@ export const seedValidation = async (
 ): Promise<string> => {
   console.log(`[Seeder] Seeding validation: ${workflowId}`);
 
-  const existingValidation = await client.validation.core.getLatestValidation(
+  const existingValidation = await client.validation.getLatest(
     workflowId,
     jobId,
   );
+
+  // Reuse if exists, has no error, and has anomalies
   if (
     existingValidation?.id &&
     !existingValidation.error &&
@@ -113,11 +115,22 @@ export const seedValidation = async (
     return existingValidation.id;
   }
 
-  const result = await client.validation.core.scheduleValidation(
-    workflowId,
-    jobId,
-  );
-  //i am lazy to implement validation status polling so we will wait for 1 second
-  await Promise.resolve(new Promise((resolve) => setTimeout(resolve, 1000)));
+  // Log warning if existing validation has issues
+  if (existingValidation?.error) {
+    console.warn(
+      `[Seeder] Existing validation has error: ${existingValidation.error}. Scheduling new validation...`,
+    );
+  } else if (existingValidation?.anomaliesCountTotal === 0) {
+    console.warn(
+      `[Seeder] Existing validation has no anomalies. Scheduling new validation...`,
+    );
+  }
+
+  const result = await client.validation.schedule(workflowId, jobId);
+  // Wait for validation record to be created before polling
+  await new Promise((resolve) => setTimeout(resolve, 1000));
+  await client.validation.waitUntilCompleted(result.validationId, {
+    pollIntervalMs: 2000,
+  });
   return result.validationId;
 };

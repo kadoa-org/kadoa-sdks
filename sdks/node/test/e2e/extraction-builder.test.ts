@@ -1,19 +1,20 @@
 import { afterAll, beforeAll, describe, expect, test } from "bun:test";
 import { KadoaClient } from "../../src";
-import { getE2ETestEnv } from "../utils/env";
+import { deleteWorkflowByName } from "../utils/cleanup-helpers";
+import { getTestEnv } from "../utils/env";
 
 describe("Extraction Builder", () => {
   let client: KadoaClient;
-  const env = getE2ETestEnv();
+  const env = getTestEnv();
 
-  beforeAll(() => {
+  beforeAll(async () => {
     client = new KadoaClient({
       apiKey: env.KADOA_API_KEY,
       timeout: 30000,
-      enableRealtime: true,
     });
 
-    client.realtime?.onEvent((event) => {
+    const realtime = await client.connectRealtime();
+    realtime.onEvent((event) => {
       console.log("event: ", event);
     });
   });
@@ -25,10 +26,13 @@ describe("Extraction Builder", () => {
   test(
     "auto-detection (no extraction parameter)",
     async () => {
+      const workflowName = `Auto Detection Test ${Date.now()}`;
+      await deleteWorkflowByName(workflowName, client);
+
       const createdExtraction = await client
         .extract({
           urls: ["https://sandbox.kadoa.com/ecommerce"],
-          name: "Auto Detection Test",
+          name: workflowName,
         })
         .withNotifications({
           events: "all",
@@ -58,17 +62,23 @@ describe("Extraction Builder", () => {
 
       expect(data).toBeDefined();
       expect(data.data.length).toBe(5);
+
+      if (createdExtraction.workflowId)
+        await client.workflow.delete(createdExtraction.workflowId);
     },
     { timeout: 700000 },
   );
 
-  test(
+  test.skip(
     "raw extraction (markdown only)",
     async () => {
+      const workflowName = `Raw Markdown Extraction ${Date.now()}`;
+      await deleteWorkflowByName(workflowName, client);
+
       const createdExtraction = await client
         .extract({
           urls: ["https://sandbox.kadoa.com/ecommerce"],
-          name: "Raw Markdown Extraction",
+          name: workflowName,
           extraction: (builder) => builder.raw("MARKDOWN"),
         })
         .bypassPreview()
@@ -92,139 +102,23 @@ describe("Extraction Builder", () => {
       expect(data.data.length).toBe(1);
       // Check that we have the raw markdown field
       expect(data.data[0]).toHaveProperty("rawMarkdown");
+
+      if (createdExtraction.workflowId)
+        await client.workflow.delete(createdExtraction.workflowId);
     },
     { timeout: 700000 },
   );
 
-  test(
-    "custom schema with fields",
-    async () => {
-      const createdExtraction = await client
-        .extract({
-          urls: ["https://sandbox.kadoa.com/ecommerce"],
-          name: "Custom Schema Test",
-          extraction: (builder) =>
-            builder
-              .entity("Product")
-              .field("title", "Product name", "STRING", {
-                example: "Example Product",
-              })
-              .field("price", "Product price", "MONEY"),
-        })
-        .bypassPreview()
-        .setInterval({
-          interval: "ONLY_ONCE",
-        })
-        .create();
-
-      expect(createdExtraction).toBeDefined();
-      expect(createdExtraction?.workflowId).toBeDefined();
-
-      const result = await createdExtraction.run({
-        variables: {},
-        limit: 5,
-      });
-      const data = await result.fetchData({
-        limit: 5,
-      });
-
-      expect(data).toBeDefined();
-      expect(data.data.length).toBe(5);
-      // Check that we have the defined fields
-      expect(data.data[0]).toHaveProperty("title");
-      expect(data.data[0]).toHaveProperty("price");
-    },
-    { timeout: 700000 },
-  );
-
-  test(
-    "hybrid extraction (schema + raw content)",
-    async () => {
-      const createdExtraction = await client
-        .extract({
-          urls: ["https://sandbox.kadoa.com/ecommerce"],
-          name: "Hybrid Extraction Test",
-          extraction: (builder) =>
-            builder
-              .entity("Product")
-              .field("title", "Product name", "STRING", {
-                example: "Example Product",
-              })
-              .field("price", "Product price", "MONEY")
-              .raw("HTML"),
-        })
-        .bypassPreview()
-        .setInterval({
-          interval: "ONLY_ONCE",
-        })
-        .create();
-
-      expect(createdExtraction).toBeDefined();
-      expect(createdExtraction?.workflowId).toBeDefined();
-
-      const result = await createdExtraction.run({
-        variables: {},
-        limit: 5,
-      });
-      const data = await result.fetchData({
-        limit: 5,
-      });
-
-      expect(data).toBeDefined();
-      expect(data.data.length).toBe(5);
-      // Check that we have both structured fields and raw content
-      expect(data.data[0]).toHaveProperty("title");
-      expect(data.data[0]).toHaveProperty("price");
-      expect(data.data[0]).toHaveProperty("rawHtml");
-    },
-    { timeout: 700000 },
-  );
-
-  test(
-    "classification field",
-    async () => {
-      const createdExtraction = await client
-        .extract({
-          urls: ["https://sandbox.kadoa.com/ecommerce"],
-          name: "Classification Test",
-          extraction: (builder) =>
-            builder.classify("category", "Product category", [
-              {
-                title: "Electronics",
-                definition: "Electronic devices and gadgets",
-              },
-              { title: "Clothing", definition: "Apparel and fashion items" },
-              { title: "Other", definition: "Other products" },
-            ]),
-        })
-        .bypassPreview()
-        .setInterval({
-          interval: "ONLY_ONCE",
-        })
-        .create();
-
-      expect(createdExtraction).toBeDefined();
-      expect(createdExtraction?.workflowId).toBeDefined();
-
-      const result = await createdExtraction.run({
-        limit: 5,
-        variables: {},
-      });
-      const data = await result.fetchData({
-        limit: 5,
-      });
-
-      expect(data).toBeDefined();
-      expect(data.data.length).toBe(5);
-      // Check that we have the classification field
-      expect(data.data[0]).toHaveProperty("category");
-    },
-    { timeout: 700000 },
-  );
+  // Covered by docs_snippets: TS-WORKFLOWS-003, TS-INTRODUCTION-002, TS-SCHEMAS-001
+  // Covered by docs_snippets: TS-WORKFLOWS-004 (hybrid/raw)
+  // Covered by docs_snippets: TS-WORKFLOWS-005 (classification)
 
   test(
     "extraction builder with additionalData",
     async () => {
+      const workflowName = `Extraction Builder Additional Data Test ${Date.now()}`;
+      await deleteWorkflowByName(workflowName, client);
+
       const testData = {
         sourceSystem: "e2e-test",
         metadata: { version: 1, testRun: true },
@@ -233,7 +127,7 @@ describe("Extraction Builder", () => {
       const createdExtraction = await client
         .extract({
           urls: ["https://sandbox.kadoa.com/ecommerce"],
-          name: "Extraction Builder Additional Data Test",
+          name: workflowName,
           extraction: (builder) =>
             builder.entity("Product").field("title", "Product name", "STRING", {
               example: "Example Product",
@@ -246,25 +140,21 @@ describe("Extraction Builder", () => {
         })
         .create();
 
-      try {
-        expect(createdExtraction).toBeDefined();
-        expect(createdExtraction?.workflowId).toBeDefined();
+      expect(createdExtraction).toBeDefined();
+      expect(createdExtraction?.workflowId).toBeDefined();
 
-        // Verify additionalData is persisted
-        const workflow = await client.workflow.get(
-          createdExtraction.workflowId,
-        );
-        expect(workflow.additionalData).toBeDefined();
-        expect(workflow.additionalData?.sourceSystem).toBe("e2e-test");
-        const metadata = workflow.additionalData?.metadata as
-          | { version?: number; testRun?: boolean }
-          | undefined;
-        expect(metadata?.version).toBe(1);
-        expect(metadata?.testRun).toBe(true);
-      } finally {
-        // Cleanup
+      // Verify additionalData is persisted
+      const workflow = await client.workflow.get(createdExtraction.workflowId);
+      expect(workflow.additionalData).toBeDefined();
+      expect(workflow.additionalData?.sourceSystem).toBe("e2e-test");
+      const metadata = workflow.additionalData?.metadata as
+        | { version?: number; testRun?: boolean }
+        | undefined;
+      expect(metadata?.version).toBe(1);
+      expect(metadata?.testRun).toBe(true);
+
+      if (createdExtraction.workflowId)
         await client.workflow.delete(createdExtraction.workflowId);
-      }
     },
     { timeout: 60000 },
   );

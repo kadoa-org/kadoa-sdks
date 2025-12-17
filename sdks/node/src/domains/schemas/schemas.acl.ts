@@ -22,8 +22,8 @@ import {
 } from "../../generated";
 import type { DataType } from "../extraction/extraction.acl";
 import type {
-  DataTypeRequiringExample,
   DataTypeNotRequiringExample,
+  DataTypeRequiringExample,
 } from "./schema-builder";
 
 // ========================================
@@ -89,14 +89,15 @@ export type Category = ClassificationFieldCategoriesInner;
  * - example is required for STRING, IMAGE, LINK, OBJECT, ARRAY
  * - example is optional for NUMBER, BOOLEAN, DATE, DATETIME, MONEY
  */
-export type DataFieldFor<T extends DataType> = T extends DataTypeRequiringExample
-  ? Omit<DataField, "example" | "dataType"> & {
-      dataType: T;
-      example: DataFieldExample;
-    }
-  : T extends DataTypeNotRequiringExample
+export type DataFieldFor<T extends DataType> =
+  T extends DataTypeRequiringExample
     ? Omit<DataField, "example" | "dataType"> & {
         dataType: T;
-        example?: DataFieldExample;
+        example: DataFieldExample;
       }
-    : never;
+    : T extends DataTypeNotRequiringExample
+      ? Omit<DataField, "example" | "dataType"> & {
+          dataType: T;
+          example?: DataFieldExample;
+        }
+      : never;
