@@ -76,8 +76,10 @@ WorkflowDisplayStateEnum = Literal[
     "COMPLIANCE_REJECTED",
     "QUEUED",
     "SETUP",
+    "PENDING_START",
     "RUNNING",
     "FAILED",
+    "DELETED",
 ]
 
 JobStateEnum = Literal[

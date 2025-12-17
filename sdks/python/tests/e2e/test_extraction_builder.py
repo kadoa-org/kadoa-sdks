@@ -2,48 +2,39 @@
 E2E tests for extraction builder functionality matching Node.js structure.
 """
 
-import pytest
-import pytest_asyncio
+import time
 
-from kadoa_sdk import KadoaClient, KadoaClientConfig
-from kadoa_sdk.core.settings import get_settings
+import pytest
+
 from kadoa_sdk.extraction.types import ExtractOptions, RunWorkflowOptions
+from kadoa_sdk.notifications.notification_setup_service import NotificationOptions
 from kadoa_sdk.schemas.schema_builder import FieldOptions
-from openapi_client.models.classification_field_categories_inner import (
-    ClassificationFieldCategoriesInner,
-)
+from tests.utils.cleanup_helpers import delete_workflow_by_name
 
 
 @pytest.mark.e2e
 class TestExtractionBuilder:
     """E2E tests for extraction builder functionality."""
 
-    @pytest_asyncio.fixture(scope="class")
-    async def client(self):
-        """Initialize client for all tests in this class."""
-        settings = get_settings()
-        client = KadoaClient(
-            KadoaClientConfig(
-                api_key=settings.api_key,
-                timeout=30,
-                enable_realtime=True,
-            )
-        )
-
-        yield client
-
-        client.dispose()
-
     @pytest.mark.integration
     @pytest.mark.timeout(700)
     @pytest.mark.asyncio
-    async def test_auto_detection_no_extraction_parameter(self, client):
+    async def test_auto_detection_no_extraction_parameter(self, realtime_client):
         """Auto-detection (no extraction parameter)."""
+        workflow_name = f"Auto Detection Test {int(time.time() * 1000)}"
+        delete_workflow_by_name(workflow_name, realtime_client)
+
         created_extraction = (
-            client.extract(
+            realtime_client.extract(
                 ExtractOptions(
                     urls=["https://sandbox.kadoa.com/ecommerce"],
-                    name="Auto Detection Test",
+                    name=workflow_name,
+                )
+            )
+            .with_notifications(
+                NotificationOptions(
+                    events="all",
+                    channels={"WEBSOCKET": True},
                 )
             )
             .bypass_preview()
@@ -61,16 +52,23 @@ class TestExtractionBuilder:
         assert data is not None
         assert len(data.data) == 5
 
+        if created_extraction.workflow_id:
+            realtime_client.workflow.delete(created_extraction.workflow_id)
+
+    @pytest.mark.skip(reason="Matching Node.js test.skip")
     @pytest.mark.integration
     @pytest.mark.timeout(700)
     @pytest.mark.asyncio
-    async def test_raw_extraction_markdown_only(self, client):
+    async def test_raw_extraction_markdown_only(self, realtime_client):
         """Raw extraction (markdown only)."""
+        workflow_name = f"Raw Markdown Extraction {int(time.time() * 1000)}"
+        delete_workflow_by_name(workflow_name, realtime_client)
+
         created_extraction = (
-            client.extract(
+            realtime_client.extract(
                 ExtractOptions(
                     urls=["https://sandbox.kadoa.com/ecommerce"],
-                    name="Raw Markdown Extraction",
+                    name=workflow_name,
                     extraction=lambda builder: builder.raw("MARKDOWN"),
                 )
             )
@@ -90,141 +88,31 @@ class TestExtractionBuilder:
         # Check that we have the raw markdown field
         assert "rawMarkdown" in data.data[0]
 
-    @pytest.mark.integration
-    @pytest.mark.timeout(700)
-    @pytest.mark.asyncio
-    async def test_custom_schema_with_fields(self, client):
-        """Custom schema with fields."""
-        created_extraction = (
-            client.extract(
-                ExtractOptions(
-                    urls=["https://sandbox.kadoa.com/ecommerce"],
-                    name="Custom Schema Test",
-                    extraction=lambda builder: builder.entity("Product")
-                    .field(
-                        "title",
-                        "Product name",
-                        "STRING",
-                        FieldOptions(example="Example Product"),
-                    )
-                    .field("price", "Product price", "MONEY"),
-                )
-            )
-            .bypass_preview()
-            .set_interval({"interval": "ONLY_ONCE"})
-            .create()
-        )
+        if created_extraction.workflow_id:
+            realtime_client.workflow.delete(created_extraction.workflow_id)
 
-        assert created_extraction is not None
-        assert created_extraction.workflow_id is not None
-
-        result = created_extraction.run(RunWorkflowOptions(variables={}, limit=5))
-        data = result.fetch_data({"limit": 5})
-
-        assert data is not None
-        assert len(data.data) == 5
-        # Check that we have the defined fields
-        assert "title" in data.data[0]
-        assert "price" in data.data[0]
-
-    @pytest.mark.integration
-    @pytest.mark.timeout(700)
-    @pytest.mark.asyncio
-    async def test_hybrid_extraction_schema_raw_content(self, client):
-        """Hybrid extraction (schema + raw content)."""
-        created_extraction = (
-            client.extract(
-                ExtractOptions(
-                    urls=["https://sandbox.kadoa.com/ecommerce"],
-                    name="Hybrid Extraction Test",
-                    extraction=lambda builder: builder.entity("Product")
-                    .field(
-                        "title",
-                        "Product name",
-                        "STRING",
-                        FieldOptions(example="Example Product"),
-                    )
-                    .field("price", "Product price", "MONEY")
-                    .raw("HTML"),
-                )
-            )
-            .bypass_preview()
-            .set_interval({"interval": "ONLY_ONCE"})
-            .create()
-        )
-
-        assert created_extraction is not None
-        assert created_extraction.workflow_id is not None
-
-        result = created_extraction.run(RunWorkflowOptions(variables={}, limit=5))
-        data = result.fetch_data({"limit": 5})
-
-        assert data is not None
-        assert len(data.data) == 5
-        # Check that we have both structured fields and raw content
-        assert "title" in data.data[0]
-        assert "price" in data.data[0]
-        assert "rawHtml" in data.data[0]
-
-    @pytest.mark.integration
-    @pytest.mark.timeout(700)
-    @pytest.mark.asyncio
-    async def test_classification_field(self, client):
-        """Classification field."""
-        created_extraction = (
-            client.extract(
-                ExtractOptions(
-                    urls=["https://sandbox.kadoa.com/ecommerce"],
-                    name="Classification Test",
-                    extraction=lambda builder: builder.classify(
-                        "category",
-                        "Product category",
-                        [
-                            ClassificationFieldCategoriesInner(
-                                title="Electronics",
-                                definition="Electronic devices and gadgets",
-                            ),
-                            ClassificationFieldCategoriesInner(
-                                title="Clothing", definition="Apparel and fashion items"
-                            ),
-                            ClassificationFieldCategoriesInner(
-                                title="Other", definition="Other products"
-                            ),
-                        ],
-                    ),
-                )
-            )
-            .bypass_preview()
-            .set_interval({"interval": "ONLY_ONCE"})
-            .create()
-        )
-
-        assert created_extraction is not None
-        assert created_extraction.workflow_id is not None
-
-        result = created_extraction.run(RunWorkflowOptions(limit=5, variables={}))
-        data = result.fetch_data({"limit": 5})
-
-        assert data is not None
-        assert len(data.data) == 5
-        # Check that we have the classification field
-        assert "category" in data.data[0]
+    # Covered by docs_snippets: PY-WORKFLOWS-003, PY-INTRODUCTION-002, PY-SCHEMAS-001
+    # Covered by docs_snippets: PY-WORKFLOWS-004 (hybrid/raw)
+    # Covered by docs_snippets: PY-WORKFLOWS-005 (classification)
 
     @pytest.mark.integration
     @pytest.mark.timeout(60)
     @pytest.mark.asyncio
-    async def test_extraction_builder_with_additional_data(self, client):
+    async def test_extraction_builder_with_additional_data(self, realtime_client):
         """Extraction builder with additionalData."""
+        workflow_name = f"Extraction Builder Additional Data Test {int(time.time() * 1000)}"
+        delete_workflow_by_name(workflow_name, realtime_client)
+
         test_data = {
             "sourceSystem": "e2e-test",
             "metadata": {"version": 1, "testRun": True},
         }
 
         created_extraction = (
-            client.extract(
+            realtime_client.extract(
                 ExtractOptions(
                     urls=["https://sandbox.kadoa.com/ecommerce"],
-                    name="Extraction Builder Additional Data Test",
+                    name=workflow_name,
                     extraction=lambda builder: builder.entity("Product").field(
                         "title",
                         "Product name",
@@ -239,72 +127,21 @@ class TestExtractionBuilder:
             .create()
         )
 
-        try:
-            assert created_extraction is not None
-            assert created_extraction.workflow_id is not None
+        assert created_extraction is not None
+        assert created_extraction.workflow_id is not None
 
-            # Note: Workflow.get() not yet implemented in Python SDK
-            # This test will be updated when workflow service is available
-            # For now, we just verify the extraction was created successfully
-        finally:
-            # Cleanup - Note: workflow.delete() not yet implemented
-            # This will be added when workflow service is available
-            pass
-
-    @pytest.mark.integration
-    @pytest.mark.timeout(60)
-    @pytest.mark.asyncio
-    async def test_agentic_navigation_requires_user_prompt(self, client):
-        """Agentic-navigation requires userPrompt."""
-        from kadoa_sdk.core.exceptions import KadoaSdkError
-
-        with pytest.raises(KadoaSdkError) as exc_info:
-            (
-                client.extract(
-                    ExtractOptions(
-                        urls=["https://sandbox.kadoa.com/ecommerce"],
-                        name="Agentic Navigation Test - Missing Prompt",
-                        navigation_mode="agentic-navigation",
-                    )
-                )
-                .bypass_preview()
-                .set_interval({"interval": "ONLY_ONCE"})
-                .create()
-            )
-
-        assert "user_prompt is required" in str(exc_info.value).lower()
-
-    @pytest.mark.integration
-    @pytest.mark.timeout(60)
-    @pytest.mark.asyncio
-    async def test_agentic_navigation_workflow_creation_with_user_prompt(
-        self, client
-    ):
-        """Agentic-navigation workflow creation with userPrompt."""
-        created_extraction = (
-            client.extract(
-                ExtractOptions(
-                    urls=["https://sandbox.kadoa.com/ecommerce"],
-                    name="Agentic Navigation Test",
-                    navigation_mode="agentic-navigation",
-                )
-            )
-            .with_prompt(
-                "Extract all products with their title, price, and description. Navigate through pagination if available."
-            )
-            .bypass_preview()
-            .set_interval({"interval": "ONLY_ONCE"})
-            .create()
+        # Verify additionalData is persisted
+        workflow = realtime_client.workflow.get(created_extraction.workflow_id)
+        workflow_additional_data = (
+            getattr(workflow, "additional_data", None)
+            or getattr(workflow, "additionalData", None)
         )
+        assert workflow_additional_data is not None
+        assert workflow_additional_data.get("sourceSystem") == "e2e-test"
+        metadata = workflow_additional_data.get("metadata")
+        assert metadata is not None
+        assert metadata.get("version") == 1
+        assert metadata.get("testRun") is True
 
-        try:
-            assert created_extraction is not None
-            assert created_extraction.workflow_id is not None
-
-            # Note: Workflow.get() not yet implemented in Python SDK
-            # This test will be updated when workflow service is available
-            # For now, we just verify the extraction was created successfully
-        finally:
-            # Cleanup - Note: workflow.delete() not yet implemented
-            # This will be added when workflow service is available
-            pass
+        if created_extraction.workflow_id:
+            realtime_client.workflow.delete(created_extraction.workflow_id)

@@ -70,7 +70,7 @@ class ExtractionOptions(BaseModel):
     location: Optional[LocationConfig] = None
     polling_interval: Optional[float] = None  # seconds
     max_wait_time: Optional[float] = None  # seconds
-    max_records: Optional[int] = None
+    limit: Optional[int] = None
     additional_data: Optional[Dict[str, Any]] = None
     user_prompt: Optional[str] = None
 
@@ -153,5 +153,5 @@ DEFAULTS = {
     "max_wait_time": 300.0,  # seconds
     "navigation_mode": "single-page",
     "location": {"type": "auto"},
-    "max_records": 1000,
+    "limit": 1000,
 }

@@ -14,6 +14,7 @@ from ..extraction_acl import (
     WorkflowWithEntityAndFields,
 )
 from openapi_client.models.agentic_workflow import AgenticWorkflow
+from openapi_client.models.workflow_with_existing_schema import WorkflowWithExistingSchema
 
 if TYPE_CHECKING:  # pragma: no cover
     from ...client import KadoaClient
@@ -412,17 +413,28 @@ class ExtractionBuilderService:
 
         if is_agentic_navigation:
             # Skip entity resolution for agentic-navigation
+            # Convert fields to dicts if they're DataField objects
+            raw_fields = (
+                entity.get("fields", [])
+                if isinstance(entity, dict) and "fields" in entity
+                else []
+            )
+            converted_fields = []
+            for field in raw_fields:
+                if hasattr(field, "model_dump"):
+                    converted_fields.append(field.model_dump())
+                elif isinstance(field, dict):
+                    converted_fields.append(field)
+                else:
+                    converted_fields.append(dict(field) if hasattr(field, "__dict__") else field)
+
             resolved_entity = ResolvedEntity(
                 entity=(
                     entity.get("name")
                     if isinstance(entity, dict) and "name" in entity
                     else None
                 ),
-                fields=(
-                    entity.get("fields", [])
-                    if isinstance(entity, dict) and "fields" in entity
-                    else []
-                ),
+                fields=converted_fields,
             )
         else:
             resolved_entity = self._entity_resolver.resolve_entity(
@@ -578,6 +590,26 @@ class ExtractionBuilderService:
                 inner.interval = interval
             if schedules:
                 inner.schedules = schedules
+        elif schema_id:
+            # Use WorkflowWithExistingSchema when schemaId is provided
+            inner = WorkflowWithExistingSchema(
+                urls=urls,
+                navigation_mode=navigation_mode,
+                name=name,
+                description=description,
+                schema_id=schema_id,
+                location=location,
+                bypass_preview=bypass_preview,
+                tags=["sdk"],
+                additional_data=additional_data,
+            )
+
+            if monitoring:
+                inner.monitoring = monitoring
+            if interval:
+                inner.interval = interval
+            if schedules:
+                inner.schedules = schedules
         else:
             inner = WorkflowWithEntityAndFields(
                 urls=urls,
@@ -592,8 +624,6 @@ class ExtractionBuilderService:
                 additional_data=additional_data,
             )
 
-            if schema_id:
-                inner.schema_id = schema_id
             if monitoring:
                 inner.monitoring = monitoring
             if interval:
