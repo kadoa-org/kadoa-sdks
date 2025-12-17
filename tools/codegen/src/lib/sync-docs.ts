@@ -63,6 +63,13 @@ export interface UnusedResult {
   unused: UnusedTag[];
 }
 
+export interface TagAnalysis {
+  sourceTags: number;
+  docTags: number;
+  orphans: OrphanTag[];
+  unused: UnusedTag[];
+}
+
 export interface UntaggedBlock {
   file: string;
   line: number;
@@ -74,6 +81,22 @@ export interface UntaggedResult {
   totalBlocks: number;
   taggedBlocks: number;
   untagged: UntaggedBlock[];
+}
+
+// Patterns
+
+const DOC_TAG_PATTERN =
+  /[ \t]*\{\/\*\s*([\w-]+)\s*\*\/\}\s*\n[ \t]*```(?:typescript|python)/g;
+
+function buildMarkerPatterns(start: string, end: string): RegExp[] {
+  return [
+    // Line comments: // @start TAG ... // @end TAG
+    new RegExp(`\\/\\/\\s*${start}\\s+([\\w-]+)\\s*\\n([\\s\\S]*?)\\/\\/\\s*${end}\\s+\\1`, "g"),
+    // Block comments: /* @start TAG ... @end TAG */
+    new RegExp(`\\/\\*\\s*${start}\\s+([\\w-]+)\\s*\\n([\\s\\S]*?)${end}\\s+\\1\\s*\\*\\/`, "g"),
+    // Python comments: # @start TAG ... # @end TAG
+    new RegExp(`#\\s*${start}\\s+([\\w-]+)\\s*\\n([\\s\\S]*?)#\\s*${end}\\s+\\1`, "g"),
+  ];
 }
 
 // File discovery
@@ -110,62 +133,50 @@ function dedent(code: string): string {
     : trimmed;
 }
 
-function extractSnippets(content: string, source: string): TaggedCode[] {
-  const snippets: TaggedCode[] = [];
-
-  const patterns = [
-    // Line comments: // @docs-start TAG ... // @docs-end TAG
-    /\/\/\s*@docs-start\s+([\w-]+)\s*\n([\s\S]*?)\/\/\s*@docs-end\s+\1/g,
-    // Block comments: /* @docs-start TAG ... @docs-end TAG */
-    /\/\*\s*@docs-start\s+([\w-]+)\s*\n([\s\S]*?)@docs-end\s+\1\s*\*\//g,
-    // Python comments: # @docs-start TAG ... # @docs-end TAG
-    /#\s*@docs-start\s+([\w-]+)\s*\n([\s\S]*?)#\s*@docs-end\s+\1/g,
-  ];
-
-  for (const pattern of patterns) {
-    for (const match of content.matchAll(pattern)) {
-      snippets.push({
-        tag: match[1],
-        code: dedent(match[2]),
-        source,
-      });
-    }
-  }
-
-  return snippets;
+interface ExtractConfig {
+  startMarker: string;
+  endMarker: string;
+  transform?: (code: string) => string;
 }
 
-/**
- * Extract preambles - doc-only code that gets prepended to snippets.
- * Preambles are written as comments with stripped prefixes.
- */
-function extractPreambles(content: string, source: string): TaggedCode[] {
-  const preambles: TaggedCode[] = [];
-
-  const patterns = [
-    // Line comments (TS/JS): // @docs-preamble TAG ... // @docs-preamble-end TAG
-    /\/\/\s*@docs-preamble\s+([\w-]+)\s*\n([\s\S]*?)\/\/\s*@docs-preamble-end\s+\1/g,
-    // Python: # @docs-preamble TAG ... # @docs-preamble-end TAG
-    /#\s*@docs-preamble\s+([\w-]+)\s*\n([\s\S]*?)#\s*@docs-preamble-end\s+\1/g,
-  ];
+function extractTagged(
+  content: string,
+  source: string,
+  config: ExtractConfig,
+): TaggedCode[] {
+  const results: TaggedCode[] = [];
+  const patterns = buildMarkerPatterns(config.startMarker, config.endMarker);
 
   for (const pattern of patterns) {
     for (const match of content.matchAll(pattern)) {
-      // Strip comment prefix from each line (// or #)
-      const strippedCode = match[2]
-        .split("\n")
-        .map((line) => line.replace(/^(\s*)(?:\/\/|#)\s?/, "$1"))
-        .join("\n");
-
-      preambles.push({
-        tag: match[1],
-        code: dedent(strippedCode),
-        source,
-      });
+      const code = config.transform ? config.transform(match[2]) : match[2];
+      results.push({ tag: match[1], code: dedent(code), source });
     }
   }
 
-  return preambles;
+  return results;
+}
+
+function stripCommentPrefix(code: string): string {
+  return code
+    .split("\n")
+    .map((line) => line.replace(/^(\s*)(?:\/\/|#)\s?/, "$1"))
+    .join("\n");
+}
+
+function extractSnippets(content: string, source: string): TaggedCode[] {
+  return extractTagged(content, source, {
+    startMarker: "@docs-start",
+    endMarker: "@docs-end",
+  });
+}
+
+function extractPreambles(content: string, source: string): TaggedCode[] {
+  return extractTagged(content, source, {
+    startMarker: "@docs-preamble",
+    endMarker: "@docs-preamble-end",
+    transform: stripCommentPrefix,
+  });
 }
 
 // Replacement
@@ -199,71 +210,52 @@ function replaceSnippets(
 }
 
 function findDocTags(content: string): string[] {
-  const pattern =
-    /[ \t]*\{\/\*\s*([\w-]+)\s*\*\/\}\s*\n[ \t]*```(?:typescript|python)/g;
-  return [...content.matchAll(pattern)].map((m) => m[1]);
+  return [...content.matchAll(DOC_TAG_PATTERN)].map((m) => m[1]);
 }
 
 // Main operations
 
-export function checkOrphanTags(config: Omit<SyncConfig, "dryRun">): CheckResult {
+export function analyzeTags(config: Omit<SyncConfig, "dryRun">): TagAnalysis {
   const sourceFiles = findFilesMulti(config.sourceDir, config.sourceGlobs);
-  const sourceTags = new Set<string>();
-
-  for (const file of sourceFiles) {
-    const content = readFileSync(file, "utf-8");
-    for (const s of extractSnippets(content, file)) {
-      sourceTags.add(s.tag);
-    }
-  }
-
-  const targetFiles = findFiles(config.targetDir, config.targetGlob);
-  const docTags: OrphanTag[] = [];
-
-  for (const file of targetFiles) {
-    const content = readFileSync(file, "utf-8");
-    for (const tag of findDocTags(content)) {
-      docTags.push({ tag, file: relative(config.targetDir, file) });
-    }
-  }
-
-  const orphans = docTags.filter((d) => !sourceTags.has(d.tag));
-
-  return {
-    sourceTags: sourceTags.size,
-    docTags: docTags.length,
-    orphans,
-  };
-}
-
-export function checkUnusedTags(config: Omit<SyncConfig, "dryRun">): UnusedResult {
-  const sourceFiles = findFilesMulti(config.sourceDir, config.sourceGlobs);
+  const sourceTagSet = new Set<string>();
   const sourceSnippets: UnusedTag[] = [];
 
   for (const file of sourceFiles) {
     const content = readFileSync(file, "utf-8");
     for (const s of extractSnippets(content, file)) {
+      sourceTagSet.add(s.tag);
       sourceSnippets.push({ tag: s.tag, file: relative(config.sourceDir, file) });
     }
   }
 
   const targetFiles = findFiles(config.targetDir, config.targetGlob);
-  const docTags = new Set<string>();
+  const docTagSet = new Set<string>();
+  const docTagsWithFile: OrphanTag[] = [];
 
   for (const file of targetFiles) {
     const content = readFileSync(file, "utf-8");
     for (const tag of findDocTags(content)) {
-      docTags.add(tag);
+      docTagSet.add(tag);
+      docTagsWithFile.push({ tag, file: relative(config.targetDir, file) });
     }
   }
 
-  const unused = sourceSnippets.filter((s) => !docTags.has(s.tag));
-
   return {
-    sourceTags: sourceSnippets.length,
-    docTags: docTags.size,
-    unused,
+    sourceTags: sourceTagSet.size,
+    docTags: docTagsWithFile.length,
+    orphans: docTagsWithFile.filter((d) => !sourceTagSet.has(d.tag)),
+    unused: sourceSnippets.filter((s) => !docTagSet.has(s.tag)),
   };
+}
+
+export function checkOrphanTags(config: Omit<SyncConfig, "dryRun">): CheckResult {
+  const { sourceTags, docTags, orphans } = analyzeTags(config);
+  return { sourceTags, docTags, orphans };
+}
+
+export function checkUnusedTags(config: Omit<SyncConfig, "dryRun">): UnusedResult {
+  const { sourceTags, docTags, unused } = analyzeTags(config);
+  return { sourceTags, docTags, unused };
 }
 
 export interface UntaggedConfig {
@@ -272,12 +264,13 @@ export interface UntaggedConfig {
   excludePatterns: string[];
 }
 
+function matchesAnyGlob(filepath: string, patterns: string[]): boolean {
+  return patterns.some((pattern) => new Glob(pattern).match(filepath));
+}
+
 export function checkUntaggedBlocks(config: UntaggedConfig): UntaggedResult {
   const targetFiles = findFiles(config.targetDir, config.targetGlob).filter(
-    (file) =>
-      !config.excludePatterns.some((pattern) =>
-        file.includes(pattern.replace(/\*/g, "")),
-      ),
+    (file) => !matchesAnyGlob(file, config.excludePatterns),
   );
 
   const untagged: UntaggedBlock[] = [];
