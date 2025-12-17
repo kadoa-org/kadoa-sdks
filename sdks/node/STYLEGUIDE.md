@@ -155,7 +155,3 @@ Exception: Type aliases are acceptable only when the generated type is already f
  * Downstream code must import from this module instead of `generated/**`.
  */
 ```
-
-**Future Lint Enforcement**:
-- `biome.json` will block imports from `/generated/**` unless the file ends with `.acl.ts`.
-- Existing violations should be migrated incrementally; temporary waivers must reference a tracking issue.

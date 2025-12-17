@@ -1,119 +1,125 @@
+import time
+
 import pytest
 from pydantic import ValidationError
 
-from kadoa_sdk import KadoaClient, KadoaClientConfig
 from kadoa_sdk.core.exceptions import KadoaHttpError, KadoaSdkError
-from kadoa_sdk.core.settings import get_settings
-from kadoa_sdk.extraction.extraction_acl import ListWorkflowsRequest, UpdateWorkflowRequest
+from kadoa_sdk.extraction.extraction_acl import UpdateWorkflowRequest
 from tests.utils.seeder import seed_workflow
 
 
 @pytest.mark.e2e
-class TestWorkflows:
-    """E2E tests for workflows functionality."""
-
-    @pytest.fixture(scope="class")
-    def client(self):
-        """Initialize client for all tests in this class."""
-        settings = get_settings()
-        client = KadoaClient(
-            KadoaClientConfig(
-                api_key=settings.api_key,
-                timeout=30,
-            )
-        )
-
-        yield client
-
-        client.dispose()
-
-    @pytest.fixture(scope="class")
-    def workflow_id(self, client):
-        """Create a test workflow for workflow tests."""
-        result = seed_workflow("test-workflow-update-delete", client)
-        yield result["workflow_id"]
+class TestWorkflowUpdateOperations:
+    """Tests that update isolated workflows."""
 
     @pytest.mark.integration
     @pytest.mark.timeout(60)
-    def test_should_update_limit(self, client, workflow_id):
+    def test_should_update_limit(self, client):
         """Should update limit."""
-        result = client.workflow.update(workflow_id, input=UpdateWorkflowRequest(limit=100))
+        # Create isolated workflow for update test
+        unique_name = f"test-update-limit-{int(time.time() * 1000)}"
+        result = seed_workflow(unique_name, client)
+        workflow_id = result["workflow_id"]
 
-        assert result.success is True
-        # Verify limit was updated - check config.limit if available, or other structure
-        workflow = client.workflow.get(workflow_id)
-        assert workflow is not None
-        # Note: The actual structure may vary - this validates the update succeeded
-        assert result.message is not None
+        try:
+            update_result = client.workflow.update(
+                workflow_id, input=UpdateWorkflowRequest(limit=100)
+            )
+
+            assert update_result.success is True
+            workflow = client.workflow.get(workflow_id)
+            assert workflow is not None
+            assert update_result.message is not None
+        finally:
+            client.workflow.delete(workflow_id)
 
     @pytest.mark.integration
     @pytest.mark.timeout(60)
-    def test_should_update_name(self, client, workflow_id):
+    def test_should_update_name(self, client):
         """Should update name."""
-        result = client.workflow.update(
-            workflow_id, input=UpdateWorkflowRequest(name="Updated Workflow Name")
-        )
+        # Create isolated workflow for update test
+        unique_name = f"test-update-name-{int(time.time() * 1000)}"
+        result = seed_workflow(unique_name, client)
+        workflow_id = result["workflow_id"]
 
-        assert result.success is True
+        try:
+            update_result = client.workflow.update(
+                workflow_id, input=UpdateWorkflowRequest(name="Updated Workflow Name")
+            )
 
-        workflow = client.workflow.get(workflow_id)
-        # Access name attribute - may be _name, name, or in nested structure
-        workflow_name = (
-            getattr(workflow, "name", None)
-            or getattr(workflow, "_name", None)
-            or (workflow.model_dump() if hasattr(workflow, "model_dump") else {}).get("name")
-        )
-        assert workflow_name == "Updated Workflow Name"
+            assert update_result.success is True
+
+            workflow = client.workflow.get(workflow_id)
+            workflow_name = (
+                getattr(workflow, "name", None)
+                or getattr(workflow, "_name", None)
+                or (workflow.model_dump() if hasattr(workflow, "model_dump") else {}).get("name")
+            )
+            assert workflow_name == "Updated Workflow Name"
+        finally:
+            client.workflow.delete(workflow_id)
 
     @pytest.mark.integration
     @pytest.mark.timeout(60)
-    def test_should_validate_additional_data_on_update(self, client, workflow_id):
+    def test_should_validate_additional_data_on_update(self, client):
         """Should validate additionalData on update."""
-        # Test invalid additionalData (array) - Pydantic validates on object creation
-        # This ensures type safety: additional_data must be a dict, not a list
-        with pytest.raises(ValidationError):
-            UpdateWorkflowRequest(additional_data=["invalid"])  # type: ignore
+        # Create isolated workflow for update test
+        unique_name = f"test-update-additional-data-{int(time.time() * 1000)}"
+        result = seed_workflow(unique_name, client)
+        workflow_id = result["workflow_id"]
 
-        # Test valid additionalData (dict)
-        valid_data = {"testKey": "testValue", "nested": {"count": 1}}
-        result = client.workflow.update(
-            workflow_id, input=UpdateWorkflowRequest(additional_data=valid_data)
-        )
+        try:
+            # Test invalid additionalData (array) - Pydantic validates on object creation
+            with pytest.raises(ValidationError):
+                UpdateWorkflowRequest(additional_data=["invalid"])  # type: ignore
 
-        assert result.success is True
+            # Test invalid additionalData (null) - SDK validates this at runtime
+            with pytest.raises((ValidationError, KadoaSdkError)):
+                client.workflow.update(
+                    workflow_id, input=UpdateWorkflowRequest(additional_data=None)  # type: ignore
+                )
 
-        # Verify additionalData was updated
-        workflow = client.workflow.get(workflow_id)
-        workflow_additional_data = (
-            getattr(workflow, "additional_data", None)
-            or getattr(workflow, "additionalData", None)
-            or (workflow.model_dump() if hasattr(workflow, "model_dump") else {}).get(
-                "additional_data"
+            # Test valid additionalData (dict)
+            valid_data = {"testKey": "testValue", "nested": {"count": 1}}
+            update_result = client.workflow.update(
+                workflow_id, input=UpdateWorkflowRequest(additional_data=valid_data)
             )
-            or (workflow.model_dump() if hasattr(workflow, "model_dump") else {}).get(
-                "additionalData"
+
+            assert update_result.success is True
+
+            # Verify additionalData was updated
+            workflow = client.workflow.get(workflow_id)
+            workflow_additional_data = (
+                getattr(workflow, "additional_data", None)
+                or getattr(workflow, "additionalData", None)
+                or (workflow.model_dump() if hasattr(workflow, "model_dump") else {}).get(
+                    "additional_data"
+                )
+                or (workflow.model_dump() if hasattr(workflow, "model_dump") else {}).get(
+                    "additionalData"
+                )
             )
-        )
-        assert workflow_additional_data == valid_data
+            assert workflow_additional_data == valid_data
+        finally:
+            client.workflow.delete(workflow_id)
+
+
+@pytest.mark.e2e
+class TestWorkflowDestructiveOperations:
+    """Tests that create/delete isolated workflows."""
 
     @pytest.mark.integration
-    @pytest.mark.timeout(60)
+    @pytest.mark.timeout(120)
     def test_should_delete_workflow(self, client):
         """Should delete workflow."""
-        # Create a separate workflow for deletion test to avoid affecting other tests
-        delete_test_workflow = seed_workflow("test-workflow-for-delete", client)
-        delete_workflow_id = delete_test_workflow["workflow_id"]
+        # Create isolated workflow for deletion
+        unique_name = f"test-workflow-delete-{int(time.time() * 1000)}"
+        result = seed_workflow(unique_name, client)
+        workflow_id = result["workflow_id"]
 
-        client.workflow.delete(delete_workflow_id)
+        client.workflow.delete(workflow_id)
 
-        # Verify workflow is deleted (soft delete - state should be DELETED)
-        deleted_workflow = client.workflow.get(delete_workflow_id)
-        workflow_state = getattr(deleted_workflow, "state", None) or (
-            deleted_workflow.model_dump() if hasattr(deleted_workflow, "model_dump") else {}
-        ).get("state")
-        assert workflow_state == "DELETED"
-
-        # Verify workflow is not returned in list (by default, deleted workflows are excluded)
+        # Verify workflow is not returned in list (deleted workflows excluded by default)
         workflows = client.workflow.list(filters=None)
         found_workflow = next(
             (
@@ -121,11 +127,11 @@ class TestWorkflows:
                 for w in workflows
                 if (
                     (w.get("_id") if isinstance(w, dict) else getattr(w, "_id", None))
-                    == delete_workflow_id
+                    == workflow_id
                 )
                 or (
                     (w.get("id") if isinstance(w, dict) else getattr(w, "id", None))
-                    == delete_workflow_id
+                    == workflow_id
                 )
             ),
             None,

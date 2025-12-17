@@ -24,6 +24,7 @@ import {
   type RuleRuleTypeEnum as GeneratedRuleTypeEnum,
   type GenerateRule,
   type GenerateRules,
+  type RuleDeleteResponse,
   type RulesListResponse,
   type ScheduleValidationResponse,
   type UpdateRule,
@@ -123,6 +124,12 @@ export type BulkDeleteRulesRequest = BulkDeleteRules;
 
 export type DeleteAllRulesRequest = DeleteRuleWithReason;
 
+export interface DeleteRuleRequest {
+  ruleId: string;
+  workflowId?: string;
+  reason?: string;
+}
+
 // ========================================
 // Response Types
 // ========================================
@@ -143,6 +150,8 @@ export type BulkApproveRulesResponseData = BulkApproveRulesResponse["data"];
 export type BulkDeleteRulesResponseData = BulkDeleteRulesResponse["data"];
 
 export type DeleteAllRulesResponseData = DeleteAllRulesResponse["data"];
+
+export type { RuleDeleteResponse };
 
 // ========================================
 // Validation Operations Types

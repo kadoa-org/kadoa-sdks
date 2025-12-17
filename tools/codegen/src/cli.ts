@@ -2,6 +2,7 @@
 import { program } from "commander";
 import { registerFetch } from "./commands/fetch";
 import { registerGenerate } from "./commands/generate";
+import { registerSyncDocs } from "./commands/sync-docs";
 
 program
   .name("kadoa-codegen")
@@ -10,6 +11,7 @@ program
 
 registerFetch(program);
 registerGenerate(program);
+registerSyncDocs(program);
 
 if (process.argv.length <= 2) {
   program.help({ error: false });

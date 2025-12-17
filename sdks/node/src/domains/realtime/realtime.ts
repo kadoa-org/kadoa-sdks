@@ -14,6 +14,13 @@ if (typeof WebSocket === "undefined") {
   global.WebSocket = require("ws");
 }
 
+export interface RealtimeEvent {
+  type: string;
+  message: unknown;
+  id?: string;
+  timestamp: number;
+}
+
 export interface RealtimeConfig {
   apiKey: string;
   heartbeatInterval?: number;
@@ -33,7 +40,7 @@ export class Realtime {
   private missedHeartbeatCheckTimer?: ReturnType<typeof setInterval>;
   private apiKey?: string;
   private source?: "stream";
-  private eventListeners: Set<(event: unknown) => void> = new Set();
+  private eventListeners: Set<(event: RealtimeEvent) => void> = new Set();
   private connectionListeners: Set<
     (connected: boolean, reason?: string) => void
   > = new Set();
@@ -47,7 +54,7 @@ export class Realtime {
     this.source = config.source;
   }
 
-  public async connect() {
+  public async connect(): Promise<void> {
     if (this.isConnecting) return;
     this.isConnecting = true;
 
@@ -70,9 +77,9 @@ export class Realtime {
       const tokenParam = this.source === "stream" ? "token" : "access_token";
       this.socket = new WebSocket(`${wssUri}?${tokenParam}=${access_token}`);
 
-      this.socket.onopen = () => {
-        this.isConnecting = false;
-        this.lastHeartbeat = Date.now();
+        this.socket.onopen = () => {
+          this.isConnecting = false;
+          this.lastHeartbeat = Date.now();
 
         if (this.socket?.readyState === WebSocket.OPEN) {
           this.socket.send(
@@ -86,41 +93,44 @@ export class Realtime {
           this.notifyConnectionListeners(true);
         }
         this.startHeartbeatCheck();
-      };
+      resolve();
+        };
 
-      this.socket.onmessage = (event) => {
-        try {
-          const data = JSON.parse(event.data);
-          if (data.type === "heartbeat") {
-            this.handleHeartbeat();
-          } else {
-            if (data?.id) {
-              fetch(`${REALTIME_API_URI}/api/v1/events/ack`, {
-                method: "POST",
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({ id: data.id }),
-              });
+        this.socket.onmessage = (event) => {
+          try {
+            const data = JSON.parse(event.data);
+            if (data.type === "heartbeat") {
+              this.handleHeartbeat();
+            } else {
+              if (data?.id) {
+                fetch(`${REALTIME_API_URI}/api/v1/events/ack`, {
+                  method: "POST",
+                  headers: { "Content-Type": "application/json" },
+                  body: JSON.stringify({ id: data.id }),
+                });
+              }
+              this.notifyEventListeners(data);
             }
-            this.notifyEventListeners(data);
+          } catch (err) {
+            debug("Failed to parse incoming message: %O", err);
           }
-        } catch (err) {
-          debug("Failed to parse incoming message: %O", err);
-        }
-      };
+        };
 
-      this.socket.onclose = () => {
-        debug("WebSocket disconnected. Attempting to reconnect...");
-        this.isConnecting = false;
-        this.stopHeartbeatCheck();
-        this.notifyConnectionListeners(false, "Connection closed");
-        setTimeout(() => this.connect(), this.reconnectDelay);
-      };
+        this.socket.onclose = () => {
+          debug("WebSocket disconnected. Attempting to reconnect...");
+          this.isConnecting = false;
+          this.stopHeartbeatCheck();
+          this.notifyConnectionListeners(false, "Connection closed");
+          setTimeout(() => this.connect(), this.reconnectDelay);
+        };
 
-      this.socket.onerror = (error) => {
-        debug("WebSocket error: %O", error);
-        this.isConnecting = false;
-        this.notifyErrorListeners(error);
-      };
+        this.socket.onerror = (error) => {
+          debug("WebSocket error: %O", error);
+          this.isConnecting = false;
+          this.notifyErrorListeners(error);
+          reject(error);
+        };
+      });
     } catch (err) {
       debug("Failed to connect: %O", err);
       this.isConnecting = false;
@@ -133,7 +143,7 @@ export class Realtime {
     this.lastHeartbeat = Date.now();
   }
 
-  private notifyEventListeners(event: unknown) {
+  private notifyEventListeners(event: RealtimeEvent) {
     this.eventListeners.forEach((listener) => {
       try {
         listener(event);
@@ -183,7 +193,7 @@ export class Realtime {
    * @param listener Function to handle incoming events
    * @returns Function to unsubscribe
    */
-  public onEvent(listener: (event: unknown) => void): () => void {
+  public onEvent(listener: (event: RealtimeEvent) => void): () => void {
     this.eventListeners.add(listener);
     return () => {
       this.eventListeners.delete(listener);

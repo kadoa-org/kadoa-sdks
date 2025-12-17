@@ -52,7 +52,6 @@ export class KadoaHttpException extends KadoaSdkException {
       method,
       responseBody: error.response?.data,
       details: extra?.details,
-      cause: error,
     });
   }
 

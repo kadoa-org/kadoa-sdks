@@ -18,9 +18,9 @@ bun run build
 bun run dev:watch
 
 # Testing
-bun test
-bun test test/e2e
-bun test --watch
+direnv exec . bun test
+direnv exec . bun test test/e2e
+direnv exec . bun test --watch
 ```
 
 ## Architecture

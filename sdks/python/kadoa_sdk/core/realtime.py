@@ -6,18 +6,27 @@ import asyncio
 import json
 import time
 from threading import Lock
-from typing import Any, Callable, Literal, Optional
+from typing import Any, Callable, Literal, NotRequired, Optional, TypedDict
 
 import aiohttp
 import websockets
 from pydantic import BaseModel
-from websockets.client import ClientConnection
+from websockets.asyncio.client import ClientConnection
 
 from kadoa_sdk.core.logger import wss as logger
 from kadoa_sdk.core.settings import get_settings
 from kadoa_sdk.version import __version__
 
 SDK_VERSION = __version__
+
+
+class RealtimeEvent(TypedDict):
+    """Realtime event received from WebSocket"""
+
+    type: str
+    message: Any
+    id: NotRequired[str]
+    timestamp: int
 
 
 class RealtimeConfig(BaseModel):
@@ -46,7 +55,7 @@ class Realtime:
         self._heartbeat_task: Optional[asyncio.Task] = None
         self._reconnect_task: Optional[asyncio.Task] = None
 
-        self._event_listeners: list[Callable[[Any], None]] = []
+        self._event_listeners: list[Callable[[RealtimeEvent], None]] = []
         self._connection_listeners: list[Callable[[bool, Optional[str]], None]] = []
         self._error_listeners: list[Callable[[Any], None]] = []
         self._listeners_lock = Lock()
@@ -129,11 +138,15 @@ class Realtime:
 
     async def _handle_messages(self) -> None:
         """Handle incoming WebSocket messages"""
-        if not self._ws:
+        ws = self._ws
+        if ws is None:
             return
 
         try:
-            async for message in self._ws:
+            while True:
+                message = await ws.recv()
+                if isinstance(message, bytes):
+                    message = message.decode("utf-8", errors="replace")
                 try:
                     data = json.loads(message)
                     if data.get("type") == "heartbeat":
@@ -183,7 +196,7 @@ class Realtime:
         if self._heartbeat_task and not self._heartbeat_task.done():
             self._heartbeat_task.cancel()
 
-    def _notify_event_listeners(self, event: Any) -> None:
+    def _notify_event_listeners(self, event: RealtimeEvent) -> None:
         """Notify all event listeners"""
         with self._listeners_lock:
             listeners = list(self._event_listeners)
@@ -260,7 +273,7 @@ class Realtime:
             if not self._reconnect_task or self._reconnect_task.done():
                 self._reconnect_task = asyncio.create_task(self._reconnect())
 
-    def on_event(self, listener: Callable[[Any], None]) -> Callable[[], None]:
+    def on_event(self, listener: Callable[[RealtimeEvent], None]) -> Callable[[], None]:
         """Subscribe to realtime events
 
         Args:

@@ -67,8 +67,15 @@ export interface PreparedExtraction {
 }
 
 export interface RunWorkflowOptions {
-  variables: Record<string, unknown>;
-  limit: number;
+  /**
+   * Optional variables to pass to the workflow execution.
+   */
+  variables?: Record<string, unknown>;
+
+  /**
+   * Optional limit for the number of records to process.
+   */
+  limit?: number;
 }
 
 export interface CreatedExtraction {
@@ -274,18 +281,22 @@ export class ExtractionBuilderService {
       });
     }
 
+    const hasSchemaId =
+      typeof entity === "object" && "schemaId" in entity && entity.schemaId;
+
     const workflow = await this.workflowsCoreService.create({
       urls,
       name,
       description,
       navigationMode,
       monitoring: this._monitoringOptions,
-      schemaId:
-        typeof entity === "object" && "schemaId" in entity
-          ? entity.schemaId
-          : undefined,
-      entity: resolvedEntity.entity,
-      fields: resolvedEntity.fields,
+      ...(hasSchemaId
+        ? {
+            schemaId: entity.schemaId,
+            entity: resolvedEntity.entity,
+            fields: resolvedEntity.fields,
+          }
+        : { entity: resolvedEntity.entity, fields: resolvedEntity.fields }),
       autoStart: false,
       interval: this._options.interval,
       schedules: this._options.schedules,

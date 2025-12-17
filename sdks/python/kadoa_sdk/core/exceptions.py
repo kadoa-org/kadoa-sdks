@@ -190,13 +190,15 @@ class KadoaHttpError(KadoaSdkError):
     ) -> "KadoaHttpError":
         status = getattr(error, "status", None)
         response_body = getattr(error, "data", None) or getattr(error, "body", None)
+        # Prefer a consistent message for auth failures across the SDK.
+        # This mirrors the Node SDK behavior where 401/403 are surfaced as "Unauthorized".
+        effective_message = "Unauthorized" if status in (401, 403) else (message or str(error))
         return KadoaHttpError(
-            message or str(error),
+            effective_message,
             http_status=status,
             response_body=response_body,
             code=KadoaHttpError.map_status_to_code(status),
             details=details,
-            cause=error,
         )
 
     @staticmethod
@@ -209,7 +211,7 @@ class KadoaHttpError(KadoaSdkError):
             return error
         if isinstance(error, ApiException):
             return KadoaHttpError.from_api_exception(error, message=message, details=details)
-        
+
         # Check for SSL certificate errors and provide user-friendly message
         error_str = str(error).lower()
         error_type = type(error).__name__
@@ -221,9 +223,11 @@ class KadoaHttpError(KadoaSdkError):
             or "CERTIFICATE_VERIFY_FAILED" in str(error)
         ):
             return KadoaHttpError(
-                "SSL certificate verification failed. This usually happens when Python cannot verify "
-                "the server's SSL certificate. The SDK uses certifi for certificate verification. "
-                "If this error persists, try: pip install --upgrade certifi",
+                (
+                    "SSL certificate verification failed. This usually happens when Python cannot "
+                    "verify the server's SSL certificate. The SDK uses certifi for certificate "
+                    "verification. If this error persists, try: pip install --upgrade certifi"
+                ),
                 code=KadoaErrorCode.NETWORK_ERROR,
                 details={
                     "issue": "SSL certificate verification failed",
@@ -239,9 +243,8 @@ class KadoaHttpError(KadoaSdkError):
                     ],
                     "original_error": str(error),
                 },
-                cause=error,
             )
-        
+
         return KadoaSdkError.wrap(error, message=message, details=details)
 
     def to_json(self) -> Dict[str, Any]:

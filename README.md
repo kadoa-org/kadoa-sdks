@@ -174,6 +174,26 @@ bun kadoa-codegen generate
 
 Note: Production builds use committed specs only. Never use `--fetch-latest` in CI.
 
+### Syncing Documentation Snippets
+
+Sync tested code snippets from SDK tests to MDX documentation:
+
+```bash
+# Sync snippets to docs
+bun kadoa-codegen sync-docs
+
+# Preview changes without writing
+bun kadoa-codegen sync-docs --dry-run
+
+# Find orphan tags (doc tags without test coverage)
+bun kadoa-codegen sync-docs --check
+
+# Find unused tags (test snippets not in docs)
+bun kadoa-codegen sync-docs --unused
+```
+
+Source files use `@docs-start TAG` / `@docs-end TAG` markers. Target MDX files use `{/* TAG */}` before code blocks.
+
 ## Publishing Setup
 
 ### Local Credentials

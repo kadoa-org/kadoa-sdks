@@ -56,6 +56,7 @@ export interface ExtractionOptionsInternal {
   autoStart?: boolean;
   additionalData?: Record<string, unknown>;
   userPrompt?: string;
+  limit?: number;
 }
 
 export type ExtractionOptions = {

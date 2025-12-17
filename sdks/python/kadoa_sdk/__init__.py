@@ -1,4 +1,10 @@
-from .client import KadoaClient, KadoaClientConfig
+from .client import (
+    KadoaClient,
+    KadoaClientConfig,
+    KadoaClientStatus,
+    TestNotificationRequest,
+    TestNotificationResult,
+)
 from .core import KadoaHttpError, KadoaSdkError
 from .extraction import (
     ExtractionModule,
@@ -20,10 +26,13 @@ def initialize_sdk(config: KadoaSdkConfig) -> KadoaClient:
 __all__ = [
     "KadoaClient",
     "KadoaClientConfig",
+    "KadoaClientStatus",
     "KadoaSdkConfig",
     "initialize_sdk",
     "KadoaSdkError",
     "KadoaHttpError",
+    "TestNotificationRequest",
+    "TestNotificationResult",
     "ExtractionModule",
     "ExtractionOptions",
     "ExtractionResult",
