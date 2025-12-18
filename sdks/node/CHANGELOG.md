@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.20.1](https://github.com/kadoa-org/kadoa-sdks/compare/node-sdk-v0.20.0...node-sdk-v0.20.1) (2025-12-18)
+
+
+### Bug Fixes
+
+* **node-sdk:** use conditional spread for optional entity field ([fd1b3ef](https://github.com/kadoa-org/kadoa-sdks/commit/fd1b3ef5fede6bf580bc3668b00d2e0abf32295b))
+
 ## [0.20.0](https://github.com/kadoa-org/kadoa-sdks/compare/node-sdk-v0.19.3...node-sdk-v0.20.0) (2025-12-18)
 
 
