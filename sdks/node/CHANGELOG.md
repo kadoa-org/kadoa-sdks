@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.20.2](https://github.com/kadoa-org/kadoa-sdks/compare/node-sdk-v0.20.1...node-sdk-v0.20.2) (2025-12-18)
+
+
+### Bug Fixes
+
+* **node-sdk:** use type assertion for workflow request union ([6470a50](https://github.com/kadoa-org/kadoa-sdks/commit/6470a5072bc2213ab9f8bcd57a04eec4c4561f4f))
+
 ## [0.20.1](https://github.com/kadoa-org/kadoa-sdks/compare/node-sdk-v0.20.0...node-sdk-v0.20.1) (2025-12-18)
 
 
