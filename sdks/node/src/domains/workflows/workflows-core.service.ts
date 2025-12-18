@@ -143,7 +143,7 @@ export class WorkflowsCoreService {
       schemaId: input.schemaId,
       description: input.description,
       navigationMode: input.navigationMode,
-      entity: input.entity,
+      ...(input.entity != null && { entity: input.entity }),
       fields: input.fields,
       bypassPreview: input.bypassPreview ?? true,
       tags: input.tags,
