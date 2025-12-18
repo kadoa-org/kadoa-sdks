@@ -3,7 +3,7 @@
 import asyncio
 import pytest
 from kadoa_sdk.extraction.types import ExtractionOptions, FetchDataOptions
-from .conftest import track_workflow
+from tests.utils.cleanup_helpers import track_workflow
 
 
 class TestDataDeliverySnippets:

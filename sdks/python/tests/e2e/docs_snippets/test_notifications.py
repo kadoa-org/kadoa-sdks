@@ -3,7 +3,7 @@
 import pytest
 from kadoa_sdk import KadoaClient, KadoaClientConfig
 from kadoa_sdk.notifications import SetupWorkflowNotificationSettingsRequest, ListSettingsRequest
-from .conftest import delete_channel_by_name
+from tests.utils.cleanup_helpers import delete_channel_by_name
 
 
 def clear_settings(client, workflow_id: str) -> None:
@@ -42,10 +42,6 @@ class TestNotificationsSnippets:
                 channels={"EMAIL": True},
             )
         )
-        # @docs-end PY-NOTIFICATIONS-001
-
-        # Clear for next example
-        clear_settings(client, fixture_workflow_id)
 
         # Custom email recipients
         client.notification.setup_for_workflow(
@@ -60,8 +56,6 @@ class TestNotificationsSnippets:
                 },
             )
         )
-
-        clear_settings(client, fixture_workflow_id)
 
         # Slack notifications
         client.notification.setup_for_workflow(
@@ -79,8 +73,6 @@ class TestNotificationsSnippets:
             )
         )
 
-        clear_settings(client, fixture_workflow_id)
-
         # Webhook notifications
         client.notification.setup_for_workflow(
             SetupWorkflowNotificationSettingsRequest(
@@ -95,6 +87,7 @@ class TestNotificationsSnippets:
                 },
             )
         )
+        # @docs-end PY-NOTIFICATIONS-001
 
         assert True
 

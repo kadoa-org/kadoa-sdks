@@ -25,6 +25,10 @@ import {
   createValidationDomain,
   type ValidationDomain,
 } from "../domains/validation/validation.facade";
+import {
+  createCrawlerDomain,
+  type CrawlerDomain,
+} from "../domains/crawler";
 import { ValidationCoreService } from "../domains/validation/validation-core.service";
 import { ValidationRulesService } from "../domains/validation/validation-rules.service";
 import { WorkflowsCoreService } from "../domains/workflows/workflows-core.service";
@@ -122,6 +126,7 @@ export function createClientDomains(params: {
   schema: SchemasService;
   user: UserService;
   validation: ValidationDomain;
+  crawler: CrawlerDomain;
 } {
   const { client, apis } = params;
 
@@ -168,6 +173,7 @@ export function createClientDomains(params: {
   });
 
   const validation = createValidationDomain(coreService, rulesService);
+  const crawler = createCrawlerDomain(client);
 
   return {
     extractionBuilderService,
@@ -177,6 +183,7 @@ export function createClientDomains(params: {
     schema: schemasService,
     user: userService,
     validation,
+    crawler,
   };
 }
 

@@ -10,6 +10,7 @@ from ..notifications import (
 )
 from ..user import UserService
 from ..validation import ValidationCoreService, ValidationDomain, ValidationRulesService
+from .crawler_domain import CrawlerDomain
 from .notification_domain import NotificationDomain
 
 if TYPE_CHECKING:  # pragma: no cover
@@ -36,5 +37,13 @@ def create_validation_domain(client: "KadoaClient") -> ValidationDomain:
     core_service = ValidationCoreService(client)
     rules_service = ValidationRulesService(client)
     return ValidationDomain(core=core_service, rules=rules_service)
+
+
+def create_crawler_domain(client: "KadoaClient") -> CrawlerDomain:
+    from ..crawler import CrawlerConfigService, CrawlerSessionService
+
+    config_service = CrawlerConfigService(client)
+    session_service = CrawlerSessionService(client)
+    return CrawlerDomain(config=config_service, session=session_service)
 
 

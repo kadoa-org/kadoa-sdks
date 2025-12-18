@@ -3,7 +3,7 @@
 import pytest
 from kadoa_sdk.extraction.types import ExtractOptions, ExtractionOptions, RunWorkflowOptions
 from kadoa_sdk.schemas.schema_builder import FieldOptions
-from .conftest import delete_workflow_by_name
+from tests.utils.cleanup_helpers import delete_workflow_by_name
 
 
 class TestIntroductionSnippets:

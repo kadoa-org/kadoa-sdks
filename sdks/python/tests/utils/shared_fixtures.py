@@ -61,6 +61,7 @@ FIXTURE_NAMES = {
     "VALIDATION_WORKFLOW": "shared-fixture-validation",
     "VALIDATION_RULE": "shared-fixture-validation-rule",
     "WORKFLOW_READ_ONLY": "shared-fixture-workflow-readonly",
+    "DOCS_WORKFLOW": "Fixture Workflow - Docs Snippets",
 }
 
 
@@ -70,6 +71,7 @@ FIXTURE_NAMES = {
 
 _validation_fixture_cache: Optional[SharedValidationFixture] = None
 _workflow_fixture_cache: Optional[SharedWorkflowFixture] = None
+_docs_workflow_id_cache: Optional[str] = None
 
 
 # ============================================================================
@@ -170,6 +172,47 @@ def get_shared_workflow_fixture(
     return _workflow_fixture_cache
 
 
+def get_docs_workflow_fixture(client: "KadoaClient") -> str:
+    """
+    Get docs workflow fixture for docs snippet tests.
+
+    Creates a simple workflow using the builder API. Subsequent calls return cached ID.
+
+    Args:
+        client: KadoaClient instance
+
+    Returns:
+        workflow_id string
+    """
+    global _docs_workflow_id_cache
+
+    if _docs_workflow_id_cache:
+        print("[SharedFixture] Using cached docs workflow fixture")
+        return _docs_workflow_id_cache
+
+    print("[SharedFixture] Creating docs workflow fixture...")
+
+    from kadoa_sdk.extraction.types import ExtractOptions
+    from kadoa_sdk.schemas.schema_builder import FieldOptions
+
+    workflow = (
+        client.extract(
+            ExtractOptions(
+                urls=["https://sandbox.kadoa.com/ecommerce"],
+                name=FIXTURE_NAMES["DOCS_WORKFLOW"],
+                extraction=lambda builder: builder.entity("Product")
+                .field("title", "Product name", "STRING", FieldOptions(example="Test Product"))
+                .field("price", "Product price", "MONEY"),
+            )
+        )
+        .create()
+    )
+
+    _docs_workflow_id_cache = workflow.workflow_id
+    print(f"[SharedFixture] Docs workflow fixture ready: {_docs_workflow_id_cache}")
+    return _docs_workflow_id_cache
+
+
 # ============================================================================
 # Cache Management
 # ============================================================================
@@ -182,10 +225,11 @@ def clear_fixture_cache() -> None:
     Call in conftest.py teardown if running tests in watch mode.
     Not needed for CI runs.
     """
-    global _validation_fixture_cache, _workflow_fixture_cache
+    global _validation_fixture_cache, _workflow_fixture_cache, _docs_workflow_id_cache
 
     _validation_fixture_cache = None
     _workflow_fixture_cache = None
+    _docs_workflow_id_cache = None
     print("[SharedFixture] Cache cleared")
 
 

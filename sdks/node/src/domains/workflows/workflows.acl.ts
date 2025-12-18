@@ -139,6 +139,8 @@ export const WorkflowDisplayStateEnum = {
   Setup: "SETUP",
   Running: "RUNNING",
   Failed: "FAILED",
+  Deleted: "DELETED",
+  PendingStart: "PENDING_START",
 } as const satisfies Record<
   keyof typeof V4WorkflowsGet200ResponseWorkflowsInnerDisplayStateEnum,
   V4WorkflowsGet200ResponseWorkflowsInnerDisplayStateEnum

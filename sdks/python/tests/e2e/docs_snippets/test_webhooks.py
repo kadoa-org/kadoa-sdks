@@ -2,7 +2,7 @@
 
 import pytest
 from kadoa_sdk.notifications import SetupWorkflowNotificationSettingsRequest, ListSettingsRequest
-from .conftest import delete_channel_by_name
+from tests.utils.cleanup_helpers import delete_channel_by_name
 
 
 def clear_settings(client, workflow_id: str) -> None:

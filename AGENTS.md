@@ -1,24 +1,18 @@
-# AGENTS.md
-
-This file provides guidance to AI coding assistants when working with code in this repository.
-
-## SDK-Specific Instructions
-
-@sdks/node/AGENTS.md
-
 ## Package Manager
 
-**Bun** is used as the primary package manager for this monorepo (v1.2.21). All development commands should use `bun` instead of `npm/yarn/pnpm`. Note that the Node.js SDK is published to NPM registry despite using Bun for development.
+**Bun** is the primary package manager. Use `bun` instead of `npm/yarn/pnpm` for all commands. The Node.js SDK publishes to NPM despite using Bun for development.
 
 ## Essential Commands
 
 ### Repository-wide Commands
 
+Run these commands for common tasks:
+
 ```bash
 # Install dependencies
 bun install
 
-# Format and lint code (uses Biome)
+# Format and lint code (Biome)
 bun run format-and-lint        # Check only
 bun run format-and-lint:fix    # Auto-fix issues
 
@@ -33,7 +27,7 @@ bun run dev:node              # Node SDK + examples
 
 ### Code Generation Commands
 
-The repository includes a custom CLI tool for fetching OpenAPI specs and generating SDK clients:
+A custom CLI fetches OpenAPI specs and generates SDK clients:
 
 ```bash
 # Fetch latest OpenAPI spec
@@ -55,7 +49,7 @@ bun kadoa-codegen generate --fetch-latest -e http://localhost:12380/openapi -f
 
 ### Monorepo Structure
 
-This is a Turborepo-based monorepo containing:
+The Turborepo-based monorepo contains these directories:
 
 ```
 kadoa-sdks/
@@ -72,54 +66,62 @@ kadoa-sdks/
 
 ### Key Technical Patterns
 
-1. **SDK Initialization Pattern**: Both SDKs use a client initialization pattern that returns configured API clients
-2. **Generated Code**: API clients are auto-generated from OpenAPI specs and placed in `generated/` directories
-3. **Monorepo Tasks**: Turbo is used for task orchestration with caching for builds
+The SDKs share these patterns:
+
+- **SDK Initialization** — Both SDKs use a client initialization pattern returning configured API clients
+- **Generated Code** — API clients auto-generate from OpenAPI specs into `generated/` directories
+- **Monorepo Tasks** — Turbo coordinates tasks with build caching
 
 ## Development Workflow
 
 ### Adding New Features
 
-1. Update the OpenAPI spec if adding new API endpoints
-2. Run code generation to update the generated clients
-3. Implement the feature in the appropriate module
-4. Add tests in the test directory
-5. Update examples if the feature affects the public API
+To add a feature:
+
+1. Update the OpenAPI spec for new API endpoints.
+2. Run code generation to update generated clients.
+3. Implement the feature in the appropriate module.
+4. Add tests in the test directory.
+5. Update examples if the feature affects the public API.
 
 ## Release Process
 
-Uses [Release Please](https://github.com/googleapis/release-please) for automated versioning.
+[Release Please](https://github.com/googleapis/release-please) handles automated versioning.
 
 ### Conventional Commits
 
 The repository enforces conventional commits with these scopes:
-- `spec` - OpenAPI spec updates
-- `node-sdk` - Node SDK changes
-- `python-sdk` - Python SDK changes
-- `codegen` - Code generation tooling
-- `node-examples` - Node example code
-- `python-examples` - Python example code
-- `ci` - CI/CD changes
-- `deps` - Dependency updates
-- `release` - Release configuration
-- `docs` - Documentation
+
+- `spec` — OpenAPI spec updates
+- `node-sdk` — Node SDK changes
+- `python-sdk` — Python SDK changes
+- `codegen` — Code generation tooling
+- `node-examples` — Node example code
+- `python-examples` — Python example code
+- `ci` — CI/CD changes
+- `deps` — Dependency updates
+- `release` — Release configuration
+- `docs` — Documentation
 
 ### Commit Types and Changelog Visibility
 
-Commit types that trigger releases:
-- `feat:` - New features (minor version bump)
-- `fix:` - Bug fixes (patch version bump)
-- `feat!:` or `fix!:` - Breaking changes (major version bump)
+These commit types trigger releases:
 
-**Changelog visibility**: Only `feat`, `fix`, `perf`, and `revert` commits appear in public changelogs. Other types (`chore`, `docs`, `refactor`, `test`, `ci`, `build`, `style`) are hidden to reduce noise.
+- `feat:` — New features (minor version bump)
+- `fix:` — Bug fixes (patch version bump)
+- `feat!:` or `fix!:` — Breaking changes (major version bump)
+
+**Changelog visibility**: Only `feat`, `fix`, `perf`, and `revert` commits appear in public changelogs. Other types (`chore`, `docs`, `refactor`, `test`, `ci`, `build`, `style`) stay hidden.
 
 Example: `git commit -m "feat(node-sdk): add retry logic to API client"`
 
 ## Important Notes
 
-- The repository uses Husky for Git hooks with commitlint for conventional commits
-- Release management is handled by release-please with separate releases for each SDK
+Keep these guidelines in mind:
+
+- Husky runs Git hooks with commitlint for conventional commits
+- Release-please manages releases separately for each SDK
 - Both SDKs follow similar architectural patterns for consistency
-- Generated code should never be manually edited - always regenerate from specs
-- Production builds use committed specs only (never use `--fetch-latest` in CI)
+- Never manually edit generated code — always regenerate from specs
+- Production builds use committed specs only (don't use `--fetch-latest` in CI)
 
