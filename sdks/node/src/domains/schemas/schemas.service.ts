@@ -6,11 +6,10 @@ import {
 } from "../../runtime/exceptions/base.exception";
 import { logger } from "../../runtime/logger";
 import { SchemaBuilder } from "./schema-builder";
-import {
-  type CreateSchemaRequest,
-  type SchemaResponse,
-  SchemasApi,
-  type UpdateSchemaRequest,
+import type {
+  CreateSchemaRequest,
+  SchemaResponse,
+  UpdateSchemaRequest,
 } from "./schemas.acl";
 
 const debug = logger.schemas;
@@ -19,10 +18,10 @@ const debug = logger.schemas;
  * Service for managing schemas
  */
 export class SchemasService {
-  private readonly schemasApi: SchemasApi;
+  constructor(private readonly client: KadoaClient) {}
 
-  constructor(client: KadoaClient) {
-    this.schemasApi = new SchemasApi(client.configuration);
+  private get schemasApi() {
+    return this.client.apis.schemas;
   }
 
   /**

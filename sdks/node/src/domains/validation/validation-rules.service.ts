@@ -1,24 +1,23 @@
 import type { KadoaClient } from "../../kadoa-client";
 import { KadoaHttpException } from "../../runtime/exceptions";
 import { logger } from "../../runtime/logger";
-import {
-  type BulkApproveRulesRequest,
-  type BulkApproveRulesResponseData,
-  type BulkDeleteRulesRequest,
-  type BulkDeleteRulesResponseData,
-  type CreateRuleRequest,
-  DataValidationApi,
-  type DeleteAllRulesRequest,
-  type DeleteAllRulesResponseData,
-  type DeleteRuleRequest,
-  type DisableRuleRequest,
-  type GenerateRuleRequest,
-  type GenerateRulesRequest,
-  type ListRulesRequest,
-  type ListRulesResponse,
-  type Rule,
-  type RuleDeleteResponse,
-  type UpdateRuleRequest,
+import type {
+  BulkApproveRulesRequest,
+  BulkApproveRulesResponseData,
+  BulkDeleteRulesRequest,
+  BulkDeleteRulesResponseData,
+  CreateRuleRequest,
+  DeleteAllRulesRequest,
+  DeleteAllRulesResponseData,
+  DeleteRuleRequest,
+  DisableRuleRequest,
+  GenerateRuleRequest,
+  GenerateRulesRequest,
+  ListRulesRequest,
+  ListRulesResponse,
+  Rule,
+  RuleDeleteResponse,
+  UpdateRuleRequest,
 } from "./validation.acl";
 
 const _debug = logger.validation;
@@ -27,14 +26,10 @@ const _debug = logger.validation;
  * Service for managing data validation rules
  */
 export class ValidationRulesService {
-  private readonly validationApi: DataValidationApi;
+  constructor(private readonly client: KadoaClient) {}
 
-  constructor(client: KadoaClient) {
-    this.validationApi = new DataValidationApi(
-      client.configuration,
-      client.baseUrl,
-      client.axiosInstance,
-    );
+  private get validationApi() {
+    return this.client.apis.validation;
   }
 
   async listRules(options?: ListRulesRequest): Promise<ListRulesResponse> {
@@ -99,15 +94,17 @@ export class ValidationRulesService {
   }
 
   async deleteRule(data: DeleteRuleRequest): Promise<RuleDeleteResponse> {
-    const response = await this.validationApi.v4DataValidationRulesRuleIdDelete({
-      ruleId: data.ruleId,
-      ...(data.workflowId != null && {
-        deleteRuleWithReason: {
-          workflowId: data.workflowId,
-          ...(data.reason != null && { reason: data.reason }),
-        },
-      }),
-    });
+    const response = await this.validationApi.v4DataValidationRulesRuleIdDelete(
+      {
+        ruleId: data.ruleId,
+        ...(data.workflowId != null && {
+          deleteRuleWithReason: {
+            workflowId: data.workflowId,
+            ...(data.reason != null && { reason: data.reason }),
+          },
+        }),
+      },
+    );
     if (response.status !== 200 || response.data.error) {
       throw KadoaHttpException.wrap(response.data, {
         message: response.data.message || "Failed to delete validation rule",

@@ -13,12 +13,12 @@ import { getSharedWorkflowFixture } from "../../utils/shared-fixtures";
 
 describe("TS-WORKFLOWS: workflows/create.mdx snippets", () => {
   let client: KadoaClient;
-  let sharedWorkflowId: string;
+  let workflowId: string;
 
   beforeAll(async () => {
     client = new KadoaClient({ apiKey: getTestEnv().KADOA_API_KEY });
     const fixture = await getSharedWorkflowFixture(client);
-    sharedWorkflowId = fixture.workflowId;
+    workflowId = fixture.workflowId;
   }, 120000);
 
   afterAll(() => {
@@ -532,13 +532,13 @@ describe("TS-WORKFLOWS: workflows/create.mdx snippets", () => {
   it(
     "TS-WORKFLOWS-015: Manual execution and status",
     async () => {
-      if (!sharedWorkflowId) throw new Error("Fixture workflow not created");
+      if (!workflowId) throw new Error("Fixture workflow not created");
 
       // @docs-start TS-WORKFLOWS-015
-      const workflow = await client.workflow.get(sharedWorkflowId);
+      const workflow = await client.workflow.get(workflowId);
       console.log(`Current workflows state: ${workflow.displayState}`);
 
-      const result = await client.workflow.runWorkflow(sharedWorkflowId, {
+      const result = await client.workflow.runWorkflow(workflowId, {
         limit: 10,
       });
       console.log(`Workflow scheduled with runId: ${result.jobId}`);

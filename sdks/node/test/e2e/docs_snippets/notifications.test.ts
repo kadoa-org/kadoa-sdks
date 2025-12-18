@@ -4,31 +4,18 @@
 
 import { afterAll, beforeAll, describe, expect, it } from "bun:test";
 import { KadoaClient } from "../../../src/kadoa-client";
-import { deleteChannelByName } from "../../utils/cleanup-helpers";
 import { getTestEnv } from "../../utils/env";
 import { getSharedWorkflowFixture } from "../../utils/shared-fixtures";
 
 describe("TS-NOTIFICATIONS: notifications.mdx snippets", () => {
   let client: KadoaClient;
-  let sharedWorkflowId: string;
+  let workflowId: string;
   const apiKey = getTestEnv().KADOA_API_KEY;
-
-  // Helper: clear all notification settings for workflow
-  const clearSettings = async () => {
-    const existing = await client.notification.settings.listSettings({
-      workflowId: sharedWorkflowId,
-    });
-    for (const setting of existing) {
-      if (setting.id) {
-        await client.notification.settings.deleteSettings(setting.id);
-      }
-    }
-  };
 
   beforeAll(async () => {
     client = new KadoaClient({ apiKey });
     const fixture = await getSharedWorkflowFixture(client);
-    sharedWorkflowId = fixture.workflowId;
+    workflowId = fixture.workflowId;
   }, 120000);
 
   afterAll(() => {
@@ -36,24 +23,19 @@ describe("TS-NOTIFICATIONS: notifications.mdx snippets", () => {
   });
 
   it("TS-NOTIFICATIONS-001: Setup workflow notifications", async () => {
-    if (!sharedWorkflowId) throw new Error("Fixture workflow not created");
-
-    // Pre-cleanup: remove channels that may exist from previous runs
-    await deleteChannelByName("team-notifications", client);
-    await deleteChannelByName("api-integration", client);
-    await clearSettings();
+    if (!workflowId) throw new Error("Fixture workflow not created");
 
     // @docs-start TS-NOTIFICATIONS-001
     // Email notifications
     await client.notification.setupForWorkflow({
-      workflowId: sharedWorkflowId,
+      workflowId: workflowId,
       events: ["workflow_finished", "workflow_failed"],
       channels: { EMAIL: true },
     });
 
     // Custom email recipients
     await client.notification.setupForWorkflow({
-      workflowId: sharedWorkflowId,
+      workflowId: workflowId,
       events: ["workflow_finished"],
       channels: {
         EMAIL: {
@@ -65,7 +47,7 @@ describe("TS-NOTIFICATIONS: notifications.mdx snippets", () => {
 
     // Slack notifications
     await client.notification.setupForWorkflow({
-      workflowId: sharedWorkflowId,
+      workflowId: workflowId,
       events: ["workflow_failed"],
       channels: {
         SLACK: {
@@ -79,7 +61,7 @@ describe("TS-NOTIFICATIONS: notifications.mdx snippets", () => {
 
     // Webhook notifications
     await client.notification.setupForWorkflow({
-      workflowId: sharedWorkflowId,
+      workflowId: workflowId,
       events: ["workflow_finished"],
       channels: {
         WEBHOOK: {
@@ -92,10 +74,6 @@ describe("TS-NOTIFICATIONS: notifications.mdx snippets", () => {
     // @docs-end TS-NOTIFICATIONS-001
 
     expect(true).toBe(true);
-
-    // Post-cleanup
-    await clearSettings();
-    await deleteChannelByName("api-integration", client);
   });
 
   it("TS-NOTIFICATIONS-002: Real-time WebSocket", async () => {

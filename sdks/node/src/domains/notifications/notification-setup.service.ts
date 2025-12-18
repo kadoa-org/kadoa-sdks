@@ -90,23 +90,12 @@ export class NotificationSetupService {
   ) {}
 
   /**
-   * Setup notification settings for a specific workflow ensuring no duplicates exist.
+   * Setup notification settings for a specific workflow.
+   * Creates channels and settings for the specified events.
    */
   async setupForWorkflow(
     requestData: SetupWorkflowNotificationSettingsRequest,
   ): Promise<NotificationSettings[]> {
-    const existingSettings = await this.settingsService.listSettings({
-      workflowId: requestData.workflowId,
-    });
-    if (existingSettings.length > 0) {
-      throw new KadoaSdkException("Settings already exist", {
-        code: KadoaErrorCode.BAD_REQUEST,
-        details: {
-          workflowId: requestData.workflowId,
-        },
-      });
-    }
-
     return this.setup({
       workflowId: requestData.workflowId,
       events: requestData.events,
@@ -171,8 +160,29 @@ export class NotificationSetupService {
       },
     );
 
+    const existingSettings = await this.settingsService.listSettings({
+      workflowId: requestData.workflowId,
+    });
+
     const newSettings: NotificationSettings[] = await Promise.all(
       eventTypes.map(async (eventType) => {
+        const existing = existingSettings.find(
+          (s) => s.eventType === eventType,
+        );
+
+        if (existing?.id) {
+          const existingChannelIds = (existing.channels || [])
+            .map((c) => c.id)
+            .filter(Boolean) as string[];
+          const mergedChannelIds = [
+            ...new Set([...existingChannelIds, ...channelIds]),
+          ];
+          return await this.settingsService.updateSettings(existing.id, {
+            channelIds: mergedChannelIds,
+            enabled: existing.enabled ?? true,
+          });
+        }
+
         return await this.settingsService.createSettings({
           workflowId: requestData.workflowId,
           channelIds,
@@ -358,9 +368,10 @@ export class NotificationSetupService {
           return existingChannel;
         }
 
+        const { name: _, ...channelConfig } = config;
         const channel = await this.channelsService.createChannel(channelType, {
           name: channelName,
-          config: config,
+          config: channelConfig,
         });
 
         debug("Created channel with custom config %O", {

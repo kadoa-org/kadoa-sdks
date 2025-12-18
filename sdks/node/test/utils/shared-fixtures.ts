@@ -36,6 +36,8 @@ export interface SharedValidationFixture {
   ruleId: string;
   ruleName: string;
   validationId: string;
+  /** Available column names from workflow schema */
+  columns: string[];
 }
 
 export interface SharedWorkflowFixture {
@@ -96,12 +98,23 @@ export async function getSharedValidationFixture(
 
   const validationId = await seedValidation({ workflowId, jobId }, client);
 
+  // Fetch schema columns for dynamic test assertions
+  const workflow = await client.workflow.get(workflowId);
+  const columns = (workflow.schema ?? [])
+    .map((field) => field.name)
+    .filter((name): name is string => !!name);
+
+  if (columns.length === 0) {
+    console.warn("[SharedFixture] No schema columns found for workflow");
+  }
+
   validationFixtureCache = {
     workflowId,
     jobId,
     ruleId,
     ruleName: FIXTURE_NAMES.VALIDATION_RULE,
     validationId,
+    columns,
   };
 
   console.log(
