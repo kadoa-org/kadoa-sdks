@@ -125,7 +125,6 @@ jobs:
             - Focus on what developers need to know
           claude_args: |
             --allowedTools "Read,Write,Bash(git diff:*)"
-            --model claude-sonnet-4-5-20250929
 
       - name: Update spec fingerprint
         if: steps.diff.outputs.changed == 'true'
