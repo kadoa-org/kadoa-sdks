@@ -980,13 +980,13 @@
                         "PAUSED",
                         "NOT_SUPPORTED",
                         "PREVIEW",
-                        "COMPLIANCE_REVIEW",
-                        "COMPLIANCE_REJECTED",
                         "QUEUED",
                         "SETUP",
                         "PENDING_START",
                         "RUNNING",
                         "FAILED",
+                        "COMPLIANCE_REVIEW",
+                        "COMPLIANCE_REJECTED",
                         "DELETED"
                       ],
                       "description": "Display state for frontend"
@@ -2150,13 +2150,13 @@
                               "PAUSED",
                               "NOT_SUPPORTED",
                               "PREVIEW",
-                              "COMPLIANCE_REVIEW",
-                              "COMPLIANCE_REJECTED",
                               "QUEUED",
                               "SETUP",
                               "PENDING_START",
                               "RUNNING",
                               "FAILED",
+                              "COMPLIANCE_REVIEW",
+                              "COMPLIANCE_REJECTED",
                               "DELETED"
                             ],
                             "description": "Display state for frontend"
@@ -15873,8 +15873,9 @@
             "description": "Optional: Schema ID to use with agentic extraction"
           },
           "entity": {
-            "description": "Optional: Entity name for agentic extraction",
-            "type": "string"
+            "type": "string",
+            "minLength": 1,
+            "description": "Optional: Entity name for agentic extraction"
           },
           "fields": {
             "type": "array",
@@ -16189,8 +16190,9 @@
             "description": "Regex patterns to exclude specific paths during crawling. Only used when navigationMode is 'all-pages'"
           },
           "entity": {
-            "description": "Entity name for extraction. Required when schema contains structured data fields (SCHEMA type)",
-            "type": "string"
+            "type": "string",
+            "minLength": 1,
+            "description": "Entity name for extraction (e.g., 'Product', 'JobListing')"
           },
           "fields": {
             "type": "array",
@@ -16217,6 +16219,7 @@
         },
         "required": [
           "urls",
+          "entity",
           "fields"
         ],
         "title": "WorkflowWithEntityAndFields",
