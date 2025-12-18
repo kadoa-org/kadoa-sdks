@@ -494,7 +494,7 @@ wheels = [
 
 [[package]]
 name = "kadoa-sdk"
-version = "0.17.3"
+version = "0.17.4rc3"
 source = { editable = "." }
 dependencies = [
     { name = "aiohttp" },

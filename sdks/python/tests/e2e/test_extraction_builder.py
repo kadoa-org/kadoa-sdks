@@ -22,7 +22,7 @@ class TestExtractionBuilder:
     async def test_auto_detection_no_extraction_parameter(self, realtime_client):
         """Auto-detection (no extraction parameter)."""
         workflow_name = f"Auto Detection Test {int(time.time() * 1000)}"
-        delete_workflow_by_name(workflow_name, realtime_client)
+        delete_workflow_by_name(realtime_client, workflow_name)
 
         created_extraction = (
             realtime_client.extract(
@@ -62,7 +62,7 @@ class TestExtractionBuilder:
     async def test_raw_extraction_markdown_only(self, realtime_client):
         """Raw extraction (markdown only)."""
         workflow_name = f"Raw Markdown Extraction {int(time.time() * 1000)}"
-        delete_workflow_by_name(workflow_name, realtime_client)
+        delete_workflow_by_name(realtime_client, workflow_name)
 
         created_extraction = (
             realtime_client.extract(
@@ -101,7 +101,7 @@ class TestExtractionBuilder:
     async def test_extraction_builder_with_additional_data(self, realtime_client):
         """Extraction builder with additionalData."""
         workflow_name = f"Extraction Builder Additional Data Test {int(time.time() * 1000)}"
-        delete_workflow_by_name(workflow_name, realtime_client)
+        delete_workflow_by_name(realtime_client, workflow_name)
 
         test_data = {
             "sourceSystem": "e2e-test",

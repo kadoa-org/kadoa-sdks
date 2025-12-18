@@ -37,7 +37,6 @@ class RealtimeConfig(BaseModel):
     reconnect_delay: int = 5000  # milliseconds
     missed_heartbeats_limit: int = 30000  # milliseconds
 
-
 class Realtime:
     """WebSocket connection for real-time events"""
 
@@ -237,7 +236,8 @@ class Realtime:
             uri = f"{settings.wss_api_uri}?access_token={access_token}"
             self._ws = await websockets.connect(uri)
 
-            await self._ws.send(json.dumps({"action": "subscribe", "channel": team_id}))
+            subscribe_msg = {"action": "subscribe", "channel": team_id}
+            await self._ws.send(json.dumps(subscribe_msg))
 
             logger.debug("Connected to WebSocket")
             self._last_heartbeat = time.time() * 1000

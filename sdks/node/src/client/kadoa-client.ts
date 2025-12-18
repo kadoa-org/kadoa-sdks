@@ -11,6 +11,7 @@ import type { SchemasService } from "../domains/schemas/schemas.service";
 import type { UserService } from "../domains/user/user.service";
 import type { ValidationDomain } from "../domains/validation/validation.facade";
 import type { WorkflowsCoreService } from "../domains/workflows/workflows-core.service";
+import type { CrawlerDomain } from "../domains/crawler";
 import { PUBLIC_API_URI } from "../runtime/config";
 import { checkForUpdates } from "../runtime/utils/version-check";
 import type {
@@ -59,6 +60,7 @@ export class KadoaClient {
   public readonly schema: SchemasService;
   public readonly user: UserService;
   public readonly validation: ValidationDomain;
+  public readonly crawler: CrawlerDomain;
 
   constructor(config: KadoaClientConfig) {
     this._baseUrl = config.baseUrl ?? PUBLIC_API_URI;
@@ -92,6 +94,7 @@ export class KadoaClient {
     this.schema = domains.schema;
     this.notification = domains.notification;
     this.validation = domains.validation;
+    this.crawler = domains.crawler;
     this._extractionBuilderService = domains.extractionBuilderService;
 
     // Check for updates in the background (non-blocking)
