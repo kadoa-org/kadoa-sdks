@@ -135,9 +135,7 @@ export class WorkflowsCoreService {
       return { id: workflowId };
     }
 
-    const request:
-      | CreateWorkflowRequest
-      | CreateWorkflowWithCustomSchemaRequest = {
+    const request = {
       urls: input.urls,
       name: input.name ?? domainName,
       schemaId: input.schemaId,
@@ -154,7 +152,7 @@ export class WorkflowsCoreService {
       schedules: input.schedules,
       additionalData: input.additionalData,
       limit: input.limit,
-    };
+    } as CreateWorkflowRequest | CreateWorkflowWithCustomSchemaRequest;
 
     const response = await this.workflowsApi.v4WorkflowsPost({
       createWorkflowBody: request,
