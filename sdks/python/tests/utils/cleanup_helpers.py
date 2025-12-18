@@ -83,3 +83,21 @@ def delete_channel_by_name(client: "KadoaClient", name: str) -> None:
         )
         if channel_id:
             client.notification.channels.delete_channel(channel_id)
+
+
+def delete_preview_rules(client: "KadoaClient", workflow_id: str) -> None:
+    """Delete all preview validation rules for a workflow."""
+    from kadoa_sdk.validation import BulkDeleteRulesRequest, ListRulesRequest
+
+    try:
+        rules = client.validation.rules.list_rules(
+            ListRulesRequest(workflow_id=workflow_id, status="preview")
+        )
+        rule_ids = [r.id for r in (rules.data or []) if r.id]
+        if rule_ids:
+            print(f"[Cleanup] Deleting {len(rule_ids)} preview rules")
+            client.validation.rules.bulk_delete_rules(
+                BulkDeleteRulesRequest(workflow_id=workflow_id, rule_ids=rule_ids)
+            )
+    except Exception as e:
+        print(f"[Cleanup] Failed to delete preview rules: {e}")

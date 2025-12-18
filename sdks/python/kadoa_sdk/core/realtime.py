@@ -224,7 +224,11 @@ class Realtime:
                 logger.debug("Error in error listener: %s", e)
 
     async def connect(self) -> None:
-        """Connect to WebSocket server"""
+        """Connect to WebSocket server.
+
+        Raises:
+            Exception: If initial connection fails (OAuth token or WebSocket connection)
+        """
         if self._is_connecting:
             return
         self._is_connecting = True
@@ -251,20 +255,13 @@ class Realtime:
             self._connection_reason = None
             self._notify_connection_listeners(True)
 
-            # Also emit SDK event for connection
-            try:
-                pass
-                # This would require access to event emitter, but for now just notify listeners
-            except Exception:
-                pass
-
         except Exception as e:
             logger.debug("Failed to connect: %s", e)
             self._is_connecting = False
             self._is_connected_state = False
             self._notify_error_listeners(e)
-            if not self._reconnect_task or self._reconnect_task.done():
-                self._reconnect_task = asyncio.create_task(self._reconnect())
+            # Re-raise on initial connection failure so caller knows it failed
+            raise
 
     def on_event(self, listener: Callable[[RealtimeEvent], None]) -> Callable[[], None]:
         """Subscribe to realtime events

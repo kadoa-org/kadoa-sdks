@@ -7,12 +7,11 @@ import {
 } from "../utils/shared-fixtures";
 
 describe("Data Validation", () => {
-  const env = getTestEnv();
   let client: KadoaClient;
   let fixture: SharedValidationFixture;
 
   beforeAll(async () => {
-    client = new KadoaClient({ apiKey: env.KADOA_API_KEY, timeout: 30000 });
+    client = new KadoaClient({ apiKey: getTestEnv().KADOA_API_KEY });
     fixture = await getSharedValidationFixture(client);
   }, 120000);
 

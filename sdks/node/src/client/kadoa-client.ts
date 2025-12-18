@@ -1,5 +1,5 @@
 import type { AxiosInstance } from "axios";
-import type { Configuration } from "../domains/apis.acl";
+import type { CrawlerDomain } from "../domains/crawler";
 import type { ExtractionService } from "../domains/extraction/services/extraction.service";
 import type {
   ExtractionBuilderService,
@@ -11,19 +11,17 @@ import type { SchemasService } from "../domains/schemas/schemas.service";
 import type { UserService } from "../domains/user/user.service";
 import type { ValidationDomain } from "../domains/validation/validation.facade";
 import type { WorkflowsCoreService } from "../domains/workflows/workflows-core.service";
-import type { CrawlerDomain } from "../domains/crawler";
 import { PUBLIC_API_URI } from "../runtime/config";
 import { checkForUpdates } from "../runtime/utils/version-check";
+import { ApiRegistry } from "./api-registry";
 import type {
   KadoaClientConfig,
   KadoaClientStatus,
   NotificationDomain,
 } from "./types";
 import {
-  createApis,
   createAxiosInstance,
   createClientDomains,
-  createOpenApiConfiguration,
   createSdkHeaders,
 } from "./wiring";
 
@@ -45,15 +43,14 @@ import {
  * ```
  */
 export class KadoaClient {
-  private readonly _configuration: Configuration;
   private readonly _axiosInstance: AxiosInstance;
   private readonly _baseUrl: string;
-  private readonly _timeout: number;
   private readonly _apiKey: string;
 
   private _realtime?: Realtime;
   private readonly _extractionBuilderService: ExtractionBuilderService;
 
+  public readonly apis: ApiRegistry;
   public readonly extraction: ExtractionService;
   public readonly workflow: WorkflowsCoreService;
   public readonly notification: NotificationDomain;
@@ -64,29 +61,21 @@ export class KadoaClient {
 
   constructor(config: KadoaClientConfig) {
     this._baseUrl = config.baseUrl ?? PUBLIC_API_URI;
-    this._timeout = config.timeout ?? 30000;
     this._apiKey = config.apiKey;
 
+    const timeout = config.timeout ?? 30000;
     const headers = createSdkHeaders();
 
-    this._configuration = createOpenApiConfiguration({
-      apiKey: this._apiKey,
-      baseUrl: this._baseUrl,
+    this._axiosInstance = createAxiosInstance({ timeout, headers });
+
+    this.apis = new ApiRegistry(
+      this._apiKey,
+      this._baseUrl,
+      this._axiosInstance,
       headers,
-    });
+    );
 
-    this._axiosInstance = createAxiosInstance({
-      timeout: this._timeout,
-      headers,
-    });
-
-    const apis = createApis({
-      configuration: this.configuration,
-      baseUrl: this.baseUrl,
-      axiosInstance: this.axiosInstance,
-    });
-
-    const domains = createClientDomains({ client: this, apis });
+    const domains = createClientDomains({ client: this });
 
     this.user = domains.user;
     this.extraction = domains.extraction;
@@ -101,15 +90,6 @@ export class KadoaClient {
     checkForUpdates().catch(() => {
       // Silently ignore errors - version check should not affect client initialization
     });
-  }
-
-  /**
-   * Get the underlying configuration
-   *
-   * @returns The configuration object
-   */
-  get configuration(): Configuration {
-    return this._configuration;
   }
 
   /**
@@ -137,15 +117,6 @@ export class KadoaClient {
    */
   get apiKey(): string {
     return this._apiKey;
-  }
-
-  /**
-   * Get the timeout value
-   *
-   * @returns The timeout in milliseconds
-   */
-  get timeout(): number {
-    return this._timeout;
   }
 
   /**

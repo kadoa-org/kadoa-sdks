@@ -4,21 +4,19 @@
 
 import { afterAll, beforeAll, describe, expect, it } from "bun:test";
 import { KadoaClient } from "../../../src/kadoa-client";
-import {
-  deleteSchemaByName,
-  deleteWorkflowByName,
-} from "../../utils/cleanup-helpers";
+import { deleteWorkflowByName } from "../../utils/cleanup-helpers";
 import { getTestEnv } from "../../utils/env";
+import { seedSchema } from "../../utils/seeder";
 import { getSharedWorkflowFixture } from "../../utils/shared-fixtures";
 
 describe("TS-WORKFLOWS: workflows/create.mdx snippets", () => {
   let client: KadoaClient;
-  let sharedWorkflowId: string;
+  let workflowId: string;
 
   beforeAll(async () => {
     client = new KadoaClient({ apiKey: getTestEnv().KADOA_API_KEY });
     const fixture = await getSharedWorkflowFixture(client);
-    sharedWorkflowId = fixture.workflowId;
+    workflowId = fixture.workflowId;
   }, 120000);
 
   afterAll(() => {
@@ -220,25 +218,26 @@ describe("TS-WORKFLOWS: workflows/create.mdx snippets", () => {
   it(
     "TS-WORKFLOWS-007: List navigation",
     async () => {
-      const schemaName = "Test Schema - TS-WORKFLOWS-007";
       const workflowName = "Product Catalog Monitor";
-      await deleteSchemaByName(schemaName, client);
       await deleteWorkflowByName(workflowName, client);
 
       // Setup: create schema
-      const schema = await client.schema.createSchema({
-        name: schemaName,
-        entity: "Product",
-        fields: [
-          {
-            name: "title",
-            description: "Product name",
-            fieldType: "SCHEMA",
-            dataType: "STRING",
-            example: "Sample Product",
-          },
-        ],
-      });
+      const { schemaId } = await seedSchema(
+        {
+          name: "Test Schema - TS-SCHEMAS-005",
+          entity: "Product",
+          fields: [
+            {
+              name: "title",
+              description: "Product name",
+              fieldType: "SCHEMA",
+              dataType: "STRING",
+              example: "Sample Product",
+            },
+          ],
+        },
+        client,
+      );
 
       // @docs-start TS-WORKFLOWS-007
       const workflow = await client
@@ -246,7 +245,7 @@ describe("TS-WORKFLOWS: workflows/create.mdx snippets", () => {
           urls: ["https://sandbox.kadoa.com/ecommerce"],
           name: "Product Catalog Monitor",
           navigationMode: "paginated-page",
-          extraction: () => ({ schemaId: schema.id }),
+          extraction: () => ({ schemaId }),
         })
         .setInterval({ interval: "HOURLY" })
         .create();
@@ -260,10 +259,9 @@ describe("TS-WORKFLOWS: workflows/create.mdx snippets", () => {
       expect(workflow.workflowId).toBeDefined();
       expect(response.data).toBeDefined();
 
-      // Cleanup
+      // Cleanup: workflow first (schema can't be deleted while in use)
       if (workflow.workflowId)
         await client.workflow.delete(workflow.workflowId);
-      if (schema.id) await client.schema.deleteSchema(schema.id);
     },
     { timeout: 300000 },
   );
@@ -532,13 +530,13 @@ describe("TS-WORKFLOWS: workflows/create.mdx snippets", () => {
   it(
     "TS-WORKFLOWS-015: Manual execution and status",
     async () => {
-      if (!sharedWorkflowId) throw new Error("Fixture workflow not created");
+      if (!workflowId) throw new Error("Fixture workflow not created");
 
       // @docs-start TS-WORKFLOWS-015
-      const workflow = await client.workflow.get(sharedWorkflowId);
+      const workflow = await client.workflow.get(workflowId);
       console.log(`Current workflows state: ${workflow.displayState}`);
 
-      const result = await client.workflow.runWorkflow(sharedWorkflowId, {
+      const result = await client.workflow.runWorkflow(workflowId, {
         limit: 10,
       });
       console.log(`Workflow scheduled with runId: ${result.jobId}`);
