@@ -71,20 +71,16 @@ async def _check_for_updates_async() -> None:
 
 def check_for_updates() -> None:
     """Check for updates in the background (non-blocking).
-    
+
     This function schedules the version check to run asynchronously
     without blocking the client initialization.
     """
     try:
-        loop = asyncio.get_event_loop()
-        if loop.is_running():
-            # If loop is already running, schedule as a task
-            asyncio.create_task(_check_for_updates_async())
-        else:
-            # If no loop is running, run until complete
-            loop.run_until_complete(_check_for_updates_async())
+        loop = asyncio.get_running_loop()
+        # If loop is already running, schedule as a task
+        asyncio.create_task(_check_for_updates_async())
     except RuntimeError:
-        # No event loop available, create a new one
+        # No event loop running, create a new one
         try:
             asyncio.run(_check_for_updates_async())
         except Exception:

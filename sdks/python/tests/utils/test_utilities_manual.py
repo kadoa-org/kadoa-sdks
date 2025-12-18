@@ -43,7 +43,7 @@ TEST_CHANNEL_NAME = "test-util-channel-manual"
 TEST_RULE_NAME = "test-util-rule-manual"
 
 
-class TestResult:
+class ManualTestResult:
     def __init__(self, name: str):
         self.name = name
         self.passed = False
@@ -92,9 +92,9 @@ def delete_rule(client: KadoaClient, workflow_id: str, rule_id: str) -> None:
 # =============================================================================
 
 
-def test_delete_workflow_by_name_exists(client: KadoaClient) -> TestResult:
+def check_delete_workflow_by_name_exists(client: KadoaClient) -> ManualTestResult:
     """Test deleting a workflow that exists."""
-    result = TestResult("delete_workflow_by_name (exists)")
+    result = ManualTestResult("delete_workflow_by_name (exists)")
     name = f"{TEST_WORKFLOW_NAME}-delete-exists"
 
     try:
@@ -133,9 +133,9 @@ def test_delete_workflow_by_name_exists(client: KadoaClient) -> TestResult:
     return result
 
 
-def test_delete_workflow_by_name_not_exists(client: KadoaClient) -> TestResult:
+def check_delete_workflow_by_name_not_exists(client: KadoaClient) -> ManualTestResult:
     """Test deleting a workflow that doesn't exist."""
-    result = TestResult("delete_workflow_by_name (not exists)")
+    result = ManualTestResult("delete_workflow_by_name (not exists)")
     name = f"{TEST_WORKFLOW_NAME}-not-exists-xyz123"
 
     try:
@@ -150,9 +150,9 @@ def test_delete_workflow_by_name_not_exists(client: KadoaClient) -> TestResult:
     return result
 
 
-def test_delete_schema_by_name_exists(client: KadoaClient) -> TestResult:
+def check_delete_schema_by_name_exists(client: KadoaClient) -> ManualTestResult:
     """Test deleting a schema that exists."""
-    result = TestResult("delete_schema_by_name (exists)")
+    result = ManualTestResult("delete_schema_by_name (exists)")
     name = f"{TEST_SCHEMA_NAME}-delete-exists"
 
     try:
@@ -193,9 +193,9 @@ def test_delete_schema_by_name_exists(client: KadoaClient) -> TestResult:
     return result
 
 
-def test_delete_schema_by_name_not_exists(client: KadoaClient) -> TestResult:
+def check_delete_schema_by_name_not_exists(client: KadoaClient) -> ManualTestResult:
     """Test deleting a schema that doesn't exist."""
-    result = TestResult("delete_schema_by_name (not exists)")
+    result = ManualTestResult("delete_schema_by_name (not exists)")
     name = f"{TEST_SCHEMA_NAME}-not-exists-xyz123"
 
     try:
@@ -210,9 +210,9 @@ def test_delete_schema_by_name_not_exists(client: KadoaClient) -> TestResult:
     return result
 
 
-def test_delete_channel_by_name_not_exists(client: KadoaClient) -> TestResult:
+def check_delete_channel_by_name_not_exists(client: KadoaClient) -> ManualTestResult:
     """Test deleting a channel that doesn't exist."""
-    result = TestResult("delete_channel_by_name (not exists)")
+    result = ManualTestResult("delete_channel_by_name (not exists)")
     name = f"{TEST_CHANNEL_NAME}-not-exists-xyz123"
 
     try:
@@ -232,9 +232,9 @@ def test_delete_channel_by_name_not_exists(client: KadoaClient) -> TestResult:
 # =============================================================================
 
 
-def test_seed_workflow_new(client: KadoaClient) -> TestResult:
+def check_seed_workflow_new(client: KadoaClient) -> ManualTestResult:
     """Test seeding a new workflow."""
-    result = TestResult("seed_workflow (new)")
+    result = ManualTestResult("seed_workflow (new)")
     name = f"{TEST_WORKFLOW_NAME}-seed-new"
 
     try:
@@ -260,9 +260,9 @@ def test_seed_workflow_new(client: KadoaClient) -> TestResult:
     return result
 
 
-def test_seed_workflow_existing(client: KadoaClient) -> TestResult:
+def check_seed_workflow_existing(client: KadoaClient) -> ManualTestResult:
     """Test seeding an existing workflow (should reuse)."""
-    result = TestResult("seed_workflow (existing)")
+    result = ManualTestResult("seed_workflow (existing)")
     name = f"{TEST_WORKFLOW_NAME}-seed-existing"
 
     try:
@@ -296,9 +296,9 @@ def test_seed_workflow_existing(client: KadoaClient) -> TestResult:
     return result
 
 
-def test_seed_workflow_with_job(client: KadoaClient) -> TestResult:
+def check_seed_workflow_with_job(client: KadoaClient) -> ManualTestResult:
     """Test seeding a workflow with run_job=True."""
-    result = TestResult("seed_workflow (with job)")
+    result = ManualTestResult("seed_workflow (with job)")
     name = f"{TEST_WORKFLOW_NAME}-seed-job"
 
     try:
@@ -331,9 +331,9 @@ def test_seed_workflow_with_job(client: KadoaClient) -> TestResult:
     return result
 
 
-def test_seed_rule_new(client: KadoaClient) -> TestResult:
+def check_seed_rule_new(client: KadoaClient) -> ManualTestResult:
     """Test seeding a new rule."""
-    result = TestResult("seed_rule (new)")
+    result = ManualTestResult("seed_rule (new)")
     workflow_name = f"{TEST_WORKFLOW_NAME}-rule-test"
     rule_name = f"{TEST_RULE_NAME}-new"
     workflow_id = None
@@ -376,9 +376,9 @@ def test_seed_rule_new(client: KadoaClient) -> TestResult:
     return result
 
 
-def test_seed_rule_existing(client: KadoaClient) -> TestResult:
+def check_seed_rule_existing(client: KadoaClient) -> ManualTestResult:
     """Test seeding an existing rule (should reuse)."""
-    result = TestResult("seed_rule (existing)")
+    result = ManualTestResult("seed_rule (existing)")
     workflow_name = f"{TEST_WORKFLOW_NAME}-rule-reuse"
     rule_name = f"{TEST_RULE_NAME}-existing"
     workflow_id = None
@@ -443,9 +443,9 @@ def test_seed_rule_existing(client: KadoaClient) -> TestResult:
     return result
 
 
-def test_seed_validation(client: KadoaClient) -> TestResult:
+def check_seed_validation(client: KadoaClient) -> ManualTestResult:
     """Test seeding a validation."""
-    result = TestResult("seed_validation")
+    result = ManualTestResult("seed_validation")
     workflow_name = f"{TEST_WORKFLOW_NAME}-validation-test"
     rule_name = f"{TEST_RULE_NAME}-validation"
     workflow_id = None
@@ -497,9 +497,9 @@ def test_seed_validation(client: KadoaClient) -> TestResult:
 # =============================================================================
 
 
-def test_shared_workflow_fixture(client: KadoaClient) -> TestResult:
+def check_shared_workflow_fixture(client: KadoaClient) -> ManualTestResult:
     """Test get_shared_workflow_fixture."""
-    result = TestResult("get_shared_workflow_fixture")
+    result = ManualTestResult("get_shared_workflow_fixture")
 
     try:
         # Clear cache first
@@ -528,9 +528,9 @@ def test_shared_workflow_fixture(client: KadoaClient) -> TestResult:
     return result
 
 
-def test_shared_validation_fixture(client: KadoaClient) -> TestResult:
+def check_shared_validation_fixture(client: KadoaClient) -> ManualTestResult:
     """Test get_shared_validation_fixture."""
-    result = TestResult("get_shared_validation_fixture")
+    result = ManualTestResult("get_shared_validation_fixture")
 
     try:
         # Clear cache first
@@ -561,9 +561,9 @@ def test_shared_validation_fixture(client: KadoaClient) -> TestResult:
     return result
 
 
-def test_docs_workflow_fixture(client: KadoaClient) -> TestResult:
+def check_docs_workflow_fixture(client: KadoaClient) -> ManualTestResult:
     """Test get_docs_workflow_fixture."""
-    result = TestResult("get_docs_workflow_fixture")
+    result = ManualTestResult("get_docs_workflow_fixture")
 
     try:
         # Clear cache first
@@ -595,7 +595,7 @@ def test_docs_workflow_fixture(client: KadoaClient) -> TestResult:
 # =============================================================================
 
 
-def run_tests(test_funcs: list, client: KadoaClient) -> list[TestResult]:
+def run_tests(test_funcs: list, client: KadoaClient) -> list[ManualTestResult]:
     """Run a list of test functions."""
     results = []
     for test_func in test_funcs:
@@ -613,37 +613,37 @@ def main() -> int:
     print_header("Test Utilities Manual Test")
     client = create_test_client()
 
-    all_results: list[TestResult] = []
+    all_results: list[ManualTestResult] = []
 
     # Cleanup Helper Tests
     print_header("1. Cleanup Helper Tests")
     cleanup_tests = [
-        test_delete_workflow_by_name_exists,
-        test_delete_workflow_by_name_not_exists,
-        test_delete_schema_by_name_exists,
-        test_delete_schema_by_name_not_exists,
-        test_delete_channel_by_name_not_exists,
+        check_delete_workflow_by_name_exists,
+        check_delete_workflow_by_name_not_exists,
+        check_delete_schema_by_name_exists,
+        check_delete_schema_by_name_not_exists,
+        check_delete_channel_by_name_not_exists,
     ]
     all_results.extend(run_tests(cleanup_tests, client))
 
     # Seeder Tests
     print_header("2. Seeder Tests")
     seeder_tests = [
-        test_seed_workflow_new,
-        test_seed_workflow_existing,
-        test_seed_workflow_with_job,
-        test_seed_rule_new,
-        test_seed_rule_existing,
-        test_seed_validation,
+        check_seed_workflow_new,
+        check_seed_workflow_existing,
+        check_seed_workflow_with_job,
+        check_seed_rule_new,
+        check_seed_rule_existing,
+        check_seed_validation,
     ]
     all_results.extend(run_tests(seeder_tests, client))
 
     # Shared Fixture Tests
     print_header("3. Shared Fixture Tests")
     fixture_tests = [
-        test_shared_workflow_fixture,
-        test_shared_validation_fixture,
-        test_docs_workflow_fixture,
+        check_shared_workflow_fixture,
+        check_shared_validation_fixture,
+        check_docs_workflow_fixture,
     ]
     all_results.extend(run_tests(fixture_tests, client))
 
