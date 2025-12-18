@@ -1,11 +1,7 @@
 import type { AxiosInstance } from "axios";
 import axios, { AxiosError } from "axios";
 import { v4 } from "uuid";
-import {
-  Configuration,
-  NotificationsApi,
-  WorkflowsApi,
-} from "../domains/apis.acl";
+import { type CrawlerDomain, createCrawlerDomain } from "../domains/crawler";
 import { DataFetcherService } from "../domains/extraction/services/data-fetcher.service";
 import { EntityResolverService } from "../domains/extraction/services/entity-resolver.service";
 import { ExtractionService } from "../domains/extraction/services/extraction.service";
@@ -25,15 +21,12 @@ import {
   createValidationDomain,
   type ValidationDomain,
 } from "../domains/validation/validation.facade";
-import {
-  createCrawlerDomain,
-  type CrawlerDomain,
-} from "../domains/crawler";
 import { ValidationCoreService } from "../domains/validation/validation-core.service";
 import { ValidationRulesService } from "../domains/validation/validation-rules.service";
 import { WorkflowsCoreService } from "../domains/workflows/workflows-core.service";
 import { KadoaHttpException } from "../runtime/exceptions";
 import { SDK_LANGUAGE, SDK_NAME, SDK_VERSION } from "../version";
+import type { NotificationsApi } from "./apis.acl";
 import type { KadoaClient } from "./kadoa-client";
 import type {
   NotificationDomain,
@@ -80,45 +73,7 @@ export function createAxiosInstance(params: {
   return axiosInstance;
 }
 
-export function createOpenApiConfiguration(params: {
-  apiKey: string;
-  baseUrl: string;
-  headers: Record<string, string>;
-}): Configuration {
-  return new Configuration({
-    apiKey: params.apiKey,
-    basePath: params.baseUrl,
-    baseOptions: {
-      headers: params.headers,
-    },
-  });
-}
-
-export function createApis(params: {
-  configuration: Configuration;
-  baseUrl: string;
-  axiosInstance: AxiosInstance;
-}): {
-  workflowsApi: WorkflowsApi;
-  notificationsApi: NotificationsApi;
-} {
-  const workflowsApi = new WorkflowsApi(
-    params.configuration,
-    params.baseUrl,
-    params.axiosInstance,
-  );
-  const notificationsApi = new NotificationsApi(
-    params.configuration,
-    params.baseUrl,
-    params.axiosInstance,
-  );
-  return { workflowsApi, notificationsApi };
-}
-
-export function createClientDomains(params: {
-  client: KadoaClient;
-  apis: ReturnType<typeof createApis>;
-}): {
+export function createClientDomains(params: { client: KadoaClient }): {
   extractionBuilderService: ExtractionBuilderService;
   extraction: ExtractionService;
   workflow: WorkflowsCoreService;
@@ -128,19 +83,19 @@ export function createClientDomains(params: {
   validation: ValidationDomain;
   crawler: CrawlerDomain;
 } {
-  const { client, apis } = params;
+  const { client } = params;
 
   const userService = new UserService(client);
-  const dataFetcherService = new DataFetcherService(apis.workflowsApi);
+  const dataFetcherService = new DataFetcherService(client.apis.workflows);
   const channelsService = new NotificationChannelsService(
-    apis.notificationsApi,
+    client.apis.notifications,
     userService,
   );
   const settingsService = new NotificationSettingsService(
-    apis.notificationsApi,
+    client.apis.notifications,
   );
   const entityResolverService = new EntityResolverService(client);
-  const workflowsCoreService = new WorkflowsCoreService(apis.workflowsApi);
+  const workflowsCoreService = new WorkflowsCoreService(client.apis.workflows);
   const schemasService = new SchemasService(client);
   const channelSetupService = new NotificationSetupService(
     channelsService,
@@ -166,7 +121,7 @@ export function createClientDomains(params: {
   );
 
   const notification = createNotificationDomain({
-    notificationsApi: apis.notificationsApi,
+    notificationsApi: client.apis.notifications,
     channelsService,
     settingsService,
     channelSetupService,

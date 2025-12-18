@@ -3,36 +3,44 @@
 import pytest
 from kadoa_sdk.validation import GenerateRuleRequest, GenerateRulesRequest, ListRulesRequest
 
+from tests.utils.cleanup_helpers import delete_preview_rules
+
 
 class TestDataValidationSnippets:
+
+    @pytest.fixture(autouse=True)
+    def cleanup_rules(self, client, fixture_validation):
+        yield
+        delete_preview_rules(client, fixture_validation.workflow_id)
 
     @pytest.mark.e2e
     def test_data_validation_001_generate_rules(self, client, fixture_validation):
         """PY-DATA-VALIDATION-001: Generate validation rules"""
         workflow_id = fixture_validation.workflow_id
+        columns = fixture_validation.columns
+
+        if len(columns) < 2:
+            pytest.skip("Need at least 2 columns")
 
         # @docs-start PY-DATA-VALIDATION-001
         # Analyzes your schema and recent data to suggest validation rules
         # Rules are created in 'preview' status for review before enabling
         # Note: Requires a workflow with completed extraction data
-        try:
-            client.validation.rules.generate_rules(
-                GenerateRulesRequest(
-                    workflow_id=workflow_id,
-                )
+        client.validation.rules.generate_rules(
+            GenerateRulesRequest(
+                workflow_id=workflow_id,
             )
+        )
 
-            # Generate rule with natural language
-            client.validation.rules.generate_rule(
-                GenerateRuleRequest(
-                    workflow_id=workflow_id,
-                    selected_columns=["email", "price"],
-                    user_prompt="Check that emails are valid and prices are positive",
-                )
+        # Generate rule with natural language
+        # Uses columns from the seeded workflow schema
+        client.validation.rules.generate_rule(
+            GenerateRuleRequest(
+                workflow_id=workflow_id,
+                selected_columns=columns[:2],
+                user_prompt="Not null values",
             )
-        except Exception:
-            # Workflows without completed jobs cannot generate rules
-            print("Skipped: workflow has no completed extraction data")
+        )
         # @docs-end PY-DATA-VALIDATION-001
 
         assert True

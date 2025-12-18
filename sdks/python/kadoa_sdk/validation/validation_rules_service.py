@@ -198,21 +198,27 @@ class ValidationRulesService:
                     message="Failed to get validation rule by name",
                 )
 
-            rules_data = (
-                response.data.data
-                if hasattr(response, "data") and hasattr(response.data, "data")
-                else []
-            )
+            # response.data is the ListRulesResponse which contains data
+            # But list_rules already extracts response.data, so handle both cases
+            rules_data = []
+            if hasattr(response, "data"):
+                if hasattr(response.data, "data"):
+                    rules_data = response.data.data or []
+                elif isinstance(response.data, list):
+                    rules_data = response.data
+            elif isinstance(response, list):
+                rules_data = response
 
             if rules_data:
                 from openapi_client.models.rule import Rule as GeneratedRule
+
                 for rule in rules_data:
                     rule_name = None
                     if hasattr(rule, "name"):
                         rule_name = rule.name
                     elif isinstance(rule, dict):
                         rule_name = rule.get("name")
-                    
+
                     if rule_name == name:
                         if isinstance(rule, GeneratedRule):
                             return Rule.from_generated(rule)

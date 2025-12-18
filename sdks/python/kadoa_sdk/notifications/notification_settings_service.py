@@ -16,6 +16,7 @@ from .notifications_acl import (
     NotificationSettingsEventType,
     NotificationSettingsEventTypeEnum,
     V5NotificationsSettingsPostRequest,
+    V5NotificationsSettingsSettingsIdPutRequest,
 )
 
 
@@ -107,6 +108,63 @@ class NotificationSettingsService:
             List of event type strings
         """
         return list(NotificationSettingsEventTypeEnum)
+
+    def update_settings(
+        self,
+        settings_id: str,
+        *,
+        channel_ids: Optional[list[str]] = None,
+        enabled: Optional[bool] = None,
+        event_type: Optional[NotificationSettingsEventType] = None,
+        event_configuration: Optional[dict] = None,
+    ) -> NotificationSettings:
+        """Update notification settings
+
+        Args:
+            settings_id: ID of the settings to update
+            channel_ids: Array of channel IDs to link to this settings
+            enabled: Whether the settings are enabled
+            event_type: Event type for the settings
+            event_configuration: Event-specific configuration
+
+        Returns:
+            Updated notification settings
+
+        Raises:
+            KadoaHttpError: If API request fails
+        """
+        request_data = {}
+        if channel_ids is not None:
+            request_data["channel_ids"] = channel_ids
+        if enabled is not None:
+            request_data["enabled"] = enabled
+        if event_type is not None:
+            request_data["event_type"] = event_type
+        if event_configuration is not None:
+            request_data["event_configuration"] = event_configuration
+
+        request = V5NotificationsSettingsSettingsIdPutRequest(**request_data)
+
+        try:
+            response = self._api.v5_notifications_settings_settings_id_put(
+                settings_id=settings_id,
+                v5_notifications_settings_settings_id_put_request=request,
+            )
+
+            if not response.data or not response.data.settings:
+                raise KadoaHttpError.wrap(
+                    Exception("No settings in response"),
+                    message="Failed to update notification settings",
+                )
+
+            return response.data.settings
+        except Exception as error:
+            if isinstance(error, KadoaHttpError):
+                raise
+            raise KadoaHttpError.wrap(
+                error,
+                message="Failed to update notification settings",
+            )
 
     def delete_settings(self, settings_id: str) -> None:
         """Delete notification settings

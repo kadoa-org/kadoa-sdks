@@ -1,6 +1,5 @@
 import type { KadoaClient } from "../../kadoa-client";
 import {
-  CrawlerApi,
   type CrawlerSession,
   type GetAllDataOptions,
   type GetPageOptions,
@@ -17,19 +16,10 @@ import {
 } from "./crawler.acl";
 
 export class CrawlerSessionService {
-  private _api: CrawlerApi | null = null;
-
   constructor(private readonly client: KadoaClient) {}
 
-  private get api(): CrawlerApi {
-    if (!this._api) {
-      this._api = new CrawlerApi(
-        this.client.configuration,
-        this.client.baseUrl,
-        this.client.axiosInstance,
-      );
-    }
-    return this._api;
+  private get api() {
+    return this.client.apis.crawler;
   }
 
   async start(body: StartCrawlRequest): Promise<StartSessionResult> {

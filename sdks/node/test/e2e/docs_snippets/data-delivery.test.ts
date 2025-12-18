@@ -10,12 +10,12 @@ import { getSharedWorkflowFixture } from "../../utils/shared-fixtures";
 
 describe("TS-DATA-DELIVERY: data-delivery/sdk.mdx snippets", () => {
   let client: KadoaClient;
-  let sharedWorkflowId: string;
+  let workflowId: string;
 
   beforeAll(async () => {
     client = new KadoaClient({ apiKey: getTestEnv().KADOA_API_KEY });
     const fixture = await getSharedWorkflowFixture(client);
-    sharedWorkflowId = fixture.workflowId;
+    workflowId = fixture.workflowId;
   }, 120000);
 
   afterAll(() => {
@@ -49,12 +49,12 @@ describe("TS-DATA-DELIVERY: data-delivery/sdk.mdx snippets", () => {
   );
 
   it("TS-DATA-DELIVERY-002: Fetch data simple", async () => {
-    if (!sharedWorkflowId) throw new Error("Fixture workflow not created");
+    if (!workflowId) throw new Error("Fixture workflow not created");
 
     // @docs-start TS-DATA-DELIVERY-002
     // Simplest way to fetch workflow data
     const data = await client.extraction.fetchData({
-      workflowId: sharedWorkflowId,
+      workflowId: workflowId,
     });
     console.log(data.data);
     // @docs-end TS-DATA-DELIVERY-002
@@ -63,11 +63,11 @@ describe("TS-DATA-DELIVERY: data-delivery/sdk.mdx snippets", () => {
   });
 
   it("TS-DATA-DELIVERY-003: Fetch data with options", async () => {
-    if (!sharedWorkflowId) throw new Error("Fixture workflow not created");
+    if (!workflowId) throw new Error("Fixture workflow not created");
 
     // @docs-start TS-DATA-DELIVERY-003
     const data = await client.extraction.fetchData({
-      workflowId: sharedWorkflowId,
+      workflowId: workflowId,
       page: 1,
       limit: 10,
     });
@@ -83,12 +83,12 @@ describe("TS-DATA-DELIVERY: data-delivery/sdk.mdx snippets", () => {
   it(
     "TS-DATA-DELIVERY-004: Pagination",
     async () => {
-      if (!sharedWorkflowId) throw new Error("Fixture workflow not created");
+      if (!workflowId) throw new Error("Fixture workflow not created");
 
       // @docs-start TS-DATA-DELIVERY-004
       // Option 1: Iterate page by page
       for await (const page of client.extraction.fetchDataPages({
-        workflowId: sharedWorkflowId,
+        workflowId: workflowId,
       })) {
         console.log("Page data:", page.data);
         console.log("Page number:", page.pagination.page);
@@ -96,7 +96,7 @@ describe("TS-DATA-DELIVERY: data-delivery/sdk.mdx snippets", () => {
 
       // Option 2: Get everything at once
       const allData = await client.extraction.fetchAllData({
-        workflowId: sharedWorkflowId,
+        workflowId: workflowId,
       });
       console.log("All data:", allData);
       // @docs-end TS-DATA-DELIVERY-004

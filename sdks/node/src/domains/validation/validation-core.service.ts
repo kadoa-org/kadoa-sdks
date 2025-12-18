@@ -6,7 +6,6 @@ import {
 } from "../../runtime/exceptions";
 import { type PollingOptions, pollUntil } from "../../runtime/utils";
 import {
-  DataValidationApi,
   type GetAnomaliesByRuleResponse,
   type GetAnomalyRulePageResponse,
   type GetValidationResponse,
@@ -17,14 +16,10 @@ import {
 } from "./validation.acl";
 
 export class ValidationCoreService {
-  private readonly validationApi: DataValidationApi;
+  constructor(private readonly client: KadoaClient) {}
 
-  constructor(client: KadoaClient) {
-    this.validationApi = new DataValidationApi(
-      client.configuration,
-      client.baseUrl,
-      client.axiosInstance,
-    );
+  private get validationApi() {
+    return this.client.apis.validation;
   }
 
   async listWorkflowValidations(
@@ -175,6 +170,9 @@ export class ValidationCoreService {
     validationId: string,
     options?: PollingOptions,
   ): Promise<GetValidationResponse> {
+    // Initial delay to allow validation record creation after scheduling
+    await new Promise((resolve) => setTimeout(resolve, 1000));
+
     const result = await pollUntil(
       async () => {
         const current = await this.getValidationDetails(validationId);

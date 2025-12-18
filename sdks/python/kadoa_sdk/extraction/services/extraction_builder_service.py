@@ -580,6 +580,7 @@ class ExtractionBuilderService:
                 fields=schema_fields,
                 location=location,
                 bypass_preview=bypass_preview,
+                auto_start=False,
                 tags=["sdk"],
                 additional_data=additional_data,
             )
@@ -600,6 +601,7 @@ class ExtractionBuilderService:
                 schema_id=schema_id,
                 location=location,
                 bypass_preview=bypass_preview,
+                auto_start=False,
                 tags=["sdk"],
                 additional_data=additional_data,
             )
@@ -620,6 +622,7 @@ class ExtractionBuilderService:
                 fields=schema_fields,
                 location=location,
                 bypass_preview=bypass_preview,
+                auto_start=False,
                 tags=["sdk"],
                 additional_data=additional_data,
             )
