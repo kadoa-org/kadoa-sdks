@@ -123,7 +123,8 @@ def get_shared_validation_fixture(client: "KadoaClient") -> SharedValidationFixt
 
     # Fetch schema columns for dynamic test assertions
     workflow = client.workflow.get(workflow_id)
-    schema = getattr(workflow, "schema", None) or []
+    # Pydantic renames 'schema' to 'var_schema' to avoid reserved word
+    schema = getattr(workflow, "var_schema", None) or []
     columns = [f.name for f in schema if getattr(f, "name", None)]
 
     if not columns:

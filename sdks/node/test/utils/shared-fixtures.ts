@@ -56,11 +56,13 @@ const FIXTURE_NAMES = {
 } as const;
 
 // ============================================================================
-// Singleton Cache
+// Singleton Cache (with promise locks to prevent race conditions)
 // ============================================================================
 
 let validationFixtureCache: SharedValidationFixture | null = null;
+let validationFixturePromise: Promise<SharedValidationFixture> | null = null;
 let workflowFixtureCache: SharedWorkflowFixture | null = null;
+let workflowFixturePromise: Promise<SharedWorkflowFixture> | null = null;
 
 // ============================================================================
 // Public API
@@ -70,7 +72,7 @@ let workflowFixtureCache: SharedWorkflowFixture | null = null;
  * Get shared validation fixture for read-only tests.
  *
  * Seeds workflow, rule, and validation once. Subsequent calls return cached fixture.
- * Safe for parallel test execution - all tests read from same fixture.
+ * Safe for parallel test execution - uses promise lock to prevent duplicate seeding.
  */
 export async function getSharedValidationFixture(
   client: KadoaClient,
@@ -80,55 +82,65 @@ export async function getSharedValidationFixture(
     return validationFixtureCache;
   }
 
-  console.log("[SharedFixture] Seeding validation fixture...");
-
-  const { workflowId, jobId } = await seedWorkflow(
-    { name: FIXTURE_NAMES.VALIDATION_WORKFLOW, runJob: true },
-    client,
-  );
-
-  if (!jobId) {
-    throw new Error("[SharedFixture] Failed to seed workflow with job");
+  // Use promise lock to prevent concurrent seeding
+  if (validationFixturePromise) {
+    console.log("[SharedFixture] Waiting for validation fixture seeding...");
+    return validationFixturePromise;
   }
 
-  const ruleId = await seedRule(
-    { name: FIXTURE_NAMES.VALIDATION_RULE, workflowId },
-    client,
-  );
+  validationFixturePromise = (async () => {
+    console.log("[SharedFixture] Seeding validation fixture...");
 
-  const validationId = await seedValidation({ workflowId, jobId }, client);
+    const { workflowId, jobId } = await seedWorkflow(
+      { name: FIXTURE_NAMES.VALIDATION_WORKFLOW, runJob: true },
+      client,
+    );
 
-  // Fetch schema columns for dynamic test assertions
-  const workflow = await client.workflow.get(workflowId);
-  const columns = (workflow.schema ?? [])
-    .map((field) => field.name)
-    .filter((name): name is string => !!name);
+    if (!jobId) {
+      throw new Error("[SharedFixture] Failed to seed workflow with job");
+    }
 
-  if (columns.length === 0) {
-    console.warn("[SharedFixture] No schema columns found for workflow");
-  }
+    const ruleId = await seedRule(
+      { name: FIXTURE_NAMES.VALIDATION_RULE, workflowId },
+      client,
+    );
 
-  validationFixtureCache = {
-    workflowId,
-    jobId,
-    ruleId,
-    ruleName: FIXTURE_NAMES.VALIDATION_RULE,
-    validationId,
-    columns,
-  };
+    const validationId = await seedValidation({ workflowId, jobId }, client);
 
-  console.log(
-    "[SharedFixture] Validation fixture ready:",
-    validationFixtureCache,
-  );
-  return validationFixtureCache;
+    // Fetch schema columns for dynamic test assertions
+    const workflow = await client.workflow.get(workflowId);
+    const columns = (workflow.schema ?? [])
+      .map((field) => field.name)
+      .filter((name): name is string => !!name);
+
+    if (columns.length === 0) {
+      console.warn("[SharedFixture] No schema columns found for workflow");
+    }
+
+    validationFixtureCache = {
+      workflowId,
+      jobId,
+      ruleId,
+      ruleName: FIXTURE_NAMES.VALIDATION_RULE,
+      validationId,
+      columns,
+    };
+
+    console.log(
+      "[SharedFixture] Validation fixture ready:",
+      validationFixtureCache,
+    );
+    return validationFixtureCache;
+  })();
+
+  return validationFixturePromise;
 }
 
 /**
  * Get shared workflow fixture for read-only workflow tests.
  *
  * Seeds workflow once. Subsequent calls return cached fixture.
- * Use for tests that only read workflow data (get, list, getByName).
+ * Safe for parallel test execution - uses promise lock to prevent duplicate seeding.
  */
 export async function getSharedWorkflowFixture(
   client: KadoaClient,
@@ -139,17 +151,27 @@ export async function getSharedWorkflowFixture(
     return workflowFixtureCache;
   }
 
-  console.log("[SharedFixture] Seeding workflow fixture...");
+  // Use promise lock to prevent concurrent seeding
+  if (workflowFixturePromise) {
+    console.log("[SharedFixture] Waiting for workflow fixture seeding...");
+    return workflowFixturePromise;
+  }
 
-  const { workflowId, jobId } = await seedWorkflow(
-    { name: FIXTURE_NAMES.WORKFLOW_READ_ONLY, runJob: options?.runJob },
-    client,
-  );
+  workflowFixturePromise = (async () => {
+    console.log("[SharedFixture] Seeding workflow fixture...");
 
-  workflowFixtureCache = { workflowId, jobId };
+    const { workflowId, jobId } = await seedWorkflow(
+      { name: FIXTURE_NAMES.WORKFLOW_READ_ONLY, runJob: options?.runJob },
+      client,
+    );
 
-  console.log("[SharedFixture] Workflow fixture ready:", workflowFixtureCache);
-  return workflowFixtureCache;
+    workflowFixtureCache = { workflowId, jobId };
+
+    console.log("[SharedFixture] Workflow fixture ready:", workflowFixtureCache);
+    return workflowFixtureCache;
+  })();
+
+  return workflowFixturePromise;
 }
 
 /**
@@ -167,6 +189,8 @@ export async function getSharedWorkflowFixture(
  */
 export function clearFixtureCache(): void {
   validationFixtureCache = null;
+  validationFixturePromise = null;
   workflowFixtureCache = null;
+  workflowFixturePromise = null;
   console.log("[SharedFixture] Cache cleared");
 }

@@ -23,8 +23,8 @@ describe("TS-DATA-VALIDATION: data-validation.mdx snippets", () => {
   }, 120000);
 
   afterAll(async () => {
-    await deletePreviewRules(workflowId, client);
-    client.dispose?.();
+    if (workflowId) await deletePreviewRules(workflowId, client);
+    client?.dispose?.();
   });
 
   it(
