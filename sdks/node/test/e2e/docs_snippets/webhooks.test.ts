@@ -10,12 +10,12 @@ import { getSharedWorkflowFixture } from "../../utils/shared-fixtures";
 
 describe("TS-WEBHOOKS: data-delivery/webhooks.mdx snippets", () => {
   let client: KadoaClient;
-  let sharedWorkflowId: string;
+  let workflowId: string;
 
   beforeAll(async () => {
     client = new KadoaClient({ apiKey: getTestEnv().KADOA_API_KEY });
     const fixture = await getSharedWorkflowFixture(client);
-    sharedWorkflowId = fixture.workflowId;
+    workflowId = fixture.workflowId;
   }, 120000);
 
   afterAll(() => {
@@ -23,13 +23,13 @@ describe("TS-WEBHOOKS: data-delivery/webhooks.mdx snippets", () => {
   });
 
   it("TS-WEBHOOKS-001: Quick webhook setup", async () => {
-    if (!sharedWorkflowId) throw new Error("Fixture workflow not created");
+    if (!workflowId) throw new Error("Fixture workflow not created");
     const channelName = "api-integration";
     await deleteChannelByName(channelName, client);
 
     // @docs-start TS-WEBHOOKS-001
     await client.notification.setupForWorkflow({
-      workflowId: sharedWorkflowId,
+      workflowId: workflowId,
       events: ["workflow_data_change"],
       channels: {
         WEBHOOK: {

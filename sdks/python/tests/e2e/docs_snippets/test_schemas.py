@@ -14,6 +14,7 @@ from kadoa_sdk.schemas.schemas_acl import (
     UpdateSchemaRequest,
 )
 from tests.utils.cleanup_helpers import delete_schema_by_name, delete_workflow_by_name
+from tests.utils.seeder import seed_schema
 
 
 class TestSchemasSnippets:
@@ -183,46 +184,49 @@ class TestSchemasSnippets:
     @pytest.mark.timeout(300)
     def test_schemas_005_use_saved_schema(self, client):
         """PY-SCHEMAS-005: Use a saved schema"""
-        schema_name = "Product Schema - PY-SCHEMAS-005"
         workflow_name = "Product Extraction - PY-SCHEMAS-005"
-        delete_schema_by_name(client, schema_name)
         delete_workflow_by_name(client, workflow_name)
 
-        # Create schema first
-        fields = [
-            SchemaField(
-                actual_instance=DataField(
-                    name="title",
-                    description="Product name",
-                    fieldType="SCHEMA",
-                    dataType="STRING",
-                    example=FieldExample(actual_instance="iPhone 15 Pro"),
-                )
-            ),
-        ]
-        create_request = CreateSchemaRequest(name=schema_name, entity="Product", fields=fields)
-        schema = client.schema.create_schema(create_request)
+        # Setup: get or create schema (idempotent)
+        result = seed_schema(
+            {
+                "name": "Test Schema - PY-SCHEMAS-005",
+                "entity": "Product",
+                "fields": [
+                    {
+                        "name": "title",
+                        "description": "Product name",
+                        "fieldType": "SCHEMA",
+                        "dataType": "STRING",
+                        "example": "Sample Product",
+                    },
+                ],
+            },
+            client,
+        )
+        schema_id = result["schema_id"]
 
         # @docs-start PY-SCHEMAS-005
         extract_options = ExtractOptions(
             urls=["https://sandbox.kadoa.com/ecommerce"],
             name="Product Extraction - PY-SCHEMAS-005",
-            extraction=lambda _: {"schemaId": schema.id},
+            extraction=lambda _: {"schemaId": schema_id},
         )
 
         extraction = client.extract(extract_options).create()
 
-        result = extraction.run()
-        print("Extraction completed:", result)
+        run_result = extraction.run()
+        print("Extraction completed:", run_result)
         # @docs-end PY-SCHEMAS-005
 
         assert extraction.workflow_id is not None
 
-        # Cleanup
+        # Cleanup - only delete workflow, schema is managed by seeder
         if extraction.workflow_id:
-            client.workflow.delete(extraction.workflow_id)
-        if schema.id:
-            client.schema.delete_schema(schema.id)
+            try:
+                client.workflow.delete(extraction.workflow_id)
+            except Exception as e:
+                print(f"Warning: Failed to delete workflow: {e}")
 
     @pytest.mark.e2e
     @pytest.mark.timeout(120)

@@ -22,19 +22,19 @@ def clear_settings(client, workflow_id: str) -> None:
 class TestWebhooksSnippets:
 
     @pytest.mark.e2e
-    def test_webhooks_001_quick_setup(self, client, fixture_workflow_id):
+    def test_webhooks_001_quick_setup(self, client, workflow_id):
         """PY-WEBHOOKS-001: Quick webhook setup"""
-        if not fixture_workflow_id:
+        if not workflow_id:
             raise ValueError("Workflow ID is required")
 
         channel_name = "api-integration"
         delete_channel_by_name(client, channel_name)
-        clear_settings(client, fixture_workflow_id)
+        clear_settings(client, workflow_id)
 
         # @docs-start PY-WEBHOOKS-001
         client.notification.setup_for_workflow(
             SetupWorkflowNotificationSettingsRequest(
-                workflow_id=fixture_workflow_id,
+                workflow_id=workflow_id,
                 events=["workflow_data_change"],
                 channels={
                     "WEBHOOK": {

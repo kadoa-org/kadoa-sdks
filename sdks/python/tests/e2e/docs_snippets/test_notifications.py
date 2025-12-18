@@ -23,13 +23,13 @@ def clear_settings(client, workflow_id: str) -> None:
 class TestNotificationsSnippets:
 
     @pytest.mark.e2e
-    def test_notifications_001_setup_workflow(self, client, fixture_workflow_id):
+    def test_notifications_001_setup_workflow(self, client, workflow_id):
         """PY-NOTIFICATIONS-001: Setup workflow notifications"""
-        if not fixture_workflow_id:
+        if not workflow_id:
             raise ValueError("Workflow ID is required")
 
         # Clean env before test
-        clear_settings(client, fixture_workflow_id)
+        clear_settings(client, workflow_id)
         delete_channel_by_name(client, "team-notifications")
         delete_channel_by_name(client, "api-integration")
 
@@ -37,7 +37,7 @@ class TestNotificationsSnippets:
         # Email notifications
         client.notification.setup_for_workflow(
             SetupWorkflowNotificationSettingsRequest(
-                workflow_id=fixture_workflow_id,
+                workflow_id=workflow_id,
                 events=["workflow_finished", "workflow_failed"],
                 channels={"EMAIL": True},
             )
@@ -46,7 +46,7 @@ class TestNotificationsSnippets:
         # Custom email recipients
         client.notification.setup_for_workflow(
             SetupWorkflowNotificationSettingsRequest(
-                workflow_id=fixture_workflow_id,
+                workflow_id=workflow_id,
                 events=["workflow_finished"],
                 channels={
                     "EMAIL": {
@@ -60,7 +60,7 @@ class TestNotificationsSnippets:
         # Slack notifications
         client.notification.setup_for_workflow(
             SetupWorkflowNotificationSettingsRequest(
-                workflow_id=fixture_workflow_id,
+                workflow_id=workflow_id,
                 events=["workflow_failed"],
                 channels={
                     "SLACK": {
@@ -76,7 +76,7 @@ class TestNotificationsSnippets:
         # Webhook notifications
         client.notification.setup_for_workflow(
             SetupWorkflowNotificationSettingsRequest(
-                workflow_id=fixture_workflow_id,
+                workflow_id=workflow_id,
                 events=["workflow_finished"],
                 channels={
                     "WEBHOOK": {
@@ -92,7 +92,7 @@ class TestNotificationsSnippets:
         assert True
 
         # Cleanup
-        clear_settings(client, fixture_workflow_id)
+        clear_settings(client, workflow_id)
         delete_channel_by_name(client, "team-notifications")
         delete_channel_by_name(client, "api-integration")
 

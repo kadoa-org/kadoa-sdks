@@ -12,6 +12,7 @@ from kadoa_sdk.schemas.schemas_acl import (
     FieldExample,
 )
 from tests.utils.cleanup_helpers import delete_workflow_by_name, delete_schema_by_name
+from tests.utils.seeder import seed_schema
 
 
 class TestWorkflowsSnippets:
@@ -246,17 +247,27 @@ class TestWorkflowsSnippets:
     @pytest.mark.timeout(300)
     def test_workflows_007_list_navigation(self, client):
         """PY-WORKFLOWS-007: List navigation"""
-        schema_name = "Test Schema - PY-WORKFLOWS-007"
         workflow_name = "Product Catalog Monitor"
-        delete_schema_by_name(client, schema_name)
         delete_workflow_by_name(client, workflow_name)
 
-        # Setup: create schema first
-        schema = (
-            client.schema.builder("Product")
-            .field("title", "Product name", "STRING", FieldOptions(example="Sample Product"))
-            .create(schema_name)
+        # Setup: get or create schema (idempotent)
+        result = seed_schema(
+            {
+                "name": "Test Schema - TS-SCHEMAS-005",
+                "entity": "Product",
+                "fields": [
+                    {
+                        "name": "title",
+                        "description": "Product name",
+                        "fieldType": "SCHEMA",
+                        "dataType": "STRING",
+                        "example": "Sample Product",
+                    },
+                ],
+            },
+            client,
         )
+        schema_id = result["schema_id"]
 
         # @docs-start PY-WORKFLOWS-007
         workflow = (
@@ -265,7 +276,7 @@ class TestWorkflowsSnippets:
                     urls=["https://sandbox.kadoa.com/ecommerce"],
                     name="Product Catalog Monitor",
                     navigation_mode="paginated-page",
-                    extraction=lambda _: {"schemaId": schema.id},
+                    extraction=lambda _: {"schemaId": schema_id},
                 )
             )
             .set_interval({"interval": "HOURLY"})
@@ -273,19 +284,20 @@ class TestWorkflowsSnippets:
         )
 
         # Run the workflow
-        result = workflow.run(RunWorkflowOptions(limit=10))
-        response = result.fetch_data({})
+        run_result = workflow.run(RunWorkflowOptions(limit=10))
+        response = run_result.fetch_data({})
         print("Extracted items:", response.data)
         # @docs-end PY-WORKFLOWS-007
 
         assert workflow.workflow_id is not None
         assert response.data is not None
 
-        # Cleanup
+        # Cleanup - only delete workflow, schema is managed by seeder
         if workflow.workflow_id:
-            client.workflow.delete(workflow.workflow_id)
-        if schema.id:
-            client.schema.delete_schema(schema.id)
+            try:
+                client.workflow.delete(workflow.workflow_id)
+            except Exception as e:
+                print(f"Warning: Failed to delete workflow: {e}")
 
     @pytest.mark.e2e
     @pytest.mark.timeout(300)
@@ -611,17 +623,17 @@ class TestWorkflowsSnippets:
 
     @pytest.mark.e2e
     @pytest.mark.timeout(120)
-    def test_workflows_015_manual_execution(self, client, fixture_workflow_id):
+    def test_workflows_015_manual_execution(self, client, workflow_id):
         """PY-WORKFLOWS-015: Manual execution and status"""
-        if not fixture_workflow_id:
+        if not workflow_id:
             raise ValueError("Fixture workflow not created")
 
         # @docs-start PY-WORKFLOWS-015
-        workflow = client.workflow.get(fixture_workflow_id)
+        workflow = client.workflow.get(workflow_id)
         print(f"Current workflows state: {workflow.display_state}")
 
         result = client.workflow.run_workflow(
-            fixture_workflow_id,
+            workflow_id,
             input=RunWorkflowOptions(limit=10),
         )
         print(f"Workflow scheduled with runId: {result.job_id}")
