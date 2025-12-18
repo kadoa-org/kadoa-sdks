@@ -28,6 +28,9 @@ from openapi_client.models.v5_notifications_settings_get200_response_data_settin
 from openapi_client.models.v5_notifications_settings_post_request import (
     V5NotificationsSettingsPostRequest,
 )
+from openapi_client.models.v5_notifications_settings_settings_id_put_request import (
+    V5NotificationsSettingsSettingsIdPutRequest,
+)
 from openapi_client.models.webhook_channel_config import WebhookChannelConfig
 from openapi_client.models.webhook_channel_config_auth import WebhookChannelConfigAuth
 
@@ -127,6 +130,8 @@ V5NotificationsChannelsPostRequest = V5NotificationsChannelsPostRequest
 
 V5NotificationsSettingsPostRequest = V5NotificationsSettingsPostRequest
 
+V5NotificationsSettingsSettingsIdPutRequest = V5NotificationsSettingsSettingsIdPutRequest
+
 __all__ = [
     "NotificationsApi",
     "NotificationChannelType",
@@ -148,4 +153,5 @@ __all__ = [
     "ChannelConfig",
     "V5NotificationsChannelsPostRequest",
     "V5NotificationsSettingsPostRequest",
+    "V5NotificationsSettingsSettingsIdPutRequest",
 ]

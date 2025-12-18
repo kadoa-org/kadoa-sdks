@@ -23,7 +23,7 @@ def client():
 
 
 @pytest.fixture(scope="session")
-def fixture_workflow_id(client) -> str:
+def workflow_id(client) -> str:
     """Get shared workflow for docs tests."""
     return get_docs_workflow_fixture(client)
 

@@ -611,17 +611,17 @@ class TestWorkflowsSnippets:
 
     @pytest.mark.e2e
     @pytest.mark.timeout(120)
-    def test_workflows_015_manual_execution(self, client, fixture_workflow_id):
+    def test_workflows_015_manual_execution(self, client, workflow_id):
         """PY-WORKFLOWS-015: Manual execution and status"""
-        if not fixture_workflow_id:
+        if not workflow_id:
             raise ValueError("Fixture workflow not created")
 
         # @docs-start PY-WORKFLOWS-015
-        workflow = client.workflow.get(fixture_workflow_id)
+        workflow = client.workflow.get(workflow_id)
         print(f"Current workflows state: {workflow.display_state}")
 
         result = client.workflow.run_workflow(
-            fixture_workflow_id,
+            workflow_id,
             input=RunWorkflowOptions(limit=10),
         )
         print(f"Workflow scheduled with runId: {result.job_id}")

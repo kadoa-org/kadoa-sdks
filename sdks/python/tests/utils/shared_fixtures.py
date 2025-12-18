@@ -43,6 +43,7 @@ class SharedValidationFixture:
     rule_id: str
     rule_name: str
     validation_id: str
+    columns: list[str]
 
 
 @dataclass
@@ -120,12 +121,21 @@ def get_shared_validation_fixture(client: "KadoaClient") -> SharedValidationFixt
 
     validation_id = seed_validation(workflow_id, job_id, client)
 
+    # Fetch schema columns for dynamic test assertions
+    workflow = client.workflow.get(workflow_id)
+    schema = getattr(workflow, "schema", None) or []
+    columns = [f.name for f in schema if getattr(f, "name", None)]
+
+    if not columns:
+        print("[SharedFixture] No schema columns found for workflow")
+
     _validation_fixture_cache = SharedValidationFixture(
         workflow_id=workflow_id,
         job_id=job_id,
         rule_id=rule_id,
         rule_name=FIXTURE_NAMES["VALIDATION_RULE"],
         validation_id=validation_id,
+        columns=columns,
     )
 
     print(f"[SharedFixture] Validation fixture ready: {_validation_fixture_cache}")

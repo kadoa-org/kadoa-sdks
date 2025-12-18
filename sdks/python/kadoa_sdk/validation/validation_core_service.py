@@ -409,6 +409,11 @@ class ValidationCoreService:
         Raises:
             KadoaSdkError: If validation fails or timeout occurs
         """
+        import time
+
+        # Initial delay to allow validation record creation after scheduling
+        time.sleep(1)
+
         options = PollingOptions(poll_interval_ms=poll_interval_ms, timeout_ms=timeout_ms)
 
         def poll_fn() -> GetValidationResponse:

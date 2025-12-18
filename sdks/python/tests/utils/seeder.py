@@ -1,6 +1,5 @@
 """Seeder utilities for E2E tests."""
 
-import time
 from typing import TYPE_CHECKING, Optional
 
 if TYPE_CHECKING:  # pragma: no cover
@@ -223,10 +222,7 @@ def seed_validation(
         )
     )
 
-    # Wait for validation record to be created before polling
-    time.sleep(2)
-
-    # Wait for validation to complete (like Node.js SDK)
+    # Wait for validation to complete
     client.validation.wait_until_completed(
         validation_id,
         poll_interval_ms=2000,
