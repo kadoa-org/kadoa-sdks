@@ -1,5 +1,18 @@
 # Changelog
 
+## [0.18.0](https://github.com/kadoa-org/kadoa-sdks/compare/python-sdk-v0.17.3...python-sdk-v0.18.0) (2025-12-18)
+
+
+### Features
+
+* **node-sdk,python-sdk:** add crawler domain ([#192](https://github.com/kadoa-org/kadoa-sdks/issues/192)) ([fd26160](https://github.com/kadoa-org/kadoa-sdks/commit/fd2616055dcd9aa85ed3a8dbef996033cb9b5939))
+* **node-sdk,python-sdk:** add type-safe schema field validation ([#188](https://github.com/kadoa-org/kadoa-sdks/issues/188)) ([2e81764](https://github.com/kadoa-org/kadoa-sdks/commit/2e81764fd2fd39fb1e5e1a0be2049729aa9c0e25))
+
+
+### Bug Fixes
+
+* improve test isolation and sync Python SDK with Node.js ([#195](https://github.com/kadoa-org/kadoa-sdks/issues/195)) ([a12867e](https://github.com/kadoa-org/kadoa-sdks/commit/a12867ece56393331f22ed9c1dcd744070a9144e))
+
 ## [0.17.3](https://github.com/kadoa-org/kadoa-sdks/compare/python-sdk-v0.17.2...python-sdk-v0.17.3) (2025-11-24)
 
 
