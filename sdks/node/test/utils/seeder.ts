@@ -1,4 +1,22 @@
 import type { KadoaClient } from "../../src";
+import type { CreateSchemaRequest } from "../../src/domains/schemas/schemas.acl";
+
+export const seedSchema = async (
+  request: CreateSchemaRequest,
+  client: KadoaClient,
+): Promise<{ schemaId: string }> => {
+  console.log(`[Seeder] Seeding schema: ${request.name}`);
+  const schemas = await client.schema.listSchemas();
+  const existing = schemas.find((s) => s.name === request.name);
+  if (existing?.id) {
+    console.log(`[Seeder] Schema ${request.name} already exists: ${existing.id}`);
+    return { schemaId: existing.id };
+  }
+
+  const schema = await client.schema.createSchema(request);
+  console.log(`[Seeder] Schema ${request.name} seeded: ${schema.id}`);
+  return { schemaId: schema.id };
+};
 
 export const seedWorkflow = async (
   {
@@ -127,8 +145,6 @@ export const seedValidation = async (
   }
 
   const result = await client.validation.schedule(workflowId, jobId);
-  // Wait for validation record to be created before polling
-  await new Promise((resolve) => setTimeout(resolve, 1000));
   await client.validation.waitUntilCompleted(result.validationId, {
     pollIntervalMs: 2000,
   });

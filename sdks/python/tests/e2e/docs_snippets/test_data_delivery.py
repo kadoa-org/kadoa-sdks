@@ -32,13 +32,13 @@ class TestDataDeliverySnippets:
 
     @pytest.mark.e2e
     @pytest.mark.timeout(300)
-    def test_data_delivery_002_fetch_data_simple(self, client, fixture_workflow_id):
+    def test_data_delivery_002_fetch_data_simple(self, client, workflow_id):
         """PY-DATA-DELIVERY-002: Fetch data simple"""
-        if not fixture_workflow_id:
+        if not workflow_id:
             raise ValueError("Fixture workflow not created")
         # @docs-start PY-DATA-DELIVERY-002
         # Simplest way to fetch workflow data
-        data = client.extraction.fetch_data(FetchDataOptions(workflow_id=fixture_workflow_id))
+        data = client.extraction.fetch_data(FetchDataOptions(workflow_id=workflow_id))
         print(data.data)
         # @docs-end PY-DATA-DELIVERY-002
 
@@ -46,14 +46,14 @@ class TestDataDeliverySnippets:
 
     @pytest.mark.e2e
     @pytest.mark.timeout(300)
-    def test_data_delivery_003_fetch_with_options(self, client, fixture_workflow_id):
+    def test_data_delivery_003_fetch_with_options(self, client, workflow_id):
         """PY-DATA-DELIVERY-003: Fetch data with options"""
-        if not fixture_workflow_id:
+        if not workflow_id:
             raise ValueError("Fixture workflow not created")
         # @docs-start PY-DATA-DELIVERY-003
         data = client.extraction.fetch_data(
             FetchDataOptions(
-                workflow_id=fixture_workflow_id,
+                workflow_id=workflow_id,
                 page=1,
                 limit=10,
             )
@@ -67,15 +67,15 @@ class TestDataDeliverySnippets:
 
     @pytest.mark.e2e
     @pytest.mark.timeout(300)
-    def test_data_delivery_004_pagination(self, client, fixture_workflow_id):
+    def test_data_delivery_004_pagination(self, client, workflow_id):
         """PY-DATA-DELIVERY-004: Pagination"""
-        if not fixture_workflow_id:
+        if not workflow_id:
             raise ValueError("Fixture workflow not created")
         # @docs-start PY-DATA-DELIVERY-004
         # Option 1: Iterate page by page
         async def iterate_pages() -> None:
             async for page in client.extraction.fetch_data_pages(
-                FetchDataOptions(workflow_id=fixture_workflow_id)
+                FetchDataOptions(workflow_id=workflow_id)
             ):
                 print("Page data:", page.data)
                 if page.pagination:
@@ -84,7 +84,7 @@ class TestDataDeliverySnippets:
         asyncio.run(iterate_pages())
 
         # Option 2: Get everything at once
-        all_data = client.extraction.fetch_all_data(FetchDataOptions(workflow_id=fixture_workflow_id))
+        all_data = client.extraction.fetch_all_data(FetchDataOptions(workflow_id=workflow_id))
         print("All data:", all_data)
         # @docs-end PY-DATA-DELIVERY-004
 

@@ -7,7 +7,7 @@ from typing import TYPE_CHECKING, Literal, Optional, Union
 if TYPE_CHECKING:  # pragma: no cover
     pass
 
-from ..core.exceptions import KadoaErrorCode, KadoaSdkError
+from ..core.exceptions import KadoaErrorCode, KadoaSdkError  # noqa: F401 - used by _handle_channels_by_id
 from ..core.logger import notifications as logger
 from .notification_channels_service import NotificationChannelsService
 from .notification_settings_service import NotificationSettingsService
@@ -87,29 +87,15 @@ class NotificationSetupService:
     def setup_for_workflow(
         self, request_data: SetupWorkflowNotificationSettingsRequest
     ) -> list[NotificationSettings]:
-        """Setup notification settings for a specific workflow ensuring no duplicates exist
+        """Setup notification settings for a specific workflow.
+        Creates channels and settings for the specified events.
 
         Args:
             request_data: Workflow notification setup configuration
 
         Returns:
             Array of created notification settings
-
-        Raises:
-            KadoaSdkError: If settings already exist
         """
-        from .notifications_acl import ListSettingsRequest
-
-        existing_settings = self._settings_service.list_settings(
-            ListSettingsRequest(workflow_id=request_data.workflow_id)
-        )
-        if existing_settings:
-            raise KadoaSdkError(
-                "Settings already exist",
-                code=KadoaErrorCode.BAD_REQUEST,
-                details={"workflow_id": request_data.workflow_id},
-            )
-
         return self.setup(
             NotificationOptions(
                 workflow_id=request_data.workflow_id,
@@ -178,19 +164,39 @@ class NotificationSetupService:
             {"events": event_types, "channels": channel_ids},
         )
 
-        from .notifications_acl import CreateSettingsRequest
+        from .notifications_acl import CreateSettingsRequest, ListSettingsRequest
+
+        existing_settings = self._settings_service.list_settings(
+            ListSettingsRequest(workflow_id=request_data.workflow_id)
+        )
 
         new_settings = []
         for event_type in event_types:
-            setting = self._settings_service.create_settings(
-                CreateSettingsRequest(
-                    workflow_id=request_data.workflow_id,
-                    channel_ids=channel_ids,
-                    event_type=event_type,
-                    enabled=True,
-                    event_configuration={},
-                )
+            existing = next(
+                (s for s in existing_settings if s.event_type == event_type),
+                None,
             )
+
+            if existing and existing.id:
+                existing_channel_ids = [
+                    ch.id for ch in (existing.channels or []) if ch.id
+                ]
+                merged_channel_ids = list(set(existing_channel_ids + channel_ids))
+                setting = self._settings_service.update_settings(
+                    existing.id,
+                    channel_ids=merged_channel_ids,
+                    enabled=existing.enabled if existing.enabled is not None else True,
+                )
+            else:
+                setting = self._settings_service.create_settings(
+                    CreateSettingsRequest(
+                        workflow_id=request_data.workflow_id,
+                        channel_ids=channel_ids,
+                        event_type=event_type,
+                        enabled=True,
+                        event_configuration={},
+                    )
+                )
             new_settings.append(setting)
 
         debug.debug(

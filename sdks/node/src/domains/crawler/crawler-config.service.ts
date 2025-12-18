@@ -1,25 +1,15 @@
 import type { KadoaClient } from "../../kadoa-client";
 import {
-  CrawlerApi,
   type CrawlerConfig,
   type CreateConfigRequest,
   type DeleteConfigResult,
 } from "./crawler.acl";
 
 export class CrawlerConfigService {
-  private _api: CrawlerApi | null = null;
-
   constructor(private readonly client: KadoaClient) {}
 
-  private get api(): CrawlerApi {
-    if (!this._api) {
-      this._api = new CrawlerApi(
-        this.client.configuration,
-        this.client.baseUrl,
-        this.client.axiosInstance,
-      );
-    }
-    return this._api;
+  private get api() {
+    return this.client.apis.crawler;
   }
 
   async createConfig(body: CreateConfigRequest): Promise<CrawlerConfig> {

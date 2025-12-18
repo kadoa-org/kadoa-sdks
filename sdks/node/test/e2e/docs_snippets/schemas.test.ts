@@ -4,8 +4,8 @@
 
 import { afterAll, beforeAll, describe, expect, it } from "bun:test";
 import { KadoaClient } from "../../../src/kadoa-client";
-import { deleteSchemaByName } from "../../utils/cleanup-helpers";
 import { getTestEnv } from "../../utils/env";
+import { seedSchema } from "../../utils/seeder";
 
 describe("TS-SCHEMAS: schemas.mdx snippets", () => {
   let client: KadoaClient;
@@ -51,12 +51,12 @@ describe("TS-SCHEMAS: schemas.mdx snippets", () => {
   );
 
   it("TS-SCHEMAS-002: Create schema", async () => {
-    const schemaName = "Product Schema";
-    await deleteSchemaByName(schemaName, client);
+    // Use unique name to avoid conflicts with existing schemas
+    const schemaName = `Product Schema - ${Date.now()}`;
 
     // @docs-start TS-SCHEMAS-002
     const schema = await client.schema.createSchema({
-      name: "Product Schema",
+      name: schemaName,
       entity: "Product",
       fields: [
         {
@@ -92,30 +92,32 @@ describe("TS-SCHEMAS: schemas.mdx snippets", () => {
 
     expect(schema).toBeDefined();
     expect(schema.id).toBeDefined();
-    if (schema.id) await client.schema.deleteSchema(schema.id);
+    // Cleanup (best effort)
+    if (schema.id) await client.schema.deleteSchema(schema.id).catch(() => {});
   });
 
   it("TS-SCHEMAS-003: Get schema", async () => {
     const schemaName = "Test Schema for Get";
-    await deleteSchemaByName(schemaName, client);
-
-    // Setup: create a schema to retrieve
-    const created = await client.schema.createSchema({
-      name: schemaName,
-      entity: "TestProduct",
-      fields: [
-        {
-          name: "title",
-          description: "Product name",
-          fieldType: "SCHEMA",
-          dataType: "STRING",
-          example: "Test Product",
-        },
-      ],
-    });
+    // Setup: get or create schema
+    const { schemaId } = await seedSchema(
+      {
+        name: schemaName,
+        entity: "TestProduct",
+        fields: [
+          {
+            name: "title",
+            description: "Product name",
+            fieldType: "SCHEMA",
+            dataType: "STRING",
+            example: "Test Product",
+          },
+        ],
+      },
+      client,
+    );
 
     // @docs-start TS-SCHEMAS-003
-    const schema = await client.schema.getSchema(created.id);
+    const schema = await client.schema.getSchema(schemaId);
 
     console.log(schema.name); // 'Product Schema'
     console.log(schema.entity); // 'Product'
@@ -126,13 +128,11 @@ describe("TS-SCHEMAS: schemas.mdx snippets", () => {
     expect(schema.name).toBe(schemaName);
     expect(schema.entity).toBeDefined();
     expect(schema.schema).toBeDefined();
-
-    await client.schema.deleteSchema(created.id);
   });
 
   it("TS-SCHEMAS-004: Delete schema", async () => {
-    const schemaName = "Schema to Delete";
-    await deleteSchemaByName(schemaName, client);
+    // Use unique name to ensure we can create and delete without conflicts
+    const schemaName = `Schema to Delete - ${Date.now()}`;
 
     // Setup: create schema to delete
     const created = await client.schema.createSchema({
@@ -148,14 +148,15 @@ describe("TS-SCHEMAS: schemas.mdx snippets", () => {
         },
       ],
     });
+    const schemaId = created.id;
 
     // @docs-start TS-SCHEMAS-004
-    await client.schema.deleteSchema(created.id);
+    await client.schema.deleteSchema(schemaId);
     // @docs-end TS-SCHEMAS-004
 
     // Verify deletion
     try {
-      await client.schema.getSchema(created.id);
+      await client.schema.getSchema(schemaId);
       throw new Error("Schema should have been deleted");
     } catch (error) {
       expect(error).toBeDefined();
@@ -165,30 +166,30 @@ describe("TS-SCHEMAS: schemas.mdx snippets", () => {
   it(
     "TS-SCHEMAS-005: Use saved schema",
     async () => {
-      const schemaName = "Test Schema - TS-SCHEMAS-005";
-      await deleteSchemaByName(schemaName, client);
-
-      // Setup: create schema first
-      const schema = await client.schema.createSchema({
-        name: schemaName,
-        entity: "Product",
-        fields: [
-          {
-            name: "title",
-            description: "Product name",
-            fieldType: "SCHEMA",
-            dataType: "STRING",
-            example: "Sample Product",
-          },
-        ],
-      });
+      // Setup: get or create schema (resilient to existing schema in use)
+      const { schemaId } = await seedSchema(
+        {
+          name: "Test Schema - TS-SCHEMAS-005",
+          entity: "Product",
+          fields: [
+            {
+              name: "title",
+              description: "Product name",
+              fieldType: "SCHEMA",
+              dataType: "STRING",
+              example: "Sample Product",
+            },
+          ],
+        },
+        client,
+      );
 
       // @docs-start TS-SCHEMAS-005
       const extraction = await client
         .extract({
           urls: ["https://sandbox.kadoa.com/ecommerce"],
           name: "Product Extraction",
-          extraction: () => ({ schemaId: schema.id }),
+          extraction: () => ({ schemaId }),
         })
         .create();
 
@@ -199,21 +200,20 @@ describe("TS-SCHEMAS: schemas.mdx snippets", () => {
       expect(extraction.workflowId).toBeDefined();
       expect(result).toBeDefined();
 
-      // Cleanup
+      // Cleanup workflow only (schema may be reused)
       if (extraction.workflowId)
         await client.workflow.delete(extraction.workflowId).catch(() => {});
-      await client.schema.deleteSchema(schema.id).catch(() => {});
     },
     { timeout: 300000 },
   );
 
   it("TS-SCHEMAS-006: Classification fields", async () => {
-    const schemaName = "Article Schema";
-    await deleteSchemaByName(schemaName, client);
+    // Use unique name to avoid conflicts
+    const schemaName = `Article Schema - ${Date.now()}`;
 
     // @docs-start TS-SCHEMAS-006
     const schema = await client.schema.createSchema({
-      name: "Article Schema",
+      name: schemaName,
       entity: "Article",
       fields: [
         {
@@ -239,16 +239,17 @@ describe("TS-SCHEMAS: schemas.mdx snippets", () => {
 
     expect(schema).toBeDefined();
     expect(schema.id).toBeDefined();
-    if (schema.id) await client.schema.deleteSchema(schema.id);
+    // Cleanup (best effort)
+    if (schema.id) await client.schema.deleteSchema(schema.id).catch(() => {});
   });
 
   it("TS-SCHEMAS-007: Metadata fields", async () => {
-    const schemaName = "Article with Raw Content";
-    await deleteSchemaByName(schemaName, client);
+    // Use unique name to avoid conflicts
+    const schemaName = `Article with Raw Content - ${Date.now()}`;
 
     // @docs-start TS-SCHEMAS-007
     const schema = await client.schema.createSchema({
-      name: "Article with Raw Content",
+      name: schemaName,
       entity: "Article",
       fields: [
         {
@@ -282,14 +283,15 @@ describe("TS-SCHEMAS: schemas.mdx snippets", () => {
 
     expect(schema).toBeDefined();
     expect(schema.id).toBeDefined();
-    if (schema.id) await client.schema.deleteSchema(schema.id);
+    // Cleanup (best effort)
+    if (schema.id) await client.schema.deleteSchema(schema.id).catch(() => {});
   });
 
-  it("TS-SCHEMAS-00: Update schema", async () => {
-    const schemaName = "Test Schema for Update";
-    const updatedName = "Updated Product Schema";
-    await deleteSchemaByName(schemaName, client);
-    await deleteSchemaByName(updatedName, client);
+  it("TS-SCHEMAS-008: Update schema", async () => {
+    // Use unique names to avoid conflicts
+    const timestamp = Date.now();
+    const schemaName = `Test Schema for Update - ${timestamp}`;
+    const updatedName = `Updated Product Schema - ${timestamp}`;
 
     const created = await client.schema.createSchema({
       name: schemaName,
@@ -308,7 +310,7 @@ describe("TS-SCHEMAS: schemas.mdx snippets", () => {
 
     // @docs-start TS-SCHEMAS-008
     const updated = await client.schema.updateSchema(schemaId, {
-      name: "Updated Product Schema",
+      name: updatedName,
       entity: "Product",
       fields: [
         {
@@ -339,6 +341,7 @@ describe("TS-SCHEMAS: schemas.mdx snippets", () => {
 
     expect(updated).toBeDefined();
     expect(updated.id).toBeDefined();
-    if (updated.id) await client.schema.deleteSchema(updated.id);
+    // Cleanup (best effort)
+    if (updated.id) await client.schema.deleteSchema(updated.id).catch(() => {});
   });
 });

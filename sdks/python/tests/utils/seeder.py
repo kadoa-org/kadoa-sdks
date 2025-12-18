@@ -1,12 +1,69 @@
 """Seeder utilities for E2E tests."""
 
-import time
-from typing import TYPE_CHECKING, Optional
+from typing import TYPE_CHECKING, Any, Optional
 
 if TYPE_CHECKING:  # pragma: no cover
     from kadoa_sdk import KadoaClient
 from kadoa_sdk.extraction.types import ExtractOptions, RunWorkflowOptions
 from kadoa_sdk.validation import CreateRuleRequest
+
+
+def seed_schema(
+    request: dict[str, Any],
+    client: "KadoaClient",
+) -> dict[str, str]:
+    """
+    Seed a schema for testing (idempotent).
+
+    Args:
+        request: Schema creation request dict with name, entity, fields
+        client: KadoaClient instance
+
+    Returns:
+        Dictionary with schema_id
+    """
+    from kadoa_sdk.schemas.schemas_acl import (
+        CreateSchemaRequest,
+        DataField,
+        FieldExample,
+        SchemaField,
+    )
+
+    name = request.get("name", "")
+    print(f"[Seeder] Seeding schema: {name}")
+
+    # Check if schema already exists
+    schemas = client.schema.list_schemas()
+    existing = next((s for s in schemas if s.name == name), None)
+    if existing and existing.id:
+        print(f"[Seeder] Schema {name} already exists: {existing.id}")
+        return {"schema_id": existing.id}
+
+    # Build schema fields from request
+    fields = []
+    for field_dict in request.get("fields", []):
+        field = SchemaField(
+            actual_instance=DataField(
+                name=field_dict.get("name"),
+                description=field_dict.get("description"),
+                fieldType=field_dict.get("fieldType", "SCHEMA"),
+                dataType=field_dict.get("dataType", "STRING"),
+                example=FieldExample(actual_instance=field_dict.get("example"))
+                if field_dict.get("example")
+                else None,
+            )
+        )
+        fields.append(field)
+
+    create_request = CreateSchemaRequest(
+        name=name,
+        entity=request.get("entity"),
+        fields=fields,
+    )
+
+    schema = client.schema.create_schema(create_request)
+    print(f"[Seeder] Schema {name} seeded: {schema.id}")
+    return {"schema_id": schema.id}
 
 
 def seed_workflow(
@@ -223,10 +280,7 @@ def seed_validation(
         )
     )
 
-    # Wait for validation record to be created before polling
-    time.sleep(2)
-
-    # Wait for validation to complete (like Node.js SDK)
+    # Wait for validation to complete
     client.validation.wait_until_completed(
         validation_id,
         poll_interval_ms=2000,
