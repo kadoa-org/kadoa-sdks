@@ -970,7 +970,7 @@
                         "SETUP",
                         "DELETED"
                       ],
-                      "description": "Current state of the workflow"
+                      "description": "Persisted workflow lifecycle state. ACTIVE = workflow is enabled, PAUSED = user paused it, DELETED = soft deleted."
                     },
                     "displayState": {
                       "type": "string",
@@ -989,7 +989,7 @@
                         "COMPLIANCE_REJECTED",
                         "DELETED"
                       ],
-                      "description": "Display state for frontend"
+                      "description": "Computed status shown to users. Combines state + runState. ACTIVE = complete/scheduled, FAILED = last run failed, RUNNING = job in progress."
                     },
                     "userId": {
                       "type": "string",
@@ -1112,7 +1112,12 @@
                     },
                     "runState": {
                       "type": "string",
-                      "description": "State of the last job run"
+                      "enum": [
+                        "RUNNING",
+                        "FINISHED",
+                        "FAILED"
+                      ],
+                      "description": "Latest job execution state. RUNNING = job in progress, FINISHED = completed successfully, FAILED = job failed."
                     },
                     "totalRecords": {
                       "type": "integer",
@@ -2001,15 +2006,46 @@
           {
             "name": "state",
             "in": "query",
-            "description": "Filter workflows by state",
+            "description": "Filter workflows by workflow state",
             "required": false,
             "schema": {
               "type": "string",
               "enum": [
                 "ACTIVE",
-                "ERROR",
+                "PAUSED"
+              ]
+            }
+          },
+          {
+            "name": "runState",
+            "in": "query",
+            "description": "Filter workflows by latest job run state (e.g., FAILED)",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "enum": [
+                "FAILED",
+                "FINISHED",
+                "RUNNING"
+              ]
+            }
+          },
+          {
+            "name": "displayState",
+            "in": "query",
+            "description": "Filter workflows by computed display state (comma-separated for multiple)",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "enum": [
+                "ACTIVE",
                 "PAUSED",
-                "NOT_SUPPORTED"
+                "PREVIEW",
+                "FAILED",
+                "RUNNING",
+                "PENDING_START",
+                "COMPLIANCE_REVIEW",
+                "COMPLIANCE_REJECTED"
               ]
             }
           },
@@ -2140,7 +2176,7 @@
                               "SETUP",
                               "DELETED"
                             ],
-                            "description": "Current state of the workflow"
+                            "description": "Persisted workflow lifecycle state. ACTIVE = workflow is enabled, PAUSED = user paused it, DELETED = soft deleted. Use for admin filtering."
                           },
                           "displayState": {
                             "type": "string",
@@ -2159,7 +2195,7 @@
                               "COMPLIANCE_REJECTED",
                               "DELETED"
                             ],
-                            "description": "Display state for frontend"
+                            "description": "Computed status shown to users. Combines state + runState. ACTIVE = complete/scheduled, FAILED = last run failed, RUNNING = job in progress. Use this for dashboard filtering."
                           },
                           "userId": {
                             "type": "string",
@@ -2228,7 +2264,12 @@
                           },
                           "runState": {
                             "type": "string",
-                            "description": "State of the last job run"
+                            "enum": [
+                              "RUNNING",
+                              "FINISHED",
+                              "FAILED"
+                            ],
+                            "description": "Latest job execution state. RUNNING = job in progress, FINISHED = job completed successfully, FAILED = job failed. This is the raw job state before computing displayState."
                           },
                           "totalRecords": {
                             "type": "integer",
@@ -3097,6 +3138,405 @@
                 }
               }
             }
+          }
+        }
+      }
+    },
+    "/v4/workflows/{workflowId}/triggers": {
+      "get": {
+        "summary": "List workflow triggers",
+        "description": "Get all triggers where the specified workflow is the source",
+        "tags": [
+          "Workflow Triggers"
+        ],
+        "parameters": [
+          {
+            "name": "workflowId",
+            "in": "path",
+            "required": true,
+            "description": "ID of the source workflow",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "x-api-key",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "Authorization",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "security": [
+          {
+            "ApiKeyAuth": []
+          },
+          {
+            "BearerAuth": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Triggers retrieved successfully"
+          },
+          "400": {
+            "description": "Invalid workflow ID"
+          },
+          "401": {
+            "description": "Unauthorized"
+          },
+          "404": {
+            "description": "Workflow not found"
+          },
+          "500": {
+            "description": "Internal server error"
+          }
+        }
+      },
+      "post": {
+        "summary": "Create a workflow trigger",
+        "description": "Create a trigger that fires when the source workflow emits an event",
+        "tags": [
+          "Workflow Triggers"
+        ],
+        "parameters": [
+          {
+            "name": "workflowId",
+            "in": "path",
+            "required": true,
+            "description": "ID of the source workflow",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "x-api-key",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "Authorization",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": [
+                  "targetWorkflowId",
+                  "eventType"
+                ],
+                "properties": {
+                  "targetWorkflowId": {
+                    "type": "string",
+                    "description": "ID of the workflow to trigger"
+                  },
+                  "eventType": {
+                    "type": "string",
+                    "enum": [
+                      "workflow_started",
+                      "workflow_finished",
+                      "workflow_failed",
+                      "workflow_data_change",
+                      "workflow_sample_finished",
+                      "workflow_export_completed",
+                      "workflow_validation_anomaly_change"
+                    ],
+                    "description": "Event type that triggers the target workflow"
+                  },
+                  "variablesMapping": {
+                    "type": "object",
+                    "description": "Map event payload data to target workflow variables"
+                  },
+                  "enabled": {
+                    "type": "boolean",
+                    "default": true,
+                    "description": "Whether the trigger is enabled"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "ApiKeyAuth": []
+          },
+          {
+            "BearerAuth": []
+          }
+        ],
+        "responses": {
+          "201": {
+            "description": "Trigger created successfully"
+          },
+          "400": {
+            "description": "Invalid input"
+          },
+          "401": {
+            "description": "Unauthorized"
+          },
+          "403": {
+            "description": "No access to target workflow"
+          },
+          "404": {
+            "description": "Workflow not found"
+          },
+          "409": {
+            "description": "Duplicate trigger"
+          },
+          "500": {
+            "description": "Internal server error"
+          }
+        }
+      }
+    },
+    "/v4/workflows/{workflowId}/triggers/{triggerId}": {
+      "get": {
+        "summary": "Get a specific trigger",
+        "tags": [
+          "Workflow Triggers"
+        ],
+        "parameters": [
+          {
+            "name": "workflowId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "triggerId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "x-api-key",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "Authorization",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "security": [
+          {
+            "ApiKeyAuth": []
+          },
+          {
+            "BearerAuth": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Trigger retrieved successfully"
+          },
+          "400": {
+            "description": "Invalid ID"
+          },
+          "401": {
+            "description": "Unauthorized"
+          },
+          "404": {
+            "description": "Trigger or workflow not found"
+          },
+          "500": {
+            "description": "Internal server error"
+          }
+        }
+      },
+      "patch": {
+        "summary": "Update a trigger",
+        "description": "Update trigger properties (eventType, variablesMapping, enabled)",
+        "tags": [
+          "Workflow Triggers"
+        ],
+        "parameters": [
+          {
+            "name": "workflowId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "triggerId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "x-api-key",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "Authorization",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "eventType": {
+                    "type": "string",
+                    "enum": [
+                      "workflow_started",
+                      "workflow_finished",
+                      "workflow_failed",
+                      "workflow_data_change",
+                      "workflow_sample_finished",
+                      "workflow_export_completed",
+                      "workflow_validation_anomaly_change"
+                    ]
+                  },
+                  "variablesMapping": {
+                    "type": "object"
+                  },
+                  "enabled": {
+                    "type": "boolean"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "ApiKeyAuth": []
+          },
+          {
+            "BearerAuth": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Trigger updated successfully"
+          },
+          "400": {
+            "description": "Invalid input"
+          },
+          "401": {
+            "description": "Unauthorized"
+          },
+          "404": {
+            "description": "Trigger or workflow not found"
+          },
+          "409": {
+            "description": "Update would create a duplicate"
+          },
+          "500": {
+            "description": "Internal server error"
+          }
+        }
+      },
+      "delete": {
+        "summary": "Delete a trigger",
+        "tags": [
+          "Workflow Triggers"
+        ],
+        "parameters": [
+          {
+            "name": "workflowId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "triggerId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "x-api-key",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "Authorization",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "security": [
+          {
+            "ApiKeyAuth": []
+          },
+          {
+            "BearerAuth": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Trigger deleted successfully"
+          },
+          "400": {
+            "description": "Invalid ID"
+          },
+          "401": {
+            "description": "Unauthorized"
+          },
+          "404": {
+            "description": "Trigger or workflow not found"
+          },
+          "500": {
+            "description": "Internal server error"
           }
         }
       }
@@ -12244,6 +12684,9 @@
           "isPreviewRun": {
             "type": "boolean"
           },
+          "autoEnable": {
+            "type": "boolean"
+          },
           "prompt": {
             "type": "string"
           }
@@ -14964,14 +15407,6 @@
           "isKey": {
             "type": "boolean",
             "description": "Whether the field is a key field"
-          },
-          "processing": {
-            "type": "string",
-            "enum": [
-              "UNKNOWN",
-              "PASSTHROUGH",
-              "SYNTHETIC"
-            ]
           }
         },
         "required": [
