@@ -914,6 +914,144 @@
         }
       }
     },
+    "/v4/workflows/bulk": {
+      "post": {
+        "summary": "Perform bulk operations on multiple workflows",
+        "description": "Execute actions on multiple workflows at once. Best-effort processing - each workflow is processed independently. The 'approve' action approves sample data for workflows in PREVIEW state.",
+        "tags": [
+          "Workflows"
+        ],
+        "security": [
+          {
+            "ApiKeyAuth": []
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": [
+                  "workflowIds",
+                  "action"
+                ],
+                "properties": {
+                  "workflowIds": {
+                    "type": "array",
+                    "items": {
+                      "type": "string"
+                    },
+                    "maxItems": 50,
+                    "description": "Array of workflow IDs to operate on (max 50)",
+                    "example": [
+                      "507f1f77bcf86cd799439011",
+                      "507f1f77bcf86cd799439012"
+                    ]
+                  },
+                  "action": {
+                    "type": "string",
+                    "enum": [
+                      "run",
+                      "pause",
+                      "resume",
+                      "delete",
+                      "approve",
+                      "assignTags"
+                    ],
+                    "description": "The action to perform on all workflows"
+                  },
+                  "params": {
+                    "type": "object",
+                    "description": "Action-specific parameters",
+                    "properties": {
+                      "tags": {
+                        "type": "array",
+                        "items": {
+                          "type": "string"
+                        },
+                        "description": "Tags to assign (required for assignTags action)"
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Bulk operation processed (check results for individual outcomes)",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "results": {
+                      "type": "array",
+                      "items": {
+                        "type": "object",
+                        "properties": {
+                          "workflowId": {
+                            "type": "string"
+                          },
+                          "success": {
+                            "type": "boolean"
+                          },
+                          "error": {
+                            "type": "string",
+                            "description": "Error message if success is false"
+                          },
+                          "jobId": {
+                            "type": "string",
+                            "description": "Job ID (for run action only)"
+                          }
+                        }
+                      }
+                    },
+                    "summary": {
+                      "type": "object",
+                      "properties": {
+                        "total": {
+                          "type": "integer"
+                        },
+                        "succeeded": {
+                          "type": "integer"
+                        },
+                        "failed": {
+                          "type": "integer"
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid request",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "error": {
+                      "type": "string"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized"
+          },
+          "403": {
+            "description": "Forbidden"
+          }
+        }
+      }
+    },
     "/v4/workflows/{workflowId}": {
       "get": {
         "summary": "Get workflow by ID",
@@ -970,7 +1108,7 @@
                         "SETUP",
                         "DELETED"
                       ],
-                      "description": "Current state of the workflow"
+                      "description": "Persisted workflow lifecycle state. ACTIVE = workflow is enabled, PAUSED = user paused it, DELETED = soft deleted."
                     },
                     "displayState": {
                       "type": "string",
@@ -989,7 +1127,7 @@
                         "COMPLIANCE_REJECTED",
                         "DELETED"
                       ],
-                      "description": "Display state for frontend"
+                      "description": "Computed status shown to users. Combines state + runState. ACTIVE = complete/scheduled, FAILED = last run failed, RUNNING = job in progress."
                     },
                     "userId": {
                       "type": "string",
@@ -1112,7 +1250,12 @@
                     },
                     "runState": {
                       "type": "string",
-                      "description": "State of the last job run"
+                      "enum": [
+                        "RUNNING",
+                        "FINISHED",
+                        "FAILED"
+                      ],
+                      "description": "Latest job execution state. RUNNING = job in progress, FINISHED = completed successfully, FAILED = job failed."
                     },
                     "totalRecords": {
                       "type": "integer",
@@ -2001,15 +2144,46 @@
           {
             "name": "state",
             "in": "query",
-            "description": "Filter workflows by state",
+            "description": "Filter workflows by workflow state",
             "required": false,
             "schema": {
               "type": "string",
               "enum": [
                 "ACTIVE",
-                "ERROR",
+                "PAUSED"
+              ]
+            }
+          },
+          {
+            "name": "runState",
+            "in": "query",
+            "description": "Filter workflows by latest job run state (e.g., FAILED)",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "enum": [
+                "FAILED",
+                "FINISHED",
+                "RUNNING"
+              ]
+            }
+          },
+          {
+            "name": "displayState",
+            "in": "query",
+            "description": "Filter workflows by computed display state (comma-separated for multiple)",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "enum": [
+                "ACTIVE",
                 "PAUSED",
-                "NOT_SUPPORTED"
+                "PREVIEW",
+                "FAILED",
+                "RUNNING",
+                "PENDING_START",
+                "COMPLIANCE_REVIEW",
+                "COMPLIANCE_REJECTED"
               ]
             }
           },
@@ -2140,7 +2314,7 @@
                               "SETUP",
                               "DELETED"
                             ],
-                            "description": "Current state of the workflow"
+                            "description": "Persisted workflow lifecycle state. ACTIVE = workflow is enabled, PAUSED = user paused it, DELETED = soft deleted. Use for admin filtering."
                           },
                           "displayState": {
                             "type": "string",
@@ -2159,7 +2333,7 @@
                               "COMPLIANCE_REJECTED",
                               "DELETED"
                             ],
-                            "description": "Display state for frontend"
+                            "description": "Computed status shown to users. Combines state + runState. ACTIVE = complete/scheduled, FAILED = last run failed, RUNNING = job in progress. Use this for dashboard filtering."
                           },
                           "userId": {
                             "type": "string",
@@ -2228,7 +2402,12 @@
                           },
                           "runState": {
                             "type": "string",
-                            "description": "State of the last job run"
+                            "enum": [
+                              "RUNNING",
+                              "FINISHED",
+                              "FAILED"
+                            ],
+                            "description": "Latest job execution state. RUNNING = job in progress, FINISHED = job completed successfully, FAILED = job failed. This is the raw job state before computing displayState."
                           },
                           "totalRecords": {
                             "type": "integer",
@@ -3097,6 +3276,398 @@
                 }
               }
             }
+          }
+        }
+      }
+    },
+    "/v4/workflows/{workflowId}/triggers": {
+      "get": {
+        "summary": "List workflow triggers",
+        "description": "Get all triggers where the specified workflow is the source",
+        "tags": [
+          "Workflow Triggers"
+        ],
+        "parameters": [
+          {
+            "name": "workflowId",
+            "in": "path",
+            "required": true,
+            "description": "ID of the source workflow",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "x-api-key",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "Authorization",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "security": [
+          {
+            "ApiKeyAuth": []
+          },
+          {
+            "BearerAuth": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Triggers retrieved successfully"
+          },
+          "400": {
+            "description": "Invalid workflow ID"
+          },
+          "401": {
+            "description": "Unauthorized"
+          },
+          "404": {
+            "description": "Workflow not found"
+          },
+          "500": {
+            "description": "Internal server error"
+          }
+        }
+      },
+      "post": {
+        "summary": "Create a workflow trigger",
+        "description": "Create a trigger that fires when the source workflow emits an event",
+        "tags": [
+          "Workflow Triggers"
+        ],
+        "parameters": [
+          {
+            "name": "workflowId",
+            "in": "path",
+            "required": true,
+            "description": "ID of the source workflow",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "x-api-key",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "Authorization",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": [
+                  "targetWorkflowId",
+                  "eventType"
+                ],
+                "properties": {
+                  "targetWorkflowId": {
+                    "type": "string",
+                    "description": "ID of the workflow to trigger"
+                  },
+                  "eventType": {
+                    "type": "string",
+                    "enum": [
+                      "workflow_started",
+                      "workflow_finished",
+                      "workflow_failed",
+                      "workflow_data_change",
+                      "workflow_sample_finished",
+                      "workflow_export_completed",
+                      "workflow_validation_anomaly_change"
+                    ],
+                    "description": "Event type that triggers the target workflow"
+                  },
+                  "enabled": {
+                    "type": "boolean",
+                    "default": true,
+                    "description": "Whether the trigger is enabled"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "ApiKeyAuth": []
+          },
+          {
+            "BearerAuth": []
+          }
+        ],
+        "responses": {
+          "201": {
+            "description": "Trigger created successfully"
+          },
+          "400": {
+            "description": "Invalid input"
+          },
+          "401": {
+            "description": "Unauthorized"
+          },
+          "403": {
+            "description": "No access to target workflow"
+          },
+          "404": {
+            "description": "Workflow not found"
+          },
+          "409": {
+            "description": "Duplicate trigger"
+          },
+          "500": {
+            "description": "Internal server error"
+          }
+        }
+      }
+    },
+    "/v4/workflows/{workflowId}/triggers/{triggerId}": {
+      "get": {
+        "summary": "Get a specific trigger",
+        "tags": [
+          "Workflow Triggers"
+        ],
+        "parameters": [
+          {
+            "name": "workflowId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "triggerId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "x-api-key",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "Authorization",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "security": [
+          {
+            "ApiKeyAuth": []
+          },
+          {
+            "BearerAuth": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Trigger retrieved successfully"
+          },
+          "400": {
+            "description": "Invalid ID"
+          },
+          "401": {
+            "description": "Unauthorized"
+          },
+          "404": {
+            "description": "Trigger or workflow not found"
+          },
+          "500": {
+            "description": "Internal server error"
+          }
+        }
+      },
+      "patch": {
+        "summary": "Update a trigger",
+        "description": "Update trigger properties (eventType, enabled)",
+        "tags": [
+          "Workflow Triggers"
+        ],
+        "parameters": [
+          {
+            "name": "workflowId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "triggerId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "x-api-key",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "Authorization",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "eventType": {
+                    "type": "string",
+                    "enum": [
+                      "workflow_started",
+                      "workflow_finished",
+                      "workflow_failed",
+                      "workflow_data_change",
+                      "workflow_sample_finished",
+                      "workflow_export_completed",
+                      "workflow_validation_anomaly_change"
+                    ]
+                  },
+                  "enabled": {
+                    "type": "boolean"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "ApiKeyAuth": []
+          },
+          {
+            "BearerAuth": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Trigger updated successfully"
+          },
+          "400": {
+            "description": "Invalid input"
+          },
+          "401": {
+            "description": "Unauthorized"
+          },
+          "404": {
+            "description": "Trigger or workflow not found"
+          },
+          "409": {
+            "description": "Update would create a duplicate"
+          },
+          "500": {
+            "description": "Internal server error"
+          }
+        }
+      },
+      "delete": {
+        "summary": "Delete a trigger",
+        "tags": [
+          "Workflow Triggers"
+        ],
+        "parameters": [
+          {
+            "name": "workflowId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "triggerId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "x-api-key",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "Authorization",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "security": [
+          {
+            "ApiKeyAuth": []
+          },
+          {
+            "BearerAuth": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Trigger deleted successfully"
+          },
+          "400": {
+            "description": "Invalid ID"
+          },
+          "401": {
+            "description": "Unauthorized"
+          },
+          "404": {
+            "description": "Trigger or workflow not found"
+          },
+          "500": {
+            "description": "Internal server error"
           }
         }
       }
@@ -12244,6 +12815,9 @@
           "isPreviewRun": {
             "type": "boolean"
           },
+          "autoEnable": {
+            "type": "boolean"
+          },
           "prompt": {
             "type": "string"
           }
@@ -13503,6 +14077,40 @@
             },
             "additionalProperties": false,
             "description": "Artifact capture options derived from legacy launch summary"
+          },
+          "rawMode": {
+            "type": "boolean",
+            "description": "Whether this is a raw data mode crawl"
+          },
+          "outputOptions": {
+            "type": "object",
+            "properties": {
+              "includeHtml": {
+                "type": "boolean"
+              },
+              "includeMarkdown": {
+                "type": "boolean"
+              },
+              "includeScreenshots": {
+                "type": "boolean"
+              },
+              "includeJson": {
+                "type": "boolean"
+              }
+            },
+            "description": "Output options for raw mode"
+          },
+          "jobId": {
+            "type": "string",
+            "description": "Internal: Job ID for workflow tracking"
+          },
+          "dataKey": {
+            "type": "string",
+            "description": "Internal: Data key for Parquet storage path"
+          },
+          "billingSource": {
+            "type": "string",
+            "description": "Internal: Billing source identifier"
           }
         },
         "title": "CreateCrawlerConfigRequest",
@@ -13793,6 +14401,40 @@
             },
             "additionalProperties": false,
             "description": "Artifact capture options derived from legacy launch summary"
+          },
+          "rawMode": {
+            "type": "boolean",
+            "description": "Whether this is a raw data mode crawl"
+          },
+          "outputOptions": {
+            "type": "object",
+            "properties": {
+              "includeHtml": {
+                "type": "boolean"
+              },
+              "includeMarkdown": {
+                "type": "boolean"
+              },
+              "includeScreenshots": {
+                "type": "boolean"
+              },
+              "includeJson": {
+                "type": "boolean"
+              }
+            },
+            "description": "Output options for raw mode"
+          },
+          "jobId": {
+            "type": "string",
+            "description": "Internal: Job ID for workflow tracking"
+          },
+          "dataKey": {
+            "type": "string",
+            "description": "Internal: Data key for Parquet storage path"
+          },
+          "billingSource": {
+            "type": "string",
+            "description": "Internal: Billing source identifier"
           },
           "configId": {
             "type": "string",
@@ -14100,6 +14742,40 @@
             },
             "additionalProperties": false,
             "description": "Artifact capture options derived from legacy launch summary"
+          },
+          "rawMode": {
+            "type": "boolean",
+            "description": "Whether this is a raw data mode crawl"
+          },
+          "outputOptions": {
+            "type": "object",
+            "properties": {
+              "includeHtml": {
+                "type": "boolean"
+              },
+              "includeMarkdown": {
+                "type": "boolean"
+              },
+              "includeScreenshots": {
+                "type": "boolean"
+              },
+              "includeJson": {
+                "type": "boolean"
+              }
+            },
+            "description": "Output options for raw mode"
+          },
+          "jobId": {
+            "type": "string",
+            "description": "Internal: Job ID for workflow tracking"
+          },
+          "dataKey": {
+            "type": "string",
+            "description": "Internal: Data key for Parquet storage path"
+          },
+          "billingSource": {
+            "type": "string",
+            "description": "Internal: Billing source identifier"
           },
           "configId": {
             "type": "string",
@@ -14440,6 +15116,40 @@
             },
             "additionalProperties": false,
             "description": "Artifact capture options derived from legacy launch summary"
+          },
+          "rawMode": {
+            "type": "boolean",
+            "description": "Whether this is a raw data mode crawl"
+          },
+          "outputOptions": {
+            "type": "object",
+            "properties": {
+              "includeHtml": {
+                "type": "boolean"
+              },
+              "includeMarkdown": {
+                "type": "boolean"
+              },
+              "includeScreenshots": {
+                "type": "boolean"
+              },
+              "includeJson": {
+                "type": "boolean"
+              }
+            },
+            "description": "Output options for raw mode"
+          },
+          "jobId": {
+            "type": "string",
+            "description": "Internal: Job ID for workflow tracking"
+          },
+          "dataKey": {
+            "type": "string",
+            "description": "Internal: Data key for Parquet storage path"
+          },
+          "billingSource": {
+            "type": "string",
+            "description": "Internal: Billing source identifier"
           }
         },
         "title": "StartCrawlerSessionRequest",
@@ -14964,14 +15674,6 @@
           "isKey": {
             "type": "boolean",
             "description": "Whether the field is a key field"
-          },
-          "processing": {
-            "type": "string",
-            "enum": [
-              "UNKNOWN",
-              "PASSTHROUGH",
-              "SYNTHETIC"
-            ]
           }
         },
         "required": [
@@ -15862,6 +16564,14 @@
             },
             "description": "Regex patterns to exclude specific paths during crawling. Only used when navigationMode is 'all-pages'"
           },
+          "pageNumbers": {
+            "type": "array",
+            "items": {
+              "type": "integer",
+              "minimum": 1
+            },
+            "description": "PDF-specific: Array of page numbers to extract (1-indexed). If not provided, all pages are extracted. Example: [1, 5, 10]"
+          },
           "userPrompt": {
             "type": "string",
             "minLength": 10,
@@ -15906,6 +16616,132 @@
         ],
         "title": "AgenticWorkflow",
         "description": "Create an AI-powered workflow that uses natural language instructions to intelligently extract and adapt data extraction based on page content. The agent can navigate complex sites and understand context.\n\nExample: `{\"urls\": [\"https://example.com\"], \"navigationMode\": \"agentic-navigation\", \"userPrompt\": \"Extract all job listings with title, company, salary, and location. Click on each listing to get full details.\"}`"
+      },
+      "RawDataWorkflow": {
+        "type": "object",
+        "properties": {
+          "urls": {
+            "type": "array",
+            "items": {
+              "type": "string",
+              "format": "uri"
+            },
+            "minItems": 1,
+            "description": "URLs to crawl"
+          },
+          "name": {
+            "type": "string",
+            "minLength": 1,
+            "description": "Workflow name"
+          },
+          "description": {
+            "type": "string",
+            "maxLength": 500,
+            "description": "Workflow description"
+          },
+          "tags": {
+            "type": "array",
+            "items": {
+              "type": "string",
+              "minLength": 3
+            },
+            "description": "Tags for organization"
+          },
+          "outputOptions": {
+            "description": "Which artifacts to include in output",
+            "type": "object",
+            "properties": {
+              "includeHtml": {
+                "default": true,
+                "type": "boolean",
+                "description": "Include raw HTML content"
+              },
+              "includeMarkdown": {
+                "default": false,
+                "type": "boolean",
+                "description": "Include Markdown conversion"
+              },
+              "includeScreenshots": {
+                "default": false,
+                "type": "boolean",
+                "description": "Include screenshots as Base64"
+              },
+              "includeJson": {
+                "default": false,
+                "type": "boolean",
+                "description": "Include JSON extraction results"
+              }
+            }
+          },
+          "maxPages": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 100000,
+            "description": "Maximum pages to crawl (default: 10,000, max: 100,000)"
+          },
+          "maxDepth": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 200,
+            "description": "Maximum crawl depth (default: 50, max: 200)"
+          },
+          "pathsFilterIn": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "description": "Regex patterns to include specific paths"
+          },
+          "pathsFilterOut": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "description": "Regex patterns to exclude specific paths"
+          },
+          "interval": {
+            "type": "string",
+            "enum": [
+              "ONLY_ONCE",
+              "EVERY_10_MINUTES",
+              "HALF_HOURLY",
+              "HOURLY",
+              "THREE_HOURLY",
+              "SIX_HOURLY",
+              "TWELVE_HOURLY",
+              "EIGHTEEN_HOURLY",
+              "DAILY",
+              "TWO_DAY",
+              "THREE_DAY",
+              "WEEKLY",
+              "BIWEEKLY",
+              "TRIWEEKLY",
+              "FOUR_WEEKS",
+              "MONTHLY",
+              "REAL_TIME",
+              "CUSTOM"
+            ],
+            "description": "Update frequency for the workflow"
+          },
+          "schedules": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "description": "Cron expressions for custom schedules"
+          },
+          "autoStart": {
+            "default": true,
+            "type": "boolean",
+            "description": "Auto-start workflow after creation"
+          }
+        },
+        "required": [
+          "urls",
+          "outputOptions"
+        ],
+        "title": "RawDataWorkflow",
+        "description": "Create a raw data workflow that crawls pages and returns artifacts (HTML, Markdown, Screenshots) without schema extraction.\n\nExample: `{\"urls\": [\"https://example.com\"], \"outputOptions\": {\"includeHtml\": true, \"includeMarkdown\": true}}`"
       },
       "WorkflowWithExistingSchema": {
         "type": "object",
@@ -16041,6 +16877,14 @@
               "type": "string"
             },
             "description": "Regex patterns to exclude specific paths during crawling. Only used when navigationMode is 'all-pages'"
+          },
+          "pageNumbers": {
+            "type": "array",
+            "items": {
+              "type": "integer",
+              "minimum": 1
+            },
+            "description": "PDF-specific: Array of page numbers to extract (1-indexed). If not provided, all pages are extracted. Example: [1, 5, 10]"
           },
           "schemaId": {
             "type": "string",
@@ -16189,6 +17033,14 @@
             },
             "description": "Regex patterns to exclude specific paths during crawling. Only used when navigationMode is 'all-pages'"
           },
+          "pageNumbers": {
+            "type": "array",
+            "items": {
+              "type": "integer",
+              "minimum": 1
+            },
+            "description": "PDF-specific: Array of page numbers to extract (1-indexed). If not provided, all pages are extracted. Example: [1, 5, 10]"
+          },
           "entity": {
             "type": "string",
             "minLength": 1,
@@ -16229,6 +17081,9 @@
         "oneOf": [
           {
             "$ref": "#/components/schemas/AgenticWorkflow"
+          },
+          {
+            "$ref": "#/components/schemas/RawDataWorkflow"
           },
           {
             "$ref": "#/components/schemas/WorkflowWithExistingSchema"
