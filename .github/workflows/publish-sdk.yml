@@ -12,8 +12,6 @@ on:
         required: true
         type: string
     secrets:
-      NPM_TOKEN:
-        required: false
       PYPI_API_TOKEN:
         required: false
 
@@ -21,6 +19,9 @@ jobs:
   publish-node:
     if: inputs.sdk_type == 'node'
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      id-token: write
     steps:
       - name: Checkout
         uses: actions/checkout@v6
@@ -49,20 +50,9 @@ jobs:
         working-directory: sdks/node
         run: bun run build
 
-      - name: Verify NPM token
-        run: |
-          if [ -z "${{ secrets.NPM_TOKEN }}" ]; then
-            echo "::error::NPM_TOKEN secret is not configured"
-            exit 1
-          fi
-
       - name: Publish to npm
         working-directory: sdks/node
-        env:
-          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
-        run: |
-          npm whoami || npm config set //registry.npmjs.org/:_authToken=${NODE_AUTH_TOKEN}
-          npm publish --access public
+        run: npm publish --access public --provenance
 
   publish-python:
     if: inputs.sdk_type == 'python'
