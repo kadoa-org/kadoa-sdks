@@ -4,3 +4,5 @@ __version__ = "0.18.0rc3"
 
 SDK_NAME = "kadoa-python-sdk"
 SDK_LANGUAGE = "python"
+
+# removed: create_rule, update_rule (API endpoints removed)
