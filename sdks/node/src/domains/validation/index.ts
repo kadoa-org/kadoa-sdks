@@ -9,7 +9,6 @@ export type {
   BulkApproveRulesResponseData,
   BulkDeleteRulesRequest,
   BulkDeleteRulesResponseData,
-  CreateRuleRequest,
   DeleteAllRulesRequest,
   DeleteAllRulesResponseData,
   DisableRuleRequest,
@@ -27,7 +26,6 @@ export type {
   RuleType,
   ScheduleValidationResponse,
   ToggleValidationResponse,
-  UpdateRuleRequest,
   ValidationStrategy,
 } from "./validation.acl";
 

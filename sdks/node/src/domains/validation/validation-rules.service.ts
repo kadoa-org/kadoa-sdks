@@ -6,7 +6,6 @@ import type {
   BulkApproveRulesResponseData,
   BulkDeleteRulesRequest,
   BulkDeleteRulesResponseData,
-  CreateRuleRequest,
   DeleteAllRulesRequest,
   DeleteAllRulesResponseData,
   DeleteRuleRequest,
@@ -17,7 +16,6 @@ import type {
   ListRulesResponse,
   Rule,
   RuleDeleteResponse,
-  UpdateRuleRequest,
 } from "./validation.acl";
 
 const _debug = logger.validation;
@@ -63,34 +61,6 @@ export class ValidationRulesService {
     }
     //todo: solve pagination or add a search parameter at API
     return response.data.data?.find((rule) => rule.name === name);
-  }
-
-  async createRule(data: CreateRuleRequest): Promise<Rule> {
-    const response = await this.validationApi.v4DataValidationRulesPost({
-      createRule: data,
-    });
-    if (response.status !== 200 || response.data.error) {
-      throw KadoaHttpException.wrap(response.data.data, {
-        message: response.data.message || "Failed to create validation rule",
-      });
-    }
-    return response.data.data;
-  }
-
-  async updateRule(
-    ruleId: string,
-    updateData: UpdateRuleRequest,
-  ): Promise<Rule> {
-    const response = await this.validationApi.v4DataValidationRulesRuleIdPut({
-      ruleId,
-      updateRule: updateData,
-    });
-    if (response.status !== 200 || response.data.error) {
-      throw KadoaHttpException.wrap(response.data.data, {
-        message: response.data.message || "Failed to update validation rule",
-      });
-    }
-    return response.data.data;
   }
 
   async deleteRule(data: DeleteRuleRequest): Promise<RuleDeleteResponse> {
