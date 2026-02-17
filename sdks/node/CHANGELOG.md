@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.20.3](https://github.com/kadoa-org/kadoa-sdks/compare/node-sdk-v0.20.2...node-sdk-v0.20.3) (2026-02-17)
+
+
+### Bug Fixes
+
+* **node-sdk:** remove create/update rule and sync workflow state enum ([79463c6](https://github.com/kadoa-org/kadoa-sdks/commit/79463c6a709b5626cde07f74e056755e592b3df7))
+
 ## [0.20.2](https://github.com/kadoa-org/kadoa-sdks/compare/node-sdk-v0.20.1...node-sdk-v0.20.2) (2025-12-18)
 
 
