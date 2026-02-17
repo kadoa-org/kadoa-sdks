@@ -39,5 +39,4 @@ jobs:
       sdk_type: ${{ needs.determine-sdk.outputs.sdk_type }}
       tag_name: ${{ github.event.release.tag_name }}
     secrets:
-      NPM_TOKEN: ${{ secrets.NPM_TOKEN }}
       PYPI_API_TOKEN: ${{ secrets.PYPI_API_TOKEN }}
