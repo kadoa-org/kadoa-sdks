@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.18.1](https://github.com/kadoa-org/kadoa-sdks/compare/python-sdk-v0.18.0...python-sdk-v0.18.1) (2026-02-17)
+
+
+### Bug Fixes
+
+* **python-sdk:** remove create/update rule and sync workflow state enum ([06e93fa](https://github.com/kadoa-org/kadoa-sdks/commit/06e93fa33d322dacc2c8dfac62941d04190f5c9e))
+
 ## [0.18.0](https://github.com/kadoa-org/kadoa-sdks/compare/python-sdk-v0.17.3...python-sdk-v0.18.0) (2025-12-18)
 
 
