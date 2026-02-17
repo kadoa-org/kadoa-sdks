@@ -25,9 +25,9 @@ dependencies = [
     "python-dotenv",
     "pydantic",
     "pydantic-settings",
-    "urllib3",
+    "urllib3>=2.4.0",
     "websockets",
-    "aiohttp",
+    "aiohttp>=3.11.18",
     "aiohttp-retry",
 ]
 
