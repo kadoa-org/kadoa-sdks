@@ -1,5 +1,77 @@
 # Changelog
 
+## [0.22.0](https://github.com/kadoa-org/kadoa-sdks/compare/node-sdk-v0.21.0...node-sdk-v0.22.0) (2026-02-17)
+
+
+### ⚠ BREAKING CHANGES
+
+* **node-sdk:** RealtimeConfig.teamApiKey renamed to apiKey
+* **node-sdk:** CrawlApi renamed to CrawlerApi in generated client
+* **node-sdk:** Module imports have been reorganized. External imports from modules/extraction and modules/workflows may need to be updated.
+* **node-sdk:** Extraction module API has been refactored to use query pattern
+* **node-sdk:** Complete API redesign - migrated from functional to OO pattern
+    - Replace initializeSdk() with new KadoaClient() class instantiation
+    - Move runExtraction() to client.extraction.run() method
+    - Reorganize file structure into core/ and modules/ directories
+    - Consolidate exceptions, events, and utilities under core/
+    - Extract business logic into dedicated modules (extraction)
+* The main entry point has been renamed from initializeApp() to KadoaSDK() in both Node.js and Python SDKs. Users will need to update their imports and initialization code.
+
+### Features
+
+* add automated dependency security auditing ([1b633ed](https://github.com/kadoa-org/kadoa-sdks/commit/1b633ed8af3b56e6815e72d959cda9c540f99a17))
+* add SDK identification headers to all API requests ([19ba4d4](https://github.com/kadoa-org/kadoa-sdks/commit/19ba4d4b42e76b70bc3d1f37a5fc677a59458132))
+* add version check on client initialization ([698e02b](https://github.com/kadoa-org/kadoa-sdks/commit/698e02bc9904048a28313e815e3085ee2fed075b))
+* make workflow name optional ([7796292](https://github.com/kadoa-org/kadoa-sdks/commit/77962921cb7edd336cfd84d8a0ed1fa727735b07))
+* Modernize Python SDK and align with Node.js functionality ([#133](https://github.com/kadoa-org/kadoa-sdks/issues/133)) ([6794c9f](https://github.com/kadoa-org/kadoa-sdks/commit/6794c9fdbf76a6c01ac2b15f350abd66f7780e6e))
+* **node-sdk,python-sdk:** add crawler domain ([#192](https://github.com/kadoa-org/kadoa-sdks/issues/192)) ([fd26160](https://github.com/kadoa-org/kadoa-sdks/commit/fd2616055dcd9aa85ed3a8dbef996033cb9b5939))
+* **node-sdk,python-sdk:** add type-safe schema field validation ([#188](https://github.com/kadoa-org/kadoa-sdks/issues/188)) ([2e81764](https://github.com/kadoa-org/kadoa-sdks/commit/2e81764fd2fd39fb1e5e1a0be2049729aa9c0e25))
+* **node-sdk:** add browser support and list workflows endpoint ([263703a](https://github.com/kadoa-org/kadoa-sdks/commit/263703a1c215647186553018f6c7dd6f74b24147))
+* **node-sdk:** add extraction builder service and parallel workflow example ([a2ef3d9](https://github.com/kadoa-org/kadoa-sdks/commit/a2ef3d91fbb01166fe08997ef3da78d8d7910111))
+* **node-sdk:** add fluent builder API for extraction configuration ([80d9596](https://github.com/kadoa-org/kadoa-sdks/commit/80d9596fb403816b39e8114c3af2a726e44fbac8))
+* **node-sdk:** add fluent schema builder with create method ([be5b65d](https://github.com/kadoa-org/kadoa-sdks/commit/be5b65d5d160289c9d256d8627d94521b0d9b109))
+* **node-sdk:** add logger module to runtime infrastructure ([5dfd685](https://github.com/kadoa-org/kadoa-sdks/commit/5dfd68538d3b7cb73059c1d705f65cbe027f91da))
+* **node-sdk:** add notifications, schemas, and user modules with improved error handling ([6791b13](https://github.com/kadoa-org/kadoa-sdks/commit/6791b13056daa3302d55ac7127d2f0817f124e3a))
+* **node-sdk:** add realtime demo examples ([24ad917](https://github.com/kadoa-org/kadoa-sdks/commit/24ad917f3b64a23f2906ac9a10b989d7e8ac8a1c))
+* **node-sdk:** add realtime WebSocket support for live data streaming ([5366b40](https://github.com/kadoa-org/kadoa-sdks/commit/5366b40089c04d541932227d8c2fb0fe0231a592))
+* **node-sdk:** add request ID tracking and improve documentation ([aa4afde](https://github.com/kadoa-org/kadoa-sdks/commit/aa4afde99bd165e1e740394ba0b84c6ce384d328))
+* **node-sdk:** add submit workflow functionality and refactor internal structure ([1269628](https://github.com/kadoa-org/kadoa-sdks/commit/12696288a45bfbcc2029a0e724eae5942235a92e))
+* **node-sdk:** add validation module with rules and anomaly detection ([960f1d2](https://github.com/kadoa-org/kadoa-sdks/commit/960f1d2f2ba640afe8b9f18efac06a0b3baaa6c1))
+* **node-sdk:** allow personal API keys for realtime connections ([#129](https://github.com/kadoa-org/kadoa-sdks/issues/129)) ([779e6fd](https://github.com/kadoa-org/kadoa-sdks/commit/779e6fde74e4bd7ee25a622e60af5be6d6ef7aa6))
+* **node-sdk:** enhance SDK with comprehensive examples and improved API features ([7aa9b87](https://github.com/kadoa-org/kadoa-sdks/commit/7aa9b87165f3cd82466d8ddb52b8e2e2340177b1))
+* **node-sdk:** make entity optional in schema builder API (KAD-3462) ([#101](https://github.com/kadoa-org/kadoa-sdks/issues/101)) ([12e8027](https://github.com/kadoa-org/kadoa-sdks/commit/12e8027296379b842c281a85179073bc955745d9))
+* **node-sdk:** make name optional in ExtractOptionsInternal ([767e395](https://github.com/kadoa-org/kadoa-sdks/commit/767e395b7eb01886150504b0821d8d7b660fdd6a))
+* **node:** unify extraction config and add maxRecords\n\n- Replace dataLimit with maxRecords in defaults\n- Pass full config to workflow creation and polling\n- Remove MAX_DATA_LIMIT constant; use config.maxRecords\n- Type updates to use ExtractionConfig across flow\n\nBREAKING CHANGE: ExtractionOptions now uses maxRecords instead of dataLimit ([46a3752](https://github.com/kadoa-org/kadoa-sdks/commit/46a37528cb28149346341e80f232faebf148dc65))
+* **spec:** update spec fingerprint ([5afb9bb](https://github.com/kadoa-org/kadoa-sdks/commit/5afb9bb5660f20b22103690477dfe02665cf3713))
+* **spec:** update spec fingerprint ([100820b](https://github.com/kadoa-org/kadoa-sdks/commit/100820b1d0f3280c63776eca00508b061d8c5076))
+* **spec:** update spec fingerprint ([a1ef20f](https://github.com/kadoa-org/kadoa-sdks/commit/a1ef20f05bfe82230403a3f8aaa10b9443580bfc))
+* **spec:** update spec fingerprint ([ce5813f](https://github.com/kadoa-org/kadoa-sdks/commit/ce5813f26347cea91c38ab0aabab83ad2f4e0b28))
+* **spec:** update spec fingerprint ([c7fd61d](https://github.com/kadoa-org/kadoa-sdks/commit/c7fd61d173aa8c25bac52999a15259089c20f2b9))
+* **spec:** update spec fingerprint ([e690fc1](https://github.com/kadoa-org/kadoa-sdks/commit/e690fc100a62612d540868ddcddf3872b4593833))
+
+
+### Bug Fixes
+
+* improve test isolation and sync Python SDK with Node.js ([#195](https://github.com/kadoa-org/kadoa-sdks/issues/195)) ([a12867e](https://github.com/kadoa-org/kadoa-sdks/commit/a12867ece56393331f22ed9c1dcd744070a9144e))
+* **node-sdk:** add Failed state to WorkflowDisplayStateEnum ([67b7fcf](https://github.com/kadoa-org/kadoa-sdks/commit/67b7fcf423befdef4d7eac6495ffe2e2f78f8a5c))
+* **node-sdk:** remove create/update rule and sync workflow state enum ([79463c6](https://github.com/kadoa-org/kadoa-sdks/commit/79463c6a709b5626cde07f74e056755e592b3df7))
+* **node-sdk:** remove zod from production dependencies for monorepo compatibility ([#180](https://github.com/kadoa-org/kadoa-sdks/issues/180)) ([2174cd0](https://github.com/kadoa-org/kadoa-sdks/commit/2174cd09b0ccdccb85bdfed26b189836768eba4a))
+* **node-sdk:** resolve build issues with schemas service and update OpenAPI specs ([da19ba9](https://github.com/kadoa-org/kadoa-sdks/commit/da19ba9fa95aae839aefa3403b9fd747b5b554ce))
+* **node-sdk:** type migrations and bypassPreview parameter support ([#127](https://github.com/kadoa-org/kadoa-sdks/issues/127)) ([762f6cb](https://github.com/kadoa-org/kadoa-sdks/commit/762f6cb0749ed3c09b56f59e9d738297c87ed3b3))
+* **node-sdk:** update test imports after refactoring ([03f79a6](https://github.com/kadoa-org/kadoa-sdks/commit/03f79a6493f2534532cff1d2adc50c8cb166d2c2))
+* **node-sdk:** use conditional spread for optional entity field ([fd1b3ef](https://github.com/kadoa-org/kadoa-sdks/commit/fd1b3ef5fede6bf580bc3668b00d2e0abf32295b))
+* **node-sdk:** use type assertion for workflow request union ([6470a50](https://github.com/kadoa-org/kadoa-sdks/commit/6470a5072bc2213ab9f8bcd57a04eec4c4561f4f))
+* properly destructure extract() parameters (userPrompt, interval, schedules, location) ([#171](https://github.com/kadoa-org/kadoa-sdks/issues/171)) ([2ab149b](https://github.com/kadoa-org/kadoa-sdks/commit/2ab149b0fed38d1ad71d30c140f90333744c7ada))
+* skip entity detection for agentic-navigation and require userPrompt ([#167](https://github.com/kadoa-org/kadoa-sdks/issues/167)) ([403a884](https://github.com/kadoa-org/kadoa-sdks/commit/403a884210f45682b643a8fd893d2424ccdf346e))
+
+
+### Code Refactoring
+
+* **node-sdk:** improve extraction module architecture and testing ([208c89f](https://github.com/kadoa-org/kadoa-sdks/commit/208c89f19b34e3e9a33464ec9811c6874f7d08d9))
+* **node-sdk:** migrate from functional to object-oriented architecture ([e98815f](https://github.com/kadoa-org/kadoa-sdks/commit/e98815f03bf7b8dd41c99e36cf9614ed856a014c))
+* **node-sdk:** migrate from modules to internal/domains architecture ([636176e](https://github.com/kadoa-org/kadoa-sdks/commit/636176e08dc0048da715af2ce5d2ebf7cad94b07))
+* rename initializeApp to KadoaSDK for better consistency ([8a18891](https://github.com/kadoa-org/kadoa-sdks/commit/8a18891ff0f7d23c7f453e935028820e2cfe460e))
+
 ## [0.21.0](https://github.com/kadoa-org/kadoa-sdks/compare/node-sdk-v0.20.3...node-sdk-v0.21.0) (2026-02-17)
 
 
