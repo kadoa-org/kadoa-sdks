@@ -52,7 +52,7 @@ jobs:
 
       - name: Publish to npm
         working-directory: sdks/node
-        run: npm publish --access public --provenance
+        run: npm publish --access public --provenance --workspaces false
 
   publish-python:
     if: inputs.sdk_type == 'python'
