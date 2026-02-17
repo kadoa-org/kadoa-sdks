@@ -11,7 +11,6 @@ import {
   type BulkApproveRulesResponse,
   type BulkDeleteRules,
   type BulkDeleteRulesResponse,
-  type CreateRule,
   DataValidationApi,
   type DataValidationApiV4DataValidationRulesGetRequest,
   type DataValidationApiV4DataValidationWorkflowsWorkflowIdJobsJobIdValidationsGetRequest,
@@ -27,7 +26,6 @@ import {
   type RuleDeleteResponse,
   type RulesListResponse,
   type ScheduleValidationResponse,
-  type UpdateRule,
   type V4DataValidationRulesGetIncludeDeletedParameter,
   type V4DataValidationRulesGetStatusEnum,
   type V4DataValidationWorkflowsWorkflowIdValidationTogglePut200Response,
@@ -105,13 +103,9 @@ export class ListRulesRequest
   includeDeleted?: IncludeDeletedRules;
 }
 
-export type CreateRuleRequest = CreateRule;
-
 export type GenerateRuleRequest = GenerateRule;
 
 export type GenerateRulesRequest = GenerateRules;
-
-export type UpdateRuleRequest = UpdateRule;
 
 export interface DisableRuleRequest {
   ruleId: string;

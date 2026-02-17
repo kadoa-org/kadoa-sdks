@@ -5,7 +5,7 @@ from typing import TYPE_CHECKING, Any, Optional
 if TYPE_CHECKING:  # pragma: no cover
     from kadoa_sdk import KadoaClient
 from kadoa_sdk.extraction.types import ExtractOptions, RunWorkflowOptions
-from kadoa_sdk.validation import CreateRuleRequest
+from kadoa_sdk.validation import GenerateRuleRequest
 
 
 def seed_schema(
@@ -188,21 +188,10 @@ def seed_rule(
         print(f"[Seeder] Rule {name} already exists: {rule_id}")
         return rule_id
 
-    rule = client.validation.rules.create_rule(
-        CreateRuleRequest(
-            name=name,
-            description="Test rule",
-            rule_type="custom_sql",
-            status="enabled",
-            parameters={
-                "sql": (
-                    "SELECT __id__, 'title' AS __column__, 'LENGTH_MAX' AS __type__, "
-                    '"title" AS __bad_value__ FROM _src WHERE "title" IS NOT NULL '
-                    'AND LENGTH("title") > 15'
-                )
-            },
+    rule = client.validation.rules.generate_rule(
+        GenerateRuleRequest(
+            user_prompt="Flag rows where title length exceeds 15 characters",
             workflow_id=workflow_id,
-            target_columns=["title"],
         )
     )
 

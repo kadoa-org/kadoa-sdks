@@ -95,16 +95,9 @@ export const seedRule = async (
     return existingRule.id;
   }
 
-  const rule = await client.validation.rules.createRule({
-    name,
-    description: "Test rule",
-    ruleType: "custom_sql",
-    status: "enabled",
-    parameters: {
-      sql: `SELECT __id__, 'title' AS __column__, 'LENGTH_MAX' AS __type__, "title" AS __bad_value__ FROM _src WHERE "title" IS NOT NULL AND LENGTH("title") > 15`,
-    },
+  const rule = await client.validation.rules.generateRule({
+    userPrompt: "Flag rows where title length exceeds 15 characters",
     workflowId,
-    targetColumns: ["title"],
   });
   console.log(`[Seeder] Rule ${name} seeded: ${rule.id}`);
   return rule.id;
