@@ -23,15 +23,15 @@
   "devDependencies": {
     "@biomejs/biome": "2.4.2",
     "@commitlint/cli": "20.4.1",
-    "@commitlint/config-conventional": "^20.0.0",
-    "husky": "^9.1.7",
-    "turbo": "^2.6.1",
+    "@commitlint/config-conventional": "20.4.1",
+    "husky": "9.1.7",
+    "turbo": "2.8.9",
     "typescript": "5.9.3"
   },
   "engines": {
     "node": ">=22"
   },
-  "packageManager": "bun@1.3.4",
+  "packageManager": "bun@1.3.9",
   "workspaces": [
     "sdks/*",
     "packages/*",
