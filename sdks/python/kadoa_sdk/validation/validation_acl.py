@@ -17,7 +17,6 @@ from openapi_client.models.bulk_approve_rules import BulkApproveRules
 from openapi_client.models.bulk_approve_rules_response import BulkApproveRulesResponse
 from openapi_client.models.bulk_delete_rules import BulkDeleteRules
 from openapi_client.models.bulk_delete_rules_response import BulkDeleteRulesResponse
-from openapi_client.models.create_rule import CreateRule
 from openapi_client.models.data_validation_report import DataValidationReport
 from openapi_client.models.delete_all_rules_response import DeleteAllRulesResponse
 from openapi_client.models.delete_rule_with_reason import DeleteRuleWithReason
@@ -27,7 +26,6 @@ from openapi_client.models.generate_rules import GenerateRules
 from openapi_client.models.rule import Rule as GeneratedRule
 from openapi_client.models.rules_list_response import RulesListResponse
 from openapi_client.models.schedule_validation_response import ScheduleValidationResponse
-from openapi_client.models.update_rule import UpdateRule
 from openapi_client.models.v4_data_validation_workflows_workflow_id_validation_toggle_put200_response import (  # noqa: E501
     V4DataValidationWorkflowsWorkflowIdValidationTogglePut200Response as TogglePut200Response,
 )
@@ -94,10 +92,8 @@ class ListRulesRequest(BaseModel):
     model_config = ConfigDict(populate_by_name=True)
 
 
-CreateRuleRequest = CreateRule
 GenerateRuleRequest = GenerateRule
 GenerateRulesRequest = GenerateRules
-UpdateRuleRequest = UpdateRule
 
 
 class DisableRuleRequest(BaseModel):
@@ -148,10 +144,8 @@ __all__ = [
     "ValidationStrategy",
     "IncludeDeletedRules",
     "ListRulesRequest",
-    "CreateRuleRequest",
     "GenerateRuleRequest",
     "GenerateRulesRequest",
-    "UpdateRuleRequest",
     "DisableRuleRequest",
     "BulkApproveRulesRequest",
     "BulkDeleteRulesRequest",

@@ -17,7 +17,6 @@ from .validation_acl import (
     BulkApproveRulesResponseData,
     BulkDeleteRulesRequest,
     BulkDeleteRulesResponseData,
-    CreateRuleRequest,
     DataValidationApi,
     DeleteAllRulesRequest,
     DeleteAllRulesResponseData,
@@ -27,7 +26,6 @@ from .validation_acl import (
     ListRulesRequest,
     ListRulesResponse,
     Rule,
-    UpdateRuleRequest,
 )
 
 debug = logger.debug
@@ -230,130 +228,6 @@ class ValidationRulesService:
                 error,
                 message="Failed to get validation rule by name",
                 details={"name": name},
-            )
-
-    def create_rule(self, data: CreateRuleRequest) -> Rule:
-        """
-        Create a validation rule.
-
-        Args:
-            data: Create rule request data
-
-        Returns:
-            Created rule
-
-        Raises:
-            KadoaHttpError: If request fails
-        """
-        try:
-            response = self.validation_api.v4_data_validation_rules_post(create_rule=data)
-
-            # Check for errors - response may not have status_code attribute
-            has_error = False
-            if hasattr(response, "status_code") and response.status_code != 200:
-                has_error = True
-            elif (
-                hasattr(response, "data")
-                and hasattr(response.data, "error")
-                and response.data.error
-            ):
-                has_error = True
-
-            if has_error:
-                error_message = (
-                    response.data.message
-                    if hasattr(response, "data") and hasattr(response.data, "message")
-                    else "Failed to create validation rule"
-                )
-                raise KadoaHttpError.wrap(
-                    response.data.data
-                    if hasattr(response, "data") and hasattr(response.data, "data")
-                    else response.data
-                    if hasattr(response, "data")
-                    else response,
-                    message=error_message,
-                )
-
-            rule_data = (
-                response.data.data
-                if hasattr(response, "data") and hasattr(response.data, "data")
-                else response.data
-                if hasattr(response, "data")
-                else response
-            )
-            # Convert to SDK Rule type with enum remapping
-            from openapi_client.models.rule import Rule as GeneratedRule
-            if isinstance(rule_data, GeneratedRule):
-                return Rule.from_generated(rule_data)
-            return rule_data
-        except Exception as error:
-            raise KadoaHttpError.wrap(
-                error,
-                message="Failed to create validation rule",
-            )
-
-    def update_rule(self, rule_id: str, update_data: UpdateRuleRequest) -> Rule:
-        """
-        Update an existing rule.
-
-        Args:
-            rule_id: Rule ID
-            update_data: Update rule request data
-
-        Returns:
-            Updated rule
-
-        Raises:
-            KadoaHttpError: If request fails
-        """
-        try:
-            response = self.validation_api.v4_data_validation_rules_rule_id_put(
-                rule_id=rule_id, update_rule=update_data
-            )
-
-            # Check for errors - response may not have status_code attribute
-            has_error = False
-            if hasattr(response, "status_code") and response.status_code != 200:
-                has_error = True
-            elif (
-                hasattr(response, "data")
-                and hasattr(response.data, "error")
-                and response.data.error
-            ):
-                has_error = True
-
-            if has_error:
-                error_message = (
-                    response.data.message
-                    if hasattr(response, "data") and hasattr(response.data, "message")
-                    else "Failed to update validation rule"
-                )
-                raise KadoaHttpError.wrap(
-                    response.data.data
-                    if hasattr(response, "data") and hasattr(response.data, "data")
-                    else response.data
-                    if hasattr(response, "data")
-                    else response,
-                    message=error_message,
-                )
-
-            rule_data = (
-                response.data.data
-                if hasattr(response, "data") and hasattr(response.data, "data")
-                else response.data
-                if hasattr(response, "data")
-                else response
-            )
-            # Convert to SDK Rule type with enum remapping
-            from openapi_client.models.rule import Rule as GeneratedRule
-            if isinstance(rule_data, GeneratedRule):
-                return Rule.from_generated(rule_data)
-            return rule_data
-        except Exception as error:
-            raise KadoaHttpError.wrap(
-                error,
-                message="Failed to update validation rule",
-                details={"ruleId": rule_id},
             )
 
     def disable_rule(self, data: DisableRuleRequest) -> Rule:

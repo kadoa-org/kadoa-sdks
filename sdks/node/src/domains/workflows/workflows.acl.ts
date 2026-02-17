@@ -43,9 +43,15 @@ export type { WorkflowsApiInterface };
  */
 export const WorkflowState = {
   Active: "ACTIVE",
-  Error: "ERROR",
   Paused: "PAUSED",
+  Preview: "PREVIEW",
+  Queued: "QUEUED",
+  Setup: "SETUP",
+  ComplianceReview: "COMPLIANCE_REVIEW",
+  ComplianceRejected: "COMPLIANCE_REJECTED",
   NotSupported: "NOT_SUPPORTED",
+  Error: "ERROR",
+  Deleted: "DELETED",
 } as const satisfies Record<
   keyof typeof V4WorkflowsGetStateEnum,
   V4WorkflowsGetStateEnum

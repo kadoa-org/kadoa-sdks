@@ -5,7 +5,6 @@ from .validation_acl import (
     BulkApproveRulesResponseData,
     BulkDeleteRulesRequest,
     BulkDeleteRulesResponseData,
-    CreateRuleRequest,
     DataValidationApi,
     DeleteAllRulesRequest,
     DeleteAllRulesResponseData,
@@ -25,7 +24,6 @@ from .validation_acl import (
     RuleType,
     ScheduleValidationResponse,
     ToggleValidationResponse,
-    UpdateRuleRequest,
     ValidationStrategy,
 )
 from .validation_core_service import ValidationCoreService
@@ -161,10 +159,8 @@ __all__ = [
     "ValidationStrategy",
     "IncludeDeletedRules",
     "ListRulesRequest",
-    "CreateRuleRequest",
     "GenerateRuleRequest",
     "GenerateRulesRequest",
-    "UpdateRuleRequest",
     "DisableRuleRequest",
     "BulkApproveRulesRequest",
     "BulkDeleteRulesRequest",
