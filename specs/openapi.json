@@ -365,6 +365,11 @@
                             "type": "string",
                             "description": "URL where the change was detected"
                           },
+                          "summary": {
+                            "type": "string",
+                            "nullable": true,
+                            "description": "AI-generated one-sentence summary of the data change. Null if generation failed, feature is disabled, or change predates the feature."
+                          },
                           "screenshotUrl": {
                             "type": "string",
                             "description": "URL of the screenshot taken when the change was detected"
@@ -533,6 +538,11 @@
                     "url": {
                       "type": "string",
                       "description": "URL where the change was detected"
+                    },
+                    "summary": {
+                      "type": "string",
+                      "nullable": true,
+                      "description": "AI-generated one-sentence summary of the data change. Null if generation failed, feature is disabled, or change predates the feature."
                     },
                     "screenshotUrl": {
                       "type": "string",
@@ -858,7 +868,9 @@
                       "bug",
                       "feature",
                       "workflow_issue",
-                      "integration"
+                      "integration",
+                      "billing",
+                      "data_diff"
                     ]
                   },
                   "priority": {
@@ -880,6 +892,10 @@
                   "workflowId": {
                     "type": "string",
                     "description": "Optional workflow ID to link the issue"
+                  },
+                  "dataChangeId": {
+                    "type": "string",
+                    "description": "Optional data change ID for data diff issues"
                   },
                   "subcategory": {
                     "type": "string",
@@ -3165,12 +3181,8 @@
                   },
                   "monitoring": {
                     "type": "object",
-                    "description": "The new monitoring config for the workflow",
+                    "description": "The monitoring config for the workflow",
                     "properties": {
-                      "enabled": {
-                        "type": "boolean",
-                        "description": "Whether monitoring is enabled for the workflow"
-                      },
                       "fields": {
                         "type": "array",
                         "items": {
@@ -4205,6 +4217,11 @@
                             "type": "string",
                             "description": "URL where the change was detected"
                           },
+                          "summary": {
+                            "type": "string",
+                            "nullable": true,
+                            "description": "AI-generated one-sentence summary of the data change. Null if generation failed, feature is disabled, or change predates the feature."
+                          },
                           "screenshotUrl": {
                             "type": "string",
                             "description": "URL of the screenshot taken when the change was detected"
@@ -4373,6 +4390,11 @@
                     "url": {
                       "type": "string",
                       "description": "URL where the change was detected"
+                    },
+                    "summary": {
+                      "type": "string",
+                      "nullable": true,
+                      "description": "AI-generated one-sentence summary of the data change. Null if generation failed, feature is disabled, or change predates the feature."
                     },
                     "screenshotUrl": {
                       "type": "string",
@@ -16296,17 +16318,13 @@
         "description": "Monitoring configuration",
         "type": "object",
         "properties": {
-          "enabled": {
-            "type": "boolean",
-            "description": "Whether monitoring is enabled"
-          },
           "fields": {
-            "default": [],
             "type": "array",
             "items": {
               "$ref": "#/components/schemas/MonitoredField"
             },
-            "description": "Fields to monitor"
+            "minItems": 1,
+            "description": "Fields to monitor (at least one required)"
           },
           "channels": {
             "type": "array",
@@ -16320,7 +16338,7 @@
           }
         },
         "required": [
-          "enabled"
+          "fields"
         ],
         "title": "MonitoringConfig"
       },
