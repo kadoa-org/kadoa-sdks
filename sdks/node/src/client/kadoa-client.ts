@@ -12,12 +12,15 @@ import type { UserService } from "../domains/user/user.service";
 import type { ValidationDomain } from "../domains/validation/validation.facade";
 import type { WorkflowsCoreService } from "../domains/workflows/workflows-core.service";
 import { PUBLIC_API_URI } from "../runtime/config";
+import { KadoaSdkException } from "../runtime/exceptions";
 import { checkForUpdates } from "../runtime/utils/version-check";
 import { ApiRegistry } from "./api-registry";
 import type {
+  BearerAuthOptions,
   KadoaClientConfig,
   KadoaClientStatus,
   NotificationDomain,
+  TeamInfo,
 } from "./types";
 import {
   createAxiosInstance,
@@ -183,6 +186,53 @@ export class KadoaClient {
       user: await this.user.getCurrentUser(),
       realtimeConnected: this.isRealtimeConnected(),
     };
+  }
+
+  /**
+   * List all teams accessible to the authenticated user.
+   *
+   * When called with a Bearer token (Supabase JWT), returns all teams the
+   * human user belongs to. Without it, falls back to x-api-key auth which
+   * only returns teams the service account (API key) belongs to.
+   */
+  async listTeams(opts?: BearerAuthOptions): Promise<TeamInfo[]> {
+    const headers: Record<string, string> = opts?.bearerToken
+      ? { Authorization: `Bearer ${opts.bearerToken}` }
+      : { "x-api-key": this._apiKey };
+
+    const response = await this._axiosInstance.get("/v5/user", {
+      baseURL: this._baseUrl,
+      headers,
+    });
+
+    return response.data?.teams ?? [];
+  }
+
+  /**
+   * Switch to a different team by fetching its API key and returning a new
+   * KadoaClient instance bound to that team. Requires Bearer auth (Supabase JWT).
+   */
+  async switchTeam(
+    teamId: string,
+    opts: BearerAuthOptions,
+  ): Promise<KadoaClient> {
+    const response = await this._axiosInstance.get(
+      `/v4/team/${teamId}/api-key`,
+      {
+        baseURL: this._baseUrl,
+        headers: { Authorization: `Bearer ${opts.bearerToken}` },
+      },
+    );
+
+    const apiKey = response.data?.apiKey?.api_key;
+    if (!apiKey) {
+      throw new KadoaSdkException(
+        response.data?.error || "No API key found for team",
+        { code: "AUTH_ERROR" },
+      );
+    }
+
+    return new KadoaClient({ apiKey, baseUrl: this._baseUrl });
   }
 
   /**

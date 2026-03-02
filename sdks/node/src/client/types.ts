@@ -10,6 +10,17 @@ import type { NotificationChannelsService } from "../domains/notifications/notif
 import type { NotificationSettingsService } from "../domains/notifications/notification-settings.service";
 import type { KadoaUser } from "../domains/user/user.service";
 
+export interface TeamInfo {
+  id: string;
+  name: string;
+  role: string;
+  memberRole: string;
+}
+
+export interface BearerAuthOptions {
+  bearerToken: string;
+}
+
 export interface KadoaClientStatus {
   baseUrl: string;
   user: KadoaUser;
