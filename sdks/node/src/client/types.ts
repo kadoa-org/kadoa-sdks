@@ -10,6 +10,17 @@ import type { NotificationChannelsService } from "../domains/notifications/notif
 import type { NotificationSettingsService } from "../domains/notifications/notification-settings.service";
 import type { KadoaUser } from "../domains/user/user.service";
 
+export interface TeamInfo {
+  id: string;
+  name: string;
+  role: string;
+  memberRole: string;
+}
+
+export interface BearerAuthOptions {
+  bearerToken: string;
+}
+
 export interface KadoaClientStatus {
   baseUrl: string;
   user: KadoaUser;
@@ -17,7 +28,16 @@ export interface KadoaClientStatus {
 }
 
 export interface KadoaClientConfig {
-  apiKey: string;
+  /**
+   * Team API key (`tk-...`). Required unless `bearerToken` is provided.
+   */
+  apiKey?: string;
+  /**
+   * Supabase JWT for Bearer auth. When set, requests send
+   * `Authorization: Bearer <token>` instead of `x-api-key`.
+   * Use {@link KadoaClient.setBearerToken} to update after refresh.
+   */
+  bearerToken?: string;
   /**
    * Override the base URL for the public API.
    *

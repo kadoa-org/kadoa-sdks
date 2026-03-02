@@ -20,9 +20,11 @@ export * from "./domains/workflows";
 // ============================================================================
 export {
   KadoaClient,
+  type BearerAuthOptions,
   type KadoaClientConfig,
   type KadoaClientStatus,
   type NotificationDomain,
+  type TeamInfo,
   type TestNotificationRequest,
   type TestNotificationResult,
   type ValidationDomain,

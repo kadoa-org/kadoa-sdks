@@ -12,12 +12,15 @@ import type { UserService } from "../domains/user/user.service";
 import type { ValidationDomain } from "../domains/validation/validation.facade";
 import type { WorkflowsCoreService } from "../domains/workflows/workflows-core.service";
 import { PUBLIC_API_URI } from "../runtime/config";
+import { KadoaSdkException } from "../runtime/exceptions";
 import { checkForUpdates } from "../runtime/utils/version-check";
 import { ApiRegistry } from "./api-registry";
 import type {
+  BearerAuthOptions,
   KadoaClientConfig,
   KadoaClientStatus,
   NotificationDomain,
+  TeamInfo,
 } from "./types";
 import {
   createAxiosInstance,
@@ -45,7 +48,9 @@ import {
 export class KadoaClient {
   private readonly _axiosInstance: AxiosInstance;
   private readonly _baseUrl: string;
+  private readonly _timeout: number;
   private readonly _apiKey: string;
+  private _bearerToken: string | undefined;
 
   private _realtime?: Realtime;
   private readonly _extractionBuilderService: ExtractionBuilderService;
@@ -60,13 +65,34 @@ export class KadoaClient {
   public readonly crawler: CrawlerDomain;
 
   constructor(config: KadoaClientConfig) {
-    this._baseUrl = config.baseUrl ?? PUBLIC_API_URI;
-    this._apiKey = config.apiKey;
+    if (!config.apiKey && !config.bearerToken) {
+      throw new KadoaSdkException(
+        "Either apiKey or bearerToken must be provided",
+        { code: "VALIDATION_ERROR" },
+      );
+    }
 
-    const timeout = config.timeout ?? 30000;
+    this._baseUrl = config.baseUrl ?? PUBLIC_API_URI;
+    this._apiKey = config.apiKey ?? "";
+    this._bearerToken = config.bearerToken;
+
+    this._timeout = config.timeout ?? 30000;
     const headers = createSdkHeaders();
 
-    this._axiosInstance = createAxiosInstance({ timeout, headers });
+    this._axiosInstance = createAxiosInstance({ timeout: this._timeout, headers });
+
+    // Auth interceptor: injects the correct auth header on every request.
+    // Runs after per-request headers are set, so it can override them.
+    this._axiosInstance.interceptors.request.use((reqConfig) => {
+      if (this._bearerToken) {
+        // Bearer mode: ensure Authorization header, remove stale x-api-key
+        if (!reqConfig.headers["Authorization"]) {
+          reqConfig.headers["Authorization"] = `Bearer ${this._bearerToken}`;
+        }
+        delete reqConfig.headers["x-api-key"];
+      }
+      return reqConfig;
+    });
 
     this.apis = new ApiRegistry(
       this._apiKey,
@@ -113,10 +139,19 @@ export class KadoaClient {
   /**
    * Get the API key
    *
-   * @returns The API key
+   * @returns The API key (empty string when using Bearer auth)
    */
   get apiKey(): string {
     return this._apiKey;
+  }
+
+  /**
+   * Update the Bearer token used for authentication.
+   * Call this after a Supabase JWT refresh so that subsequent requests
+   * use the new token.
+   */
+  setBearerToken(token: string): void {
+    this._bearerToken = token;
   }
 
   /**
@@ -183,6 +218,26 @@ export class KadoaClient {
       user: await this.user.getCurrentUser(),
       realtimeConnected: this.isRealtimeConnected(),
     };
+  }
+
+  /**
+   * List all teams accessible to the authenticated user.
+   *
+   * When called with a Bearer token (Supabase JWT), returns all teams the
+   * human user belongs to. Without it, falls back to x-api-key auth which
+   * only returns teams the service account (API key) belongs to.
+   */
+  async listTeams(opts?: BearerAuthOptions): Promise<TeamInfo[]> {
+    const headers: Record<string, string> = opts?.bearerToken
+      ? { Authorization: `Bearer ${opts.bearerToken}` }
+      : { "x-api-key": this._apiKey };
+
+    const response = await this._axiosInstance.get("/v5/user", {
+      baseURL: this._baseUrl,
+      headers,
+    });
+
+    return response.data?.teams ?? [];
   }
 
   /**
