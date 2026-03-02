@@ -148,9 +148,37 @@ describe("KadoaClient auth", () => {
   });
 
   describe("setActiveTeam", () => {
-    test("is a function on the client", () => {
+    test("throws on empty teamId", async () => {
       const client = new KadoaClient({ bearerToken: "jwt-test" });
-      expect(typeof client.setActiveTeam).toBe("function");
+      expect(client.setActiveTeam("")).rejects.toThrow(KadoaSdkException);
+    });
+
+    test("throws on whitespace-only teamId", async () => {
+      const client = new KadoaClient({ bearerToken: "jwt-test" });
+      expect(client.setActiveTeam("   ")).rejects.toThrow(KadoaSdkException);
+    });
+
+    test("posts to correct endpoint with teamId payload", async () => {
+      const client = new KadoaClient({ bearerToken: "jwt-test" });
+
+      // Capture the request the interceptor chain would build
+      let capturedUrl: string | undefined;
+      let capturedData: unknown;
+      client.axiosInstance.interceptors.request.use((config) => {
+        capturedUrl = `${config.baseURL}${config.url}`;
+        capturedData = config.data;
+        // Abort before actually sending — we only care about the config
+        throw new axios.Cancel("intercepted");
+      });
+
+      try {
+        await client.setActiveTeam("team-uuid-123");
+      } catch {
+        // Expected — we cancelled the request
+      }
+
+      expect(capturedUrl).toContain("/v5/auth/active-team");
+      expect(capturedData).toEqual({ teamId: "team-uuid-123" });
     });
   });
 

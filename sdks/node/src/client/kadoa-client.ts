@@ -260,6 +260,11 @@ export class KadoaClient {
    * @param teamId - The team ID to switch to (must be a team the user belongs to)
    */
   async setActiveTeam(teamId: string): Promise<void> {
+    if (!teamId?.trim()) {
+      throw new KadoaSdkException("teamId is required", {
+        code: "VALIDATION_ERROR",
+      });
+    }
     await this._axiosInstance.post(
       "/v5/auth/active-team",
       { teamId },
