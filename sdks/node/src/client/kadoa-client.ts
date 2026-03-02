@@ -48,7 +48,6 @@ import {
 export class KadoaClient {
   private readonly _axiosInstance: AxiosInstance;
   private readonly _baseUrl: string;
-  private readonly _timeout: number;
   private readonly _apiKey: string;
   private _bearerToken: string | undefined;
 
@@ -76,10 +75,10 @@ export class KadoaClient {
     this._apiKey = config.apiKey ?? "";
     this._bearerToken = config.bearerToken;
 
-    this._timeout = config.timeout ?? 30000;
+    const timeout = config.timeout ?? 30000;
     const headers = createSdkHeaders();
 
-    this._axiosInstance = createAxiosInstance({ timeout: this._timeout, headers });
+    this._axiosInstance = createAxiosInstance({ timeout, headers });
 
     // Auth interceptor: injects the correct auth header on every request.
     // Runs after per-request headers are set, so it can override them.
@@ -94,6 +93,9 @@ export class KadoaClient {
       return reqConfig;
     });
 
+    // _apiKey is "" in bearer-only mode. Generated API clients will set
+    // x-api-key: "" on requests; the auth interceptor above cleans this up
+    // when _bearerToken is set (interceptors run after config-build time).
     this.apis = new ApiRegistry(
       this._apiKey,
       this._baseUrl,
@@ -181,6 +183,12 @@ export class KadoaClient {
   async connectRealtime(
     options?: Omit<RealtimeConfig, "apiKey">,
   ): Promise<Realtime> {
+    if (!this._apiKey) {
+      throw new KadoaSdkException(
+        "Realtime requires an API key. Bearer-only auth is not supported for WebSocket connections.",
+        { code: "VALIDATION_ERROR" },
+      );
+    }
     if (!this._realtime) {
       this._realtime = new Realtime({ apiKey: this._apiKey, ...options });
       await this._realtime.connect();
@@ -228,13 +236,15 @@ export class KadoaClient {
    * only returns teams the service account (API key) belongs to.
    */
   async listTeams(opts?: BearerAuthOptions): Promise<TeamInfo[]> {
-    const headers: Record<string, string> = opts?.bearerToken
+    // When opts.bearerToken is provided, override the instance-level auth.
+    // Otherwise let the axios auth interceptor handle it.
+    const headers: Record<string, string> | undefined = opts?.bearerToken
       ? { Authorization: `Bearer ${opts.bearerToken}` }
-      : { "x-api-key": this._apiKey };
+      : undefined;
 
     const response = await this._axiosInstance.get("/v5/user", {
       baseURL: this._baseUrl,
-      headers,
+      ...(headers && { headers }),
     });
 
     return response.data?.teams ?? [];
