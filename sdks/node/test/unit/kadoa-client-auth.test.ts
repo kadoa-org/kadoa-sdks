@@ -147,6 +147,13 @@ describe("KadoaClient auth", () => {
     });
   });
 
+  describe("setActiveTeam", () => {
+    test("is a function on the client", () => {
+      const client = new KadoaClient({ bearerToken: "jwt-test" });
+      expect(typeof client.setActiveTeam).toBe("function");
+    });
+  });
+
   describe("connectRealtime", () => {
     test("throws when using bearer-only auth (no apiKey)", async () => {
       const client = new KadoaClient({ bearerToken: "jwt-test" });

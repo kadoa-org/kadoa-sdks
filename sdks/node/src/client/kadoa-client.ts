@@ -251,6 +251,23 @@ export class KadoaClient {
   }
 
   /**
+   * Switch the active team for this session.
+   *
+   * Calls `POST /v5/auth/active-team` which updates the server-side
+   * session→team mapping. Subsequent requests with the same JWT are
+   * automatically scoped to the new team — no token refresh needed.
+   *
+   * @param teamId - The team ID to switch to (must be a team the user belongs to)
+   */
+  async setActiveTeam(teamId: string): Promise<void> {
+    await this._axiosInstance.post(
+      "/v5/auth/active-team",
+      { teamId },
+      { baseURL: this._baseUrl },
+    );
+  }
+
+  /**
    * Dispose of the client and clean up resources
    */
   dispose(): void {
