@@ -1,4 +1,4 @@
-import { afterEach, describe, expect, mock, test } from "bun:test";
+import { describe, expect, mock, test } from "bun:test";
 import axios from "axios";
 import type { InternalAxiosRequestConfig } from "axios";
 import { KadoaClient } from "../../src/client/kadoa-client";
