@@ -33,7 +33,7 @@ export interface KadoaClientConfig {
    */
   apiKey?: string;
   /**
-   * Supabase JWT for Bearer auth. When set, requests send
+   * = JWT for Bearer auth. When set, requests send
    * `Authorization: Bearer <token>` instead of `x-api-key`.
    * Use {@link KadoaClient.setBearerToken} to update after refresh.
    */
