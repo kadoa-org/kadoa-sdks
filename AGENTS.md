@@ -45,6 +45,26 @@ bun kadoa-codegen fetch-spec -e http://localhost:12380/openapi -f
 bun kadoa-codegen generate --fetch-latest -e http://localhost:12380/openapi -f
 ```
 
+### Python SDK Local Development
+
+The Python SDK requires additional setup beyond `bun install`:
+
+```bash
+# Generate the Python OpenAPI client from committed spec
+bun kadoa-codegen generate -c python
+
+# Set up Python virtual environment with uv
+cd sdks/python
+uv venv
+uv pip install -e ".[dev]"
+
+# Run Python tests
+uv run pytest tests/ -v
+uv run pytest tests/ -v --ignore=tests/e2e  # Skip e2e (requires API key)
+```
+
+> **Important:** `openapi_client/` is gitignored and must be generated locally before the Python SDK can be imported or tested.
+
 ## Architecture Overview
 
 ### Monorepo Structure

@@ -6,7 +6,8 @@ Thank you for your interest in contributing to Kadoa SDKs. This guide will help 
 
 - **Bun** v1.2.21+ (primary package manager)
 - **Node.js** v20+ (for npm publishing)
-- **Python** 3.8+ (for Python SDK)
+- **Python** 3.12+ (for Python SDK)
+- **uv** (Python package manager) - install with `curl -LsSf https://astral.sh/uv/install.sh | sh`
 - **Git** with conventional commits knowledge
 
 ## Development Setup
@@ -22,6 +23,25 @@ bun install
 # Run development mode
 bun run dev
 ```
+
+### Python SDK Setup
+
+The Python SDK requires generating the OpenAPI client and setting up a virtual environment:
+
+```bash
+# Generate the Python OpenAPI client (requires bun install first)
+bun kadoa-codegen generate -c python
+
+# Set up Python virtual environment
+cd sdks/python
+uv venv
+uv pip install -e ".[dev]"
+
+# Verify setup
+uv run python -c "from kadoa_sdk import KadoaClient; print('Setup OK')"
+```
+
+> **Note:** The `openapi_client/` directory is gitignored and must be regenerated locally. Without it, Python SDK imports will fail with `ModuleNotFoundError: No module named 'openapi_client'`.
 
 ## Project Structure
 
