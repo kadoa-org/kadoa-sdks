@@ -10,6 +10,8 @@ from .extraction import (
     ExtractionModule,
     ExtractionOptions,
     ExtractionResult,
+    FetchDataOptions,
+    FetchDataResult,
     run_extraction,
 )
 from .version import __version__
@@ -36,6 +38,8 @@ __all__ = [
     "ExtractionModule",
     "ExtractionOptions",
     "ExtractionResult",
+    "FetchDataOptions",
+    "FetchDataResult",
     "run_extraction",
     "__version__",
 ]

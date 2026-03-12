@@ -1,5 +1,19 @@
 # Changelog
 
+## [0.18.3](https://github.com/kadoa-org/kadoa-sdks/compare/python-sdk-v0.18.2...python-sdk-v0.18.3) (2026-03-10)
+
+
+### Bug Fixes
+
+* **python-sdk:** correct version string from 0.18.2rc3 to 0.18.2 ([#234](https://github.com/kadoa-org/kadoa-sdks/issues/234)) ([be5e35c](https://github.com/kadoa-org/kadoa-sdks/commit/be5e35cbed94e0cc6c95e5e68ffca00fd3a9a584))
+
+## [0.18.2](https://github.com/kadoa-org/kadoa-sdks/compare/python-sdk-v0.18.1...python-sdk-v0.18.2) (2026-03-10)
+
+
+### Bug Fixes
+
+* **python-sdk:** add missing top-level exports for fetch data types ([#229](https://github.com/kadoa-org/kadoa-sdks/issues/229)) ([6b8572c](https://github.com/kadoa-org/kadoa-sdks/commit/6b8572c9eb7d248720a39555681728d90a01159c))
+
 ## [0.18.1](https://github.com/kadoa-org/kadoa-sdks/compare/python-sdk-v0.18.0...python-sdk-v0.18.1) (2026-02-17)
 
 
