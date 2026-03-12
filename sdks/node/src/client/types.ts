@@ -13,8 +13,8 @@ import type { KadoaUser } from "../domains/user/user.service";
 export interface TeamInfo {
   id: string;
   name: string;
-  role: string;
   memberRole: string;
+  adminEmail: string | null;
 }
 
 export interface BearerAuthOptions {
