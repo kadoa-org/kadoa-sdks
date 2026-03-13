@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.24.0](https://github.com/kadoa-org/kadoa-sdks/compare/node-sdk-v0.23.0...node-sdk-v0.24.0) (2026-03-12)
+
+
+### Features
+
+* **node-sdk:** add admin email to team info, remove dead role field ([#233](https://github.com/kadoa-org/kadoa-sdks/issues/233)) ([60490fd](https://github.com/kadoa-org/kadoa-sdks/commit/60490fd3e88a3290d4ebcbf1c3ce14c6d6df000f))
+
 ## [0.23.0](https://github.com/kadoa-org/kadoa-sdks/compare/node-sdk-v0.22.0...node-sdk-v0.23.0) (2026-03-03)
 
 
