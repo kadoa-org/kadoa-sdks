@@ -238,4 +238,48 @@ describe("Realtime", () => {
 
     realtime.close();
   });
+
+  test("clamps server-provided drain delay before scheduling replacement", async () => {
+    let tokenCallCount = 0;
+
+    global.fetch = (async (input: RequestInfo | URL) => {
+      const url = String(input);
+      if (url.includes("/v4/oauth2/token")) {
+        tokenCallCount += 1;
+        return {
+          json: async () => ({
+            access_token: `token-${tokenCallCount}`,
+            team_id: "team-123",
+          }),
+        } as Response;
+      }
+
+      return {
+        json: async () => ({}),
+      } as Response;
+    }) as typeof fetch;
+
+    const realtime = new Realtime({
+      apiKey: "test-key",
+      reconnectDelay: 2,
+      heartbeatInterval: 50,
+      missedHeartbeatsLimit: 5_000,
+    });
+
+    const connectPromise = realtime.connect();
+    const firstSocket = await waitForSocket(0);
+    firstSocket.open();
+    await connectPromise;
+
+    firstSocket.message({
+      type: "control.draining",
+      retryAfterMs: Number.POSITIVE_INFINITY,
+    });
+
+    await sleep(10);
+    const secondSocket = await waitForSocket(1);
+    expect(secondSocket).toBeDefined();
+
+    realtime.close();
+  });
 });

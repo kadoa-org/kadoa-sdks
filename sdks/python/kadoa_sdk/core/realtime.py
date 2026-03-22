@@ -51,6 +51,8 @@ class RealtimeConfig(BaseModel):
 class Realtime:
     """WebSocket connection for real-time events"""
 
+    _MAX_RECONNECT_DELAY_MS = 60_000
+
     def __init__(self, config: RealtimeConfig) -> None:
         self._api_key = config.api_key
         self._heartbeat_interval = config.heartbeat_interval
@@ -199,7 +201,10 @@ class Realtime:
 
         logger.debug("Received drain signal, preparing replacement socket")
         self._draining_sockets.add(ws)
-        await self._schedule_reconnect(message.get("retryAfterMs", self._reconnect_delay), True)
+        await self._schedule_reconnect(
+            self._normalize_reconnect_delay(message.get("retryAfterMs")),
+            True,
+        )
 
     async def _handle_socket_closed(self, ws: ClientConnection, reason: str) -> None:
         """Handle an individual socket closing."""
@@ -238,7 +243,7 @@ class Realtime:
             return
 
         async def reconnect_after_delay() -> None:
-            await asyncio.sleep(delay_ms / 1000.0)
+            await asyncio.sleep(self._normalize_reconnect_delay(delay_ms) / 1000.0)
             if self._is_closed or self._is_connecting:
                 return
             if not replacement and self._ws is not None:
@@ -257,6 +262,18 @@ class Realtime:
                 self._reconnect_task = None
 
         self._reconnect_task = asyncio.create_task(reconnect_after_delay())
+
+    def _normalize_reconnect_delay(self, delay_ms: Any) -> int:
+        """Clamp reconnect delay to a safe integer range."""
+        if not isinstance(delay_ms, int | float):
+            return self._reconnect_delay
+        if delay_ms != delay_ms or delay_ms in (float("inf"), float("-inf")):
+            return self._reconnect_delay
+
+        return min(
+            max(0, int(delay_ms)),
+            self._MAX_RECONNECT_DELAY_MS,
+        )
 
     def _stop_heartbeat_check(self) -> None:
         """Stop heartbeat monitoring"""

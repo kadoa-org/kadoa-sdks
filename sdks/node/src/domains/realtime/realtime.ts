@@ -47,6 +47,7 @@ export interface RealtimeConfig {
 }
 
 export class Realtime {
+  private static readonly MAX_RECONNECT_DELAY_MS = 60_000;
   private activeSocket?: WebSocket;
   private drainingSockets: Set<WebSocket> = new Set();
   private heartbeatInterval: number;
@@ -250,7 +251,10 @@ export class Realtime {
 
     debug("Received drain signal, preparing replacement socket");
     this.drainingSockets.add(socket);
-    this.scheduleReconnect(message.retryAfterMs ?? this.reconnectDelay, true);
+    this.scheduleReconnect(
+      this.normalizeReconnectDelay(message.retryAfterMs),
+      true,
+    );
   }
 
   private handleSocketClose(socket: WebSocket) {
@@ -313,7 +317,18 @@ export class Realtime {
         this.notifyErrorListeners(err);
         this.scheduleReconnect();
       }
-    }, delay);
+    }, this.normalizeReconnectDelay(delay));
+  }
+
+  private normalizeReconnectDelay(delay?: number): number {
+    if (!Number.isFinite(delay)) {
+      return this.reconnectDelay;
+    }
+
+    return Math.min(
+      Math.max(0, Math.trunc(delay)),
+      Realtime.MAX_RECONNECT_DELAY_MS,
+    );
   }
 
   private isDuplicateEvent(eventId?: string): boolean {

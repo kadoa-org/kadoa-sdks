@@ -27,7 +27,7 @@ if "kadoa_sdk.core.logger" not in sys.modules:
 
 if "kadoa_sdk.core.settings" not in sys.modules:
     settings_module = types.ModuleType("kadoa_sdk.core.settings")
-    settings_module.get_settings = lambda: SimpleNamespace()
+    settings_module.get_settings = SimpleNamespace
     sys.modules["kadoa_sdk.core.settings"] = settings_module
 
 if "kadoa_sdk.version" not in sys.modules:
@@ -265,5 +265,55 @@ class TestRealtime:
             (False, "Connection closed"),
             (True, None),
         ]
+
+        await realtime.close_async()
+
+    @pytest.mark.asyncio
+    async def test_clamps_server_provided_drain_delay_before_reconnecting(self, monkeypatch):
+        created: list[FakeWebSocket] = []
+
+        async def fake_connect(uri: str) -> FakeWebSocket:
+            socket = FakeWebSocket(uri)
+            created.append(socket)
+            return socket
+
+        token_counter = {"value": 0}
+
+        async def fake_get_oauth_token(self) -> tuple[str, str]:
+            token_counter["value"] += 1
+            return f"token-{token_counter['value']}", "team-123"
+
+        monkeypatch.setattr(realtime_module.websockets, "connect", fake_connect)
+        monkeypatch.setattr(
+            realtime_module.websockets.exceptions,
+            "ConnectionClosed",
+            FakeConnectionClosedError,
+        )
+        monkeypatch.setattr(
+            realtime_module,
+            "get_settings",
+            lambda: SimpleNamespace(
+                wss_api_uri="ws://example.test/realtime",
+                realtime_api_uri="http://example.test/realtime",
+                public_api_uri="http://example.test/public",
+            ),
+        )
+        monkeypatch.setattr(Realtime, "_get_oauth_token", fake_get_oauth_token)
+
+        realtime = Realtime(
+            RealtimeConfig(
+                api_key="test-key",
+                reconnect_delay=2,
+                heartbeat_interval=50,
+                missed_heartbeats_limit=5000,
+            )
+        )
+
+        await realtime.connect()
+        first_socket = await wait_for_socket(created, 0)
+        first_socket.queue_message({"type": "control.draining", "retryAfterMs": float("inf")})
+
+        second_socket = await wait_for_socket(created, 1)
+        assert second_socket is not None
 
         await realtime.close_async()
