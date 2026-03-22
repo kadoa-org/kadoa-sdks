@@ -292,6 +292,14 @@ export class Realtime {
       return;
     }
 
+    const safeDelayMs =
+      typeof delay === "number" && Number.isFinite(delay)
+        ? Math.min(
+            Math.max(0, Math.trunc(delay)),
+            Realtime.MAX_RECONNECT_DELAY_MS,
+          )
+        : this.reconnectDelay;
+
     this.reconnectTimer = setTimeout(async () => {
       this.reconnectTimer = undefined;
       if (
@@ -317,7 +325,7 @@ export class Realtime {
         this.notifyErrorListeners(err);
         this.scheduleReconnect();
       }
-    }, this.normalizeReconnectDelay(delay));
+    }, safeDelayMs);
   }
 
   private normalizeReconnectDelay(delay?: number): number {
