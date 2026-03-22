@@ -47,6 +47,7 @@ export interface RealtimeConfig {
 }
 
 export class Realtime {
+  private static readonly DEFAULT_RECONNECT_DELAY_MS = 5_000;
   private static readonly MAX_RECONNECT_DELAY_MS = 60_000;
   private activeSocket?: WebSocket;
   private drainingSockets: Set<WebSocket> = new Set();
@@ -73,7 +74,7 @@ export class Realtime {
   constructor(config: RealtimeConfig) {
     this.apiKey = config.apiKey;
     this.heartbeatInterval = config.heartbeatInterval || 10000;
-    this.reconnectDelay = config.reconnectDelay || 5000;
+    this.reconnectDelay = this.normalizeReconnectDelay(config.reconnectDelay);
     this.missedHeartbeatsLimit = config.missedHeartbeatsLimit || 30000;
   }
 
@@ -251,10 +252,7 @@ export class Realtime {
 
     debug("Received drain signal, preparing replacement socket");
     this.drainingSockets.add(socket);
-    this.scheduleReconnect(
-      this.normalizeReconnectDelay(message.retryAfterMs),
-      true,
-    );
+    this.scheduleDrainReconnect(message.retryAfterMs);
   }
 
   private handleSocketClose(socket: WebSocket) {
@@ -287,18 +285,10 @@ export class Realtime {
     this.scheduleReconnect();
   }
 
-  private scheduleReconnect(delay = this.reconnectDelay, replacement = false) {
+  private scheduleReconnect(replacement = false) {
     if (this.isClosed || this.reconnectTimer) {
       return;
     }
-
-    const safeDelayMs =
-      typeof delay === "number" && Number.isFinite(delay)
-        ? Math.min(
-            Math.max(0, Math.trunc(delay)),
-            Realtime.MAX_RECONNECT_DELAY_MS,
-          )
-        : this.reconnectDelay;
 
     this.reconnectTimer = setTimeout(async () => {
       this.reconnectTimer = undefined;
@@ -323,14 +313,49 @@ export class Realtime {
         debug("Reconnect failed: %O", err);
         this.isConnecting = false;
         this.notifyErrorListeners(err);
-        this.scheduleReconnect();
+        this.scheduleReconnect(replacement);
+      }
+    }, this.reconnectDelay);
+  }
+
+  private scheduleDrainReconnect(retryAfterMs?: number) {
+    if (this.isClosed || this.reconnectTimer) {
+      return;
+    }
+
+    let safeDelayMs = this.reconnectDelay;
+    if (
+      typeof retryAfterMs === "number" &&
+      Number.isFinite(retryAfterMs) &&
+      retryAfterMs >= 0 &&
+      retryAfterMs <= Realtime.MAX_RECONNECT_DELAY_MS
+    ) {
+      safeDelayMs = Math.trunc(retryAfterMs);
+    }
+
+    this.reconnectTimer = setTimeout(async () => {
+      this.reconnectTimer = undefined;
+      if (this.isClosed || this.isConnecting) {
+        return;
+      }
+
+      this.isConnecting = true;
+
+      try {
+        const { access_token, team_id } = await this.getOAuthToken();
+        await this.openSocket(access_token, team_id, "replacement");
+      } catch (err) {
+        debug("Reconnect failed: %O", err);
+        this.isConnecting = false;
+        this.notifyErrorListeners(err);
+        this.scheduleReconnect(true);
       }
     }, safeDelayMs);
   }
 
   private normalizeReconnectDelay(delay?: number): number {
     if (!Number.isFinite(delay)) {
-      return this.reconnectDelay;
+      return Realtime.DEFAULT_RECONNECT_DELAY_MS;
     }
 
     return Math.min(
