@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.24.1](https://github.com/kadoa-org/kadoa-sdks/compare/node-sdk-v0.24.0...node-sdk-v0.24.1) (2026-03-23)
+
+
+### Bug Fixes
+
+* handle realtime draining reconnects ([#240](https://github.com/kadoa-org/kadoa-sdks/issues/240)) ([e1f69bb](https://github.com/kadoa-org/kadoa-sdks/commit/e1f69bbfad6d75f9e49c15604ad650d245d9376b))
+
 ## [0.24.0](https://github.com/kadoa-org/kadoa-sdks/compare/node-sdk-v0.23.0...node-sdk-v0.24.0) (2026-03-12)
 
 
