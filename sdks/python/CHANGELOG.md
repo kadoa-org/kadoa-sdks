@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.18.4](https://github.com/kadoa-org/kadoa-sdks/compare/python-sdk-v0.18.3...python-sdk-v0.18.4) (2026-03-23)
+
+
+### Bug Fixes
+
+* handle realtime draining reconnects ([#240](https://github.com/kadoa-org/kadoa-sdks/issues/240)) ([e1f69bb](https://github.com/kadoa-org/kadoa-sdks/commit/e1f69bbfad6d75f9e49c15604ad650d245d9376b))
+
 ## [0.18.3](https://github.com/kadoa-org/kadoa-sdks/compare/python-sdk-v0.18.2...python-sdk-v0.18.3) (2026-03-10)
 
 
