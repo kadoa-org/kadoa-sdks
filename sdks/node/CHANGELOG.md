@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.24.2](https://github.com/kadoa-org/kadoa-sdks/compare/node-sdk-v0.24.1...node-sdk-v0.24.2) (2026-03-23)
+
+
+### Bug Fixes
+
+* **node-sdk:** fix realtime release build typing ([#244](https://github.com/kadoa-org/kadoa-sdks/issues/244)) ([af6f02c](https://github.com/kadoa-org/kadoa-sdks/commit/af6f02c75116ae588b96a38bd6be02aaca414aa7))
+
 ## [0.24.1](https://github.com/kadoa-org/kadoa-sdks/compare/node-sdk-v0.24.0...node-sdk-v0.24.1) (2026-03-23)
 
 
