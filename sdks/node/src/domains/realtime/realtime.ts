@@ -18,6 +18,10 @@ interface DrainControlMessage {
   retryAfterMs?: number;
 }
 
+interface HeartbeatMessage {
+  type: "heartbeat";
+}
+
 interface SubscribeMessage {
   action: "subscribe";
   channel: string;
@@ -29,7 +33,7 @@ type SocketRole = "active" | "replacement" | "draining";
 type RealtimeMessage =
   | RealtimeEvent
   | DrainControlMessage
-  | { type: "heartbeat" };
+  | HeartbeatMessage;
 
 export interface RealtimeEvent {
   type: string;
@@ -45,6 +49,13 @@ export interface RealtimeConfig {
   reconnectDelay?: number;
   missedHeartbeatsLimit?: number;
 }
+
+const isDrainControlMessage = (
+  message: RealtimeMessage,
+): message is DrainControlMessage => message.type === "control.draining";
+
+const isRealtimeEvent = (message: RealtimeMessage): message is RealtimeEvent =>
+  message.type !== "heartbeat" && message.type !== "control.draining";
 
 export class Realtime {
   private static readonly DEFAULT_RECONNECT_DELAY_MS = 5_000;
@@ -216,16 +227,20 @@ export class Realtime {
         return;
       }
 
-      if (data.type === "control.draining") {
+      if (isDrainControlMessage(data)) {
         this.handleDrainSignal(socket, data);
         return;
       }
 
-      if (data._cursor) {
+      if (!isRealtimeEvent(data)) {
+        return;
+      }
+
+      if (typeof data._cursor === "string") {
         this.lastCursor = data._cursor;
       }
 
-      if (data.id) {
+      if (typeof data.id === "string") {
         fetch(`${REALTIME_API_URI}/api/v1/events/ack`, {
           method: "POST",
           headers: { "Content-Type": "application/json" },
@@ -354,7 +369,7 @@ export class Realtime {
   }
 
   private normalizeReconnectDelay(delay?: number): number {
-    if (!Number.isFinite(delay)) {
+    if (typeof delay !== "number" || !Number.isFinite(delay)) {
       return Realtime.DEFAULT_RECONNECT_DELAY_MS;
     }
 
