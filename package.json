@@ -21,11 +21,11 @@
     "prepare": "husky"
   },
   "devDependencies": {
-    "@biomejs/biome": "2.4.6",
-    "@commitlint/cli": "20.4.3",
-    "@commitlint/config-conventional": "20.4.3",
+    "@biomejs/biome": "2.4.8",
+    "@commitlint/cli": "20.5.0",
+    "@commitlint/config-conventional": "20.5.0",
     "husky": "9.1.7",
-    "turbo": "2.8.14",
+    "turbo": "2.8.20",
     "typescript": "5.9.3"
   },
   "engines": {
