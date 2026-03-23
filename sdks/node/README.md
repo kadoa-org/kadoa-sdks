@@ -339,6 +339,8 @@ const extraction = await client.extract({
 .create();
 ```
 
+The SDK automatically reconnects when the realtime service drains a socket during deploys. If the server provides `_cursor` values, the client resumes with `lastCursor` on the replacement subscribe and suppresses overlapping duplicate deliveries by `event.id`.
+
 **Connection control:**
 
 ```typescript

@@ -45,6 +45,18 @@ print(f"Extracted {len(result.data)} items")
 
 That's it! With the SDK, data is automatically extracted. For more control, specify exactly what fields you want using the builder API.
 
+## Realtime WebSockets
+
+```python
+realtime = await client.connect_realtime()
+realtime.on_event(lambda event: print("Event:", event))
+realtime.on_connection(
+    lambda connected, reason=None: print("Connection:", connected, reason)
+)
+```
+
+The SDK reconnects automatically when the realtime service drains a socket during deploys. When the server includes `_cursor` on events, the client resumes with `lastCursor` on the replacement subscribe and suppresses overlap duplicates by `event["id"]`.
+
 ## Documentation
 
 For comprehensive documentation, examples, and API reference, visit:
