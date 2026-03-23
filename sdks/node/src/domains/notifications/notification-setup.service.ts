@@ -172,7 +172,7 @@ export class NotificationSetupService {
 
         if (existing?.id) {
           const existingChannelIds = (existing.channels || [])
-            .map((c) => c.id)
+            .map((channel: NotificationChannel) => channel.id)
             .filter(Boolean) as string[];
           const mergedChannelIds = [
             ...new Set([...existingChannelIds, ...channelIds]),
