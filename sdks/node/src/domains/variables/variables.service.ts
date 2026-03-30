@@ -1,6 +1,9 @@
 import type { KadoaClient } from "../../kadoa-client";
 import { KadoaSdkException } from "../../runtime/exceptions";
-import { KadoaErrorCode } from "../../runtime/exceptions/base.exception";
+import {
+  ERROR_MESSAGES,
+  KadoaErrorCode,
+} from "../../runtime/exceptions/base.exception";
 import { logger } from "../../runtime/logger";
 import type {
   CreateVariableRequest,
@@ -43,10 +46,13 @@ export class VariablesService {
     const variable = response.data.variable;
 
     if (!variable) {
-      throw new KadoaSdkException(`Variable not found: ${variableId}`, {
-        code: KadoaErrorCode.NOT_FOUND,
-        details: { variableId },
-      });
+      throw new KadoaSdkException(
+        `${ERROR_MESSAGES.VARIABLE_NOT_FOUND}: ${variableId}`,
+        {
+          code: KadoaErrorCode.NOT_FOUND,
+          details: { variableId },
+        },
+      );
     }
 
     return variable;
@@ -65,7 +71,7 @@ export class VariablesService {
     const variable = response.data.variable;
 
     if (!variable) {
-      throw new KadoaSdkException("Failed to create variable", {
+      throw new KadoaSdkException(ERROR_MESSAGES.VARIABLE_CREATE_FAILED, {
         code: KadoaErrorCode.INTERNAL_ERROR,
       });
     }
@@ -90,10 +96,13 @@ export class VariablesService {
     const variable = response.data.variable;
 
     if (!variable) {
-      throw new KadoaSdkException(`Failed to update variable: ${variableId}`, {
-        code: KadoaErrorCode.INTERNAL_ERROR,
-        details: { variableId },
-      });
+      throw new KadoaSdkException(
+        `${ERROR_MESSAGES.VARIABLE_UPDATE_FAILED}: ${variableId}`,
+        {
+          code: KadoaErrorCode.INTERNAL_ERROR,
+          details: { variableId },
+        },
+      );
     }
 
     return variable;
