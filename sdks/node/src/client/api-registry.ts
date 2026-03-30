@@ -6,6 +6,7 @@ import {
   DataValidationApi,
   NotificationsApi,
   SchemasApi,
+  VariablesApi,
   WorkflowsApi,
 } from "./apis.acl";
 
@@ -60,5 +61,9 @@ export class ApiRegistry {
 
   get notifications(): NotificationsApi {
     return this.get(NotificationsApi);
+  }
+
+  get variables(): VariablesApi {
+    return this.get(VariablesApi);
   }
 }
