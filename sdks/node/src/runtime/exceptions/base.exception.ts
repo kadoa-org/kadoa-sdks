@@ -63,6 +63,11 @@ export class KadoaSdkException extends Error {
     SCHEMA_CREATE_FAILED: "Failed to create schema",
     SCHEMA_UPDATE_FAILED: "Failed to update schema",
     SCHEMA_DELETE_FAILED: "Failed to delete schema",
+
+    // Variable specific errors
+    VARIABLE_NOT_FOUND: "Variable not found",
+    VARIABLE_CREATE_FAILED: "Failed to create variable",
+    VARIABLE_UPDATE_FAILED: "Failed to update variable",
   } as const;
 
   constructor(message: string, options?: KadoaSdkExceptionOptions) {

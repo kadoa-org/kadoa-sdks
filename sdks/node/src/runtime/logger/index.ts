@@ -13,4 +13,5 @@ export const logger = {
   notifications: createLogger("notifications"),
   schemas: createLogger("schemas"),
   validation: createLogger("validation"),
+  variables: createLogger("variables"),
 };
