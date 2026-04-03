@@ -14,6 +14,7 @@ export * from "./domains/realtime";
 export * from "./domains/schemas";
 export * from "./domains/user";
 export * from "./domains/validation";
+export * from "./domains/variables";
 export * from "./domains/workflows";
 // ============================================================================
 // Core Client & Configuration
