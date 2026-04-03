@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.25.0](https://github.com/kadoa-org/kadoa-sdks/compare/node-sdk-v0.24.2...node-sdk-v0.25.0) (2026-04-03)
+
+
+### Features
+
+* **node-sdk:** add variables domain with CRUD operations ([#250](https://github.com/kadoa-org/kadoa-sdks/issues/250)) ([c5cf45c](https://github.com/kadoa-org/kadoa-sdks/commit/c5cf45cdc9495a38aa1b6f4731cad4097a15298a))
+
 ## [0.24.2](https://github.com/kadoa-org/kadoa-sdks/compare/node-sdk-v0.24.1...node-sdk-v0.24.2) (2026-03-23)
 
 
