@@ -1,6 +1,7 @@
 import type { AxiosInstance } from "axios";
 import axios, { AxiosError } from "axios";
 import { v4 } from "uuid";
+import { ChangesService } from "../domains/changes/changes.service";
 import { type CrawlerDomain, createCrawlerDomain } from "../domains/crawler";
 import { DataFetcherService } from "../domains/extraction/services/data-fetcher.service";
 import { EntityResolverService } from "../domains/extraction/services/entity-resolver.service";
@@ -76,6 +77,7 @@ export function createAxiosInstance(params: {
 }
 
 export function createClientDomains(params: { client: KadoaClient }): {
+  changes: ChangesService;
   extractionBuilderService: ExtractionBuilderService;
   extraction: ExtractionService;
   workflow: WorkflowsCoreService;
@@ -89,6 +91,7 @@ export function createClientDomains(params: { client: KadoaClient }): {
 } {
   const { client } = params;
 
+  const changesService = new ChangesService(client);
   const userService = new UserService(client);
   const dataFetcherService = new DataFetcherService(client.apis.workflows);
   const channelsService = new NotificationChannelsService(
@@ -137,6 +140,7 @@ export function createClientDomains(params: { client: KadoaClient }): {
   const crawler = createCrawlerDomain(client);
 
   return {
+    changes: changesService,
     extractionBuilderService,
     extraction: extractionService,
     workflow: workflowsCoreService,
