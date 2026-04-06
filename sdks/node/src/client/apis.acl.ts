@@ -3,6 +3,7 @@ export {
   DataValidationApi,
   NotificationsApi,
   SchemasApi,
+  TemplatesApi,
   VariablesApi,
   WorkflowsApi,
 } from "../generated";
