@@ -17,6 +17,7 @@ import { NotificationChannelsService } from "../domains/notifications/notificati
 import { NotificationSettingsService } from "../domains/notifications/notification-settings.service";
 import { SchemasService } from "../domains/schemas/schemas.service";
 import { UserService } from "../domains/user/user.service";
+import { TemplatesService } from "../domains/templates/templates.service";
 import { VariablesService } from "../domains/variables/variables.service";
 import {
   createValidationDomain,
@@ -81,6 +82,7 @@ export function createClientDomains(params: { client: KadoaClient }): {
   notification: NotificationDomain;
   schema: SchemasService;
   user: UserService;
+  template: TemplatesService;
   validation: ValidationDomain;
   variable: VariablesService;
   crawler: CrawlerDomain;
@@ -99,6 +101,7 @@ export function createClientDomains(params: { client: KadoaClient }): {
   const entityResolverService = new EntityResolverService(client);
   const workflowsCoreService = new WorkflowsCoreService(client.apis.workflows);
   const schemasService = new SchemasService(client);
+  const templatesService = new TemplatesService(client);
   const variablesService = new VariablesService(client);
   const channelSetupService = new NotificationSetupService(
     channelsService,
@@ -140,6 +143,7 @@ export function createClientDomains(params: { client: KadoaClient }): {
     notification,
     schema: schemasService,
     user: userService,
+    template: templatesService,
     validation,
     variable: variablesService,
     crawler,
