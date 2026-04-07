@@ -824,19 +824,134 @@
         "tags": [
           "Support"
         ],
+        "security": [
+          {
+            "ApiKeyAuth": []
+          }
+        ],
         "parameters": [
           {
-            "name": "x-api-key",
-            "in": "header",
+            "name": "includeResolved",
+            "in": "query",
             "required": false,
             "schema": {
-              "type": "string"
-            }
+              "type": "string",
+              "enum": [
+                "true",
+                "false"
+              ],
+              "default": "false"
+            },
+            "description": "When true, includes resolved issues in the response. Defaults to false."
           }
         ],
         "responses": {
           "200": {
-            "description": "List of support issues"
+            "description": "List of support issues",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "issues": {
+                      "type": "array",
+                      "items": {
+                        "type": "object",
+                        "properties": {
+                          "id": {
+                            "type": "string",
+                            "format": "uuid",
+                            "description": "Support request ID"
+                          },
+                          "teamId": {
+                            "type": "string",
+                            "format": "uuid",
+                            "description": "Team that owns the issue"
+                          },
+                          "workflowId": {
+                            "type": "string",
+                            "format": "uuid",
+                            "description": "Linked workflow ID (if any)"
+                          },
+                          "workflowName": {
+                            "type": "string",
+                            "description": "Name of the linked workflow"
+                          },
+                          "issueId": {
+                            "type": "string",
+                            "description": "Kadoa issue identifier (e.g. KAD-1234)"
+                          },
+                          "requestedAt": {
+                            "type": "string",
+                            "format": "date-time",
+                            "description": "When the issue was created"
+                          },
+                          "resolvedAt": {
+                            "type": "string",
+                            "format": "date-time",
+                            "nullable": true,
+                            "description": "When the issue was resolved (null if open)"
+                          },
+                          "resolvedBy": {
+                            "type": "string",
+                            "nullable": true,
+                            "description": "Who resolved the issue"
+                          },
+                          "issueTitle": {
+                            "type": "string",
+                            "description": "Issue title"
+                          },
+                          "issueDescription": {
+                            "type": "string",
+                            "description": "Issue description"
+                          },
+                          "status": {
+                            "type": "string",
+                            "description": "Current status (e.g. Triage, Todo, In Progress, Done)"
+                          },
+                          "priority": {
+                            "type": "number",
+                            "description": "Priority level (0=No priority, 1=Urgent, 2=High, 3=Medium, 4=Low)"
+                          },
+                          "labels": {
+                            "type": "array",
+                            "items": {
+                              "type": "string"
+                            },
+                            "description": "Labels attached to the issue"
+                          },
+                          "updatedAt": {
+                            "type": "string",
+                            "format": "date-time",
+                            "description": "Last update timestamp"
+                          }
+                        }
+                      }
+                    }
+                  }
+                },
+                "example": {
+                  "issues": [
+                    {
+                      "id": "a1b2c3d4-e5f6-7890-abcd-ef1234567890",
+                      "teamId": "f0e1d2c3-b4a5-6789-0abc-def123456789",
+                      "workflowId": "12345678-abcd-ef01-2345-6789abcdef01",
+                      "workflowName": "Product catalog scraper",
+                      "issueId": "KAD-1234",
+                      "requestedAt": "2026-03-18T09:15:00.000Z",
+                      "resolvedAt": "2026-03-18T10:32:12.000Z",
+                      "resolvedBy": "support-agent",
+                      "issueTitle": "Missing price fields on product pages",
+                      "issueDescription": "Several product pages are returning null for the price field. Affected URLs include the seasonal sale section.",
+                      "status": "Done",
+                      "priority": 2,
+                      "labels": [],
+                      "updatedAt": "2026-03-18T10:32:00.000Z"
+                    }
+                  ]
+                }
+              }
+            }
           }
         }
       },
@@ -845,6 +960,11 @@
         "description": "Creates a support ticket. User info is inferred from auth context.",
         "tags": [
           "Support"
+        ],
+        "security": [
+          {
+            "ApiKeyAuth": []
+          }
         ],
         "requestBody": {
           "required": true,
@@ -887,7 +1007,35 @@
                     "type": "string"
                   },
                   "files": {
-                    "type": "array"
+                    "type": "array",
+                    "description": "File attachments to include with the issue. Each file must already be hosted at a publicly accessible URL.",
+                    "items": {
+                      "type": "object",
+                      "required": [
+                        "name",
+                        "url",
+                        "type",
+                        "size"
+                      ],
+                      "properties": {
+                        "name": {
+                          "type": "string",
+                          "description": "File name (e.g. screenshot.png)"
+                        },
+                        "url": {
+                          "type": "string",
+                          "description": "Publicly accessible URL of the file"
+                        },
+                        "type": {
+                          "type": "string",
+                          "description": "MIME type (e.g. image/png, application/pdf)"
+                        },
+                        "size": {
+                          "type": "number",
+                          "description": "File size in bytes"
+                        }
+                      }
+                    }
                   },
                   "workflowId": {
                     "type": "string",
@@ -895,7 +1043,7 @@
                   },
                   "dataChangeId": {
                     "type": "string",
-                    "description": "Optional data change ID for data diff issues"
+                    "description": "ID of a data change from the Data Changes API (GET /v4/changes). Links the support issue to a specific data diff so the team can review the exact change being reported. Only relevant when category is data_diff."
                   },
                   "subcategory": {
                     "type": "string",
@@ -931,7 +1079,7 @@
                     },
                     "issueIdentifier": {
                       "type": "string",
-                      "description": "Linear issue identifier (e.g., KAD-123)"
+                      "description": "Kadoa issue identifier (e.g., KAD-123)"
                     }
                   }
                 }
@@ -947,9 +1095,99 @@
         "tags": [
           "Support"
         ],
+        "security": [
+          {
+            "ApiKeyAuth": []
+          }
+        ],
         "responses": {
           "200": {
-            "description": "List of available states"
+            "description": "List of available states",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "states": {
+                      "type": "array",
+                      "items": {
+                        "type": "object",
+                        "properties": {
+                          "id": {
+                            "type": "string",
+                            "description": "State ID (use this when updating an issue)"
+                          },
+                          "name": {
+                            "type": "string",
+                            "description": "Human-readable state name"
+                          },
+                          "position": {
+                            "type": "number",
+                            "description": "Display order position"
+                          },
+                          "type": {
+                            "type": "string",
+                            "description": "State type (e.g. triage, unstarted, started, completed, canceled)"
+                          }
+                        }
+                      }
+                    }
+                  }
+                },
+                "example": {
+                  "states": [
+                    {
+                      "id": "2d70fae6-0805-47f5-9f6f-49f2edb9c1be",
+                      "name": "Triage",
+                      "position": 0,
+                      "type": "triage"
+                    },
+                    {
+                      "id": "2b23aac3-4b57-46de-a551-cf823758a6de",
+                      "name": "In Review",
+                      "position": 1002,
+                      "type": "started"
+                    },
+                    {
+                      "id": "dec8f12f-33d6-4e4b-bd9e-431caba0d0b5",
+                      "name": "Todo",
+                      "position": 1,
+                      "type": "unstarted"
+                    },
+                    {
+                      "id": "d5171eb1-0479-45fd-acf4-502a6874eb89",
+                      "name": "In Progress",
+                      "position": 2,
+                      "type": "started"
+                    },
+                    {
+                      "id": "ba3f8aed-c34e-44fb-83f8-86142df48a12",
+                      "name": "Duplicate",
+                      "position": 5,
+                      "type": "canceled"
+                    },
+                    {
+                      "id": "a0a782d4-1295-4c11-9ac4-e1462d8c6c58",
+                      "name": "Done",
+                      "position": 3,
+                      "type": "completed"
+                    },
+                    {
+                      "id": "5eee6b17-12a5-44ed-b17e-daf16686a5ee",
+                      "name": "Backlog",
+                      "position": 0,
+                      "type": "backlog"
+                    },
+                    {
+                      "id": "0fd73e82-b7c0-4f21-b65f-3dd0871f7a11",
+                      "name": "Canceled",
+                      "position": 4,
+                      "type": "canceled"
+                    }
+                  ]
+                }
+              }
+            }
           }
         }
       }
@@ -959,6 +1197,11 @@
         "summary": "Update issue priority and/or status",
         "tags": [
           "Support"
+        ],
+        "security": [
+          {
+            "ApiKeyAuth": []
+          }
         ],
         "parameters": [
           {
@@ -985,10 +1228,16 @@
                       2,
                       3,
                       4
-                    ]
+                    ],
+                    "description": "Issue priority (0=No priority, 1=Urgent, 2=High, 3=Medium, 4=Low)"
                   },
                   "stateId": {
-                    "type": "string"
+                    "type": "string",
+                    "description": "Target state ID. Use GET /v4/support/states to retrieve available states. Setting a non-final state on a resolved issue will reopen it."
+                  },
+                  "reopenComment": {
+                    "type": "string",
+                    "description": "Optional comment explaining why the issue is being reopened. Max 2000 characters. Only used when reopening a resolved issue."
                   }
                 }
               }
@@ -1453,13 +1702,13 @@
                       },
                       "description": "Tags associated with the workflow"
                     },
-                    "templateName": {
+                    "schemaName": {
                       "type": "string",
-                      "description": "Name of the template used"
+                      "description": "Name of the schema used"
                     },
-                    "templateId": {
+                    "schemaId": {
                       "type": "string",
-                      "description": "ID of the template used"
+                      "description": "ID of the schema used"
                     },
                     "jobId": {
                       "type": "string",
@@ -2574,15 +2823,6 @@
             }
           },
           {
-            "name": "templateId",
-            "in": "query",
-            "description": "Filter workflows by template ID (DEPRECATED - templates replaced by schemas)",
-            "required": false,
-            "schema": {
-              "type": "string"
-            }
-          },
-          {
             "name": "includeDeleted",
             "in": "query",
             "description": "Include deleted workflows (for compliance officers)",
@@ -2875,13 +3115,13 @@
                             },
                             "description": "Extraction schema fields"
                           },
-                          "templateName": {
+                          "schemaName": {
                             "type": "string",
-                            "description": "Name of the template used"
+                            "description": "Name of the schema used"
                           },
-                          "templateId": {
+                          "schemaId": {
                             "type": "string",
-                            "description": "ID of the template used"
+                            "description": "ID of the schema used"
                           },
                           "errors": {
                             "type": "array",
@@ -11443,6 +11683,1735 @@
         ]
       }
     },
+    "/v4/templates/": {
+      "get": {
+        "description": "List all active templates for the authenticated user's team",
+        "summary": "List all templates",
+        "tags": [
+          "Templates"
+        ],
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "200",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TemplateListResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "401",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "error": {
+                      "type": "boolean",
+                      "description": "Indicates an error occurred"
+                    },
+                    "message": {
+                      "type": "string",
+                      "description": "Error message"
+                    },
+                    "details": {
+                      "nullable": true,
+                      "description": "Additional error details (e.g., validation errors)"
+                    }
+                  },
+                  "required": [
+                    "error",
+                    "message"
+                  ]
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "500",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "error": {
+                      "type": "boolean",
+                      "description": "Indicates an error occurred"
+                    },
+                    "message": {
+                      "type": "string",
+                      "description": "Error message"
+                    },
+                    "details": {
+                      "nullable": true,
+                      "description": "Additional error details (e.g., validation errors)"
+                    }
+                  },
+                  "required": [
+                    "error",
+                    "message"
+                  ]
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "ApiKeyAuth": []
+          }
+        ]
+      },
+      "post": {
+        "description": "Create a new template for the team",
+        "summary": "Create new template",
+        "tags": [
+          "Templates"
+        ],
+        "parameters": [],
+        "requestBody": {
+          "description": "Body",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateTemplateBody"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "201",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TemplateCreatedResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "400",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "error": {
+                      "type": "boolean",
+                      "description": "Indicates an error occurred"
+                    },
+                    "message": {
+                      "type": "string",
+                      "description": "Error message"
+                    },
+                    "details": {
+                      "nullable": true,
+                      "description": "Additional error details (e.g., validation errors)"
+                    }
+                  },
+                  "required": [
+                    "error",
+                    "message"
+                  ]
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "401",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "error": {
+                      "type": "boolean",
+                      "description": "Indicates an error occurred"
+                    },
+                    "message": {
+                      "type": "string",
+                      "description": "Error message"
+                    },
+                    "details": {
+                      "nullable": true,
+                      "description": "Additional error details (e.g., validation errors)"
+                    }
+                  },
+                  "required": [
+                    "error",
+                    "message"
+                  ]
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "409",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "error": {
+                      "type": "boolean",
+                      "description": "Indicates an error occurred"
+                    },
+                    "message": {
+                      "type": "string",
+                      "description": "Error message"
+                    },
+                    "details": {
+                      "nullable": true,
+                      "description": "Additional error details (e.g., validation errors)"
+                    }
+                  },
+                  "required": [
+                    "error",
+                    "message"
+                  ]
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "500",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "error": {
+                      "type": "boolean",
+                      "description": "Indicates an error occurred"
+                    },
+                    "message": {
+                      "type": "string",
+                      "description": "Error message"
+                    },
+                    "details": {
+                      "nullable": true,
+                      "description": "Additional error details (e.g., validation errors)"
+                    }
+                  },
+                  "required": [
+                    "error",
+                    "message"
+                  ]
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "ApiKeyAuth": []
+          }
+        ]
+      }
+    },
+    "/v4/templates/{templateId}": {
+      "get": {
+        "description": "Retrieve a template with all its published versions",
+        "summary": "Get template by ID",
+        "tags": [
+          "Templates"
+        ],
+        "parameters": [
+          {
+            "name": "templateId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            },
+            "description": "Template ID"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "200",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TemplateDetailResponseBody"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "401",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "error": {
+                      "type": "boolean",
+                      "description": "Indicates an error occurred"
+                    },
+                    "message": {
+                      "type": "string",
+                      "description": "Error message"
+                    },
+                    "details": {
+                      "nullable": true,
+                      "description": "Additional error details (e.g., validation errors)"
+                    }
+                  },
+                  "required": [
+                    "error",
+                    "message"
+                  ]
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "404",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "error": {
+                      "type": "boolean",
+                      "description": "Indicates an error occurred"
+                    },
+                    "message": {
+                      "type": "string",
+                      "description": "Error message"
+                    },
+                    "details": {
+                      "nullable": true,
+                      "description": "Additional error details (e.g., validation errors)"
+                    }
+                  },
+                  "required": [
+                    "error",
+                    "message"
+                  ]
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "500",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "error": {
+                      "type": "boolean",
+                      "description": "Indicates an error occurred"
+                    },
+                    "message": {
+                      "type": "string",
+                      "description": "Error message"
+                    },
+                    "details": {
+                      "nullable": true,
+                      "description": "Additional error details (e.g., validation errors)"
+                    }
+                  },
+                  "required": [
+                    "error",
+                    "message"
+                  ]
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "ApiKeyAuth": []
+          }
+        ]
+      },
+      "put": {
+        "description": "Update template name or description",
+        "summary": "Update template",
+        "tags": [
+          "Templates"
+        ],
+        "parameters": [
+          {
+            "name": "templateId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            },
+            "description": "Template ID"
+          }
+        ],
+        "requestBody": {
+          "description": "Body",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateTemplateBody"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "200",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TemplateUpdatedResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "400",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "error": {
+                      "type": "boolean",
+                      "description": "Indicates an error occurred"
+                    },
+                    "message": {
+                      "type": "string",
+                      "description": "Error message"
+                    },
+                    "details": {
+                      "nullable": true,
+                      "description": "Additional error details (e.g., validation errors)"
+                    }
+                  },
+                  "required": [
+                    "error",
+                    "message"
+                  ]
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "401",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "error": {
+                      "type": "boolean",
+                      "description": "Indicates an error occurred"
+                    },
+                    "message": {
+                      "type": "string",
+                      "description": "Error message"
+                    },
+                    "details": {
+                      "nullable": true,
+                      "description": "Additional error details (e.g., validation errors)"
+                    }
+                  },
+                  "required": [
+                    "error",
+                    "message"
+                  ]
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "404",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "error": {
+                      "type": "boolean",
+                      "description": "Indicates an error occurred"
+                    },
+                    "message": {
+                      "type": "string",
+                      "description": "Error message"
+                    },
+                    "details": {
+                      "nullable": true,
+                      "description": "Additional error details (e.g., validation errors)"
+                    }
+                  },
+                  "required": [
+                    "error",
+                    "message"
+                  ]
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "409",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "error": {
+                      "type": "boolean",
+                      "description": "Indicates an error occurred"
+                    },
+                    "message": {
+                      "type": "string",
+                      "description": "Error message"
+                    },
+                    "details": {
+                      "nullable": true,
+                      "description": "Additional error details (e.g., validation errors)"
+                    }
+                  },
+                  "required": [
+                    "error",
+                    "message"
+                  ]
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "500",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "error": {
+                      "type": "boolean",
+                      "description": "Indicates an error occurred"
+                    },
+                    "message": {
+                      "type": "string",
+                      "description": "Error message"
+                    },
+                    "details": {
+                      "nullable": true,
+                      "description": "Additional error details (e.g., validation errors)"
+                    }
+                  },
+                  "required": [
+                    "error",
+                    "message"
+                  ]
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "ApiKeyAuth": []
+          }
+        ]
+      },
+      "delete": {
+        "description": "Soft-delete (archive) a template. Existing workflows are unaffected.",
+        "summary": "Archive template",
+        "tags": [
+          "Templates"
+        ],
+        "parameters": [
+          {
+            "name": "templateId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            },
+            "description": "Template ID"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "200",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TemplateArchivedResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "401",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "error": {
+                      "type": "boolean",
+                      "description": "Indicates an error occurred"
+                    },
+                    "message": {
+                      "type": "string",
+                      "description": "Error message"
+                    },
+                    "details": {
+                      "nullable": true,
+                      "description": "Additional error details (e.g., validation errors)"
+                    }
+                  },
+                  "required": [
+                    "error",
+                    "message"
+                  ]
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "404",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "error": {
+                      "type": "boolean",
+                      "description": "Indicates an error occurred"
+                    },
+                    "message": {
+                      "type": "string",
+                      "description": "Error message"
+                    },
+                    "details": {
+                      "nullable": true,
+                      "description": "Additional error details (e.g., validation errors)"
+                    }
+                  },
+                  "required": [
+                    "error",
+                    "message"
+                  ]
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "500",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "error": {
+                      "type": "boolean",
+                      "description": "Indicates an error occurred"
+                    },
+                    "message": {
+                      "type": "string",
+                      "description": "Error message"
+                    },
+                    "details": {
+                      "nullable": true,
+                      "description": "Additional error details (e.g., validation errors)"
+                    }
+                  },
+                  "required": [
+                    "error",
+                    "message"
+                  ]
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "ApiKeyAuth": []
+          }
+        ]
+      }
+    },
+    "/v4/templates/{templateId}/versions": {
+      "post": {
+        "description": "Create a new immutable version of a template with prompt, schema, and/or data validation",
+        "summary": "Publish template version",
+        "tags": [
+          "Templates"
+        ],
+        "parameters": [
+          {
+            "name": "templateId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            },
+            "description": "Template ID"
+          }
+        ],
+        "requestBody": {
+          "description": "Body",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateTemplateVersionBody"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "201",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TemplateVersionCreatedResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "400",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "error": {
+                      "type": "boolean",
+                      "description": "Indicates an error occurred"
+                    },
+                    "message": {
+                      "type": "string",
+                      "description": "Error message"
+                    },
+                    "details": {
+                      "nullable": true,
+                      "description": "Additional error details (e.g., validation errors)"
+                    }
+                  },
+                  "required": [
+                    "error",
+                    "message"
+                  ]
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "401",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "error": {
+                      "type": "boolean",
+                      "description": "Indicates an error occurred"
+                    },
+                    "message": {
+                      "type": "string",
+                      "description": "Error message"
+                    },
+                    "details": {
+                      "nullable": true,
+                      "description": "Additional error details (e.g., validation errors)"
+                    }
+                  },
+                  "required": [
+                    "error",
+                    "message"
+                  ]
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "404",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "error": {
+                      "type": "boolean",
+                      "description": "Indicates an error occurred"
+                    },
+                    "message": {
+                      "type": "string",
+                      "description": "Error message"
+                    },
+                    "details": {
+                      "nullable": true,
+                      "description": "Additional error details (e.g., validation errors)"
+                    }
+                  },
+                  "required": [
+                    "error",
+                    "message"
+                  ]
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "500",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "error": {
+                      "type": "boolean",
+                      "description": "Indicates an error occurred"
+                    },
+                    "message": {
+                      "type": "string",
+                      "description": "Error message"
+                    },
+                    "details": {
+                      "nullable": true,
+                      "description": "Additional error details (e.g., validation errors)"
+                    }
+                  },
+                  "required": [
+                    "error",
+                    "message"
+                  ]
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "ApiKeyAuth": []
+          }
+        ]
+      }
+    },
+    "/v4/templates/{templateId}/schemas": {
+      "get": {
+        "description": "List all schemas linked to this template",
+        "summary": "List template schemas",
+        "tags": [
+          "Templates"
+        ],
+        "parameters": [
+          {
+            "name": "templateId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            },
+            "description": "Template ID"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "200",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TemplateSchemasResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "401",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "error": {
+                      "type": "boolean",
+                      "description": "Indicates an error occurred"
+                    },
+                    "message": {
+                      "type": "string",
+                      "description": "Error message"
+                    },
+                    "details": {
+                      "nullable": true,
+                      "description": "Additional error details (e.g., validation errors)"
+                    }
+                  },
+                  "required": [
+                    "error",
+                    "message"
+                  ]
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "404",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "error": {
+                      "type": "boolean",
+                      "description": "Indicates an error occurred"
+                    },
+                    "message": {
+                      "type": "string",
+                      "description": "Error message"
+                    },
+                    "details": {
+                      "nullable": true,
+                      "description": "Additional error details (e.g., validation errors)"
+                    }
+                  },
+                  "required": [
+                    "error",
+                    "message"
+                  ]
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "500",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "error": {
+                      "type": "boolean",
+                      "description": "Indicates an error occurred"
+                    },
+                    "message": {
+                      "type": "string",
+                      "description": "Error message"
+                    },
+                    "details": {
+                      "nullable": true,
+                      "description": "Additional error details (e.g., validation errors)"
+                    }
+                  },
+                  "required": [
+                    "error",
+                    "message"
+                  ]
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "ApiKeyAuth": []
+          }
+        ]
+      }
+    },
+    "/v4/templates/{templateId}/workflows": {
+      "get": {
+        "description": "List all workflows created from this template with outdated version detection",
+        "summary": "List template workflows",
+        "tags": [
+          "Templates"
+        ],
+        "parameters": [
+          {
+            "name": "templateId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            },
+            "description": "Template ID"
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "200",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TemplateWorkflowsResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "401",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "error": {
+                      "type": "boolean",
+                      "description": "Indicates an error occurred"
+                    },
+                    "message": {
+                      "type": "string",
+                      "description": "Error message"
+                    },
+                    "details": {
+                      "nullable": true,
+                      "description": "Additional error details (e.g., validation errors)"
+                    }
+                  },
+                  "required": [
+                    "error",
+                    "message"
+                  ]
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "404",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "error": {
+                      "type": "boolean",
+                      "description": "Indicates an error occurred"
+                    },
+                    "message": {
+                      "type": "string",
+                      "description": "Error message"
+                    },
+                    "details": {
+                      "nullable": true,
+                      "description": "Additional error details (e.g., validation errors)"
+                    }
+                  },
+                  "required": [
+                    "error",
+                    "message"
+                  ]
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "500",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "error": {
+                      "type": "boolean",
+                      "description": "Indicates an error occurred"
+                    },
+                    "message": {
+                      "type": "string",
+                      "description": "Error message"
+                    },
+                    "details": {
+                      "nullable": true,
+                      "description": "Additional error details (e.g., validation errors)"
+                    }
+                  },
+                  "required": [
+                    "error",
+                    "message"
+                  ]
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "ApiKeyAuth": []
+          }
+        ]
+      }
+    },
+    "/v4/templates/{templateId}/apply": {
+      "post": {
+        "description": "Apply a template version's config to existing workflows (clone with lineage update)",
+        "summary": "Apply template update",
+        "tags": [
+          "Templates"
+        ],
+        "parameters": [
+          {
+            "name": "templateId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            },
+            "description": "Template ID"
+          }
+        ],
+        "requestBody": {
+          "description": "Body",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ApplyTemplateUpdateBody"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "200",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ApplyTemplateUpdateResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "400",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "error": {
+                      "type": "boolean",
+                      "description": "Indicates an error occurred"
+                    },
+                    "message": {
+                      "type": "string",
+                      "description": "Error message"
+                    },
+                    "details": {
+                      "nullable": true,
+                      "description": "Additional error details (e.g., validation errors)"
+                    }
+                  },
+                  "required": [
+                    "error",
+                    "message"
+                  ]
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "401",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "error": {
+                      "type": "boolean",
+                      "description": "Indicates an error occurred"
+                    },
+                    "message": {
+                      "type": "string",
+                      "description": "Error message"
+                    },
+                    "details": {
+                      "nullable": true,
+                      "description": "Additional error details (e.g., validation errors)"
+                    }
+                  },
+                  "required": [
+                    "error",
+                    "message"
+                  ]
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "404",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "error": {
+                      "type": "boolean",
+                      "description": "Indicates an error occurred"
+                    },
+                    "message": {
+                      "type": "string",
+                      "description": "Error message"
+                    },
+                    "details": {
+                      "nullable": true,
+                      "description": "Additional error details (e.g., validation errors)"
+                    }
+                  },
+                  "required": [
+                    "error",
+                    "message"
+                  ]
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "500",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "error": {
+                      "type": "boolean",
+                      "description": "Indicates an error occurred"
+                    },
+                    "message": {
+                      "type": "string",
+                      "description": "Error message"
+                    },
+                    "details": {
+                      "nullable": true,
+                      "description": "Additional error details (e.g., validation errors)"
+                    }
+                  },
+                  "required": [
+                    "error",
+                    "message"
+                  ]
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "ApiKeyAuth": []
+          }
+        ]
+      }
+    },
+    "/v4/templates/{templateId}/link": {
+      "post": {
+        "description": "Associate existing workflows with this template at the latest version. Returns 409 with conflict details if workflows are linked to another template (use force: true to override).",
+        "summary": "Link workflows to template",
+        "tags": [
+          "Templates"
+        ],
+        "parameters": [
+          {
+            "name": "templateId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            },
+            "description": "Template ID"
+          }
+        ],
+        "requestBody": {
+          "description": "Body",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/LinkWorkflowsBody"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "200",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/LinkWorkflowsResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "400",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "error": {
+                      "type": "boolean",
+                      "description": "Indicates an error occurred"
+                    },
+                    "message": {
+                      "type": "string",
+                      "description": "Error message"
+                    },
+                    "details": {
+                      "nullable": true,
+                      "description": "Additional error details (e.g., validation errors)"
+                    }
+                  },
+                  "required": [
+                    "error",
+                    "message"
+                  ]
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "401",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "error": {
+                      "type": "boolean",
+                      "description": "Indicates an error occurred"
+                    },
+                    "message": {
+                      "type": "string",
+                      "description": "Error message"
+                    },
+                    "details": {
+                      "nullable": true,
+                      "description": "Additional error details (e.g., validation errors)"
+                    }
+                  },
+                  "required": [
+                    "error",
+                    "message"
+                  ]
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "404",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "error": {
+                      "type": "boolean",
+                      "description": "Indicates an error occurred"
+                    },
+                    "message": {
+                      "type": "string",
+                      "description": "Error message"
+                    },
+                    "details": {
+                      "nullable": true,
+                      "description": "Additional error details (e.g., validation errors)"
+                    }
+                  },
+                  "required": [
+                    "error",
+                    "message"
+                  ]
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "409",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/LinkWorkflowsConflictResponse"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "500",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "error": {
+                      "type": "boolean",
+                      "description": "Indicates an error occurred"
+                    },
+                    "message": {
+                      "type": "string",
+                      "description": "Error message"
+                    },
+                    "details": {
+                      "nullable": true,
+                      "description": "Additional error details (e.g., validation errors)"
+                    }
+                  },
+                  "required": [
+                    "error",
+                    "message"
+                  ]
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "ApiKeyAuth": []
+          }
+        ]
+      }
+    },
+    "/v4/templates/from-workflow": {
+      "post": {
+        "description": "Extract a workflow's prompt, schema, validation rules, and notifications into a new template or as a new version of an existing template. Auto-links the workflow.",
+        "summary": "Save workflow as template",
+        "tags": [
+          "Templates"
+        ],
+        "parameters": [],
+        "requestBody": {
+          "description": "Body",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SaveFromWorkflowBody"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "201",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SaveFromWorkflowResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "400",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "error": {
+                      "type": "boolean",
+                      "description": "Indicates an error occurred"
+                    },
+                    "message": {
+                      "type": "string",
+                      "description": "Error message"
+                    },
+                    "details": {
+                      "nullable": true,
+                      "description": "Additional error details (e.g., validation errors)"
+                    }
+                  },
+                  "required": [
+                    "error",
+                    "message"
+                  ]
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "401",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "error": {
+                      "type": "boolean",
+                      "description": "Indicates an error occurred"
+                    },
+                    "message": {
+                      "type": "string",
+                      "description": "Error message"
+                    },
+                    "details": {
+                      "nullable": true,
+                      "description": "Additional error details (e.g., validation errors)"
+                    }
+                  },
+                  "required": [
+                    "error",
+                    "message"
+                  ]
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "404",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "error": {
+                      "type": "boolean",
+                      "description": "Indicates an error occurred"
+                    },
+                    "message": {
+                      "type": "string",
+                      "description": "Error message"
+                    },
+                    "details": {
+                      "nullable": true,
+                      "description": "Additional error details (e.g., validation errors)"
+                    }
+                  },
+                  "required": [
+                    "error",
+                    "message"
+                  ]
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "409",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "error": {
+                      "type": "boolean",
+                      "description": "Indicates an error occurred"
+                    },
+                    "message": {
+                      "type": "string",
+                      "description": "Error message"
+                    },
+                    "details": {
+                      "nullable": true,
+                      "description": "Additional error details (e.g., validation errors)"
+                    }
+                  },
+                  "required": [
+                    "error",
+                    "message"
+                  ]
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "500",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "error": {
+                      "type": "boolean",
+                      "description": "Indicates an error occurred"
+                    },
+                    "message": {
+                      "type": "string",
+                      "description": "Error message"
+                    },
+                    "details": {
+                      "nullable": true,
+                      "description": "Additional error details (e.g., validation errors)"
+                    }
+                  },
+                  "required": [
+                    "error",
+                    "message"
+                  ]
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "ApiKeyAuth": []
+          }
+        ]
+      }
+    },
+    "/v4/templates/{templateId}/unlink": {
+      "post": {
+        "description": "Remove the template association from workflows (does not change workflow config)",
+        "summary": "Unlink workflows from template",
+        "tags": [
+          "Templates"
+        ],
+        "parameters": [
+          {
+            "name": "templateId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            },
+            "description": "Template ID"
+          }
+        ],
+        "requestBody": {
+          "description": "Body",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UnlinkWorkflowsBody"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "200",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/UnlinkWorkflowsResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "400",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "error": {
+                      "type": "boolean",
+                      "description": "Indicates an error occurred"
+                    },
+                    "message": {
+                      "type": "string",
+                      "description": "Error message"
+                    },
+                    "details": {
+                      "nullable": true,
+                      "description": "Additional error details (e.g., validation errors)"
+                    }
+                  },
+                  "required": [
+                    "error",
+                    "message"
+                  ]
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "401",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "error": {
+                      "type": "boolean",
+                      "description": "Indicates an error occurred"
+                    },
+                    "message": {
+                      "type": "string",
+                      "description": "Error message"
+                    },
+                    "details": {
+                      "nullable": true,
+                      "description": "Additional error details (e.g., validation errors)"
+                    }
+                  },
+                  "required": [
+                    "error",
+                    "message"
+                  ]
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "404",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "error": {
+                      "type": "boolean",
+                      "description": "Indicates an error occurred"
+                    },
+                    "message": {
+                      "type": "string",
+                      "description": "Error message"
+                    },
+                    "details": {
+                      "nullable": true,
+                      "description": "Additional error details (e.g., validation errors)"
+                    }
+                  },
+                  "required": [
+                    "error",
+                    "message"
+                  ]
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "500",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "error": {
+                      "type": "boolean",
+                      "description": "Indicates an error occurred"
+                    },
+                    "message": {
+                      "type": "string",
+                      "description": "Error message"
+                    },
+                    "details": {
+                      "nullable": true,
+                      "description": "Additional error details (e.g., validation errors)"
+                    }
+                  },
+                  "required": [
+                    "error",
+                    "message"
+                  ]
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "ApiKeyAuth": []
+          }
+        ]
+      }
+    },
     "/v4/workflows/": {
       "post": {
         "description": "Create a new workflow with schema, custom fields, or agentic navigation mode",
@@ -17154,6 +19123,1704 @@
         ],
         "title": "DeleteSchemaResponse",
         "description": "Response for schema deletion"
+      },
+      "TemplateResponse": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid",
+            "description": "Template ID"
+          },
+          "name": {
+            "type": "string",
+            "description": "Template name"
+          },
+          "description": {
+            "type": "string",
+            "description": "Template description",
+            "nullable": true
+          },
+          "teamId": {
+            "type": "string",
+            "format": "uuid",
+            "description": "Owning team ID"
+          },
+          "latestVersion": {
+            "type": "number",
+            "description": "Latest published version number",
+            "nullable": true
+          },
+          "workflowCount": {
+            "type": "number",
+            "description": "Number of workflows linked to this template"
+          },
+          "hasPrompt": {
+            "type": "boolean",
+            "description": "Whether the latest version has a prompt"
+          },
+          "hasSchema": {
+            "type": "boolean",
+            "description": "Whether the latest version has a schema"
+          },
+          "hasValidation": {
+            "type": "boolean",
+            "description": "Whether the latest version has validation rules"
+          },
+          "hasNotifications": {
+            "type": "boolean",
+            "description": "Whether the latest version has notification settings"
+          },
+          "archivedAt": {
+            "type": "string",
+            "description": "Archive timestamp (null if active)",
+            "nullable": true
+          },
+          "createdAt": {
+            "type": "string",
+            "description": "Creation timestamp"
+          },
+          "updatedAt": {
+            "type": "string",
+            "description": "Last update timestamp"
+          }
+        },
+        "required": [
+          "id",
+          "name",
+          "description",
+          "teamId",
+          "latestVersion",
+          "archivedAt",
+          "createdAt",
+          "updatedAt"
+        ],
+        "title": "TemplateResponse",
+        "description": "Template object response"
+      },
+      "TemplateListResponse": {
+        "type": "object",
+        "properties": {
+          "error": {
+            "type": "boolean",
+            "enum": [
+              false
+            ],
+            "description": "Error flag (always false on success)"
+          },
+          "data": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/TemplateResponse"
+            },
+            "description": "List of templates"
+          }
+        },
+        "required": [
+          "error",
+          "data"
+        ],
+        "title": "TemplateListResponse",
+        "description": "Response wrapper for list of templates"
+      },
+      "TemplateValidationRule": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 255,
+            "description": "Rule name"
+          },
+          "description": {
+            "type": "string",
+            "description": "Rule description"
+          },
+          "ruleType": {
+            "type": "string",
+            "enum": [
+              "regex",
+              "custom_sql",
+              "llm"
+            ],
+            "description": "Type of validation rule"
+          },
+          "targetColumns": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "description": "Columns this rule targets"
+          },
+          "parameters": {
+            "type": "object",
+            "additionalProperties": {
+              "nullable": true
+            },
+            "description": "Rule parameters (e.g., sql, pattern)"
+          },
+          "status": {
+            "default": "enabled",
+            "type": "string",
+            "enum": [
+              "preview",
+              "enabled",
+              "disabled"
+            ],
+            "description": "Initial rule status"
+          },
+          "metadata": {
+            "type": "object",
+            "additionalProperties": {
+              "nullable": true
+            },
+            "description": "Additional metadata"
+          }
+        },
+        "required": [
+          "name",
+          "ruleType",
+          "parameters"
+        ],
+        "title": "TemplateValidationRule",
+        "description": "A data validation rule to be cloned into workflows"
+      },
+      "TemplateVersionDetailResponse": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid",
+            "description": "Version row ID"
+          },
+          "templateId": {
+            "type": "string",
+            "format": "uuid",
+            "description": "Parent template ID"
+          },
+          "version": {
+            "type": "number",
+            "description": "Version number"
+          },
+          "prompt": {
+            "type": "string",
+            "description": "User prompt",
+            "nullable": true
+          },
+          "schemaId": {
+            "type": "string",
+            "format": "uuid",
+            "description": "Referenced data_schemas ID",
+            "nullable": true
+          },
+          "schemaFields": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "name": {
+                  "type": "string",
+                  "description": "Field name"
+                },
+                "description": {
+                  "type": "string",
+                  "description": "Field description"
+                },
+                "fieldType": {
+                  "type": "string",
+                  "description": "Field type (SCHEMA, etc.)"
+                },
+                "example": {
+                  "type": "string",
+                  "description": "Example value"
+                },
+                "dataType": {
+                  "type": "string",
+                  "description": "Data type (STRING, NUMBER, DATE, LINK, etc.)"
+                },
+                "isKey": {
+                  "type": "boolean",
+                  "description": "Whether the field is a key field"
+                }
+              },
+              "required": [
+                "name"
+              ]
+            },
+            "nullable": true,
+            "description": "Fields from the linked schema"
+          },
+          "dataValidation": {
+            "type": "object",
+            "properties": {
+              "config": {
+                "type": "object",
+                "properties": {
+                  "enabled": {
+                    "type": "boolean",
+                    "description": "Whether data validation is enabled"
+                  },
+                  "alerting": {
+                    "type": "object",
+                    "properties": {
+                      "system": {
+                        "type": "object",
+                        "properties": {
+                          "enabled": {
+                            "type": "boolean"
+                          },
+                          "threshold": {
+                            "default": 1,
+                            "type": "number"
+                          }
+                        },
+                        "required": [
+                          "enabled"
+                        ],
+                        "description": "System alerting configuration"
+                      },
+                      "user": {
+                        "type": "object",
+                        "properties": {
+                          "enabled": {
+                            "type": "boolean"
+                          },
+                          "threshold": {
+                            "default": 1,
+                            "type": "number"
+                          }
+                        },
+                        "required": [
+                          "enabled"
+                        ],
+                        "description": "User alerting configuration"
+                      }
+                    },
+                    "description": "Alerting configuration"
+                  }
+                },
+                "required": [
+                  "enabled"
+                ],
+                "description": "Data validation config to copy into workflow.config.dataValidation"
+              },
+              "rules": {
+                "type": "array",
+                "items": {
+                  "$ref": "#/components/schemas/TemplateValidationRule"
+                },
+                "description": "Validation rules to clone as data_validation.validation_rules rows"
+              }
+            },
+            "description": "Data validation configuration for a template version",
+            "nullable": true
+          },
+          "notificationSettings": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "id": {
+                  "type": "string",
+                  "format": "uuid",
+                  "description": "Notification configuration ID"
+                },
+                "eventType": {
+                  "type": "string",
+                  "description": "Event type (e.g., workflow_finished, error)"
+                },
+                "eventConfiguration": {
+                  "type": "object",
+                  "additionalProperties": {
+                    "nullable": true
+                  },
+                  "description": "Event-specific config"
+                },
+                "enabled": {
+                  "type": "boolean",
+                  "description": "Whether this notification is enabled"
+                },
+                "channels": {
+                  "type": "array",
+                  "items": {
+                    "type": "object",
+                    "properties": {
+                      "channelId": {
+                        "type": "string",
+                        "format": "uuid"
+                      },
+                      "channelName": {
+                        "type": "string"
+                      },
+                      "channelType": {
+                        "type": "string"
+                      }
+                    },
+                    "required": [
+                      "channelId",
+                      "channelName",
+                      "channelType"
+                    ]
+                  },
+                  "description": "Linked notification channels"
+                }
+              },
+              "required": [
+                "id",
+                "eventType",
+                "eventConfiguration",
+                "enabled",
+                "channels"
+              ]
+            }
+          },
+          "validationRules": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "name": {
+                  "type": "string",
+                  "minLength": 1,
+                  "maxLength": 255,
+                  "description": "Rule name"
+                },
+                "description": {
+                  "type": "string",
+                  "description": "Rule description"
+                },
+                "ruleType": {
+                  "type": "string",
+                  "enum": [
+                    "regex",
+                    "custom_sql",
+                    "llm"
+                  ],
+                  "description": "Type of validation rule"
+                },
+                "targetColumns": {
+                  "type": "array",
+                  "items": {
+                    "type": "string"
+                  },
+                  "description": "Columns this rule targets"
+                },
+                "parameters": {
+                  "type": "object",
+                  "additionalProperties": {
+                    "nullable": true
+                  },
+                  "description": "Rule parameters (e.g., sql, pattern)"
+                },
+                "status": {
+                  "default": "enabled",
+                  "type": "string",
+                  "enum": [
+                    "preview",
+                    "enabled",
+                    "disabled"
+                  ],
+                  "description": "Initial rule status"
+                },
+                "metadata": {
+                  "type": "object",
+                  "additionalProperties": {
+                    "nullable": true
+                  },
+                  "description": "Additional metadata"
+                },
+                "id": {
+                  "type": "string",
+                  "format": "uuid"
+                }
+              },
+              "required": [
+                "name",
+                "ruleType",
+                "parameters",
+                "id"
+              ]
+            }
+          },
+          "createdAt": {
+            "type": "string",
+            "description": "Creation timestamp"
+          },
+          "schemaName": {
+            "type": "string",
+            "nullable": true,
+            "description": "Name of the linked schema"
+          },
+          "schemaEntity": {
+            "type": "string",
+            "nullable": true,
+            "description": "Entity name from the linked schema"
+          }
+        },
+        "required": [
+          "id",
+          "templateId",
+          "version",
+          "prompt",
+          "schemaId",
+          "createdAt"
+        ],
+        "title": "TemplateVersionDetailResponse",
+        "description": "Template version with schema details"
+      },
+      "TemplateDetailResponseBody": {
+        "type": "object",
+        "properties": {
+          "error": {
+            "type": "boolean",
+            "enum": [
+              false
+            ],
+            "description": "Error flag (always false on success)"
+          },
+          "data": {
+            "type": "object",
+            "properties": {
+              "id": {
+                "type": "string",
+                "format": "uuid",
+                "description": "Template ID"
+              },
+              "name": {
+                "type": "string",
+                "description": "Template name"
+              },
+              "description": {
+                "type": "string",
+                "description": "Template description",
+                "nullable": true
+              },
+              "teamId": {
+                "type": "string",
+                "format": "uuid",
+                "description": "Owning team ID"
+              },
+              "latestVersion": {
+                "type": "number",
+                "description": "Latest published version number",
+                "nullable": true
+              },
+              "workflowCount": {
+                "type": "number",
+                "description": "Number of workflows linked to this template"
+              },
+              "hasPrompt": {
+                "type": "boolean",
+                "description": "Whether the latest version has a prompt"
+              },
+              "hasSchema": {
+                "type": "boolean",
+                "description": "Whether the latest version has a schema"
+              },
+              "hasValidation": {
+                "type": "boolean",
+                "description": "Whether the latest version has validation rules"
+              },
+              "hasNotifications": {
+                "type": "boolean",
+                "description": "Whether the latest version has notification settings"
+              },
+              "archivedAt": {
+                "type": "string",
+                "description": "Archive timestamp (null if active)",
+                "nullable": true
+              },
+              "createdAt": {
+                "type": "string",
+                "description": "Creation timestamp"
+              },
+              "updatedAt": {
+                "type": "string",
+                "description": "Last update timestamp"
+              },
+              "versions": {
+                "type": "array",
+                "items": {
+                  "$ref": "#/components/schemas/TemplateVersionDetailResponse"
+                },
+                "description": "All published versions"
+              }
+            },
+            "required": [
+              "id",
+              "name",
+              "description",
+              "teamId",
+              "latestVersion",
+              "archivedAt",
+              "createdAt",
+              "updatedAt",
+              "versions"
+            ],
+            "description": "Template with versions"
+          }
+        },
+        "required": [
+          "error",
+          "data"
+        ],
+        "title": "TemplateDetailResponseBody",
+        "description": "Response wrapper for template detail"
+      },
+      "CreateTemplateBody": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 255,
+            "description": "Name of the template"
+          },
+          "description": {
+            "type": "string",
+            "maxLength": 2000,
+            "description": "Description of the template"
+          }
+        },
+        "required": [
+          "name"
+        ],
+        "title": "CreateTemplateBody",
+        "description": "Request body for creating a new template"
+      },
+      "TemplateCreatedResponse": {
+        "type": "object",
+        "properties": {
+          "error": {
+            "type": "boolean",
+            "enum": [
+              false
+            ],
+            "description": "Error flag (always false on success)"
+          },
+          "success": {
+            "type": "boolean",
+            "enum": [
+              true
+            ],
+            "description": "Success flag"
+          },
+          "data": {
+            "type": "object",
+            "properties": {
+              "id": {
+                "type": "string",
+                "format": "uuid",
+                "description": "Template ID"
+              },
+              "name": {
+                "type": "string",
+                "description": "Template name"
+              },
+              "description": {
+                "type": "string",
+                "description": "Template description",
+                "nullable": true
+              },
+              "teamId": {
+                "type": "string",
+                "format": "uuid",
+                "description": "Owning team ID"
+              },
+              "latestVersion": {
+                "type": "number",
+                "description": "Latest published version number",
+                "nullable": true
+              },
+              "workflowCount": {
+                "type": "number",
+                "description": "Number of workflows linked to this template"
+              },
+              "hasPrompt": {
+                "type": "boolean",
+                "description": "Whether the latest version has a prompt"
+              },
+              "hasSchema": {
+                "type": "boolean",
+                "description": "Whether the latest version has a schema"
+              },
+              "hasValidation": {
+                "type": "boolean",
+                "description": "Whether the latest version has validation rules"
+              },
+              "hasNotifications": {
+                "type": "boolean",
+                "description": "Whether the latest version has notification settings"
+              },
+              "archivedAt": {
+                "type": "string",
+                "description": "Archive timestamp (null if active)",
+                "nullable": true
+              },
+              "createdAt": {
+                "type": "string",
+                "description": "Creation timestamp"
+              },
+              "updatedAt": {
+                "type": "string",
+                "description": "Last update timestamp"
+              }
+            },
+            "required": [
+              "id",
+              "name",
+              "description",
+              "teamId",
+              "latestVersion",
+              "archivedAt",
+              "createdAt",
+              "updatedAt"
+            ],
+            "description": "Created template"
+          }
+        },
+        "required": [
+          "error",
+          "success",
+          "data"
+        ],
+        "title": "TemplateCreatedResponse",
+        "description": "Response for template creation"
+      },
+      "UpdateTemplateBody": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 255,
+            "description": "Updated name"
+          },
+          "description": {
+            "type": "string",
+            "maxLength": 2000,
+            "nullable": true,
+            "description": "Updated description"
+          }
+        },
+        "title": "UpdateTemplateBody",
+        "description": "Request body for updating a template"
+      },
+      "TemplateUpdatedResponse": {
+        "type": "object",
+        "properties": {
+          "error": {
+            "type": "boolean",
+            "enum": [
+              false
+            ],
+            "description": "Error flag (always false on success)"
+          },
+          "success": {
+            "type": "boolean",
+            "enum": [
+              true
+            ],
+            "description": "Success flag"
+          },
+          "data": {
+            "type": "object",
+            "properties": {
+              "id": {
+                "type": "string",
+                "format": "uuid",
+                "description": "Template ID"
+              },
+              "name": {
+                "type": "string",
+                "description": "Template name"
+              },
+              "description": {
+                "type": "string",
+                "description": "Template description",
+                "nullable": true
+              },
+              "teamId": {
+                "type": "string",
+                "format": "uuid",
+                "description": "Owning team ID"
+              },
+              "latestVersion": {
+                "type": "number",
+                "description": "Latest published version number",
+                "nullable": true
+              },
+              "workflowCount": {
+                "type": "number",
+                "description": "Number of workflows linked to this template"
+              },
+              "hasPrompt": {
+                "type": "boolean",
+                "description": "Whether the latest version has a prompt"
+              },
+              "hasSchema": {
+                "type": "boolean",
+                "description": "Whether the latest version has a schema"
+              },
+              "hasValidation": {
+                "type": "boolean",
+                "description": "Whether the latest version has validation rules"
+              },
+              "hasNotifications": {
+                "type": "boolean",
+                "description": "Whether the latest version has notification settings"
+              },
+              "archivedAt": {
+                "type": "string",
+                "description": "Archive timestamp (null if active)",
+                "nullable": true
+              },
+              "createdAt": {
+                "type": "string",
+                "description": "Creation timestamp"
+              },
+              "updatedAt": {
+                "type": "string",
+                "description": "Last update timestamp"
+              }
+            },
+            "required": [
+              "id",
+              "name",
+              "description",
+              "teamId",
+              "latestVersion",
+              "archivedAt",
+              "createdAt",
+              "updatedAt"
+            ],
+            "description": "Updated template"
+          }
+        },
+        "required": [
+          "error",
+          "success",
+          "data"
+        ],
+        "title": "TemplateUpdatedResponse",
+        "description": "Response for template update"
+      },
+      "TemplateArchivedResponse": {
+        "type": "object",
+        "properties": {
+          "error": {
+            "type": "boolean",
+            "enum": [
+              false
+            ],
+            "description": "Error flag (always false on success)"
+          },
+          "success": {
+            "type": "boolean",
+            "enum": [
+              true
+            ],
+            "description": "Success flag"
+          },
+          "message": {
+            "type": "string",
+            "description": "Archive confirmation message"
+          }
+        },
+        "required": [
+          "error",
+          "success",
+          "message"
+        ],
+        "title": "TemplateArchivedResponse",
+        "description": "Response for template archival"
+      },
+      "CreateTemplateVersionBody": {
+        "type": "object",
+        "properties": {
+          "prompt": {
+            "type": "string",
+            "description": "User prompt to copy into workflow config"
+          },
+          "schemaId": {
+            "type": "string",
+            "format": "uuid",
+            "description": "data_schemas ID to reference (mutually exclusive with schemaFields)"
+          },
+          "schemaFields": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "name": {
+                  "type": "string",
+                  "description": "Field name"
+                },
+                "description": {
+                  "type": "string",
+                  "description": "Field description"
+                },
+                "fieldType": {
+                  "type": "string",
+                  "description": "Field type (SCHEMA, etc.)"
+                },
+                "example": {
+                  "type": "string",
+                  "description": "Example value"
+                },
+                "dataType": {
+                  "type": "string",
+                  "description": "Data type (STRING, NUMBER, DATE, LINK, etc.)"
+                },
+                "isKey": {
+                  "type": "boolean",
+                  "description": "Whether the field is a key field"
+                }
+              },
+              "required": [
+                "name"
+              ]
+            },
+            "description": "Schema fields to create a new schema inline"
+          },
+          "schemaEntity": {
+            "type": "string",
+            "description": "Entity name for the inline schema"
+          },
+          "dataValidation": {
+            "type": "object",
+            "properties": {
+              "config": {
+                "type": "object",
+                "properties": {
+                  "enabled": {
+                    "type": "boolean",
+                    "description": "Whether data validation is enabled"
+                  },
+                  "alerting": {
+                    "type": "object",
+                    "properties": {
+                      "system": {
+                        "type": "object",
+                        "properties": {
+                          "enabled": {
+                            "type": "boolean"
+                          },
+                          "threshold": {
+                            "default": 1,
+                            "type": "number"
+                          }
+                        },
+                        "required": [
+                          "enabled"
+                        ],
+                        "description": "System alerting configuration"
+                      },
+                      "user": {
+                        "type": "object",
+                        "properties": {
+                          "enabled": {
+                            "type": "boolean"
+                          },
+                          "threshold": {
+                            "default": 1,
+                            "type": "number"
+                          }
+                        },
+                        "required": [
+                          "enabled"
+                        ],
+                        "description": "User alerting configuration"
+                      }
+                    },
+                    "description": "Alerting configuration"
+                  }
+                },
+                "required": [
+                  "enabled"
+                ],
+                "description": "Data validation config to copy into workflow.config.dataValidation"
+              },
+              "rules": {
+                "type": "array",
+                "items": {
+                  "$ref": "#/components/schemas/TemplateValidationRule"
+                },
+                "description": "Validation rules to clone as data_validation.validation_rules rows"
+              }
+            },
+            "description": "Data validation rules and config"
+          },
+          "notifications": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "eventType": {
+                  "type": "string"
+                },
+                "eventConfiguration": {
+                  "type": "object",
+                  "additionalProperties": {
+                    "nullable": true
+                  }
+                },
+                "enabled": {
+                  "type": "boolean"
+                },
+                "channelIds": {
+                  "type": "array",
+                  "items": {
+                    "type": "string",
+                    "format": "uuid"
+                  }
+                },
+                "channels": {
+                  "type": "array",
+                  "items": {
+                    "type": "object",
+                    "properties": {
+                      "channelId": {
+                        "type": "string",
+                        "format": "uuid"
+                      }
+                    },
+                    "required": [
+                      "channelId"
+                    ]
+                  }
+                }
+              },
+              "required": [
+                "eventType"
+              ]
+            },
+            "description": "Notification configuration for this version"
+          }
+        },
+        "title": "CreateTemplateVersionBody",
+        "description": "Request body for publishing a new template version"
+      },
+      "TemplateVersionCreatedResponse": {
+        "type": "object",
+        "properties": {
+          "error": {
+            "type": "boolean",
+            "enum": [
+              false
+            ],
+            "description": "Error flag (always false on success)"
+          },
+          "success": {
+            "type": "boolean",
+            "enum": [
+              true
+            ],
+            "description": "Success flag"
+          },
+          "data": {
+            "type": "object",
+            "properties": {
+              "id": {
+                "type": "string",
+                "format": "uuid",
+                "description": "Version row ID"
+              },
+              "templateId": {
+                "type": "string",
+                "format": "uuid",
+                "description": "Parent template ID"
+              },
+              "version": {
+                "type": "number",
+                "description": "Version number"
+              },
+              "prompt": {
+                "type": "string",
+                "description": "User prompt",
+                "nullable": true
+              },
+              "schemaId": {
+                "type": "string",
+                "format": "uuid",
+                "description": "Referenced data_schemas ID",
+                "nullable": true
+              },
+              "schemaFields": {
+                "type": "array",
+                "items": {
+                  "type": "object",
+                  "properties": {
+                    "name": {
+                      "type": "string",
+                      "description": "Field name"
+                    },
+                    "description": {
+                      "type": "string",
+                      "description": "Field description"
+                    },
+                    "fieldType": {
+                      "type": "string",
+                      "description": "Field type (SCHEMA, etc.)"
+                    },
+                    "example": {
+                      "type": "string",
+                      "description": "Example value"
+                    },
+                    "dataType": {
+                      "type": "string",
+                      "description": "Data type (STRING, NUMBER, DATE, LINK, etc.)"
+                    },
+                    "isKey": {
+                      "type": "boolean",
+                      "description": "Whether the field is a key field"
+                    }
+                  },
+                  "required": [
+                    "name"
+                  ]
+                },
+                "nullable": true,
+                "description": "Resolved schema fields from data_schemas"
+              },
+              "dataValidation": {
+                "type": "object",
+                "properties": {
+                  "config": {
+                    "type": "object",
+                    "properties": {
+                      "enabled": {
+                        "type": "boolean",
+                        "description": "Whether data validation is enabled"
+                      },
+                      "alerting": {
+                        "type": "object",
+                        "properties": {
+                          "system": {
+                            "type": "object",
+                            "properties": {
+                              "enabled": {
+                                "type": "boolean"
+                              },
+                              "threshold": {
+                                "default": 1,
+                                "type": "number"
+                              }
+                            },
+                            "required": [
+                              "enabled"
+                            ],
+                            "description": "System alerting configuration"
+                          },
+                          "user": {
+                            "type": "object",
+                            "properties": {
+                              "enabled": {
+                                "type": "boolean"
+                              },
+                              "threshold": {
+                                "default": 1,
+                                "type": "number"
+                              }
+                            },
+                            "required": [
+                              "enabled"
+                            ],
+                            "description": "User alerting configuration"
+                          }
+                        },
+                        "description": "Alerting configuration"
+                      }
+                    },
+                    "required": [
+                      "enabled"
+                    ],
+                    "description": "Data validation config to copy into workflow.config.dataValidation"
+                  },
+                  "rules": {
+                    "type": "array",
+                    "items": {
+                      "$ref": "#/components/schemas/TemplateValidationRule"
+                    },
+                    "description": "Validation rules to clone as data_validation.validation_rules rows"
+                  }
+                },
+                "description": "Data validation configuration for a template version",
+                "nullable": true
+              },
+              "notificationSettings": {
+                "type": "array",
+                "items": {
+                  "type": "object",
+                  "properties": {
+                    "id": {
+                      "type": "string",
+                      "format": "uuid",
+                      "description": "Notification configuration ID"
+                    },
+                    "eventType": {
+                      "type": "string",
+                      "description": "Event type (e.g., workflow_finished, error)"
+                    },
+                    "eventConfiguration": {
+                      "type": "object",
+                      "additionalProperties": {
+                        "nullable": true
+                      },
+                      "description": "Event-specific config"
+                    },
+                    "enabled": {
+                      "type": "boolean",
+                      "description": "Whether this notification is enabled"
+                    },
+                    "channels": {
+                      "type": "array",
+                      "items": {
+                        "type": "object",
+                        "properties": {
+                          "channelId": {
+                            "type": "string",
+                            "format": "uuid"
+                          },
+                          "channelName": {
+                            "type": "string"
+                          },
+                          "channelType": {
+                            "type": "string"
+                          }
+                        },
+                        "required": [
+                          "channelId",
+                          "channelName",
+                          "channelType"
+                        ]
+                      },
+                      "description": "Linked notification channels"
+                    }
+                  },
+                  "required": [
+                    "id",
+                    "eventType",
+                    "eventConfiguration",
+                    "enabled",
+                    "channels"
+                  ]
+                }
+              },
+              "validationRules": {
+                "type": "array",
+                "items": {
+                  "type": "object",
+                  "properties": {
+                    "name": {
+                      "type": "string",
+                      "minLength": 1,
+                      "maxLength": 255,
+                      "description": "Rule name"
+                    },
+                    "description": {
+                      "type": "string",
+                      "description": "Rule description"
+                    },
+                    "ruleType": {
+                      "type": "string",
+                      "enum": [
+                        "regex",
+                        "custom_sql",
+                        "llm"
+                      ],
+                      "description": "Type of validation rule"
+                    },
+                    "targetColumns": {
+                      "type": "array",
+                      "items": {
+                        "type": "string"
+                      },
+                      "description": "Columns this rule targets"
+                    },
+                    "parameters": {
+                      "type": "object",
+                      "additionalProperties": {
+                        "nullable": true
+                      },
+                      "description": "Rule parameters (e.g., sql, pattern)"
+                    },
+                    "status": {
+                      "default": "enabled",
+                      "type": "string",
+                      "enum": [
+                        "preview",
+                        "enabled",
+                        "disabled"
+                      ],
+                      "description": "Initial rule status"
+                    },
+                    "metadata": {
+                      "type": "object",
+                      "additionalProperties": {
+                        "nullable": true
+                      },
+                      "description": "Additional metadata"
+                    },
+                    "id": {
+                      "type": "string",
+                      "format": "uuid"
+                    }
+                  },
+                  "required": [
+                    "name",
+                    "ruleType",
+                    "parameters",
+                    "id"
+                  ]
+                }
+              },
+              "createdAt": {
+                "type": "string",
+                "description": "Creation timestamp"
+              }
+            },
+            "required": [
+              "id",
+              "templateId",
+              "version",
+              "prompt",
+              "schemaId",
+              "createdAt"
+            ],
+            "description": "Created version"
+          }
+        },
+        "required": [
+          "error",
+          "success",
+          "data"
+        ],
+        "title": "TemplateVersionCreatedResponse",
+        "description": "Response for template version creation"
+      },
+      "TemplateSchemasResponse": {
+        "type": "object",
+        "properties": {
+          "error": {
+            "type": "boolean",
+            "enum": [
+              false
+            ],
+            "description": "Error flag (always false on success)"
+          },
+          "data": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "schemaId": {
+                  "type": "string",
+                  "format": "uuid",
+                  "description": "Schema ID"
+                },
+                "schemaName": {
+                  "type": "string",
+                  "description": "Schema name"
+                },
+                "entity": {
+                  "type": "string",
+                  "description": "Entity name",
+                  "nullable": true
+                },
+                "fieldCount": {
+                  "type": "number",
+                  "description": "Number of fields in the schema"
+                }
+              },
+              "required": [
+                "schemaId",
+                "schemaName",
+                "entity",
+                "fieldCount"
+              ]
+            },
+            "description": "Schemas linked to this template"
+          }
+        },
+        "required": [
+          "error",
+          "data"
+        ],
+        "title": "TemplateSchemasResponse",
+        "description": "Response for listing schemas linked to a template"
+      },
+      "TemplateWorkflowsResponse": {
+        "type": "object",
+        "properties": {
+          "error": {
+            "type": "boolean",
+            "enum": [
+              false
+            ],
+            "description": "Error flag (always false on success)"
+          },
+          "data": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "workflowId": {
+                  "type": "string",
+                  "format": "uuid",
+                  "description": "Workflow ID"
+                },
+                "workflowName": {
+                  "type": "string",
+                  "description": "Workflow name"
+                },
+                "templateVersion": {
+                  "type": "number",
+                  "description": "Template version the workflow was created from"
+                },
+                "isOutdated": {
+                  "type": "boolean",
+                  "description": "Whether a newer template version exists"
+                }
+              },
+              "required": [
+                "workflowId",
+                "workflowName",
+                "templateVersion",
+                "isOutdated"
+              ]
+            },
+            "description": "Workflows linked to this template"
+          }
+        },
+        "required": [
+          "error",
+          "data"
+        ],
+        "title": "TemplateWorkflowsResponse",
+        "description": "Response for listing workflows created from a template"
+      },
+      "ApplyTemplateUpdateBody": {
+        "type": "object",
+        "properties": {
+          "targetVersion": {
+            "type": "integer",
+            "minimum": 1,
+            "description": "Template version to apply"
+          },
+          "workflowIds": {
+            "type": "array",
+            "items": {
+              "type": "string",
+              "format": "uuid"
+            },
+            "minItems": 1,
+            "maxItems": 100,
+            "description": "Workflow IDs to update (max 100)"
+          }
+        },
+        "required": [
+          "targetVersion",
+          "workflowIds"
+        ],
+        "title": "ApplyTemplateUpdateBody",
+        "description": "Request body for applying a template version update to existing workflows"
+      },
+      "ApplyTemplateUpdateResponse": {
+        "type": "object",
+        "properties": {
+          "error": {
+            "type": "boolean",
+            "enum": [
+              false
+            ],
+            "description": "Error flag (always false on success)"
+          },
+          "success": {
+            "type": "boolean",
+            "enum": [
+              true
+            ],
+            "description": "Success flag"
+          },
+          "updatedCount": {
+            "type": "number",
+            "description": "Number of workflows updated"
+          },
+          "workflowIds": {
+            "type": "array",
+            "items": {
+              "type": "string",
+              "format": "uuid"
+            },
+            "description": "IDs of updated workflows"
+          }
+        },
+        "required": [
+          "error",
+          "success",
+          "updatedCount",
+          "workflowIds"
+        ],
+        "title": "ApplyTemplateUpdateResponse",
+        "description": "Response for template update application"
+      },
+      "LinkWorkflowsBody": {
+        "type": "object",
+        "properties": {
+          "workflowIds": {
+            "type": "array",
+            "items": {
+              "type": "string",
+              "format": "uuid"
+            },
+            "minItems": 1,
+            "maxItems": 100,
+            "description": "Workflow IDs to link to this template"
+          },
+          "force": {
+            "type": "boolean",
+            "description": "If true, relink workflows that are already linked to another template"
+          }
+        },
+        "required": [
+          "workflowIds"
+        ],
+        "title": "LinkWorkflowsBody",
+        "description": "Request body for linking workflows to a template"
+      },
+      "LinkWorkflowsResponse": {
+        "type": "object",
+        "properties": {
+          "error": {
+            "type": "boolean",
+            "enum": [
+              false
+            ],
+            "description": "Error flag (always false on success)"
+          },
+          "success": {
+            "type": "boolean",
+            "enum": [
+              true
+            ],
+            "description": "Success flag"
+          },
+          "linkedCount": {
+            "type": "number",
+            "description": "Number of workflows linked"
+          },
+          "workflowIds": {
+            "type": "array",
+            "items": {
+              "type": "string",
+              "format": "uuid"
+            },
+            "description": "IDs of linked workflows"
+          }
+        },
+        "required": [
+          "error",
+          "success",
+          "linkedCount",
+          "workflowIds"
+        ],
+        "title": "LinkWorkflowsResponse",
+        "description": "Response for linking workflows to a template"
+      },
+      "LinkWorkflowsConflictResponse": {
+        "type": "object",
+        "properties": {
+          "error": {
+            "type": "boolean",
+            "enum": [
+              true
+            ],
+            "description": "Error flag"
+          },
+          "code": {
+            "type": "string",
+            "enum": [
+              "CONFLICT"
+            ],
+            "description": "Error code"
+          },
+          "conflicts": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "workflowId": {
+                  "type": "string",
+                  "format": "uuid"
+                },
+                "workflowName": {
+                  "type": "string"
+                },
+                "templateId": {
+                  "type": "string",
+                  "format": "uuid"
+                },
+                "templateName": {
+                  "type": "string"
+                }
+              },
+              "required": [
+                "workflowId",
+                "workflowName",
+                "templateId",
+                "templateName"
+              ]
+            },
+            "description": "Workflows already linked to another template"
+          }
+        },
+        "required": [
+          "error",
+          "code",
+          "conflicts"
+        ],
+        "title": "LinkWorkflowsConflictResponse",
+        "description": "Response when workflows are already linked to another template"
+      },
+      "SaveFromWorkflowBody": {
+        "type": "object",
+        "properties": {
+          "workflowId": {
+            "type": "string",
+            "format": "uuid",
+            "description": "Source workflow ID to extract config from"
+          },
+          "name": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 255,
+            "description": "Name for the new template (required if templateId is not set)"
+          },
+          "description": {
+            "type": "string",
+            "maxLength": 2000,
+            "description": "Description for the new template"
+          },
+          "templateId": {
+            "type": "string",
+            "format": "uuid",
+            "description": "Existing template ID to add a new version to (mutually exclusive with name)"
+          }
+        },
+        "required": [
+          "workflowId"
+        ],
+        "title": "SaveFromWorkflowBody",
+        "description": "Request body for saving a workflow's config as a template (new or existing)"
+      },
+      "SaveFromWorkflowResponse": {
+        "type": "object",
+        "properties": {
+          "error": {
+            "type": "boolean",
+            "enum": [
+              false
+            ],
+            "description": "Error flag (always false on success)"
+          },
+          "success": {
+            "type": "boolean",
+            "enum": [
+              true
+            ],
+            "description": "Success flag"
+          },
+          "data": {
+            "type": "object",
+            "properties": {
+              "templateId": {
+                "type": "string",
+                "format": "uuid",
+                "description": "Template ID (new or existing)"
+              },
+              "version": {
+                "type": "number",
+                "description": "Published version number"
+              },
+              "isNew": {
+                "type": "boolean",
+                "description": "Whether a new template was created"
+              }
+            },
+            "required": [
+              "templateId",
+              "version",
+              "isNew"
+            ]
+          }
+        },
+        "required": [
+          "error",
+          "success",
+          "data"
+        ],
+        "title": "SaveFromWorkflowResponse",
+        "description": "Response for saving a workflow as a template"
+      },
+      "UnlinkWorkflowsBody": {
+        "type": "object",
+        "properties": {
+          "workflowIds": {
+            "type": "array",
+            "items": {
+              "type": "string",
+              "format": "uuid"
+            },
+            "minItems": 1,
+            "maxItems": 100,
+            "description": "Workflow IDs to unlink from this template"
+          }
+        },
+        "required": [
+          "workflowIds"
+        ],
+        "title": "UnlinkWorkflowsBody",
+        "description": "Request body for unlinking workflows from a template"
+      },
+      "UnlinkWorkflowsResponse": {
+        "type": "object",
+        "properties": {
+          "error": {
+            "type": "boolean",
+            "enum": [
+              false
+            ],
+            "description": "Error flag (always false on success)"
+          },
+          "success": {
+            "type": "boolean",
+            "enum": [
+              true
+            ],
+            "description": "Success flag"
+          },
+          "unlinkedCount": {
+            "type": "number",
+            "description": "Number of workflows unlinked"
+          },
+          "workflowIds": {
+            "type": "array",
+            "items": {
+              "type": "string",
+              "format": "uuid"
+            },
+            "description": "IDs of unlinked workflows"
+          }
+        },
+        "required": [
+          "error",
+          "success",
+          "unlinkedCount",
+          "workflowIds"
+        ],
+        "title": "UnlinkWorkflowsResponse",
+        "description": "Response for unlinking workflows from a template"
       },
       "Location": {
         "type": "object",

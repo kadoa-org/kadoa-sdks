@@ -68,6 +68,13 @@ export class KadoaSdkException extends Error {
     VARIABLE_NOT_FOUND: "Variable not found",
     VARIABLE_CREATE_FAILED: "Failed to create variable",
     VARIABLE_UPDATE_FAILED: "Failed to update variable",
+
+    // Template specific errors
+    TEMPLATE_NOT_FOUND: "Template not found",
+    TEMPLATE_CREATE_FAILED: "Failed to create template",
+    TEMPLATE_UPDATE_FAILED: "Failed to update template",
+    TEMPLATE_VERSION_CREATE_FAILED: "Failed to create template version",
+    TEMPLATE_FROM_WORKFLOW_FAILED: "Failed to create template from workflow",
   } as const;
 
   constructor(message: string, options?: KadoaSdkExceptionOptions) {

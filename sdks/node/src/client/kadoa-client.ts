@@ -10,6 +10,7 @@ import { Realtime, type RealtimeConfig } from "../domains/realtime";
 import type { SchemasService } from "../domains/schemas/schemas.service";
 import type { UserService } from "../domains/user/user.service";
 import type { ValidationDomain } from "../domains/validation/validation.facade";
+import type { TemplatesService } from "../domains/templates/templates.service";
 import type { VariablesService } from "../domains/variables/variables.service";
 import type { WorkflowsCoreService } from "../domains/workflows/workflows-core.service";
 import { PUBLIC_API_URI } from "../runtime/config";
@@ -61,6 +62,7 @@ export class KadoaClient {
   public readonly notification: NotificationDomain;
   public readonly schema: SchemasService;
   public readonly user: UserService;
+  public readonly template: TemplatesService;
   public readonly validation: ValidationDomain;
   public readonly variable: VariablesService;
   public readonly crawler: CrawlerDomain;
@@ -112,6 +114,7 @@ export class KadoaClient {
     this.workflow = domains.workflow;
     this.schema = domains.schema;
     this.notification = domains.notification;
+    this.template = domains.template;
     this.validation = domains.validation;
     this.variable = domains.variable;
     this.crawler = domains.crawler;
