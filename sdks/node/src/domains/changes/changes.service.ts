@@ -1,7 +1,6 @@
 import type { KadoaClient } from "../../kadoa-client";
 import { KadoaSdkException } from "../../runtime/exceptions";
 import {
-  ERROR_MESSAGES,
   KadoaErrorCode,
 } from "../../runtime/exceptions/base.exception";
 import { logger } from "../../runtime/logger";
