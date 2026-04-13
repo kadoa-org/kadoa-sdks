@@ -124,10 +124,9 @@ function coalesceDifferences(
 ): ChangeDifference[] | undefined {
   if (!raw) return undefined;
 
-  type RawDiffWithRef =
-    V4ChangesGet200ResponseChangesInnerDifferencesInner & {
-      rowRef?: { currentRowId?: string; previousRowId?: string };
-    };
+  type RawDiffWithRef = V4ChangesGet200ResponseChangesInnerDifferencesInner & {
+    rowRef?: { currentRowId?: string; previousRowId?: string };
+  };
 
   const addedByRow = new Map<string, RawDiffWithRef>();
   const removedByRow = new Map<string, RawDiffWithRef>();
