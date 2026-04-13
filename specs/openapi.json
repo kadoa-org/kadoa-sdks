@@ -22019,9 +22019,9 @@
         "type": "string",
         "enum": [
           "STRING",
-          "NUMBER",
-          "BOOLEAN",
-          "JSON"
+          "SECRET",
+          "OBJECT",
+          "ARRAY"
         ],
         "title": "VariableDataType",
         "description": "The data type of the variable value"

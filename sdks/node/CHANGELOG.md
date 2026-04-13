@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.26.0](https://github.com/kadoa-org/kadoa-sdks/compare/node-sdk-v0.25.0...node-sdk-v0.26.0) (2026-04-07)
+
+
+### Features
+
+* **node-sdk:** add templates domain with crud, versioning, and workflow operations ([#257](https://github.com/kadoa-org/kadoa-sdks/issues/257)) ([9fcd96c](https://github.com/kadoa-org/kadoa-sdks/commit/9fcd96c18c2fa3c7e6ecbb05c7775b10be9239f4))
+
 ## [0.25.0](https://github.com/kadoa-org/kadoa-sdks/compare/node-sdk-v0.24.2...node-sdk-v0.25.0) (2026-04-03)
 
 
