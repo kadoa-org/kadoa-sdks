@@ -108,6 +108,87 @@ describe("ChangesService", () => {
     });
   });
 
+  describe("coalesces added+removed pairs into changed", () => {
+    test("merges added/removed sharing rowRef into a single changed diff", async () => {
+      mockV4ChangesGet.mockResolvedValueOnce({
+        data: {
+          changesCount: 1,
+          changes: [
+            {
+              id: "c1",
+              workflowId: "wf-1",
+              differences: [
+                {
+                  type: "added",
+                  fields: [{ key: "btc", value: "$74,355.26" }],
+                  rowRef: {
+                    currentWorkflowJobId: "j2",
+                    currentRowId: "row-1",
+                  },
+                },
+                {
+                  type: "removed",
+                  fields: [{ key: "btc", value: "$74,243.48" }],
+                  rowRef: {
+                    previousWorkflowJobId: "j1",
+                    previousRowId: "row-1",
+                  },
+                },
+              ],
+            },
+          ],
+          pagination: { totalCount: 1, page: 1, totalPages: 1, limit: 10 },
+        },
+      });
+
+      const client = createTestClient();
+      const result = await client.changes.list();
+
+      expect(result.changes[0].differences).toHaveLength(1);
+      expect(result.changes[0].differences?.[0].type).toBe("changed");
+      expect(result.changes[0].differences?.[0].fields?.[0]).toEqual({
+        key: "btc",
+        value: "$74,355.26",
+        previousValue: "$74,243.48",
+      });
+    });
+
+    test("leaves unpaired added/removed untouched (true insert/delete)", async () => {
+      mockV4ChangesGet.mockResolvedValueOnce({
+        data: {
+          changesCount: 1,
+          changes: [
+            {
+              id: "c2",
+              workflowId: "wf-1",
+              differences: [
+                {
+                  type: "added",
+                  fields: [{ key: "name", value: "newrow" }],
+                  rowRef: { currentRowId: "row-A" },
+                },
+                {
+                  type: "removed",
+                  fields: [{ key: "name", value: "goneRow" }],
+                  rowRef: { previousRowId: "row-B" },
+                },
+              ],
+            },
+          ],
+          pagination: { totalCount: 1, page: 1, totalPages: 1, limit: 10 },
+        },
+      });
+
+      const client = createTestClient();
+      const result = await client.changes.list();
+
+      const diffs = result.changes[0].differences;
+      expect(diffs).toHaveLength(2);
+      const types = diffs?.map((d) => d.type).sort();
+      expect(types).toEqual(["added", "removed"]);
+    });
+  });
+
   describe("get()", () => {
     test("returns a single change by ID", async () => {
       mockV4ChangesChangeIdGet.mockResolvedValueOnce({

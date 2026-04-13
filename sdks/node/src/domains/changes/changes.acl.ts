@@ -101,12 +101,95 @@ export function mapChange(raw: V4ChangesGet200ResponseChangesInner): Change {
     id: raw.id,
     workflowId: raw.workflowId,
     data: raw.data,
-    differences: raw.differences?.map(mapDifference),
+    differences: coalesceDifferences(raw.differences),
     url: raw.url,
     summary: raw.summary,
     screenshotUrl: raw.screenshotUrl,
     createdAt: raw.createdAt,
   };
+}
+
+/**
+ * The API emits row updates as separate `added` + `removed` diffs that share
+ * the same row identity (rowRef.currentRowId === rowRef.previousRowId). We
+ * coalesce those pairs into a single `changed` diff so consumers see clean
+ * `previousValue → value` semantics. Unpaired added/removed entries (true
+ * inserts/deletes) pass through untouched.
+ *
+ * NOTE: `rowRef` is present on the wire but missing from the OpenAPI spec,
+ * so we read it via a local cast. Remove the cast once the spec is updated.
+ */
+function coalesceDifferences(
+  raw: V4ChangesGet200ResponseChangesInner["differences"],
+): ChangeDifference[] | undefined {
+  if (!raw) return undefined;
+
+  type RawDiffWithRef =
+    V4ChangesGet200ResponseChangesInnerDifferencesInner & {
+      rowRef?: { currentRowId?: string; previousRowId?: string };
+    };
+
+  const addedByRow = new Map<string, RawDiffWithRef>();
+  const removedByRow = new Map<string, RawDiffWithRef>();
+  const passthrough: RawDiffWithRef[] = [];
+
+  for (const diff of raw as RawDiffWithRef[]) {
+    if (diff.type === "added" && diff.rowRef?.currentRowId) {
+      addedByRow.set(diff.rowRef.currentRowId, diff);
+    } else if (diff.type === "removed" && diff.rowRef?.previousRowId) {
+      removedByRow.set(diff.rowRef.previousRowId, diff);
+    } else {
+      passthrough.push(diff);
+    }
+  }
+
+  const result: ChangeDifference[] = [];
+
+  for (const [rowId, added] of addedByRow) {
+    const removed = removedByRow.get(rowId);
+    if (removed) {
+      removedByRow.delete(rowId);
+      result.push(mergeAddedRemoved(added, removed));
+    } else {
+      result.push(mapDifference(added));
+    }
+  }
+
+  for (const removed of removedByRow.values()) {
+    result.push(mapDifference(removed));
+  }
+
+  for (const diff of passthrough) {
+    result.push(mapDifference(diff));
+  }
+
+  return result;
+}
+
+function mergeAddedRemoved(
+  added: V4ChangesGet200ResponseChangesInnerDifferencesInner,
+  removed: V4ChangesGet200ResponseChangesInnerDifferencesInner,
+): ChangeDifference {
+  const previousByKey = new Map<string, string | undefined>();
+  for (const f of removed.fields ?? []) {
+    if (f.key !== undefined) previousByKey.set(f.key, f.value);
+  }
+
+  const fields: ChangeDifferenceField[] = (added.fields ?? []).map((f) => ({
+    key: f.key,
+    value: f.value,
+    previousValue: f.key !== undefined ? previousByKey.get(f.key) : undefined,
+  }));
+
+  // Surface any removed-only keys (rare, but possible if shapes differ).
+  const addedKeys = new Set((added.fields ?? []).map((f) => f.key));
+  for (const f of removed.fields ?? []) {
+    if (!addedKeys.has(f.key)) {
+      fields.push({ key: f.key, value: undefined, previousValue: f.value });
+    }
+  }
+
+  return { type: ChangeDifferenceType.Changed, fields };
 }
 
 function mapDifference(
