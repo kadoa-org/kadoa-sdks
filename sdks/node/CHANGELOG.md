@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.27.0](https://github.com/kadoa-org/kadoa-sdks/compare/node-sdk-v0.26.0...node-sdk-v0.27.0) (2026-04-14)
+
+
+### Features
+
+* **node-sdk:** add changes domain with list() and get() ([#258](https://github.com/kadoa-org/kadoa-sdks/issues/258)) ([8f09ecb](https://github.com/kadoa-org/kadoa-sdks/commit/8f09ecbe1fa31b9495171b30f76d8fca8af71cab))
+
 ## [0.26.0](https://github.com/kadoa-org/kadoa-sdks/compare/node-sdk-v0.25.0...node-sdk-v0.26.0) (2026-04-07)
 
 
