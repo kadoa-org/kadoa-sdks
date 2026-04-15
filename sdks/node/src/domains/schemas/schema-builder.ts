@@ -5,7 +5,7 @@ import type { Category, FieldExample, SchemaField } from "./schemas.acl";
 
 export type { FieldExample, Category };
 
-const SYNTHETIC_RAW_FIELD_CONFIG = {
+const RAW_HELPER_FIELD_CONFIG = {
   HTML: {
     dataType: "STRING",
     description: "Full page HTML as a string. Return the raw HTML content.",
@@ -111,7 +111,7 @@ export class SchemaBuilder {
   readonly fields: SchemaField[] = [];
   entityName?: string;
 
-  private isSyntheticRawField(field: SchemaField): boolean {
+  private isRawHelperField(field: SchemaField): boolean {
     return (
       field.fieldType === "SCHEMA" &&
       field.name in
@@ -125,7 +125,7 @@ export class SchemaBuilder {
 
   private hasEntityRequiringSchemaFields(): boolean {
     return this.fields.some(
-      (field) => field.fieldType === "SCHEMA" && !this.isSyntheticRawField(field),
+      (field) => field.fieldType === "SCHEMA" && !this.isRawHelperField(field),
     );
   }
 
@@ -207,7 +207,7 @@ export class SchemaBuilder {
   }
 
   /**
-   * Add a synthetic raw-content field for agentic extraction.
+   * Add a raw-content helper field for agentic extraction.
    * HTML and MARKDOWN become STRING fields; PAGE_URL becomes a LINK field.
    */
   raw(name: RawFormat | RawFormat[]): this {
@@ -216,7 +216,7 @@ export class SchemaBuilder {
     for (const name of names) {
       const fieldName = `raw${upperFirst(camelCase(name))}`;
       const rawKey = name.toUpperCase() as Uppercase<RawFormat>;
-      const config = SYNTHETIC_RAW_FIELD_CONFIG[rawKey];
+      const config = RAW_HELPER_FIELD_CONFIG[rawKey];
 
       if (this.fields.some((field) => field.name === fieldName)) {
         continue;

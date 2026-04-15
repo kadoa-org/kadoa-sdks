@@ -33,7 +33,7 @@ DataType = str  # STRING, NUMBER, BOOLEAN, DATE, DATETIME, MONEY, IMAGE, LINK, O
 RawFormat = str  # HTML, MARKDOWN, PAGE_URL
 SchemaField = Union[DataField, ClassificationField, RawContentField]
 
-SYNTHETIC_RAW_FIELD_CONFIG = {
+RAW_HELPER_FIELD_CONFIG = {
     "HTML": {
         "data_type": "STRING",
         "description": "Full page HTML as a string. Return the raw HTML content.",
@@ -125,7 +125,7 @@ class SchemaBuilder:
         """Check if any fields are schema fields"""
         return any(getattr(field, "field_type", None) == "SCHEMA" for field in self.fields)
 
-    def _is_synthetic_raw_field(self, field: SchemaField) -> bool:
+    def _is_raw_helper_field(self, field: SchemaField) -> bool:
         return getattr(field, "field_type", None) == "SCHEMA" and getattr(field, "name", None) in {
             "rawHtml",
             "rawMarkdown",
@@ -134,7 +134,7 @@ class SchemaBuilder:
 
     def _has_entity_requiring_schema_fields(self) -> bool:
         return any(
-            getattr(field, "field_type", None) == "SCHEMA" and not self._is_synthetic_raw_field(field)
+            getattr(field, "field_type", None) == "SCHEMA" and not self._is_raw_helper_field(field)
             for field in self.fields
         )
 
@@ -223,7 +223,7 @@ class SchemaBuilder:
 
     def raw(self, name: Union[RawFormat, List[RawFormat]]) -> "SchemaBuilder":
         """
-        Add a synthetic raw-content field for agentic extraction.
+        Add a raw-content helper field for agentic extraction.
 
         Args:
             name: Raw content format(s): "html", "markdown", or "page_url" (case-insensitive)
@@ -244,7 +244,7 @@ class SchemaBuilder:
                 continue
 
             metadata_key_upper = raw_lower.upper()
-            config = SYNTHETIC_RAW_FIELD_CONFIG[metadata_key_upper]
+            config = RAW_HELPER_FIELD_CONFIG[metadata_key_upper]
 
             field = DataField(
                 name=field_name,

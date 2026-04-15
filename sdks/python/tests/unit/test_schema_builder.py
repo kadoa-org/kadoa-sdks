@@ -93,8 +93,8 @@ class TestSchemaBuilderFieldBuilding:
         assert builder.fields[0].field_type == "CLASSIFICATION"
         assert len(builder.fields[0].categories) == 2
 
-    def test_creates_synthetic_raw_schema_fields_correctly(self):
-        """Should create synthetic raw schema fields correctly."""
+    def test_creates_raw_helper_schema_fields_correctly(self):
+        """Should create raw helper schema fields correctly."""
         builder = SchemaBuilder().raw("MARKDOWN")
 
         assert len(builder.fields) == 1

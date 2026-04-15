@@ -109,7 +109,7 @@ describe("SchemaBuilder", () => {
       });
     });
 
-    test("creates synthetic raw schema fields correctly", () => {
+    test("creates raw helper schema fields correctly", () => {
       const builder = new SchemaBuilder().raw("MARKDOWN");
 
       expect(builder.fields).toHaveLength(1);
