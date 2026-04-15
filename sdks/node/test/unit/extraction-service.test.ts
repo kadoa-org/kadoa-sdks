@@ -15,10 +15,6 @@ describe("ExtractionService", () => {
       data: [{ title: "Example" }],
       pagination: { page: 1, totalPages: 1, totalCount: 1, limit: 100 },
     }));
-    const resolveEntity = mock(async () => ({
-      entity: "Product",
-      fields: [{ name: "title" }],
-    }));
 
     const workflowsCoreService = {
       create,
@@ -27,23 +23,19 @@ describe("ExtractionService", () => {
     const dataFetcherService = {
       fetchData,
     } as unknown as ConstructorParameters<typeof ExtractionService>[1];
-    const entityResolverService = {
-      resolveEntity,
-    } as unknown as ConstructorParameters<typeof ExtractionService>[2];
     const notificationSetupService = {
       setup: mock(async () => []),
-    } as unknown as ConstructorParameters<typeof ExtractionService>[3];
+    } as unknown as ConstructorParameters<typeof ExtractionService>[2];
     const notificationChannelsService = {} as ConstructorParameters<
       typeof ExtractionService
-    >[4];
+    >[3];
     const notificationSettingsService = {} as ConstructorParameters<
       typeof ExtractionService
-    >[5];
+    >[4];
 
     const service = new ExtractionService(
       workflowsCoreService,
       dataFetcherService,
-      entityResolverService,
       notificationSetupService,
       notificationChannelsService,
       notificationSettingsService,
@@ -53,7 +45,6 @@ describe("ExtractionService", () => {
       urls: ["https://example.com"],
     });
 
-    expect(resolveEntity).not.toHaveBeenCalled();
     expect(create).toHaveBeenCalledTimes(1);
     expect(create.mock.calls[0]?.[0]).toMatchObject({
       urls: ["https://example.com"],
@@ -78,10 +69,6 @@ describe("ExtractionService", () => {
       data: [{ title: "Example" }],
       pagination: { page: 1, totalPages: 1, totalCount: 1, limit: 100 },
     }));
-    const resolveEntity = mock(async () => ({
-      entity: "Ignored",
-      fields: [],
-    }));
 
     const workflowsCoreService = {
       create,
@@ -90,23 +77,19 @@ describe("ExtractionService", () => {
     const dataFetcherService = {
       fetchData,
     } as unknown as ConstructorParameters<typeof ExtractionService>[1];
-    const entityResolverService = {
-      resolveEntity,
-    } as unknown as ConstructorParameters<typeof ExtractionService>[2];
     const notificationSetupService = {
       setup: mock(async () => []),
-    } as unknown as ConstructorParameters<typeof ExtractionService>[3];
+    } as unknown as ConstructorParameters<typeof ExtractionService>[2];
     const notificationChannelsService = {} as ConstructorParameters<
       typeof ExtractionService
-    >[4];
+    >[3];
     const notificationSettingsService = {} as ConstructorParameters<
       typeof ExtractionService
-    >[5];
+    >[4];
 
     const service = new ExtractionService(
       workflowsCoreService,
       dataFetcherService,
-      entityResolverService,
       notificationSetupService,
       notificationChannelsService,
       notificationSettingsService,
@@ -123,7 +106,6 @@ describe("ExtractionService", () => {
       },
     });
 
-    expect(resolveEntity).not.toHaveBeenCalled();
     expect(create.mock.calls[0]?.[0]).toMatchObject({
       navigationMode: "agentic-navigation",
       userPrompt:
@@ -151,14 +133,11 @@ describe("ExtractionService", () => {
       { fetchData } as unknown as ConstructorParameters<
         typeof ExtractionService
       >[1],
-      {
-        resolveEntity: mock(async () => undefined),
-      } as unknown as ConstructorParameters<typeof ExtractionService>[2],
       { setup: mock(async () => []) } as unknown as ConstructorParameters<
         typeof ExtractionService
-      >[3],
+      >[2],
+      {} as ConstructorParameters<typeof ExtractionService>[3],
       {} as ConstructorParameters<typeof ExtractionService>[4],
-      {} as ConstructorParameters<typeof ExtractionService>[5],
     );
 
     await service.run({
@@ -183,15 +162,11 @@ describe("ExtractionService", () => {
       { create } as unknown as ConstructorParameters<
         typeof ExtractionService
       >[0],
-      {} as ConstructorParameters<typeof ExtractionService>[1],
-      {
-        resolveEntity: mock(async () => ({ entity: "Ignored", fields: [] })),
-      } as unknown as ConstructorParameters<typeof ExtractionService>[2],
       { setup: mock(async () => []) } as unknown as ConstructorParameters<
         typeof ExtractionService
-      >[3],
-      {} as ConstructorParameters<typeof ExtractionService>[4],
-      {} as ConstructorParameters<typeof ExtractionService>[5],
+      >[1],
+      {} as ConstructorParameters<typeof ExtractionService>[2],
+      {} as ConstructorParameters<typeof ExtractionService>[3],
     );
 
     const result = await service.submit({
@@ -214,15 +189,11 @@ describe("ExtractionService", () => {
       { create } as unknown as ConstructorParameters<
         typeof ExtractionService
       >[0],
-      {} as ConstructorParameters<typeof ExtractionService>[1],
-      {
-        resolveEntity: mock(async () => ({ entity: "Ignored", fields: [] })),
-      } as unknown as ConstructorParameters<typeof ExtractionService>[2],
       { setup: mock(async () => []) } as unknown as ConstructorParameters<
         typeof ExtractionService
-      >[3],
-      {} as ConstructorParameters<typeof ExtractionService>[4],
-      {} as ConstructorParameters<typeof ExtractionService>[5],
+      >[1],
+      {} as ConstructorParameters<typeof ExtractionService>[2],
+      {} as ConstructorParameters<typeof ExtractionService>[3],
     );
 
     await service.submit({

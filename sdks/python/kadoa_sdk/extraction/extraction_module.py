@@ -9,7 +9,6 @@ from ..core.exceptions import KadoaErrorCode, KadoaHttpError, KadoaSdkError
 from .extraction_acl import GetJobResponse, RunWorkflowResponse
 from .services import (
     DataFetcherService,
-    EntityDetectorService,
     WorkflowManagerService,
 )
 from .types import (
@@ -64,7 +63,6 @@ class ExtractionModule:
     def __init__(self, client: "KadoaClient") -> None:
         self.client = client
         self.data_fetcher = DataFetcherService(client)
-        self.entity_detector = EntityDetectorService(client)
         self.workflow_manager = WorkflowManagerService(client)
 
     def _validate_options(self, options: ExtractionOptions) -> None:
@@ -76,7 +74,7 @@ class ExtractionModule:
     def run(self, options: ExtractionOptions) -> ExtractionResult:
         """Run an extraction workflow and wait for completion.
 
-        Creates an agentic extraction workflow for the provided URLs, waits for it
+        Creates an extraction workflow for the provided URLs, waits for it
         to complete, and returns the extracted data.
 
         Args:
@@ -113,26 +111,15 @@ class ExtractionModule:
             limit=options.limit or DEFAULTS["limit"],
             max_wait_time=options.max_wait_time or DEFAULTS["max_wait_time"],
             name=options.name,
-            navigation_mode=options.navigation_mode or DEFAULTS["navigation_mode"],
             polling_interval=options.polling_interval or DEFAULTS["polling_interval"],
             user_prompt=options.user_prompt,
+            additional_data=options.additional_data,
         )
 
         try:
             entity = None
             fields: List[Dict[str, Any]] = []
-            if config.navigation_mode != "agentic-navigation":
-                prediction = self.entity_detector.fetch_entity_fields(
-                    link=config.urls[0],
-                    location=config.location or {"type": "auto"},
-                    navigation_mode=str(config.navigation_mode),
-                )
-                entity = prediction["entity"]
-                fields = prediction["fields"]
-
-            config.user_prompt = _build_agentic_prompt(
-                entity=entity, fields=fields, user_prompt=config.user_prompt
-            )
+            config.user_prompt = _build_agentic_prompt(entity=entity, fields=fields, user_prompt=config.user_prompt)
             workflow_id = self.workflow_manager.create_workflow(
                 entity=entity,
                 fields=fields,
@@ -222,26 +209,15 @@ class ExtractionModule:
             limit=options.limit or DEFAULTS["limit"],
             max_wait_time=options.max_wait_time or DEFAULTS["max_wait_time"],
             name=options.name,
-            navigation_mode=options.navigation_mode or DEFAULTS["navigation_mode"],
             polling_interval=options.polling_interval or DEFAULTS["polling_interval"],
             user_prompt=options.user_prompt,
+            additional_data=options.additional_data,
         )
 
         try:
             entity = None
             fields: List[Dict[str, Any]] = []
-            if config.navigation_mode != "agentic-navigation":
-                prediction = self.entity_detector.fetch_entity_fields(
-                    link=config.urls[0],
-                    location=config.location or {"type": "auto"},
-                    navigation_mode=str(config.navigation_mode),
-                )
-                entity = prediction["entity"]
-                fields = prediction["fields"]
-
-            config.user_prompt = _build_agentic_prompt(
-                entity=entity, fields=fields, user_prompt=config.user_prompt
-            )
+            config.user_prompt = _build_agentic_prompt(entity=entity, fields=fields, user_prompt=config.user_prompt)
             workflow_id = self.workflow_manager.create_workflow(
                 entity=entity,
                 fields=fields,

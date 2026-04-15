@@ -11,14 +11,8 @@ describe("ExtractionBuilderService", () => {
       {
         create,
       } as unknown as ConstructorParameters<typeof ExtractionBuilderService>[0],
-      {
-        resolveEntity: mock(async () => ({
-          entity: "Product",
-          fields: [{ name: "title" }],
-        })),
-      } as unknown as ConstructorParameters<typeof ExtractionBuilderService>[1],
+      {} as ConstructorParameters<typeof ExtractionBuilderService>[1],
       {} as ConstructorParameters<typeof ExtractionBuilderService>[2],
-      {} as ConstructorParameters<typeof ExtractionBuilderService>[3],
     );
 
     const created = await service
@@ -52,14 +46,8 @@ describe("ExtractionBuilderService", () => {
       {
         create,
       } as unknown as ConstructorParameters<typeof ExtractionBuilderService>[0],
-      {
-        resolveEntity: mock(async () => ({
-          entity: "Product",
-          fields: [{ name: "title" }],
-        })),
-      } as unknown as ConstructorParameters<typeof ExtractionBuilderService>[1],
+      {} as ConstructorParameters<typeof ExtractionBuilderService>[1],
       {} as ConstructorParameters<typeof ExtractionBuilderService>[2],
-      {} as ConstructorParameters<typeof ExtractionBuilderService>[3],
     );
 
     await service
@@ -85,14 +73,8 @@ describe("ExtractionBuilderService", () => {
       {
         create,
       } as unknown as ConstructorParameters<typeof ExtractionBuilderService>[0],
-      {
-        resolveEntity: mock(async () => ({
-          entity: "Product",
-          fields: [{ name: "title" }],
-        })),
-      } as unknown as ConstructorParameters<typeof ExtractionBuilderService>[1],
+      {} as ConstructorParameters<typeof ExtractionBuilderService>[1],
       {} as ConstructorParameters<typeof ExtractionBuilderService>[2],
-      {} as ConstructorParameters<typeof ExtractionBuilderService>[3],
     );
 
     await service
@@ -122,14 +104,8 @@ describe("ExtractionBuilderService", () => {
       {
         create,
       } as unknown as ConstructorParameters<typeof ExtractionBuilderService>[0],
-      {
-        resolveEntity: mock(async () => ({
-          entity: undefined,
-          fields: [],
-        })),
-      } as unknown as ConstructorParameters<typeof ExtractionBuilderService>[1],
+      {} as ConstructorParameters<typeof ExtractionBuilderService>[1],
       {} as ConstructorParameters<typeof ExtractionBuilderService>[2],
-      {} as ConstructorParameters<typeof ExtractionBuilderService>[3],
     );
 
     await service
@@ -156,14 +132,8 @@ describe("ExtractionBuilderService", () => {
       {
         create,
       } as unknown as ConstructorParameters<typeof ExtractionBuilderService>[0],
-      {
-        resolveEntity: mock(async () => ({
-          entity: undefined,
-          fields: [],
-        })),
-      } as unknown as ConstructorParameters<typeof ExtractionBuilderService>[1],
+      {} as ConstructorParameters<typeof ExtractionBuilderService>[1],
       {} as ConstructorParameters<typeof ExtractionBuilderService>[2],
-      {} as ConstructorParameters<typeof ExtractionBuilderService>[3],
     );
 
     await service
@@ -188,6 +158,88 @@ describe("ExtractionBuilderService", () => {
       ],
       userPrompt:
         "extract all records from this page and return these fields: rawMarkdown, rawPageUrl",
+    });
+  });
+
+  test("run reuses an already started workflow job", async () => {
+    const create = mock(async (_input: Record<string, unknown>) => ({
+      id: "wf-reuse",
+    }));
+    const get = mock(async () => ({
+      state: "ACTIVE",
+      runState: "RUNNING",
+      jobId: "job-existing",
+    }));
+    const runWorkflow = mock(async () => ({
+      jobId: "job-new",
+    }));
+    const waitForJobCompletion = mock(async () => ({
+      state: "FINISHED",
+    }));
+
+    const service = new ExtractionBuilderService(
+      {
+        create,
+        get,
+        runWorkflow,
+        waitForJobCompletion,
+      } as unknown as ConstructorParameters<typeof ExtractionBuilderService>[0],
+      {} as ConstructorParameters<typeof ExtractionBuilderService>[1],
+      {} as ConstructorParameters<typeof ExtractionBuilderService>[2],
+    );
+
+    const created = await service
+      .extract({
+        urls: ["https://example.com"],
+        name: "Reuse Existing Job",
+      })
+      .create();
+
+    await created.run({ limit: 1 });
+
+    expect(runWorkflow).not.toHaveBeenCalled();
+    expect(waitForJobCompletion).toHaveBeenCalledWith(
+      "wf-reuse",
+      "job-existing",
+    );
+  });
+
+  test("submit reuses an already started workflow job", async () => {
+    const create = mock(async (_input: Record<string, unknown>) => ({
+      id: "wf-submit-reuse",
+    }));
+    const get = mock(async () => ({
+      state: "ACTIVE",
+      runState: "RUNNING",
+      jobId: "job-existing",
+    }));
+    const runWorkflow = mock(async () => ({
+      jobId: "job-new",
+    }));
+
+    const service = new ExtractionBuilderService(
+      {
+        create,
+        get,
+        runWorkflow,
+      } as unknown as ConstructorParameters<typeof ExtractionBuilderService>[0],
+      {} as ConstructorParameters<typeof ExtractionBuilderService>[1],
+      {} as ConstructorParameters<typeof ExtractionBuilderService>[2],
+    );
+
+    const created = await service
+      .extract({
+        urls: ["https://example.com"],
+        name: "Reuse Existing Submit Job",
+      })
+      .create();
+
+    const submitted = await created.submit({ limit: 1 });
+
+    expect(runWorkflow).not.toHaveBeenCalled();
+    expect(submitted).toEqual({
+      workflowId: "wf-submit-reuse",
+      jobId: "job-existing",
     });
   });
 });

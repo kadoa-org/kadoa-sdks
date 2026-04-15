@@ -17,7 +17,6 @@ from ..extraction_acl import (
     RawContentField,
     SchemaResponseSchemaInner,
     V4WorkflowsWorkflowIdGet200Response,
-    WorkflowWithEntityAndFields,
 )
 
 if TYPE_CHECKING:  # pragma: no cover
@@ -115,36 +114,21 @@ class WorkflowManagerService:
                     field_obj = DataField(**field_dict)
                     schema_fields.append(SchemaResponseSchemaInner(actual_instance=field_obj))
 
-        navigation_mode = config.navigation_mode or DEFAULTS["navigation_mode"]
         user_prompt = config.user_prompt or DEFAULTS["user_prompt"]
 
-        if navigation_mode == "agentic-navigation":
-            inner = AgenticWorkflow(
-                urls=config.urls,
-                navigation_mode="agentic-navigation",
-                entity=entity,
-                name=(config.name or domain_name),
-                fields=schema_fields,
-                location=config.location,
-                bypass_preview=True,
-                limit=(config.limit or DEFAULTS["limit"]),
-                tags=["sdk"],
-                additional_data=config.additional_data,
-                user_prompt=user_prompt,
-            )
-        else:
-            inner = WorkflowWithEntityAndFields(
-                urls=config.urls,
-                navigation_mode=navigation_mode,
-                entity=entity,
-                name=(config.name or domain_name),
-                fields=schema_fields,
-                location=config.location,
-                bypass_preview=True,
-                limit=(config.limit or DEFAULTS["limit"]),
-                tags=["sdk"],
-                additional_data=config.additional_data,
-            )
+        inner = AgenticWorkflow(
+            urls=config.urls,
+            navigation_mode=DEFAULTS["navigation_mode"],
+            entity=entity,
+            name=(config.name or domain_name),
+            fields=schema_fields,
+            location=config.location,
+            bypass_preview=True,
+            limit=(config.limit or DEFAULTS["limit"]),
+            tags=["sdk"],
+            additional_data=config.additional_data,
+            user_prompt=user_prompt,
+        )
         try:
             wrapper = CreateWorkflowBody(inner)
             resp = api.v4_workflows_post(create_workflow_body=wrapper)

@@ -1,5 +1,8 @@
 import assert from "node:assert";
-import { KadoaSdkException } from "../../../runtime/exceptions";
+import {
+  KadoaHttpException,
+  KadoaSdkException,
+} from "../../../runtime/exceptions";
 import { logger } from "../../../runtime/logger";
 import type {
   NotificationOptions,
@@ -11,7 +14,6 @@ import type { WorkflowsCoreService } from "../../workflows/workflows-core.servic
 import type {
   FetchDataOptions,
   LocationConfig,
-  NavigationMode,
   SchemaField,
   WorkflowInterval,
   WorkflowMonitoringConfig,
@@ -20,14 +22,20 @@ import type {
   DataFetcherService,
   FetchDataResult,
 } from "./data-fetcher.service";
-import type {
-  EntityConfig,
-  EntityResolverService,
-} from "./entity-resolver.service";
+import type { EntityConfig } from "./entity-resolver.service";
 
 const debug = logger.extraction;
 const DEFAULT_AGENTIC_PROMPT =
   "extract all the data for the main entity of this page";
+const BUILD_NOT_READY_ERROR = "No completed build. Build the project first.";
+const TERMINAL_RUN_STATES = new Set([
+  "FINISHED",
+  "SUCCESS",
+  "FAILED",
+  "ERROR",
+  "STOPPED",
+  "CANCELLED",
+]);
 
 function getFieldName(field: SchemaField): string | undefined {
   return "name" in field && typeof field.name === "string"
@@ -64,7 +72,6 @@ export interface ExtractOptionsInternal {
   urls: string[];
   name?: string;
   description?: string;
-  navigationMode: NavigationMode;
   entity: EntityConfig;
   bypassPreview?: boolean;
   interval?: WorkflowInterval;
@@ -74,9 +81,7 @@ export interface ExtractOptionsInternal {
   userPrompt?: string;
 }
 
-export interface ExtractOptions
-  extends Omit<ExtractOptionsInternal, "navigationMode" | "entity"> {
-  navigationMode?: NavigationMode;
+export interface ExtractOptions extends Omit<ExtractOptionsInternal, "entity"> {
   extraction?: (builder: SchemaBuilder) => SchemaBuilder | { schemaId: string };
 }
 
@@ -174,7 +179,6 @@ export class ExtractionBuilderService {
 
   constructor(
     private readonly workflowsCoreService: WorkflowsCoreService,
-    private readonly entityResolverService: EntityResolverService,
     private readonly dataFetcherService: DataFetcherService,
     private readonly notificationSetupService: NotificationSetupService,
   ) {}
@@ -183,7 +187,6 @@ export class ExtractionBuilderService {
     urls,
     name,
     description,
-    navigationMode,
     extraction,
     additionalData,
     bypassPreview,
@@ -209,14 +212,12 @@ export class ExtractionBuilderService {
       }
     }
 
-    const resolvedNavigationMode = navigationMode || "agentic-navigation";
     this._userPrompt = userPrompt;
 
     this._options = {
       urls,
       name,
       description,
-      navigationMode: resolvedNavigationMode,
       entity,
       bypassPreview: bypassPreview ?? false,
       additionalData,
@@ -275,51 +276,23 @@ export class ExtractionBuilderService {
 
   async create(): Promise<CreatedExtraction> {
     assert(this._options, "Options are not set");
-    const { urls, name, description, navigationMode, entity } = this.options;
+    const { urls, name, description, entity } = this.options;
 
-    // For real-time workflows with AI detection, use selector mode
-    const isAgenticNavigation = navigationMode === "agentic-navigation";
-    const isRealTime = this._options.interval === "REAL_TIME";
-    const useSelectorMode = isRealTime && entity === "ai-detection";
+    const resolvedEntity: { entity?: string; fields: Array<SchemaField> } = {
+      entity:
+        typeof entity === "object" && "name" in entity
+          ? entity.name
+          : undefined,
+      fields:
+        typeof entity === "object" && "fields" in entity ? entity.fields : [],
+    };
 
-    let resolvedEntity: { entity?: string; fields: Array<SchemaField> };
-    if (isAgenticNavigation) {
-      // Skip entity resolution for agentic-navigation
-      resolvedEntity = {
-        entity:
-          typeof entity === "object" && "name" in entity
-            ? entity.name
-            : undefined,
-        fields:
-          typeof entity === "object" && "fields" in entity ? entity.fields : [],
-      };
-    } else {
-      resolvedEntity = await this.entityResolverService.resolveEntity(entity, {
-        link: urls[0],
-        location: this._options.location,
-        navigationMode,
-        selectorMode: useSelectorMode,
-      });
-    }
-
-    if (isAgenticNavigation) {
-      this._userPrompt = buildAgenticPrompt({
-        entity: resolvedEntity.entity,
-        fields: resolvedEntity.fields,
-        userPrompt: this._userPrompt,
-      });
-      this._options.userPrompt = this._userPrompt;
-
-      if (!this._userPrompt) {
-        throw new KadoaSdkException(
-          "userPrompt is required when navigationMode is 'agentic-navigation'",
-          {
-            code: "VALIDATION_ERROR",
-            details: { navigationMode },
-          },
-        );
-      }
-    }
+    this._userPrompt = buildAgenticPrompt({
+      entity: resolvedEntity.entity,
+      fields: resolvedEntity.fields,
+      userPrompt: this._userPrompt,
+    });
+    this._options.userPrompt = this._userPrompt;
 
     const schemaId =
       typeof entity === "object" && "schemaId" in entity
@@ -331,7 +304,7 @@ export class ExtractionBuilderService {
       urls,
       name,
       description,
-      navigationMode,
+      navigationMode: "agentic-navigation",
       monitoring: this._monitoringOptions,
       ...(hasSchemaId
         ? {
@@ -399,10 +372,10 @@ export class ExtractionBuilderService {
       );
     }
 
-    const startedJob = await this.workflowsCoreService.runWorkflow(
-      this._workflowId,
-      { variables: options?.variables, limit: options?.limit },
-    );
+    const startedJob = await this.startOrReuseWorkflowRun(this._workflowId, {
+      variables: options?.variables,
+      limit: options?.limit,
+    });
     assert(startedJob.jobId, "Job ID is not set"); //todo: I am not sure about this
     debug("Job started: %O", startedJob);
     this._jobId = startedJob.jobId;
@@ -432,10 +405,10 @@ export class ExtractionBuilderService {
       );
     }
 
-    const submittedJob = await this.workflowsCoreService.runWorkflow(
-      this._workflowId,
-      { variables: options?.variables, limit: options?.limit },
-    );
+    const submittedJob = await this.startOrReuseWorkflowRun(this._workflowId, {
+      variables: options?.variables,
+      limit: options?.limit,
+    });
     assert(submittedJob.jobId, "Job ID is not set"); //todo: I am not sure about this
     debug("Job submitted: %O", submittedJob);
 
@@ -471,5 +444,85 @@ export class ExtractionBuilderService {
       runId: this._jobId,
       ...options,
     });
+  }
+
+  private async startOrReuseWorkflowRun(
+    workflowId: string,
+    input: RunWorkflowOptions,
+  ) {
+    const currentJob = await this.findActiveWorkflowJob(workflowId);
+    if (currentJob) {
+      debug("Reusing active workflow job: %O", currentJob);
+      return currentJob;
+    }
+
+    try {
+      return await this.workflowsCoreService.runWorkflow(workflowId, input);
+    } catch (error) {
+      if (!this.isBuildNotReadyError(error)) {
+        throw error;
+      }
+
+      const recoveredJob = await this.waitForWorkflowJob(workflowId);
+      if (recoveredJob) {
+        debug(
+          "Recovered active workflow job after run rejection: %O",
+          recoveredJob,
+        );
+        return recoveredJob;
+      }
+
+      throw error;
+    }
+  }
+
+  private async findActiveWorkflowJob(workflowId: string) {
+    const workflow = await this.workflowsCoreService.get(workflowId);
+    if (!workflow.jobId || !workflow.runState) {
+      return undefined;
+    }
+
+    if (TERMINAL_RUN_STATES.has(workflow.runState.toUpperCase())) {
+      return undefined;
+    }
+
+    return {
+      jobId: workflow.jobId,
+      status: workflow.runState,
+      message: "Workflow already has an active run",
+    };
+  }
+
+  private async waitForWorkflowJob(workflowId: string) {
+    for (let attempt = 0; attempt < 5; attempt += 1) {
+      const currentJob = await this.findActiveWorkflowJob(workflowId);
+      if (currentJob) {
+        return currentJob;
+      }
+
+      await new Promise((resolve) => setTimeout(resolve, 1000));
+    }
+
+    return undefined;
+  }
+
+  private isBuildNotReadyError(error: unknown): boolean {
+    if (!(error instanceof KadoaHttpException)) {
+      return false;
+    }
+
+    const responseBody = error.responseBody;
+    if (
+      responseBody &&
+      typeof responseBody === "object" &&
+      "error" in responseBody &&
+      typeof responseBody.error === "string"
+    ) {
+      return responseBody.error.includes(BUILD_NOT_READY_ERROR);
+    }
+
+    return typeof error.message === "string"
+      ? error.message.includes(BUILD_NOT_READY_ERROR)
+      : false;
   }
 }

@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 from collections.abc import AsyncGenerator
+import time
 from typing import TYPE_CHECKING, Any, Dict, List, Optional, TypedDict, Union
 
 from ..extraction_acl import (
@@ -10,16 +11,13 @@ from ..extraction_acl import (
     DataFieldExample,
     SchemaResponseSchemaInner,
     V4WorkflowsWorkflowIdGet200Response,
-    WorkflowWithEntityAndFields,
 )
 from openapi_client.models.agentic_workflow import AgenticWorkflow
-from openapi_client.models.workflow_with_existing_schema import WorkflowWithExistingSchema
 
 if TYPE_CHECKING:  # pragma: no cover
     from ...client import KadoaClient
 from ...core.exceptions import KadoaErrorCode, KadoaHttpError, KadoaSdkError
 from ...core.http import get_workflows_api
-from ...core.logger import extraction as logger
 from ...core.utils import PollingOptions, poll_until
 from ...notifications import NotificationOptions
 from ...schemas.schema_builder import SchemaBuilder
@@ -30,17 +28,23 @@ from ..types import (
     FetchDataOptions,
     FetchDataResult,
     LocationConfig,
-    NavigationMode,
     RunWorkflowOptions,
     WaitForReadyOptions,
     WorkflowInterval,
     WorkflowMonitoringConfig,
 )
 from .data_fetcher_service import DataFetcherService
-from .entity_resolver_service import EntityResolverService, ResolvedEntity
 
-debug = logger
 DEFAULT_AGENTIC_PROMPT = "extract all the data for the main entity of this page"
+BUILD_NOT_READY_ERROR = "No completed build. Build the project first."
+TERMINAL_RUN_STATES = {
+    "FINISHED",
+    "SUCCESS",
+    "FAILED",
+    "ERROR",
+    "STOPPED",
+    "CANCELLED",
+}
 
 
 def _build_agentic_prompt(
@@ -203,7 +207,7 @@ class PreparedExtraction:
         return self
 
     def with_prompt(self, prompt: str) -> "PreparedExtraction":
-        """Set user prompt for agentic navigation"""
+        """Set user prompt for this extraction"""
         self._builder._user_prompt = prompt
         self._options.user_prompt = prompt
         return self
@@ -321,7 +325,6 @@ class ExtractionBuilderService:
 
     def __init__(self, client: "KadoaClient") -> None:
         self.client = client
-        self._entity_resolver = EntityResolverService(client)
         self._data_fetcher = DataFetcherService(client)
         self._notification_options: Optional[NotificationOptions] = None
         self._monitoring_options: Optional[WorkflowMonitoringConfig] = None
@@ -354,7 +357,6 @@ class ExtractionBuilderService:
                 - urls: List of URLs to extract from
                 - name: Extraction name
                 - description: Optional description
-                - navigation_mode: Optional navigation mode
                 - extraction: Optional schema builder callback
                 - additional_data: Optional additional metadata
                 - bypass_preview: Whether to skip preview mode
@@ -399,14 +401,12 @@ class ExtractionBuilderService:
                 else:
                     entity = {"fields": built_fields}
 
-        resolved_navigation_mode = options.navigation_mode or "agentic-navigation"
         self._user_prompt = options.user_prompt
 
         internal_options = ExtractOptionsInternal(
             urls=options.urls,
             name=options.name,
             description=options.description,
-            navigation_mode=resolved_navigation_mode,
             entity=entity,
             bypass_preview=options.bypass_preview or False,
             additional_data=options.additional_data,
@@ -420,67 +420,33 @@ class ExtractionBuilderService:
         urls = options.urls
         name = options.name
         description = options.description
-        navigation_mode = options.navigation_mode
         entity = options.entity
         user_prompt = options.user_prompt or self._user_prompt
 
-        is_agentic_navigation = navigation_mode == "agentic-navigation"
+        raw_fields = (
+            entity.get("fields")
+            if isinstance(entity, dict) and isinstance(entity.get("fields"), list)
+            else []
+        )
+        converted_fields = []
+        for field in raw_fields:
+            if hasattr(field, "model_dump"):
+                converted_fields.append(field.model_dump())
+            elif isinstance(field, dict):
+                converted_fields.append(field)
+            else:
+                converted_fields.append(dict(field) if hasattr(field, "__dict__") else field)
 
-        # For real-time workflows with AI detection, use selector mode
-        is_real_time = options.interval == "REAL_TIME"
-        use_selector_mode = is_real_time and entity == "ai-detection"
-
-        if is_agentic_navigation:
-            # Skip entity resolution for agentic-navigation
-            # Convert fields to dicts if they're DataField objects
-            raw_fields = (
-                entity.get("fields", [])
-                if isinstance(entity, dict) and "fields" in entity
-                else []
-            )
-            converted_fields = []
-            for field in raw_fields:
-                if hasattr(field, "model_dump"):
-                    converted_fields.append(field.model_dump())
-                elif isinstance(field, dict):
-                    converted_fields.append(field)
-                else:
-                    converted_fields.append(dict(field) if hasattr(field, "__dict__") else field)
-
-            resolved_entity = ResolvedEntity(
-                entity=(
-                    entity.get("name")
-                    if isinstance(entity, dict) and "name" in entity
-                    else None
-                ),
-                fields=converted_fields,
-            )
-            user_prompt = _build_agentic_prompt(
-                entity=resolved_entity.entity,
-                fields=converted_fields,
-                user_prompt=user_prompt,
-            )
-            self._user_prompt = user_prompt
-        else:
-            resolved_entity = self._entity_resolver.resolve_entity(
-                entity,
-                {
-                    "link": urls[0],
-                    "location": options.location,
-                    "navigationMode": navigation_mode,
-                    "selectorMode": use_selector_mode,
-                },
-            )
-
-        if is_agentic_navigation and not user_prompt:
-            raise KadoaSdkError(
-                "user_prompt is required when navigation_mode is 'agentic-navigation'",
-                code=KadoaErrorCode.VALIDATION_ERROR,
-                details={"navigation_mode": navigation_mode},
-            )
+        resolved_entity_name = entity.get("name") if isinstance(entity, dict) else None
+        user_prompt = _build_agentic_prompt(
+            entity=resolved_entity_name,
+            fields=converted_fields,
+            user_prompt=user_prompt,
+        )
+        self._user_prompt = user_prompt
 
         fields_list = []
-        for field in resolved_entity.fields:
+        for field in converted_fields:
             if hasattr(field, "model_dump"):
                 fields_list.append(field.model_dump())
             elif isinstance(field, dict):
@@ -488,18 +454,11 @@ class ExtractionBuilderService:
             else:
                 fields_list.append(dict(field) if hasattr(field, "__dict__") else field)
 
-        # Ensure entity name is set (required by API)
-        entity_name = resolved_entity.entity
-        if not entity_name and fields_list:
-            # Use a default entity name if fields are present but no entity name
-            entity_name = "Item"
-
         workflow_id = self._create_workflow(
             urls=urls,
             name=name,
             description=description,
-            navigation_mode=navigation_mode,
-            entity=entity_name,
+            entity=resolved_entity_name,
             fields=fields_list,
             schema_id=(
                 entity.get("schemaId")
@@ -531,7 +490,6 @@ class ExtractionBuilderService:
         urls: List[str],
         name: str,
         description: Optional[str],
-        navigation_mode: NavigationMode,
         entity: Optional[str],
         fields: List[Dict[str, Any]],
         schema_id: Optional[str],
@@ -588,78 +546,28 @@ class ExtractionBuilderService:
                     field_obj = DataField(**field_dict)
                     schema_fields.append(SchemaResponseSchemaInner(actual_instance=field_obj))
 
-        if navigation_mode == "agentic-navigation":
-            if not user_prompt:
-                raise KadoaSdkError(
-                    "user_prompt is required when navigation_mode is 'agentic-navigation'",
-                    code=KadoaErrorCode.VALIDATION_ERROR,
-                    details={"navigation_mode": navigation_mode},
-                )
+        inner = AgenticWorkflow(
+            urls=urls,
+            navigation_mode="agentic-navigation",
+            name=name,
+            description=description,
+            user_prompt=user_prompt or DEFAULT_AGENTIC_PROMPT,
+            schema_id=schema_id,
+            entity=entity,
+            fields=schema_fields,
+            location=location,
+            bypass_preview=bypass_preview,
+            auto_start=False,
+            tags=["sdk"],
+            additional_data=additional_data,
+        )
 
-            inner = AgenticWorkflow(
-                urls=urls,
-                navigation_mode="agentic-navigation",
-                name=name,
-                description=description,
-                user_prompt=user_prompt,
-                schema_id=schema_id,
-                entity=entity,
-                fields=schema_fields,
-                location=location,
-                bypass_preview=bypass_preview,
-                auto_start=False,
-                tags=["sdk"],
-                additional_data=additional_data,
-            )
-
-            if monitoring:
-                inner.monitoring = monitoring
-            if interval:
-                inner.interval = interval
-            if schedules:
-                inner.schedules = schedules
-        elif schema_id:
-            # Use WorkflowWithExistingSchema when schemaId is provided
-            inner = WorkflowWithExistingSchema(
-                urls=urls,
-                navigation_mode=navigation_mode,
-                name=name,
-                description=description,
-                schema_id=schema_id,
-                location=location,
-                bypass_preview=bypass_preview,
-                auto_start=False,
-                tags=["sdk"],
-                additional_data=additional_data,
-            )
-
-            if monitoring:
-                inner.monitoring = monitoring
-            if interval:
-                inner.interval = interval
-            if schedules:
-                inner.schedules = schedules
-        else:
-            inner = WorkflowWithEntityAndFields(
-                urls=urls,
-                navigation_mode=navigation_mode,
-                entity=entity,
-                name=name,
-                description=description,
-                fields=schema_fields,
-                location=location,
-                bypass_preview=bypass_preview,
-                auto_start=False,
-                tags=["sdk"],
-                additional_data=additional_data,
-            )
-
-            if monitoring:
-                inner.monitoring = monitoring
-            if interval:
-                inner.interval = interval
-            if schedules:
-                inner.schedules = schedules
+        if monitoring:
+            inner.monitoring = monitoring
+        if interval:
+            inner.interval = interval
+        if schedules:
+            inner.schedules = schedules
 
         try:
             wrapper = CreateWorkflowBody(inner)
@@ -731,7 +639,7 @@ class ExtractionBuilderService:
                 details={"interval": "REAL_TIME", "workflowId": workflow_id},
             )
 
-        job_id = self._run_workflow(workflow_id, run_options)
+        job_id = self._start_or_reuse_workflow_run(workflow_id, run_options)
 
         self._wait_for_job_completion(workflow_id, job_id)
 
@@ -752,7 +660,7 @@ class ExtractionBuilderService:
                 details={"interval": "REAL_TIME", "workflowId": workflow_id},
             )
 
-        job_id = self._run_workflow(workflow_id, run_options)
+        job_id = self._start_or_reuse_workflow_run(workflow_id, run_options)
         return SubmittedExtraction(workflow_id, job_id)
 
     def _run_workflow(
@@ -788,6 +696,61 @@ class ExtractionBuilderService:
                 message="Failed to run workflow",
                 details={"workflowId": workflow_id},
             )
+
+    def _start_or_reuse_workflow_run(
+        self,
+        workflow_id: str,
+        options: Optional[RunWorkflowOptions] = None,
+    ) -> str:
+        existing_job_id = self._find_active_workflow_job(workflow_id)
+        if existing_job_id:
+            return existing_job_id
+
+        try:
+            return self._run_workflow(workflow_id, options)
+        except Exception as error:
+            if not self._is_build_not_ready_error(error):
+                raise
+
+            recovered_job_id = self._wait_for_workflow_job(workflow_id)
+            if recovered_job_id:
+                return recovered_job_id
+
+            raise
+
+    def _find_active_workflow_job(self, workflow_id: str) -> Optional[str]:
+        workflow = self._get_workflow_status(workflow_id)
+        job_id = getattr(workflow, "job_id", None) or getattr(workflow, "jobId", None)
+        run_state = getattr(workflow, "run_state", None) or getattr(workflow, "runState", None)
+
+        if not job_id or not run_state:
+            return None
+
+        if str(run_state).upper() in TERMINAL_RUN_STATES:
+            return None
+
+        return str(job_id)
+
+    def _wait_for_workflow_job(self, workflow_id: str) -> Optional[str]:
+        for _ in range(5):
+            current_job_id = self._find_active_workflow_job(workflow_id)
+            if current_job_id:
+                return current_job_id
+            time.sleep(1)
+
+        return None
+
+    def _is_build_not_ready_error(self, error: Exception) -> bool:
+        if isinstance(error, KadoaHttpError):
+            response_body = error.response_body
+            if isinstance(response_body, dict):
+                response_error = response_body.get("error")
+                if isinstance(response_error, str) and BUILD_NOT_READY_ERROR in response_error:
+                    return True
+            if BUILD_NOT_READY_ERROR in str(error):
+                return True
+
+        return BUILD_NOT_READY_ERROR in str(error)
 
     def _wait_for_job_completion(self, workflow_id: str, job_id: str) -> None:
         """Wait for job to complete using polling utility"""

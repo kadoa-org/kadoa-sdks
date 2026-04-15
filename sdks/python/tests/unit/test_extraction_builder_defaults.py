@@ -1,4 +1,5 @@
 from unittest.mock import Mock
+from types import SimpleNamespace
 
 import pytest
 
@@ -183,5 +184,85 @@ def test_builder_synthesizes_raw_helper_fields_as_structured_fields():
             inner.user_prompt
             == "extract all records from this page and return these fields: rawMarkdown, rawPageUrl"
         )
+    finally:
+        builder_module.get_workflows_api = original_get_api
+
+
+@pytest.mark.unit
+def test_builder_run_reuses_existing_started_job():
+    mock_client = Mock()
+    mock_client.notification = Mock()
+    mock_client.notification.setup = Mock()
+    mock_client.notification.setup.setup = Mock()
+
+    mock_api = Mock()
+    mock_response = Mock()
+    mock_response.workflow_id = "test-workflow-id"
+    mock_response.workflowId = "test-workflow-id"
+    mock_api.v4_workflows_post.return_value = mock_response
+
+    original_get_api = builder_module.get_workflows_api
+    builder_module.get_workflows_api = lambda client: mock_api
+
+    try:
+        builder = builder_module.ExtractionBuilderService(mock_client)
+        created = builder.extract(
+            ExtractOptions(
+                urls=["https://example.com"],
+                name="Reuse Existing Job",
+            )
+        ).create()
+
+        builder._get_workflow_status = Mock(
+            return_value=SimpleNamespace(job_id="job-existing", run_state="RUNNING")
+        )
+        builder._run_workflow = Mock(return_value="job-new")
+        builder._wait_for_job_completion = Mock()
+
+        finished = created.run()
+
+        assert finished.job_id == "job-existing"
+        builder._run_workflow.assert_not_called()
+        builder._wait_for_job_completion.assert_called_once_with(
+            "test-workflow-id", "job-existing"
+        )
+    finally:
+        builder_module.get_workflows_api = original_get_api
+
+
+@pytest.mark.unit
+def test_builder_submit_reuses_existing_started_job():
+    mock_client = Mock()
+    mock_client.notification = Mock()
+    mock_client.notification.setup = Mock()
+    mock_client.notification.setup.setup = Mock()
+
+    mock_api = Mock()
+    mock_response = Mock()
+    mock_response.workflow_id = "test-workflow-id"
+    mock_response.workflowId = "test-workflow-id"
+    mock_api.v4_workflows_post.return_value = mock_response
+
+    original_get_api = builder_module.get_workflows_api
+    builder_module.get_workflows_api = lambda client: mock_api
+
+    try:
+        builder = builder_module.ExtractionBuilderService(mock_client)
+        created = builder.extract(
+            ExtractOptions(
+                urls=["https://example.com"],
+                name="Reuse Existing Submit Job",
+            )
+        ).create()
+
+        builder._get_workflow_status = Mock(
+            return_value=SimpleNamespace(job_id="job-existing", run_state="RUNNING")
+        )
+        builder._run_workflow = Mock(return_value="job-new")
+
+        submitted = created.submit()
+
+        assert submitted.job_id == "job-existing"
+        builder._run_workflow.assert_not_called()
     finally:
         builder_module.get_workflows_api = original_get_api
