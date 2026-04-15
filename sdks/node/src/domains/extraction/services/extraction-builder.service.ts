@@ -450,6 +450,8 @@ export class ExtractionBuilderService {
     workflowId: string,
     input: RunWorkflowOptions,
   ) {
+    // Some agentic workflows already have an active job by the time create()
+    // returns, so reuse that run instead of issuing a duplicate /run request.
     const currentJob = await this.findActiveWorkflowJob(workflowId);
     if (currentJob) {
       debug("Reusing active workflow job: %O", currentJob);
