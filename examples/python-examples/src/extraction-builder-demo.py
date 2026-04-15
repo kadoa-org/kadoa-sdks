@@ -48,7 +48,7 @@ def main():
             client.extract(
                 ExtractOptions(
                     urls=["https://sandbox.kadoa.com/ecommerce"],
-                    name="Python Synthetic Raw Demo",
+                    name="Python Raw Demo",
                     extraction=lambda builder: builder.raw("MARKDOWN").raw("PAGE_URL"),
                 )
             )
@@ -89,7 +89,7 @@ def main():
             client.extract(
                 ExtractOptions(
                     urls=["https://sandbox.kadoa.com/ecommerce"],
-                    name="Python Hybrid Synthetic Raw Demo",
+                    name="Python Hybrid Raw Demo",
                     extraction=lambda builder: (
                         builder.entity("Product")
                         .field(

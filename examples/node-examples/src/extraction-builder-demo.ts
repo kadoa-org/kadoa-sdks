@@ -28,7 +28,7 @@ async function main() {
   const rawExtraction = await client
     .extract({
       urls: ["https://sandbox.kadoa.com/ecommerce"],
-      name: "Node Synthetic Raw Demo",
+      name: "Node Raw Demo",
       extraction: (builder) => builder.raw("MARKDOWN").raw("PAGE_URL"),
     })
     .bypassPreview()
@@ -60,7 +60,7 @@ async function main() {
   const hybridExtraction = await client
     .extract({
       urls: ["https://sandbox.kadoa.com/ecommerce"],
-      name: "Node Hybrid Synthetic Raw Demo",
+      name: "Node Hybrid Raw Demo",
       extraction: (builder) =>
         builder
           .entity("Product")
