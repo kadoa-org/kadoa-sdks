@@ -27,13 +27,13 @@ def main():
     try:
         print("\n=== Extraction Builder Demo ===\n")
 
-        # 1. Agentic default (no schema)
-        print("1. Agentic default (no extraction parameter):")
+        # 1. Default extraction (no schema)
+        print("1. Default extraction (no extraction parameter):")
         auto_extraction = (
             client.extract(
                 ExtractOptions(
                     urls=["https://sandbox.kadoa.com/ecommerce"],
-                    name="Python Agentic Default Demo",
+                    name="Python Default Extraction Demo",
                 )
             )
             .bypass_preview()

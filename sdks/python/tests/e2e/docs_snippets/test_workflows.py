@@ -38,17 +38,17 @@ class TestWorkflowsSnippets:
 
     @pytest.mark.e2e
     @pytest.mark.timeout(120)
-    def test_workflows_002_agentic_extraction(self, client):
-        """PY-WORKFLOWS-002: Agentic extraction"""
-        workflow_name = "Agentic Product Extraction"
+    def test_workflows_002_default_extraction(self, client):
+        """PY-WORKFLOWS-002: Default extraction"""
+        workflow_name = "Default Product Extraction"
         delete_workflow_by_name(client, workflow_name)
 
         # @docs-start PY-WORKFLOWS-002
-        # SDK: agentic navigation extracts the main entity on the page
+        # SDK: default extraction targets the main entity on the page
         result = client.extraction.run(
             ExtractionOptions(
                 urls=["https://sandbox.kadoa.com/ecommerce"],
-                name="Agentic Product Extraction",
+                name="Default Product Extraction",
                 limit=10,
                 user_prompt="extract all the data for the main entity of this page",
             )

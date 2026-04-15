@@ -21,7 +21,7 @@ const client = new KadoaClient({
   apiKey: 'your-api-key'
 });
 
-// Agentic navigation extracts the main entity by default
+// Default extraction targets the main entity on the page
 const result = await client.extraction.run({
   urls: ['https://example.com/products'],
   name: 'Product Extraction'
@@ -33,9 +33,9 @@ console.log(`Extracted ${result.data?.length} items`);
 
 ## Extraction Methods
 
-### Agentic Default
+### Default Extraction
 
-The simplest way to extract data. Agentic navigation targets the main entity on the page by default:
+The simplest way to extract data. By default, the SDK targets the main entity on the page:
 
 ```typescript
 const result = await client.extraction.run({
@@ -59,7 +59,7 @@ const result = await client.extraction.run({
 
 ### Builder API (Custom Schemas)
 
-Define exactly what data you want to extract using the fluent builder pattern. The builder also defaults to agentic navigation, and derives a schema-aware prompt from the entity and fields you specify:
+Define exactly what data you want to extract using the fluent builder pattern. The builder derives a schema-aware prompt from the entity and fields you specify:
 
 ```typescript
 const extraction = await client.extract({
@@ -93,7 +93,7 @@ const data = await result.fetchData({});
 
 **Raw Content Extraction**
 
-Add convenience fields for raw page artifacts using agentic extraction:
+Add convenience fields for raw page artifacts to the extraction schema:
 
 ```typescript
 // Single format

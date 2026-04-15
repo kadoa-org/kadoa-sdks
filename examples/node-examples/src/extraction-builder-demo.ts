@@ -11,12 +11,12 @@ async function main() {
 
   console.log("\n=== Extraction Builder Demo ===\n");
 
-  // 1. Agentic default (no schema)
-  console.log("1. Agentic default (no extraction parameter):");
+  // 1. Default extraction (no schema)
+  console.log("1. Default extraction (no extraction parameter):");
   const autoExtraction = await client
     .extract({
       urls: ["https://sandbox.kadoa.com/ecommerce"],
-      name: "Node Agentic Default Demo",
+      name: "Node Default Extraction Demo",
     })
     .bypassPreview()
     .setInterval({ interval: "ONLY_ONCE" })
@@ -36,7 +36,7 @@ async function main() {
     .create();
   console.log(`✓ Created workflow: ${rawExtraction.workflowId}`);
 
-  // 3. Custom schema with schema-aware agentic prompt
+  // 3. Custom schema with a schema-aware default prompt
   console.log("\n3. Custom schema with structured fields:");
   const schemaExtraction = await client
     .extract({

@@ -41,16 +41,16 @@ describe("TS-WORKFLOWS: workflows/create.mdx snippets", () => {
   });
 
   it(
-    "TS-WORKFLOWS-002: Agentic extraction",
+    "TS-WORKFLOWS-002: Default extraction",
     async () => {
-      const workflowName = "Agentic Product Extraction";
+      const workflowName = "Default Product Extraction";
       await deleteWorkflowByName(workflowName, client);
 
       // @docs-start TS-WORKFLOWS-002
-      // SDK: agentic navigation extracts the main entity on the page
+      // SDK: default extraction targets the main entity on the page
       const result = await client.extraction.run({
         urls: ["https://sandbox.kadoa.com/ecommerce"],
-        name: "Agentic Product Extraction",
+        name: "Default Product Extraction",
         limit: 10,
         userPrompt: "extract all the data for the main entity of this page",
       });
