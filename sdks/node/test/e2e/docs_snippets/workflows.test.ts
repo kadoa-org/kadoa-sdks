@@ -41,17 +41,18 @@ describe("TS-WORKFLOWS: workflows/create.mdx snippets", () => {
   });
 
   it(
-    "TS-WORKFLOWS-002: Auto-detection extraction",
+    "TS-WORKFLOWS-002: Default extraction",
     async () => {
-      const workflowName = "Auto Product Extraction";
+      const workflowName = "Default Product Extraction";
       await deleteWorkflowByName(workflowName, client);
 
       // @docs-start TS-WORKFLOWS-002
-      // SDK: AI automatically detects and extracts data
+      // SDK: default extraction targets the main entity on the page
       const result = await client.extraction.run({
         urls: ["https://sandbox.kadoa.com/ecommerce"],
-        name: "Auto Product Extraction",
+        name: "Default Product Extraction",
         limit: 10,
+        userPrompt: "extract all the data for the main entity of this page",
       });
 
       console.log(result.data);
@@ -175,7 +176,7 @@ describe("TS-WORKFLOWS: workflows/create.mdx snippets", () => {
   );
 
   it(
-    "TS-WORKFLOWS-006: Single page extraction",
+    "TS-WORKFLOWS-006: Job posting extraction",
     async () => {
       const workflowName = "Job Posting Monitor";
       await deleteWorkflowByName(workflowName, client);
@@ -185,7 +186,6 @@ describe("TS-WORKFLOWS: workflows/create.mdx snippets", () => {
         .extract({
           urls: ["https://sandbox.kadoa.com/careers-simple"],
           name: "Job Posting Monitor",
-          navigationMode: "single-page",
           extraction: (builder) =>
             builder
               .entity("Job Posting")
@@ -214,9 +214,9 @@ describe("TS-WORKFLOWS: workflows/create.mdx snippets", () => {
     { timeout: 120000 },
   );
 
-  // paginated-page navigation takes >5min - run manually
+  // Existing schema extraction takes >5min - run manually
   it(
-    "TS-WORKFLOWS-007: List navigation",
+    "TS-WORKFLOWS-007: Existing schema extraction",
     async () => {
       const workflowName = "Product Catalog Monitor";
       await deleteWorkflowByName(workflowName, client);
@@ -244,7 +244,6 @@ describe("TS-WORKFLOWS: workflows/create.mdx snippets", () => {
         .extract({
           urls: ["https://sandbox.kadoa.com/ecommerce"],
           name: "Product Catalog Monitor",
-          navigationMode: "paginated-page",
           extraction: () => ({ schemaId }),
         })
         .setInterval({ interval: "HOURLY" })
@@ -267,14 +266,13 @@ describe("TS-WORKFLOWS: workflows/create.mdx snippets", () => {
   );
 
   it.skip(
-    "TS-WORKFLOWS-008: List + details navigation",
+    "TS-WORKFLOWS-008: Detailed product extraction",
     async () => {
       // @docs-start TS-WORKFLOWS-008
       const workflow = await client
         .extract({
           urls: ["https://sandbox.kadoa.com/ecommerce"],
           name: "Product Details Extractor",
-          navigationMode: "page-and-detail",
           extraction: (builder) =>
             builder
               .entity("Product")
@@ -303,14 +301,13 @@ describe("TS-WORKFLOWS: workflows/create.mdx snippets", () => {
   );
 
   it.skip(
-    "TS-WORKFLOWS-009: All pages crawler",
+    "TS-WORKFLOWS-009: Product catalog extraction",
     async () => {
       // @docs-start TS-WORKFLOWS-009
       const workflow = await client
         .extract({
           urls: ["https://sandbox.kadoa.com/ecommerce"],
           name: "Product Catalog Crawler",
-          navigationMode: "all-pages",
           extraction: (builder) =>
             builder
               .entity("Product")
@@ -335,9 +332,9 @@ describe("TS-WORKFLOWS: workflows/create.mdx snippets", () => {
     { timeout: 300000 },
   );
 
-  // agentic-navigation takes too long, unskip for manual testing
+  // Prompted extraction takes too long, unskip for manual testing
   it.skip(
-    "TS-WORKFLOWS-010: AI navigation with existing schema",
+    "TS-WORKFLOWS-010: Prompted extraction with existing schema",
     async () => {
       // Setup: create schema first
       const schema = await client.schema.createSchema({
@@ -372,8 +369,7 @@ describe("TS-WORKFLOWS: workflows/create.mdx snippets", () => {
       const workflow = await client
         .extract({
           urls: ["https://sandbox.kadoa.com/careers-directory"],
-          name: "AI Job Scraper",
-          navigationMode: "agentic-navigation",
+          name: "Job Scraper",
           extraction: () => ({
             schemaId: schema.id,
           }),
@@ -385,7 +381,7 @@ describe("TS-WORKFLOWS: workflows/create.mdx snippets", () => {
         .create();
 
       console.log(`Workflow ${workflow.workflowId} started`);
-      // Note: AI Navigation flows typically take ~1 hour to complete.
+      // Note: These longer-running extraction flows typically take ~1 hour to complete.
       // We recommend using webhooks to receive notifications when finished.
       workflow.run().then((w) => {
         console.log(`Workflow finished. RunId: ${w}`);
@@ -395,16 +391,15 @@ describe("TS-WORKFLOWS: workflows/create.mdx snippets", () => {
     { timeout: 120000 },
   );
 
-  // agentic-navigation takes too long, unskip for manual testing
+  // Prompted extraction takes too long, unskip for manual testing
   it.skip(
-    "TS-WORKFLOWS-011: AI navigation with custom schema",
+    "TS-WORKFLOWS-011: Prompted extraction with custom schema",
     async () => {
       // @docs-start TS-WORKFLOWS-011
       const workflow = await client
         .extract({
           urls: ["https://sandbox.kadoa.com/careers-directory"],
-          name: "AI Job Scraper with Schema",
-          navigationMode: "agentic-navigation",
+          name: "Job Scraper with Schema",
           extraction: (builder) =>
             builder
               .entity("Job Posting")
@@ -425,7 +420,7 @@ describe("TS-WORKFLOWS: workflows/create.mdx snippets", () => {
         .create();
 
       console.log(`Workflow ${workflow.workflowId} started`);
-      // Note: AI Navigation flows typically take ~1 hour to complete.
+      // Note: These longer-running extraction flows typically take ~1 hour to complete.
       // We recommend using webhooks to receive notifications when finished.
       workflow.run().then((w) => {
         console.log(`Workflow finished. RunId: ${w}`);
@@ -438,23 +433,22 @@ describe("TS-WORKFLOWS: workflows/create.mdx snippets", () => {
     { timeout: 120000 },
   );
 
-  // agentic-navigation takes too long, unskip for manual testing
+  // Prompted extraction takes too long, unskip for manual testing
   it.skip(
-    "TS-WORKFLOWS-012: AI navigation with auto-detected schema",
+    "TS-WORKFLOWS-012: Prompted extraction without a schema",
     async () => {
       // @docs-start TS-WORKFLOWS-012
       const workflow = await client
         .extract({
           urls: ["https://sandbox.kadoa.com/news"],
-          name: "AI Blog Scraper",
-          navigationMode: "agentic-navigation",
+          name: "Blog Scraper",
           userPrompt: `Find all blog posts from 2024. For each post,
             extract the title, author, publication date, and content.`,
         })
         .create();
 
       console.log(`Workflow ${workflow.workflowId} started`);
-      // Note: AI Navigation flows typically take ~1 hour to complete.
+      // Note: These longer-running extraction flows typically take ~1 hour to complete.
       // We recommend using webhooks to receive notifications when finished.
       workflow.run().then((w) => {
         console.log(`Workflow finished. RunId: ${w}`);
@@ -466,16 +460,15 @@ describe("TS-WORKFLOWS: workflows/create.mdx snippets", () => {
     { timeout: 120000 },
   );
 
-  // agentic-navigation takes too long, unskip for manual testing
+  // Prompted extraction takes too long, unskip for manual testing
   it.skip(
-    "TS-WORKFLOWS-013: Using variables in AI navigation",
+    "TS-WORKFLOWS-013: Using variables in prompted extraction",
     async () => {
       // @docs-start TS-WORKFLOWS-013
       const workflow = await client
         .extract({
           urls: ["https://sandbox.kadoa.com/ecommerce"],
           name: "Dynamic Product Search",
-          navigationMode: "agentic-navigation",
           userPrompt: `Navigate to search and loop through
             '@productTypes', press search, and extract
             product details for all results.`,
@@ -483,7 +476,7 @@ describe("TS-WORKFLOWS: workflows/create.mdx snippets", () => {
         .create();
 
       console.log(`Workflow ${workflow.workflowId} started`);
-      // Note: AI Navigation flows typically take ~1 hour to complete.
+      // Note: These longer-running extraction flows typically take ~1 hour to complete.
       // We recommend using webhooks to receive notifications when finished.
       workflow.run().then((w) => {
         console.log(`Workflow finished. RunId: ${w}`);
@@ -559,7 +552,6 @@ describe("TS-WORKFLOWS: workflows/create.mdx snippets", () => {
         .extract({
           urls: ["https://sandbox.kadoa.com/ecommerce/pagination"],
           name: "Paginated Extraction",
-          navigationMode: "paginated-page",
           extraction: (builder) =>
             builder
               .entity("Product")

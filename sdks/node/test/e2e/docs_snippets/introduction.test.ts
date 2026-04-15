@@ -37,6 +37,7 @@ describe("TS-INTRODUCTION: introduction.mdx snippets", () => {
         urls: ["https://sandbox.kadoa.com/ecommerce"],
         name: "My First Extraction",
         limit: 10,
+        userPrompt: "extract all the data for the main entity of this page",
       });
 
       console.log(result.data);

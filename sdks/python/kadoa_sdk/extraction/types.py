@@ -11,15 +11,6 @@ from ..core.pagination import PageInfo
 from ..extraction.extraction_acl import GetWorkflowResponse
 from ..schemas.schema_builder import SchemaBuilder
 
-# Navigation mode enum - matches WorkflowWithEntityAndFields.navigation_mode validator
-# Python's OpenAPI generator doesn't create enum classes, so we use Literal types
-NavigationMode = Literal[
-    "single-page",
-    "paginated-page",
-    "page-and-detail",
-    "agentic-navigation",
-]
-
 # Workflow interval enum - matches WorkflowWithEntityAndFields.interval validator
 # Python's OpenAPI generator doesn't create enum classes, so we use Literal types
 WorkflowInterval = Literal[
@@ -65,7 +56,6 @@ ExtractCallback = Callable[[SchemaBuilder], Union[SchemaBuilder, Dict[str, str]]
 
 class ExtractionOptions(BaseModel):
     urls: List[str]
-    navigation_mode: Optional[NavigationMode] = None
     name: Optional[str] = None
     location: Optional[LocationConfig] = None
     polling_interval: Optional[float] = None  # seconds
@@ -114,7 +104,6 @@ class ExtractOptions(BaseModel):
     urls: List[str]
     name: str
     description: Optional[str] = None
-    navigation_mode: Optional[NavigationMode] = None
     extraction: Optional[ExtractCallback] = None
     additional_data: Optional[Dict[str, Any]] = None
     bypass_preview: Optional[bool] = None
@@ -126,7 +115,6 @@ class ExtractOptionsInternal(BaseModel):
 
     urls: List[str]
     name: str
-    navigation_mode: NavigationMode
     entity: EntityConfig
     description: Optional[str] = None
     bypass_preview: Optional[bool] = None
@@ -151,7 +139,8 @@ class WaitForReadyOptions(BaseModel):
 DEFAULTS = {
     "polling_interval": 5.0,  # seconds
     "max_wait_time": 300.0,  # seconds
-    "navigation_mode": "single-page",
+    "navigation_mode": "agentic-navigation",
     "location": {"type": "auto"},
     "limit": 1000,
+    "user_prompt": "extract all the data for the main entity of this page",
 }
