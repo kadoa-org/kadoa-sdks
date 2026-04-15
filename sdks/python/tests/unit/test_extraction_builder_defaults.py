@@ -2,9 +2,7 @@ from unittest.mock import Mock
 
 import pytest
 
-from kadoa_sdk.extraction.services.extraction_builder_service import (
-    ExtractionBuilderService,
-)
+import kadoa_sdk.extraction.services.extraction_builder_service as builder_module
 from kadoa_sdk.extraction.types import ExtractOptions
 
 
@@ -21,13 +19,11 @@ def test_builder_defaults_to_agentic_navigation_with_default_prompt():
     mock_response.workflowId = "test-workflow-id"
     mock_api.v4_workflows_post.return_value = mock_response
 
-    import kadoa_sdk.extraction.services.extraction_builder_service as builder_module
-
     original_get_api = builder_module.get_workflows_api
     builder_module.get_workflows_api = lambda client: mock_api
 
     try:
-        builder = ExtractionBuilderService(mock_client)
+        builder = builder_module.ExtractionBuilderService(mock_client)
 
         result = (
             builder.extract(
@@ -68,13 +64,11 @@ def test_builder_uses_generic_prompt_without_schema():
     mock_response.workflowId = "test-workflow-id"
     mock_api.v4_workflows_post.return_value = mock_response
 
-    import kadoa_sdk.extraction.services.extraction_builder_service as builder_module
-
     original_get_api = builder_module.get_workflows_api
     builder_module.get_workflows_api = lambda client: mock_api
 
     try:
-        builder = ExtractionBuilderService(mock_client)
+        builder = builder_module.ExtractionBuilderService(mock_client)
         builder.extract(ExtractOptions(urls=["https://example.com"], name="Test")).create()
 
         request = mock_api.v4_workflows_post.call_args.kwargs["create_workflow_body"]
@@ -97,13 +91,11 @@ def test_builder_preserves_explicit_user_prompt():
     mock_response.workflowId = "test-workflow-id"
     mock_api.v4_workflows_post.return_value = mock_response
 
-    import kadoa_sdk.extraction.services.extraction_builder_service as builder_module
-
     original_get_api = builder_module.get_workflows_api
     builder_module.get_workflows_api = lambda client: mock_api
 
     try:
-        builder = ExtractionBuilderService(mock_client)
+        builder = builder_module.ExtractionBuilderService(mock_client)
         builder.extract(
             ExtractOptions(
                 urls=["https://example.com"],
@@ -135,13 +127,11 @@ def test_builder_keeps_raw_fields_on_agentic_navigation():
     mock_response.workflowId = "test-workflow-id"
     mock_api.v4_workflows_post.return_value = mock_response
 
-    import kadoa_sdk.extraction.services.extraction_builder_service as builder_module
-
     original_get_api = builder_module.get_workflows_api
     builder_module.get_workflows_api = lambda client: mock_api
 
     try:
-        builder = ExtractionBuilderService(mock_client)
+        builder = builder_module.ExtractionBuilderService(mock_client)
         builder.extract(
             ExtractOptions(
                 urls=["https://example.com"],
@@ -171,13 +161,11 @@ def test_builder_synthesizes_raw_helper_fields_as_structured_fields():
     mock_response.workflowId = "test-workflow-id"
     mock_api.v4_workflows_post.return_value = mock_response
 
-    import kadoa_sdk.extraction.services.extraction_builder_service as builder_module
-
     original_get_api = builder_module.get_workflows_api
     builder_module.get_workflows_api = lambda client: mock_api
 
     try:
-        builder = ExtractionBuilderService(mock_client)
+        builder = builder_module.ExtractionBuilderService(mock_client)
         builder.extract(
             ExtractOptions(
                 urls=["https://example.com"],
