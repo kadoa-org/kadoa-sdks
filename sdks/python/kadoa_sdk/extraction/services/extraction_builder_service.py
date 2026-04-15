@@ -702,6 +702,9 @@ class ExtractionBuilderService:
         workflow_id: str,
         options: Optional[RunWorkflowOptions] = None,
     ) -> str:
+        # Some agentic workflows already have an active job by the time
+        # create() returns, so reuse that run instead of issuing a duplicate
+        # /run request.
         existing_job_id = self._find_active_workflow_job(workflow_id)
         if existing_job_id:
             return existing_job_id
