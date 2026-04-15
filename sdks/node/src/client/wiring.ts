@@ -4,7 +4,6 @@ import { v4 } from "uuid";
 import { ChangesService } from "../domains/changes/changes.service";
 import { type CrawlerDomain, createCrawlerDomain } from "../domains/crawler";
 import { DataFetcherService } from "../domains/extraction/services/data-fetcher.service";
-import { EntityResolverService } from "../domains/extraction/services/entity-resolver.service";
 import { ExtractionService } from "../domains/extraction/services/extraction.service";
 import { ExtractionBuilderService } from "../domains/extraction/services/extraction-builder.service";
 import type {
@@ -17,15 +16,15 @@ import { NotificationSetupService } from "../domains/notifications";
 import { NotificationChannelsService } from "../domains/notifications/notification-channels.service";
 import { NotificationSettingsService } from "../domains/notifications/notification-settings.service";
 import { SchemasService } from "../domains/schemas/schemas.service";
-import { UserService } from "../domains/user/user.service";
 import { TemplatesService } from "../domains/templates/templates.service";
-import { VariablesService } from "../domains/variables/variables.service";
+import { UserService } from "../domains/user/user.service";
 import {
   createValidationDomain,
   type ValidationDomain,
 } from "../domains/validation/validation.facade";
 import { ValidationCoreService } from "../domains/validation/validation-core.service";
 import { ValidationRulesService } from "../domains/validation/validation-rules.service";
+import { VariablesService } from "../domains/variables/variables.service";
 import { WorkflowsCoreService } from "../domains/workflows/workflows-core.service";
 import { KadoaHttpException } from "../runtime/exceptions";
 import { SDK_LANGUAGE, SDK_NAME, SDK_VERSION } from "../version";
@@ -101,7 +100,6 @@ export function createClientDomains(params: { client: KadoaClient }): {
   const settingsService = new NotificationSettingsService(
     client.apis.notifications,
   );
-  const entityResolverService = new EntityResolverService(client);
   const workflowsCoreService = new WorkflowsCoreService(client.apis.workflows);
   const schemasService = new SchemasService(client);
   const templatesService = new TemplatesService(client);
@@ -116,7 +114,6 @@ export function createClientDomains(params: { client: KadoaClient }): {
   const extractionService = new ExtractionService(
     workflowsCoreService,
     dataFetcherService,
-    entityResolverService,
     channelSetupService,
     channelsService,
     settingsService,
@@ -124,7 +121,6 @@ export function createClientDomains(params: { client: KadoaClient }): {
 
   const extractionBuilderService = new ExtractionBuilderService(
     workflowsCoreService,
-    entityResolverService,
     dataFetcherService,
     channelSetupService,
   );

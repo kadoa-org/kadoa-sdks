@@ -24,6 +24,8 @@ def main():
         result = client.extraction.run(
             ExtractionOptions(
                 urls=["https://sandbox.kadoa.com/ecommerce"],
+                name="Python Run Extraction Demo",
+                user_prompt="extract all the data for the main entity of this page",
             )
         )
 

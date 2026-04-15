@@ -20,7 +20,6 @@ import type {
 import type {
   FetchDataOptions,
   LocationConfig,
-  NavigationMode,
   SchemaField,
   WorkflowDetailsResponse,
   WorkflowInterval,
@@ -30,10 +29,7 @@ import type {
   DataFetcherService,
   FetchDataResult,
 } from "./data-fetcher.service";
-import type {
-  EntityConfig,
-  EntityResolverService,
-} from "./entity-resolver.service";
+import type { EntityConfig } from "./entity-resolver.service";
 
 const debug = logger.extraction;
 
@@ -41,7 +37,6 @@ export interface ExtractionOptionsInternal {
   urls: string[];
   prompt?: string;
   mode: "run" | "submit";
-  navigationMode: NavigationMode;
   name?: string;
   description?: string;
   location: LocationConfig;
@@ -77,6 +72,39 @@ export interface SubmitExtractionResult {
 
 // Use TERMINAL_RUN_STATES from WorkflowsCoreService for consistency
 const SUCCESSFUL_RUN_STATES = new Set(["FINISHED", "SUCCESS"]);
+const DEFAULT_AGENTIC_PROMPT =
+  "extract all the data for the main entity of this page";
+
+function getFieldName(field: SchemaField): string | undefined {
+  return "name" in field && typeof field.name === "string"
+    ? field.name
+    : undefined;
+}
+
+function buildAgenticPrompt(params: {
+  entity?: string;
+  fields: Array<SchemaField>;
+  userPrompt?: string;
+}): string {
+  if (params.userPrompt) {
+    return params.userPrompt;
+  }
+
+  const fieldNames = params.fields
+    .map((field) => getFieldName(field))
+    .filter((name): name is string => Boolean(name));
+
+  if (fieldNames.length === 0) {
+    return DEFAULT_AGENTIC_PROMPT;
+  }
+
+  const fieldList = fieldNames.join(", ");
+  if (params.entity) {
+    return `extract all ${params.entity} entities from this page and return these fields: ${fieldList}`;
+  }
+
+  return `extract all records from this page and return these fields: ${fieldList}`;
+}
 
 export const DEFAULT_OPTIONS: Omit<
   ExtractionOptionsInternal,
@@ -85,7 +113,6 @@ export const DEFAULT_OPTIONS: Omit<
   mode: "run",
   pollingInterval: 5000,
   maxWaitTime: 300000,
-  navigationMode: "single-page",
   location: { type: "auto" },
   bypassPreview: true,
   autoStart: true,
@@ -97,7 +124,6 @@ export class ExtractionService {
   constructor(
     private readonly workflowsCoreService: WorkflowsCoreService,
     private readonly dataFetcherService: DataFetcherService,
-    private readonly entityResolverService: EntityResolverService,
     private readonly notificationSetupService: NotificationSetupService,
     private readonly notificationChannelsService: NotificationChannelsService,
     private readonly notificationSettingsService: NotificationSettingsService,
@@ -199,10 +225,9 @@ export class ExtractionService {
   ): Promise<ExtractionResult | SubmitExtractionResult> {
     this.validateOptions(options);
 
-    const config: Omit<ExtractionOptionsInternal, "entity" | "fields"> = merge(
-      DEFAULT_OPTIONS,
-      options,
-    );
+    const config: Omit<ExtractionOptionsInternal, "entity" | "fields"> = {
+      ...merge(DEFAULT_OPTIONS, options),
+    };
 
     const isRealTime = config.interval === "REAL_TIME";
 
@@ -221,54 +246,34 @@ export class ExtractionService {
 
     let workflowId: string;
 
-    // For agentic-navigation, skip entity resolution and require userPrompt
-    const isAgenticNavigation = config.navigationMode === "agentic-navigation";
-    if (isAgenticNavigation) {
-      if (!config.userPrompt) {
-        throw new KadoaSdkException(
-          "userPrompt is required when navigationMode is 'agentic-navigation'",
-          {
-            code: "VALIDATION_ERROR",
-            details: { navigationMode: config.navigationMode },
-          },
-        );
-      }
-    }
-
-    let resolvedEntity: { entity?: string; fields: Array<SchemaField> };
-    if (isAgenticNavigation) {
-      // Skip entity resolution for agentic-navigation
-      const entityConfig = options.entity || "ai-detection";
-      resolvedEntity = {
-        entity:
-          typeof entityConfig === "object" && "name" in entityConfig
-            ? entityConfig.name
-            : undefined,
-        fields:
-          typeof entityConfig === "object" && "fields" in entityConfig
-            ? entityConfig.fields
-            : [],
-      };
-    } else {
-      resolvedEntity = await this.entityResolverService.resolveEntity(
-        options.entity || "ai-detection",
-        {
-          link: config.urls[0],
-          location: config.location,
-          navigationMode: config.navigationMode,
-        },
-      );
-    }
+    const entityConfig = options.entity;
+    const resolvedEntity: { entity?: string; fields: Array<SchemaField> } = {
+      entity:
+        typeof entityConfig === "object" && "name" in entityConfig
+          ? entityConfig.name
+          : undefined,
+      fields:
+        typeof entityConfig === "object" && "fields" in entityConfig
+          ? entityConfig.fields
+          : [],
+    };
 
     const hasNotifications = !!config.notifications;
 
+    const userPrompt = buildAgenticPrompt({
+      entity: resolvedEntity.entity,
+      fields: resolvedEntity.fields,
+      userPrompt: config.userPrompt,
+    });
+
     const workflowRequest = {
       ...config,
+      navigationMode: "agentic-navigation" as const,
       fields: resolvedEntity.fields,
       ...(resolvedEntity.entity !== undefined
         ? { entity: resolvedEntity.entity }
         : {}),
-      ...(config.userPrompt ? { userPrompt: config.userPrompt } : {}),
+      userPrompt,
     };
 
     const result = await this.workflowsCoreService.create(workflowRequest);

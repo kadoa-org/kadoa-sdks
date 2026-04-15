@@ -13,7 +13,6 @@ export type {
   MetadataKey,
   MonitoringField,
   MonitoringOperator,
-  NavigationMode,
   RawFormat,
   SchemaField,
   WorkflowDataResponse,

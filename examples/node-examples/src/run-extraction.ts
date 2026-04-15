@@ -11,6 +11,8 @@ async function main() {
 
   const result = await client.extraction.run({
     urls: ["https://sandbox.kadoa.com/ecommerce"],
+    name: "Node Run Extraction Demo",
+    userPrompt: "extract all the data for the main entity of this page",
   });
 
   if (result.workflowId) {

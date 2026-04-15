@@ -38,18 +38,19 @@ class TestWorkflowsSnippets:
 
     @pytest.mark.e2e
     @pytest.mark.timeout(120)
-    def test_workflows_002_auto_detection(self, client):
-        """PY-WORKFLOWS-002: Auto-detection extraction"""
-        workflow_name = "Auto Product Extraction"
+    def test_workflows_002_default_extraction(self, client):
+        """PY-WORKFLOWS-002: Default extraction"""
+        workflow_name = "Default Product Extraction"
         delete_workflow_by_name(client, workflow_name)
 
         # @docs-start PY-WORKFLOWS-002
-        # SDK: AI automatically detects and extracts data
+        # SDK: default extraction targets the main entity on the page
         result = client.extraction.run(
             ExtractionOptions(
                 urls=["https://sandbox.kadoa.com/ecommerce"],
-                name="Auto Product Extraction",
+                name="Default Product Extraction",
                 limit=10,
+                user_prompt="extract all the data for the main entity of this page",
             )
         )
 
@@ -195,8 +196,8 @@ class TestWorkflowsSnippets:
 
     @pytest.mark.e2e
     @pytest.mark.timeout(120)
-    def test_workflows_006_single_page(self, client):
-        """PY-WORKFLOWS-006: Single page extraction"""
+    def test_workflows_006_job_posting_extraction(self, client):
+        """PY-WORKFLOWS-006: Job posting extraction"""
         workflow_name = "Job Posting Monitor"
         delete_workflow_by_name(client, workflow_name)
 
@@ -206,7 +207,6 @@ class TestWorkflowsSnippets:
                 ExtractOptions(
                     urls=["https://sandbox.kadoa.com/careers-simple"],
                     name="Job Posting Monitor",
-                    navigation_mode="single-page",
                     extraction=lambda builder: builder.entity("Job Posting")
                     .field(
                         "jobTitle",
@@ -245,8 +245,8 @@ class TestWorkflowsSnippets:
 
     @pytest.mark.e2e
     @pytest.mark.timeout(300)
-    def test_workflows_007_list_navigation(self, client):
-        """PY-WORKFLOWS-007: List navigation"""
+    def test_workflows_007_existing_schema_extraction(self, client):
+        """PY-WORKFLOWS-007: Existing schema extraction"""
         workflow_name = "Product Catalog Monitor"
         delete_workflow_by_name(client, workflow_name)
 
@@ -275,7 +275,6 @@ class TestWorkflowsSnippets:
                 ExtractOptions(
                     urls=["https://sandbox.kadoa.com/ecommerce"],
                     name="Product Catalog Monitor",
-                    navigation_mode="paginated-page",
                     extraction=lambda _: {"schemaId": schema_id},
                 )
             )
@@ -301,9 +300,9 @@ class TestWorkflowsSnippets:
 
     @pytest.mark.e2e
     @pytest.mark.timeout(300)
-    @pytest.mark.skip(reason="page-and-detail navigation times out in CI")
-    def test_workflows_008_list_details(self, client):
-        """PY-WORKFLOWS-008: List + details navigation"""
+    @pytest.mark.skip(reason="Detailed extraction times out in CI")
+    def test_workflows_008_detailed_product_extraction(self, client):
+        """PY-WORKFLOWS-008: Detailed product extraction"""
         workflow_name = "Product Details Extractor"
         delete_workflow_by_name(client, workflow_name)
 
@@ -313,7 +312,6 @@ class TestWorkflowsSnippets:
                 ExtractOptions(
                     urls=["https://sandbox.kadoa.com/ecommerce"],
                     name="Product Details Extractor",
-                    navigation_mode="page-and-detail",
                     extraction=lambda builder: builder.entity("Product")
                     .field(
                         "title",
@@ -353,9 +351,9 @@ class TestWorkflowsSnippets:
 
     @pytest.mark.e2e
     @pytest.mark.timeout(300)
-    @pytest.mark.skip(reason="paginated-page navigation times out in CI")
-    def test_workflows_009_all_pages(self, client):
-        """PY-WORKFLOWS-009: All pages crawler"""
+    @pytest.mark.skip(reason="Catalog extraction times out in CI")
+    def test_workflows_009_catalog_extraction(self, client):
+        """PY-WORKFLOWS-009: Product catalog extraction"""
         workflow_name = "Product Catalog Crawler"
         delete_workflow_by_name(client, workflow_name)
 
@@ -365,7 +363,6 @@ class TestWorkflowsSnippets:
                 ExtractOptions(
                     urls=["https://sandbox.kadoa.com/ecommerce"],
                     name="Product Catalog Crawler",
-                    navigation_mode="paginated-page",  # Note: 'all-pages' maps to paginated-page in Python SDK
                     extraction=lambda builder: builder.entity("Product")
                     .field(
                         "title",
@@ -399,9 +396,9 @@ class TestWorkflowsSnippets:
 
     @pytest.mark.e2e
     @pytest.mark.timeout(120)
-    @pytest.mark.skip(reason="agentic-navigation takes too long, unskip for manual testing")
-    def test_workflows_010_ai_navigation_existing_schema(self, client):
-        """PY-WORKFLOWS-010: AI navigation with existing schema"""
+    @pytest.mark.skip(reason="Prompted extraction takes too long, unskip for manual testing")
+    def test_workflows_010_prompted_extraction_existing_schema(self, client):
+        """PY-WORKFLOWS-010: Prompted extraction with existing schema"""
         schema_name = "Test Schema - PY-WORKFLOWS-010"
         workflow_name = "AI Job Scraper"
         delete_schema_by_name(client, schema_name)
@@ -436,8 +433,7 @@ class TestWorkflowsSnippets:
             client.extract(
                 ExtractOptions(
                     urls=["https://sandbox.kadoa.com/careers-directory"],
-                    name="AI Job Scraper",
-                    navigation_mode="agentic-navigation",
+                    name="Job Scraper",
                     extraction=lambda _: {"schemaId": schema.id},
                     user_prompt="""Navigate to the careers section, find all
                        engineering job postings, and extract the job details
@@ -449,7 +445,7 @@ class TestWorkflowsSnippets:
         )
 
         print(f"Workflow {workflow.workflow_id} started")
-        # Note: AI Navigation flows typically take ~1 hour to complete.
+        # Note: These longer-running extraction flows typically take ~1 hour to complete.
         # We recommend using webhooks to receive notifications when finished.
         # Call workflow.submit() or workflow.run() to start the extraction
         # @docs-end PY-WORKFLOWS-010
@@ -464,9 +460,9 @@ class TestWorkflowsSnippets:
 
     @pytest.mark.e2e
     @pytest.mark.timeout(120)
-    @pytest.mark.skip(reason="agentic-navigation takes too long, unskip for manual testing")
-    def test_workflows_011_ai_navigation_custom_schema(self, client):
-        """PY-WORKFLOWS-011: AI navigation with custom schema"""
+    @pytest.mark.skip(reason="Prompted extraction takes too long, unskip for manual testing")
+    def test_workflows_011_prompted_extraction_custom_schema(self, client):
+        """PY-WORKFLOWS-011: Prompted extraction with custom schema"""
         workflow_name = "AI Job Scraper with Schema"
         delete_workflow_by_name(client, workflow_name)
 
@@ -475,8 +471,7 @@ class TestWorkflowsSnippets:
             client.extract(
                 ExtractOptions(
                     urls=["https://sandbox.kadoa.com/careers-directory"],
-                    name="AI Job Scraper with Schema",
-                    navigation_mode="agentic-navigation",
+                    name="Job Scraper with Schema",
                     extraction=lambda builder: builder.entity("Job Posting")
                     .field(
                         "jobTitle",
@@ -509,7 +504,7 @@ class TestWorkflowsSnippets:
         )
 
         print(f"Workflow {workflow.workflow_id} started")
-        # Note: AI Navigation flows typically take ~1 hour to complete.
+        # Note: These longer-running extraction flows typically take ~1 hour to complete.
         # We recommend using webhooks to receive notifications when finished.
         # Call workflow.submit() or workflow.run() to start the extraction
         # @docs-end PY-WORKFLOWS-011
@@ -522,9 +517,9 @@ class TestWorkflowsSnippets:
 
     @pytest.mark.e2e
     @pytest.mark.timeout(120)
-    @pytest.mark.skip(reason="agentic-navigation takes too long, unskip for manual testing")
-    def test_workflows_012_ai_navigation_auto_schema(self, client):
-        """PY-WORKFLOWS-012: AI navigation with auto-detected schema"""
+    @pytest.mark.skip(reason="Prompted extraction takes too long, unskip for manual testing")
+    def test_workflows_012_prompted_extraction_without_schema(self, client):
+        """PY-WORKFLOWS-012: Prompted extraction without a schema"""
         workflow_name = "AI Blog Scraper"
         delete_workflow_by_name(client, workflow_name)
 
@@ -533,8 +528,7 @@ class TestWorkflowsSnippets:
             client.extract(
                 ExtractOptions(
                     urls=["https://sandbox.kadoa.com/news"],
-                    name="AI Blog Scraper",
-                    navigation_mode="agentic-navigation",
+                    name="Blog Scraper",
                     user_prompt="""Find all blog posts from 2024. For each post,
             extract the title, author, publication date, and content.""",
                 )
@@ -543,7 +537,7 @@ class TestWorkflowsSnippets:
         )
 
         print(f"Workflow {workflow.workflow_id} started")
-        # Note: AI Navigation flows typically take ~1 hour to complete.
+        # Note: These longer-running extraction flows typically take ~1 hour to complete.
         # We recommend using webhooks to receive notifications when finished.
         # Call workflow.submit() or workflow.run() to start the extraction
         # @docs-end PY-WORKFLOWS-012
@@ -556,9 +550,9 @@ class TestWorkflowsSnippets:
 
     @pytest.mark.e2e
     @pytest.mark.timeout(120)
-    @pytest.mark.skip(reason="agentic-navigation takes too long, unskip for manual testing")
-    def test_workflows_013_ai_navigation_variables(self, client):
-        """PY-WORKFLOWS-013: Using variables in AI navigation"""
+    @pytest.mark.skip(reason="Prompted extraction takes too long, unskip for manual testing")
+    def test_workflows_013_prompted_extraction_variables(self, client):
+        """PY-WORKFLOWS-013: Using variables in prompted extraction"""
         workflow_name = "Dynamic Product Search"
         delete_workflow_by_name(client, workflow_name)
 
@@ -568,7 +562,6 @@ class TestWorkflowsSnippets:
                 ExtractOptions(
                     urls=["https://sandbox.kadoa.com/ecommerce"],
                     name="Dynamic Product Search",
-                    navigation_mode="agentic-navigation",
                     user_prompt="""Navigate to search and loop through
             '@productTypes', press search, and extract
             product details for all results.""",
@@ -578,7 +571,7 @@ class TestWorkflowsSnippets:
         )
 
         print(f"Workflow {workflow.workflow_id} started")
-        # Note: AI Navigation flows typically take ~1 hour to complete.
+        # Note: These longer-running extraction flows typically take ~1 hour to complete.
         # We recommend using webhooks to receive notifications when finished.
         # Call workflow.submit() or workflow.run() to start the extraction
         # @docs-end PY-WORKFLOWS-013
@@ -655,7 +648,6 @@ class TestWorkflowsSnippets:
                 ExtractOptions(
                     urls=["https://sandbox.kadoa.com/ecommerce/pagination"],
                     name="Paginated Extraction",
-                    navigation_mode="paginated-page",
                     extraction=lambda builder: builder.entity("Product")
                     .field(
                         "title",
