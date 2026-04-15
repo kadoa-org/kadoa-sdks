@@ -151,7 +151,8 @@ class WaitForReadyOptions(BaseModel):
 DEFAULTS = {
     "polling_interval": 5.0,  # seconds
     "max_wait_time": 300.0,  # seconds
-    "navigation_mode": "single-page",
+    "navigation_mode": "agentic-navigation",
     "location": {"type": "auto"},
     "limit": 1000,
+    "user_prompt": "extract all the data for the main entity of this page",
 }

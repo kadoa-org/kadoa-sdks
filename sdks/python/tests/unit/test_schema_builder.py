@@ -93,15 +93,14 @@ class TestSchemaBuilderFieldBuilding:
         assert builder.fields[0].field_type == "CLASSIFICATION"
         assert len(builder.fields[0].categories) == 2
 
-    def test_creates_raw_metadata_fields_correctly(self):
-        """Should create raw metadata fields correctly."""
+    def test_creates_synthetic_raw_schema_fields_correctly(self):
+        """Should create synthetic raw schema fields correctly."""
         builder = SchemaBuilder().raw("MARKDOWN")
 
         assert len(builder.fields) == 1
         assert builder.fields[0].name == "rawMarkdown"
-        assert builder.fields[0].description == "Raw page content in MARKDOWN format"
-        assert builder.fields[0].field_type == "METADATA"
-        assert builder.fields[0].metadata_key == "MARKDOWN"
+        assert builder.fields[0].field_type == "SCHEMA"
+        assert builder.fields[0].data_type == "STRING"
 
     def test_creates_multiple_raw_fields_at_once(self):
         """Should create multiple raw fields at once."""
@@ -110,7 +109,7 @@ class TestSchemaBuilderFieldBuilding:
         assert len(builder.fields) == 3
         assert builder.fields[0].name == "rawHtml"
         assert builder.fields[1].name == "rawMarkdown"
-        assert builder.fields[2].name == "rawPageurl"
+        assert builder.fields[2].name == "rawPageUrl"
 
     def test_prevents_duplicate_raw_fields(self):
         """Should prevent duplicate raw fields."""
@@ -129,7 +128,7 @@ class TestSchemaBuilderFieldBuilding:
 
         assert len(builder.fields) == 2
         assert builder.fields[0].field_type == "SCHEMA"
-        assert builder.fields[1].field_type == "METADATA"
+        assert builder.fields[1].field_type == "SCHEMA"
 
 
 @pytest.mark.unit

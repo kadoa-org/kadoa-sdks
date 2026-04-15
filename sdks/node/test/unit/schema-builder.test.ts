@@ -109,15 +109,14 @@ describe("SchemaBuilder", () => {
       });
     });
 
-    test("creates raw metadata fields correctly", () => {
+    test("creates synthetic raw schema fields correctly", () => {
       const builder = new SchemaBuilder().raw("MARKDOWN");
 
       expect(builder.fields).toHaveLength(1);
       expect(builder.fields[0]).toMatchObject({
         name: "rawMarkdown",
-        description: "Raw page content in MARKDOWN format",
-        fieldType: "METADATA",
-        metadataKey: "MARKDOWN",
+        dataType: "STRING",
+        fieldType: "SCHEMA",
       });
     });
 
@@ -144,7 +143,7 @@ describe("SchemaBuilder", () => {
 
       expect(builder.fields).toHaveLength(2);
       expect(builder.fields[0].fieldType).toBe("SCHEMA");
-      expect(builder.fields[1].fieldType).toBe("METADATA");
+      expect(builder.fields[1].fieldType).toBe("SCHEMA");
     });
   });
 

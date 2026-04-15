@@ -5,6 +5,33 @@ import type { Category, FieldExample, SchemaField } from "./schemas.acl";
 
 export type { FieldExample, Category };
 
+const SYNTHETIC_RAW_FIELD_CONFIG = {
+  HTML: {
+    dataType: "STRING",
+    description: "Full page HTML as a string. Return the raw HTML content.",
+    example: "<html><body><h1>Example page</h1></body></html>",
+  },
+  MARKDOWN: {
+    dataType: "STRING",
+    description:
+      "Main page content rendered as markdown. Return the markdown as a string.",
+    example: "# Example page\n\nThis is the main page content.",
+  },
+  PAGE_URL: {
+    dataType: "LINK",
+    description:
+      "Canonical page URL for the extracted page. Return the resolved page URL.",
+    example: "https://example.com/page",
+  },
+} as const satisfies Record<
+  Uppercase<RawFormat>,
+  {
+    dataType: Extract<DataType, "STRING" | "LINK">;
+    description: string;
+    example: string;
+  }
+>;
+
 /**
  * Data types that require an example value
  */
@@ -84,8 +111,22 @@ export class SchemaBuilder {
   readonly fields: SchemaField[] = [];
   entityName?: string;
 
-  private hasSchemaFields(): boolean {
-    return this.fields.some((field) => field.fieldType === "SCHEMA");
+  private isSyntheticRawField(field: SchemaField): boolean {
+    return (
+      field.fieldType === "SCHEMA" &&
+      field.name in
+        {
+          rawHtml: true,
+          rawMarkdown: true,
+          rawPageUrl: true,
+        }
+    );
+  }
+
+  private hasEntityRequiringSchemaFields(): boolean {
+    return this.fields.some(
+      (field) => field.fieldType === "SCHEMA" && !this.isSyntheticRawField(field),
+    );
   }
 
   entity(entityName: string): this {
@@ -166,14 +207,16 @@ export class SchemaBuilder {
   }
 
   /**
-   * Add raw page content to extract
-   * @param name - Raw content format(s): "html", "markdown", or "url"
+   * Add a synthetic raw-content field for agentic extraction.
+   * HTML and MARKDOWN become STRING fields; PAGE_URL becomes a LINK field.
    */
   raw(name: RawFormat | RawFormat[]): this {
     const names = Array.isArray(name) ? name : [name];
 
     for (const name of names) {
       const fieldName = `raw${upperFirst(camelCase(name))}`;
+      const rawKey = name.toUpperCase() as Uppercase<RawFormat>;
+      const config = SYNTHETIC_RAW_FIELD_CONFIG[rawKey];
 
       if (this.fields.some((field) => field.name === fieldName)) {
         continue;
@@ -181,16 +224,17 @@ export class SchemaBuilder {
 
       this.fields.push({
         name: fieldName,
-        description: `Raw page content in ${name.toUpperCase()} format`,
-        fieldType: "METADATA",
-        metadataKey: name,
+        description: config.description,
+        fieldType: "SCHEMA",
+        dataType: config.dataType,
+        example: config.example,
       });
     }
     return this;
   }
 
   build(): { entityName?: string; fields: SchemaField[] } {
-    if (this.hasSchemaFields() && !this.entityName) {
+    if (this.hasEntityRequiringSchemaFields() && !this.entityName) {
       throw new KadoaSdkException(
         "Entity name is required when schema fields are present",
         {

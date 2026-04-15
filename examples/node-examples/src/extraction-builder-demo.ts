@@ -11,12 +11,12 @@ async function main() {
 
   console.log("\n=== Extraction Builder Demo ===\n");
 
-  // 1. Auto-detection (simplest)
-  console.log("1. Auto-detection (no extraction parameter):");
+  // 1. Agentic default (no schema)
+  console.log("1. Agentic default (no extraction parameter):");
   const autoExtraction = await client
     .extract({
       urls: ["https://sandbox.kadoa.com/ecommerce"],
-      name: "Auto Detection Demo",
+      name: "Node Agentic Default Demo",
     })
     .bypassPreview()
     .setInterval({ interval: "ONLY_ONCE" })
@@ -28,7 +28,7 @@ async function main() {
   const rawExtraction = await client
     .extract({
       urls: ["https://sandbox.kadoa.com/ecommerce"],
-      name: "Raw Markdown Demo",
+      name: "Node Synthetic Raw Demo",
       extraction: (builder) => builder.raw("MARKDOWN").raw("PAGE_URL"),
     })
     .bypassPreview()
@@ -36,12 +36,12 @@ async function main() {
     .create();
   console.log(`✓ Created workflow: ${rawExtraction.workflowId}`);
 
-  // 3. Custom schema with fields
+  // 3. Custom schema with schema-aware agentic prompt
   console.log("\n3. Custom schema with structured fields:");
   const schemaExtraction = await client
     .extract({
       urls: ["https://sandbox.kadoa.com/ecommerce"],
-      name: "Custom Schema Demo",
+      name: "Node Custom Schema Demo",
       extraction: (builder) =>
         builder
           .entity("Product")
@@ -60,7 +60,7 @@ async function main() {
   const hybridExtraction = await client
     .extract({
       urls: ["https://sandbox.kadoa.com/ecommerce"],
-      name: "Hybrid Demo",
+      name: "Node Hybrid Synthetic Raw Demo",
       extraction: (builder) =>
         builder
           .entity("Product")
@@ -80,7 +80,7 @@ async function main() {
   const classificationExtraction = await client
     .extract({
       urls: ["https://sandbox.kadoa.com/ecommerce"],
-      name: "Classification Demo",
+      name: "Node Classification Demo",
       extraction: (builder) =>
         builder.classify("category", "Product category", [
           {

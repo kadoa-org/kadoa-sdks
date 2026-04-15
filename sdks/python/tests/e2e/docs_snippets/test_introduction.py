@@ -26,6 +26,7 @@ class TestIntroductionSnippets:
                 urls=["https://sandbox.kadoa.com/ecommerce"],
                 name="My First Extraction",
                 limit=10,
+                user_prompt="extract all the data for the main entity of this page",
             )
         )
 

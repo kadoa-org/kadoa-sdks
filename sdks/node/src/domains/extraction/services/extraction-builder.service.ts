@@ -26,6 +26,39 @@ import type {
 } from "./entity-resolver.service";
 
 const debug = logger.extraction;
+const DEFAULT_AGENTIC_PROMPT =
+  "extract all the data for the main entity of this page";
+
+function getFieldName(field: SchemaField): string | undefined {
+  return "name" in field && typeof field.name === "string"
+    ? field.name
+    : undefined;
+}
+
+function buildAgenticPrompt(params: {
+  entity?: string;
+  fields: Array<SchemaField>;
+  userPrompt?: string;
+}): string {
+  if (params.userPrompt) {
+    return params.userPrompt;
+  }
+
+  const fieldNames = params.fields
+    .map((field) => getFieldName(field))
+    .filter((name): name is string => Boolean(name));
+
+  if (fieldNames.length === 0) {
+    return DEFAULT_AGENTIC_PROMPT;
+  }
+
+  const fieldList = fieldNames.join(", ");
+  if (params.entity) {
+    return `extract all ${params.entity} entities from this page and return these fields: ${fieldList}`;
+  }
+
+  return `extract all records from this page and return these fields: ${fieldList}`;
+}
 
 export interface ExtractOptionsInternal {
   urls: string[];
@@ -160,6 +193,7 @@ export class ExtractionBuilderService {
     location,
   }: ExtractOptions): PreparedExtraction {
     let entity: EntityConfig = "ai-detection";
+    let builtFields: Array<SchemaField> = [];
 
     if (extraction) {
       const result = extraction(new SchemaBuilder());
@@ -168,21 +202,21 @@ export class ExtractionBuilderService {
         entity = { schemaId: result.schemaId };
       } else {
         const builtSchema = result.build();
+        builtFields = builtSchema.fields;
         entity = builtSchema.entityName
-          ? { name: builtSchema.entityName, fields: builtSchema.fields }
-          : { fields: builtSchema.fields };
+          ? { name: builtSchema.entityName, fields: builtFields }
+          : { fields: builtFields };
       }
     }
 
-    if (userPrompt) {
-      this._userPrompt = userPrompt;
-    }
+    const resolvedNavigationMode = navigationMode || "agentic-navigation";
+    this._userPrompt = userPrompt;
 
     this._options = {
       urls,
       name,
       description,
-      navigationMode: navigationMode || "single-page",
+      navigationMode: resolvedNavigationMode,
       entity,
       bypassPreview: bypassPreview ?? false,
       additionalData,
@@ -243,21 +277,8 @@ export class ExtractionBuilderService {
     assert(this._options, "Options are not set");
     const { urls, name, description, navigationMode, entity } = this.options;
 
-    // For agentic-navigation, skip entity resolution and require userPrompt
-    const isAgenticNavigation = navigationMode === "agentic-navigation";
-    if (isAgenticNavigation) {
-      if (!this._userPrompt) {
-        throw new KadoaSdkException(
-          "userPrompt is required when navigationMode is 'agentic-navigation'",
-          {
-            code: "VALIDATION_ERROR",
-            details: { navigationMode },
-          },
-        );
-      }
-    }
-
     // For real-time workflows with AI detection, use selector mode
+    const isAgenticNavigation = navigationMode === "agentic-navigation";
     const isRealTime = this._options.interval === "REAL_TIME";
     const useSelectorMode = isRealTime && entity === "ai-detection";
 
@@ -281,8 +302,30 @@ export class ExtractionBuilderService {
       });
     }
 
-    const hasSchemaId =
-      typeof entity === "object" && "schemaId" in entity && entity.schemaId;
+    if (isAgenticNavigation) {
+      this._userPrompt = buildAgenticPrompt({
+        entity: resolvedEntity.entity,
+        fields: resolvedEntity.fields,
+        userPrompt: this._userPrompt,
+      });
+      this._options.userPrompt = this._userPrompt;
+
+      if (!this._userPrompt) {
+        throw new KadoaSdkException(
+          "userPrompt is required when navigationMode is 'agentic-navigation'",
+          {
+            code: "VALIDATION_ERROR",
+            details: { navigationMode },
+          },
+        );
+      }
+    }
+
+    const schemaId =
+      typeof entity === "object" && "schemaId" in entity
+        ? entity.schemaId
+        : undefined;
+    const hasSchemaId = Boolean(schemaId);
 
     const workflow = await this.workflowsCoreService.create({
       urls,
@@ -292,7 +335,7 @@ export class ExtractionBuilderService {
       monitoring: this._monitoringOptions,
       ...(hasSchemaId
         ? {
-            schemaId: entity.schemaId,
+            schemaId,
             entity: resolvedEntity.entity,
             fields: resolvedEntity.fields,
           }

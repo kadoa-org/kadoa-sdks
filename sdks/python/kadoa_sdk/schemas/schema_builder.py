@@ -33,6 +33,24 @@ DataType = str  # STRING, NUMBER, BOOLEAN, DATE, DATETIME, MONEY, IMAGE, LINK, O
 RawFormat = str  # HTML, MARKDOWN, PAGE_URL
 SchemaField = Union[DataField, ClassificationField, RawContentField]
 
+SYNTHETIC_RAW_FIELD_CONFIG = {
+    "HTML": {
+        "data_type": "STRING",
+        "description": "Full page HTML as a string. Return the raw HTML content.",
+        "example": "<html><body><h1>Example page</h1></body></html>",
+    },
+    "MARKDOWN": {
+        "data_type": "STRING",
+        "description": "Main page content rendered as markdown. Return the markdown as a string.",
+        "example": "# Example page\n\nThis is the main page content.",
+    },
+    "PAGE_URL": {
+        "data_type": "LINK",
+        "description": "Canonical page URL for the extracted page. Return the resolved page URL.",
+        "example": "https://example.com/page",
+    },
+}
+
 
 class BuiltSchema(TypedDict, total=False):
     """Built schema structure returned by SchemaBuilder.build()"""
@@ -106,6 +124,19 @@ class SchemaBuilder:
     def _has_schema_fields(self) -> bool:
         """Check if any fields are schema fields"""
         return any(getattr(field, "field_type", None) == "SCHEMA" for field in self.fields)
+
+    def _is_synthetic_raw_field(self, field: SchemaField) -> bool:
+        return getattr(field, "field_type", None) == "SCHEMA" and getattr(field, "name", None) in {
+            "rawHtml",
+            "rawMarkdown",
+            "rawPageUrl",
+        }
+
+    def _has_entity_requiring_schema_fields(self) -> bool:
+        return any(
+            getattr(field, "field_type", None) == "SCHEMA" and not self._is_synthetic_raw_field(field)
+            for field in self.fields
+        )
 
     def entity(self, entity_name: str) -> "SchemaBuilder":
         """Set entity name"""
@@ -192,7 +223,7 @@ class SchemaBuilder:
 
     def raw(self, name: Union[RawFormat, List[RawFormat]]) -> "SchemaBuilder":
         """
-        Add raw page content to extract
+        Add a synthetic raw-content field for agentic extraction.
 
         Args:
             name: Raw content format(s): "html", "markdown", or "page_url" (case-insensitive)
@@ -206,21 +237,21 @@ class SchemaBuilder:
             parts = raw_lower.split("_")
             camel_case = parts[0] + "".join(word.capitalize() for word in parts[1:])
             # Capitalize first letter: "html" -> "Html", "pageUrl" -> "PageUrl"
-            field_name = f"raw{camel_case.capitalize()}"
+            field_name = f"raw{camel_case[0].upper()}{camel_case[1:]}"
 
             # Check if field already exists
             if any(getattr(field, "name", None) == field_name for field in self.fields):
                 continue
 
-            # Normalize metadata_key to uppercase to match enum requirements
-            # Accept: html, markdown, page_url -> HTML, MARKDOWN, PAGE_URL
             metadata_key_upper = raw_lower.upper()
+            config = SYNTHETIC_RAW_FIELD_CONFIG[metadata_key_upper]
 
-            field = RawContentField(
+            field = DataField(
                 name=field_name,
-                description=f"Raw page content in {raw_lower.upper()} format",
-                field_type="METADATA",
-                metadata_key=metadata_key_upper,
+                description=config["description"],
+                field_type="SCHEMA",
+                data_type=config["data_type"],
+                example=DataFieldExample(actual_instance=config["example"]),
             )
             self.fields.append(field)
         return self
@@ -232,7 +263,7 @@ class SchemaBuilder:
         Returns:
             BuiltSchema with entityName and fields
         """
-        if self._has_schema_fields() and not self.entity_name:
+        if self._has_entity_requiring_schema_fields() and not self.entity_name:
             raise KadoaSdkError(
                 "Entity name is required when schema fields are present",
                 code=KadoaErrorCode.VALIDATION_ERROR,

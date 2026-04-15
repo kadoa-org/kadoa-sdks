@@ -6,6 +6,7 @@ from urllib.parse import urlparse
 from typing import TYPE_CHECKING, Any, Dict, List, Optional
 
 from kadoa_sdk.core.logger import workflow as logger
+from openapi_client.models.agentic_workflow import AgenticWorkflow
 
 from ..extraction_acl import (
     ClassificationField,
@@ -65,7 +66,11 @@ class WorkflowManagerService:
         return bool(run_state and run_state.upper() in TERMINAL_RUN_STATES)
 
     def create_workflow(
-        self, *, entity: str, fields: List[Dict[str, Any]], config: ExtractionOptions
+        self,
+        *,
+        entity: Optional[str],
+        fields: List[Dict[str, Any]],
+        config: ExtractionOptions,
     ) -> str:
         self._validate_additional_data(config.additional_data)
 
@@ -110,18 +115,36 @@ class WorkflowManagerService:
                     field_obj = DataField(**field_dict)
                     schema_fields.append(SchemaResponseSchemaInner(actual_instance=field_obj))
 
-        inner = WorkflowWithEntityAndFields(
-            urls=config.urls,
-            navigation_mode=(config.navigation_mode or DEFAULTS["navigation_mode"]),
-            entity=entity,
-            name=(config.name or domain_name),
-            fields=schema_fields,
-            location=config.location,
-            bypass_preview=True,
-            limit=(config.limit or DEFAULTS["limit"]),
-            tags=["sdk"],
-            additional_data=config.additional_data,
-        )
+        navigation_mode = config.navigation_mode or DEFAULTS["navigation_mode"]
+        user_prompt = config.user_prompt or DEFAULTS["user_prompt"]
+
+        if navigation_mode == "agentic-navigation":
+            inner = AgenticWorkflow(
+                urls=config.urls,
+                navigation_mode="agentic-navigation",
+                entity=entity,
+                name=(config.name or domain_name),
+                fields=schema_fields,
+                location=config.location,
+                bypass_preview=True,
+                limit=(config.limit or DEFAULTS["limit"]),
+                tags=["sdk"],
+                additional_data=config.additional_data,
+                user_prompt=user_prompt,
+            )
+        else:
+            inner = WorkflowWithEntityAndFields(
+                urls=config.urls,
+                navigation_mode=navigation_mode,
+                entity=entity,
+                name=(config.name or domain_name),
+                fields=schema_fields,
+                location=config.location,
+                bypass_preview=True,
+                limit=(config.limit or DEFAULTS["limit"]),
+                tags=["sdk"],
+                additional_data=config.additional_data,
+            )
         try:
             wrapper = CreateWorkflowBody(inner)
             resp = api.v4_workflows_post(create_workflow_body=wrapper)

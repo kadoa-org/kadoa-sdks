@@ -27,13 +27,13 @@ def main():
     try:
         print("\n=== Extraction Builder Demo ===\n")
 
-        # 1. Auto-detection (simplest)
-        print("1. Auto-detection (no extraction parameter):")
+        # 1. Agentic default (no schema)
+        print("1. Agentic default (no extraction parameter):")
         auto_extraction = (
             client.extract(
                 ExtractOptions(
                     urls=["https://sandbox.kadoa.com/ecommerce"],
-                    name="Auto Detection Demo",
+                    name="Python Agentic Default Demo",
                 )
             )
             .bypass_preview()
@@ -48,7 +48,7 @@ def main():
             client.extract(
                 ExtractOptions(
                     urls=["https://sandbox.kadoa.com/ecommerce"],
-                    name="Raw Markdown Demo",
+                    name="Python Synthetic Raw Demo",
                     extraction=lambda builder: builder.raw("MARKDOWN").raw("PAGE_URL"),
                 )
             )
@@ -64,7 +64,7 @@ def main():
             client.extract(
                 ExtractOptions(
                     urls=["https://sandbox.kadoa.com/ecommerce"],
-                    name="Custom Schema Demo",
+                    name="Python Custom Schema Demo",
                     extraction=lambda builder: (
                         builder.entity("Product")
                         .field(
@@ -89,7 +89,7 @@ def main():
             client.extract(
                 ExtractOptions(
                     urls=["https://sandbox.kadoa.com/ecommerce"],
-                    name="Hybrid Demo",
+                    name="Python Hybrid Synthetic Raw Demo",
                     extraction=lambda builder: (
                         builder.entity("Product")
                         .field(
@@ -115,7 +115,7 @@ def main():
             client.extract(
                 ExtractOptions(
                     urls=["https://sandbox.kadoa.com/ecommerce"],
-                    name="Classification Demo",
+                    name="Python Classification Demo",
                     extraction=lambda builder: builder.classify(
                         "category",
                         "Product category",

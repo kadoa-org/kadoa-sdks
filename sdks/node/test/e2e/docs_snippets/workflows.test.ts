@@ -41,17 +41,18 @@ describe("TS-WORKFLOWS: workflows/create.mdx snippets", () => {
   });
 
   it(
-    "TS-WORKFLOWS-002: Auto-detection extraction",
+    "TS-WORKFLOWS-002: Agentic extraction",
     async () => {
-      const workflowName = "Auto Product Extraction";
+      const workflowName = "Agentic Product Extraction";
       await deleteWorkflowByName(workflowName, client);
 
       // @docs-start TS-WORKFLOWS-002
-      // SDK: AI automatically detects and extracts data
+      // SDK: agentic navigation extracts the main entity on the page
       const result = await client.extraction.run({
         urls: ["https://sandbox.kadoa.com/ecommerce"],
-        name: "Auto Product Extraction",
+        name: "Agentic Product Extraction",
         limit: 10,
+        userPrompt: "extract all the data for the main entity of this page",
       });
 
       console.log(result.data);

@@ -77,6 +77,39 @@ export interface SubmitExtractionResult {
 
 // Use TERMINAL_RUN_STATES from WorkflowsCoreService for consistency
 const SUCCESSFUL_RUN_STATES = new Set(["FINISHED", "SUCCESS"]);
+const DEFAULT_AGENTIC_PROMPT =
+  "extract all the data for the main entity of this page";
+
+function getFieldName(field: SchemaField): string | undefined {
+  return "name" in field && typeof field.name === "string"
+    ? field.name
+    : undefined;
+}
+
+function buildAgenticPrompt(params: {
+  entity?: string;
+  fields: Array<SchemaField>;
+  userPrompt?: string;
+}): string {
+  if (params.userPrompt) {
+    return params.userPrompt;
+  }
+
+  const fieldNames = params.fields
+    .map((field) => getFieldName(field))
+    .filter((name): name is string => Boolean(name));
+
+  if (fieldNames.length === 0) {
+    return DEFAULT_AGENTIC_PROMPT;
+  }
+
+  const fieldList = fieldNames.join(", ");
+  if (params.entity) {
+    return `extract all ${params.entity} entities from this page and return these fields: ${fieldList}`;
+  }
+
+  return `extract all records from this page and return these fields: ${fieldList}`;
+}
 
 export const DEFAULT_OPTIONS: Omit<
   ExtractionOptionsInternal,
@@ -85,7 +118,7 @@ export const DEFAULT_OPTIONS: Omit<
   mode: "run",
   pollingInterval: 5000,
   maxWaitTime: 300000,
-  navigationMode: "single-page",
+  navigationMode: "agentic-navigation",
   location: { type: "auto" },
   bypassPreview: true,
   autoStart: true,
@@ -221,24 +254,12 @@ export class ExtractionService {
 
     let workflowId: string;
 
-    // For agentic-navigation, skip entity resolution and require userPrompt
     const isAgenticNavigation = config.navigationMode === "agentic-navigation";
-    if (isAgenticNavigation) {
-      if (!config.userPrompt) {
-        throw new KadoaSdkException(
-          "userPrompt is required when navigationMode is 'agentic-navigation'",
-          {
-            code: "VALIDATION_ERROR",
-            details: { navigationMode: config.navigationMode },
-          },
-        );
-      }
-    }
 
     let resolvedEntity: { entity?: string; fields: Array<SchemaField> };
     if (isAgenticNavigation) {
       // Skip entity resolution for agentic-navigation
-      const entityConfig = options.entity || "ai-detection";
+      const entityConfig = options.entity;
       resolvedEntity = {
         entity:
           typeof entityConfig === "object" && "name" in entityConfig
@@ -262,13 +283,29 @@ export class ExtractionService {
 
     const hasNotifications = !!config.notifications;
 
+    const userPrompt = buildAgenticPrompt({
+      entity: resolvedEntity.entity,
+      fields: resolvedEntity.fields,
+      userPrompt: config.userPrompt,
+    });
+
+    if (isAgenticNavigation && !userPrompt) {
+      throw new KadoaSdkException(
+        "userPrompt is required when navigationMode is 'agentic-navigation'",
+        {
+          code: "VALIDATION_ERROR",
+          details: { navigationMode: config.navigationMode },
+        },
+      );
+    }
+
     const workflowRequest = {
       ...config,
       fields: resolvedEntity.fields,
       ...(resolvedEntity.entity !== undefined
         ? { entity: resolvedEntity.entity }
         : {}),
-      ...(config.userPrompt ? { userPrompt: config.userPrompt } : {}),
+      userPrompt,
     };
 
     const result = await this.workflowsCoreService.create(workflowRequest);

@@ -8,7 +8,6 @@ from ..extraction_acl import (
     CreateWorkflowBody,
     DataField,
     DataFieldExample,
-    RawContentField,
     SchemaResponseSchemaInner,
     V4WorkflowsWorkflowIdGet200Response,
     WorkflowWithEntityAndFields,
@@ -41,6 +40,29 @@ from .data_fetcher_service import DataFetcherService
 from .entity_resolver_service import EntityResolverService, ResolvedEntity
 
 debug = logger
+DEFAULT_AGENTIC_PROMPT = "extract all the data for the main entity of this page"
+
+
+def _build_agentic_prompt(
+    *, entity: Optional[str], fields: List[Dict[str, Any]], user_prompt: Optional[str]
+) -> str:
+    if user_prompt:
+        return user_prompt
+
+    field_names = [
+        field.get("name")
+        for field in fields
+        if isinstance(field, dict) and isinstance(field.get("name"), str)
+    ]
+
+    if not field_names:
+        return DEFAULT_AGENTIC_PROMPT
+
+    field_list = ", ".join(field_names)
+    if entity:
+        return f"extract all {entity} entities from this page and return these fields: {field_list}"
+
+    return f"extract all records from this page and return these fields: {field_list}"
 
 
 class RunWorkflowRequest(TypedDict, total=False):
@@ -359,6 +381,7 @@ class ExtractionBuilderService:
             ```
         """
         entity: EntityConfig = "ai-detection"
+        built_fields: List[Dict[str, Any]] = []
 
         if options.extraction:
             result = options.extraction(SchemaBuilder())
@@ -367,19 +390,23 @@ class ExtractionBuilderService:
                 entity = {"schemaId": result["schemaId"]}
             else:
                 built_schema = result.build()
+                built_fields = built_schema["fields"]
                 if built_schema.get("entityName"):
                     entity = {
                         "name": built_schema["entityName"],
-                        "fields": built_schema["fields"],
+                        "fields": built_fields,
                     }
                 else:
-                    entity = {"fields": built_schema["fields"]}
+                    entity = {"fields": built_fields}
+
+        resolved_navigation_mode = options.navigation_mode or "agentic-navigation"
+        self._user_prompt = options.user_prompt
 
         internal_options = ExtractOptionsInternal(
             urls=options.urls,
             name=options.name,
             description=options.description,
-            navigation_mode=options.navigation_mode or "single-page",
+            navigation_mode=resolved_navigation_mode,
             entity=entity,
             bypass_preview=options.bypass_preview or False,
             additional_data=options.additional_data,
@@ -397,15 +424,7 @@ class ExtractionBuilderService:
         entity = options.entity
         user_prompt = options.user_prompt or self._user_prompt
 
-        # For agentic-navigation, skip entity resolution and require userPrompt
         is_agentic_navigation = navigation_mode == "agentic-navigation"
-        if is_agentic_navigation:
-            if not user_prompt:
-                raise KadoaSdkError(
-                    "user_prompt is required when navigation_mode is 'agentic-navigation'",
-                    code=KadoaErrorCode.VALIDATION_ERROR,
-                    details={"navigation_mode": navigation_mode},
-                )
 
         # For real-time workflows with AI detection, use selector mode
         is_real_time = options.interval == "REAL_TIME"
@@ -436,6 +455,12 @@ class ExtractionBuilderService:
                 ),
                 fields=converted_fields,
             )
+            user_prompt = _build_agentic_prompt(
+                entity=resolved_entity.entity,
+                fields=converted_fields,
+                user_prompt=user_prompt,
+            )
+            self._user_prompt = user_prompt
         else:
             resolved_entity = self._entity_resolver.resolve_entity(
                 entity,
@@ -445,6 +470,13 @@ class ExtractionBuilderService:
                     "navigationMode": navigation_mode,
                     "selectorMode": use_selector_mode,
                 },
+            )
+
+        if is_agentic_navigation and not user_prompt:
+            raise KadoaSdkError(
+                "user_prompt is required when navigation_mode is 'agentic-navigation'",
+                code=KadoaErrorCode.VALIDATION_ERROR,
+                details={"navigation_mode": navigation_mode},
             )
 
         fields_list = []
@@ -518,14 +550,12 @@ class ExtractionBuilderService:
         for field in fields:
             if isinstance(field, SchemaResponseSchemaInner):
                 schema_fields.append(field)
-            elif isinstance(field, (DataField, ClassificationField, RawContentField)):
+            elif isinstance(field, (DataField, ClassificationField)):
                 schema_fields.append(SchemaResponseSchemaInner(actual_instance=field))
             elif isinstance(field, dict):
                 field_type = field.get("fieldType") or field.get("field_type")
                 if field_type == "CLASSIFICATION":
                     field_obj = ClassificationField(**field)
-                elif field_type == "METADATA":
-                    field_obj = RawContentField(**field)
                 else:
                     field_dict = dict(field)
                     if "example" in field_dict and field_dict["example"] is not None:
@@ -542,8 +572,6 @@ class ExtractionBuilderService:
                     field_type = field_dict.get("fieldType") or field_dict.get("field_type")
                     if field_type == "CLASSIFICATION":
                         field_obj = ClassificationField(**field_dict)
-                    elif field_type == "METADATA":
-                        field_obj = RawContentField(**field_dict)
                     else:
                         if "example" in field_dict and field_dict["example"] is not None:
                             example_value = field_dict.pop("example")
@@ -560,7 +588,6 @@ class ExtractionBuilderService:
                     field_obj = DataField(**field_dict)
                     schema_fields.append(SchemaResponseSchemaInner(actual_instance=field_obj))
 
-        # For agentic-navigation, use AgenticWorkflow type
         if navigation_mode == "agentic-navigation":
             if not user_prompt:
                 raise KadoaSdkError(

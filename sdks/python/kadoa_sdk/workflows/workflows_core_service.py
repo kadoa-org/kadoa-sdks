@@ -145,7 +145,6 @@ class WorkflowsCoreService:
         domain_name = urlparse(input.urls[0]).hostname
 
         try:
-            # For agentic-navigation, use AgenticWorkflow type
             if input.navigation_mode == "agentic-navigation":
                 if not input.user_prompt:
                     raise KadoaSdkError(

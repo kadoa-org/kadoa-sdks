@@ -316,7 +316,7 @@ const rule = await client.validation.rules.createRule({
 | workflows | `update()` (limit, name), `delete()`, additionalData validation |
 | validation-core | `list()`, `get()`, `getLatest()`, `getAnomalies()`, `getAnomaliesByRule()` |
 | validation-rules | `createRule()`, `listRules()`, `bulkApproveRules()`, `bulkDeleteRules()` |
-| extraction-builder | auto-detection, raw extraction, custom schema, hybrid, classification, additionalData |
+| extraction-builder | agentic default, raw extraction, custom schema, hybrid, classification, additionalData |
 | realtime-extraction | WebSocket connection, event subscription |
 
 ### 3.2 docs_snippets Tests

@@ -25,6 +25,31 @@ from .types import (
 SUCCESSFUL_RUN_STATES = {"FINISHED", "SUCCESS"}
 
 
+def _build_agentic_prompt(
+    *,
+    entity: Optional[str],
+    fields: List[Dict[str, Any]],
+    user_prompt: Optional[str],
+) -> str:
+    if user_prompt:
+        return user_prompt
+
+    field_names = [
+        field.get("name")
+        for field in fields
+        if isinstance(field, dict) and isinstance(field.get("name"), str)
+    ]
+
+    if not field_names:
+        return DEFAULTS["user_prompt"]
+
+    field_list = ", ".join(field_names)
+    if entity:
+        return f"extract all {entity} entities from this page and return these fields: {field_list}"
+
+    return f"extract all records from this page and return these fields: {field_list}"
+
+
 class ExtractionModule:
     """Module for running and managing data extractions.
 
@@ -51,8 +76,8 @@ class ExtractionModule:
     def run(self, options: ExtractionOptions) -> ExtractionResult:
         """Run an extraction workflow and wait for completion.
 
-        Automatically detects entities from the provided URLs, creates a workflow,
-        waits for it to complete, and returns the extracted data.
+        Creates an agentic extraction workflow for the provided URLs, waits for it
+        to complete, and returns the extracted data.
 
         Args:
             options: Extraction options including URLs, name, and configuration
@@ -90,17 +115,28 @@ class ExtractionModule:
             name=options.name,
             navigation_mode=options.navigation_mode or DEFAULTS["navigation_mode"],
             polling_interval=options.polling_interval or DEFAULTS["polling_interval"],
+            user_prompt=options.user_prompt,
         )
 
         try:
-            prediction = self.entity_detector.fetch_entity_fields(
-                link=config.urls[0],
-                location=config.location or {"type": "auto"},
-                navigation_mode=str(config.navigation_mode),
-            )
+            entity = None
+            fields: List[Dict[str, Any]] = []
+            if config.navigation_mode != "agentic-navigation":
+                prediction = self.entity_detector.fetch_entity_fields(
+                    link=config.urls[0],
+                    location=config.location or {"type": "auto"},
+                    navigation_mode=str(config.navigation_mode),
+                )
+                entity = prediction["entity"]
+                fields = prediction["fields"]
 
+            config.user_prompt = _build_agentic_prompt(
+                entity=entity, fields=fields, user_prompt=config.user_prompt
+            )
             workflow_id = self.workflow_manager.create_workflow(
-                entity=prediction["entity"], fields=prediction["fields"], config=config
+                entity=entity,
+                fields=fields,
+                config=config,
             )
 
             workflow = self.workflow_manager.wait_for_workflow_completion(
@@ -188,21 +224,32 @@ class ExtractionModule:
             name=options.name,
             navigation_mode=options.navigation_mode or DEFAULTS["navigation_mode"],
             polling_interval=options.polling_interval or DEFAULTS["polling_interval"],
+            user_prompt=options.user_prompt,
         )
 
         try:
-            prediction = self.entity_detector.fetch_entity_fields(
-                link=config.urls[0],
-                location=config.location or {"type": "auto"},
-                navigation_mode=str(config.navigation_mode),
-            )
+            entity = None
+            fields: List[Dict[str, Any]] = []
+            if config.navigation_mode != "agentic-navigation":
+                prediction = self.entity_detector.fetch_entity_fields(
+                    link=config.urls[0],
+                    location=config.location or {"type": "auto"},
+                    navigation_mode=str(config.navigation_mode),
+                )
+                entity = prediction["entity"]
+                fields = prediction["fields"]
 
+            config.user_prompt = _build_agentic_prompt(
+                entity=entity, fields=fields, user_prompt=config.user_prompt
+            )
             workflow_id = self.workflow_manager.create_workflow(
-                entity=prediction["entity"], fields=prediction["fields"], config=config
+                entity=entity,
+                fields=fields,
+                config=config,
             )
 
             # Submit workflow run without waiting
-            from ...core.http import get_workflows_api
+            from ..core.http import get_workflows_api
 
             api = get_workflows_api(self.client)
             run_request = {}

@@ -21,7 +21,7 @@ const client = new KadoaClient({
   apiKey: 'your-api-key'
 });
 
-// AI automatically detects and extracts data
+// Agentic navigation extracts the main entity by default
 const result = await client.extraction.run({
   urls: ['https://example.com/products'],
   name: 'Product Extraction'
@@ -33,9 +33,9 @@ console.log(`Extracted ${result.data?.length} items`);
 
 ## Extraction Methods
 
-### Auto-Detection
+### Agentic Default
 
-The simplest way to extract data - AI automatically detects structured content:
+The simplest way to extract data. Agentic navigation targets the main entity on the page by default:
 
 ```typescript
 const result = await client.extraction.run({
@@ -55,11 +55,11 @@ const result = await client.extraction.run({
 // }
 ```
 
-**When to use:** Quick extractions, exploratory data gathering, or when you don't know the exact schema.
+**When to use:** Quick extractions, exploratory data gathering, or when you don't know the exact schema yet.
 
 ### Builder API (Custom Schemas)
 
-Define exactly what data you want to extract using the fluent builder pattern:
+Define exactly what data you want to extract using the fluent builder pattern. The builder also defaults to agentic navigation, and derives a schema-aware prompt from the entity and fields you specify:
 
 ```typescript
 const extraction = await client.extract({
@@ -93,7 +93,7 @@ const data = await result.fetchData({});
 
 **Raw Content Extraction**
 
-Extract page content without structure transformation:
+Add convenience fields for raw page artifacts using agentic extraction:
 
 ```typescript
 // Single format
