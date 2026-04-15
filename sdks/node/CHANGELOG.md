@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.27.1](https://github.com/kadoa-org/kadoa-sdks/compare/node-sdk-v0.27.0...node-sdk-v0.27.1) (2026-04-15)
+
+
+### Bug Fixes
+
+* trigger SDK release for extraction changes ([#265](https://github.com/kadoa-org/kadoa-sdks/issues/265)) ([c9842f3](https://github.com/kadoa-org/kadoa-sdks/commit/c9842f37bfd6e66d3f0f54b7ea4080afd15330ba))
+
 ## [0.27.0](https://github.com/kadoa-org/kadoa-sdks/compare/node-sdk-v0.26.0...node-sdk-v0.27.0) (2026-04-14)
 
 
