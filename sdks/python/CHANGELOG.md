@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.18.5](https://github.com/kadoa-org/kadoa-sdks/compare/python-sdk-v0.18.4...python-sdk-v0.18.5) (2026-04-15)
+
+
+### Bug Fixes
+
+* trigger SDK release for extraction changes ([#265](https://github.com/kadoa-org/kadoa-sdks/issues/265)) ([c9842f3](https://github.com/kadoa-org/kadoa-sdks/commit/c9842f37bfd6e66d3f0f54b7ea4080afd15330ba))
+
 ## [0.18.4](https://github.com/kadoa-org/kadoa-sdks/compare/python-sdk-v0.18.3...python-sdk-v0.18.4) (2026-03-23)
 
 
