@@ -52,7 +52,13 @@ export type UnlinkWorkflowsRequest = GeneratedUnlinkWorkflowsBody;
 
 export type ApplyTemplateUpdateRequest = GeneratedApplyTemplateUpdateBody;
 
-export type SaveFromWorkflowRequest = GeneratedSaveFromWorkflowBody;
+export type SaveFromWorkflowRequest = GeneratedSaveFromWorkflowBody & {
+  /**
+   * Which parts of the workflow config to include in the template.
+   * Defaults to all parts when omitted. Rejects empty array with 400.
+   */
+  includeParts?: ("prompt" | "schema" | "notifications")[];
+};
 
 // ========================================
 // Response Types
