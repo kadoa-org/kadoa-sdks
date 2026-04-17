@@ -37,7 +37,7 @@ export type CreateTemplateRequest = GeneratedCreateTemplateBody;
 
 export type UpdateTemplateRequest = GeneratedUpdateTemplateBody;
 
-export type CreateTemplateVersionRequest = GeneratedCreateTemplateVersionBody;
+export type CreateTemplateVersionRequest = Omit<GeneratedCreateTemplateVersionBody, "dataValidation">;
 
 export type SaveFromWorkflowRequest = GeneratedSaveFromWorkflowBody & {
   /**
