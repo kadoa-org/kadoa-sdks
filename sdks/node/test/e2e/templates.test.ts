@@ -105,22 +105,6 @@ describe("Templates", () => {
       { timeout: 60000 },
     );
 
-    test(
-      "should list workflows for a template",
-      async () => {
-        const template = await client.template.create({
-          name: `test-workflows-${Date.now()}`,
-        });
-
-        try {
-          const workflows = await client.template.listWorkflows(template.id);
-          expect(Array.isArray(workflows)).toBe(true);
-        } finally {
-          await client.template.delete(template.id);
-        }
-      },
-      { timeout: 60000 },
-    );
   });
 
   describe("Destructive Operations", () => {
