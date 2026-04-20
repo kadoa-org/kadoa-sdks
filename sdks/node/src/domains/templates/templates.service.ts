@@ -6,12 +6,8 @@ import {
 } from "../../runtime/exceptions/base.exception";
 import { logger } from "../../runtime/logger";
 import type {
-  ApplyTemplateUpdateRequest,
-  ApplyTemplateUpdateResult,
   CreateTemplateRequest,
   CreateTemplateVersionRequest,
-  LinkWorkflowsRequest,
-  LinkWorkflowsResult,
   SaveFromWorkflowRequest,
   SaveFromWorkflowResult,
   Template,
@@ -19,9 +15,6 @@ import type {
   TemplateListItem,
   TemplateSchema,
   TemplateVersion,
-  TemplateWorkflow,
-  UnlinkWorkflowsRequest,
-  UnlinkWorkflowsResult,
   UpdateTemplateRequest,
 } from "./templates.acl";
 
@@ -175,70 +168,6 @@ export class TemplatesService {
     });
 
     return response.data.data ?? [];
-  }
-
-  /**
-   * List workflows linked to a template.
-   */
-  async listWorkflows(templateId: string): Promise<TemplateWorkflow[]> {
-    debug("Listing workflows for template: %s", templateId);
-
-    const response = await this.templatesApi.v4TemplatesTemplateIdWorkflowsGet({
-      templateId,
-    });
-
-    return response.data.data ?? [];
-  }
-
-  /**
-   * Link workflows to a template.
-   */
-  async linkWorkflows(
-    templateId: string,
-    body: LinkWorkflowsRequest,
-  ): Promise<LinkWorkflowsResult> {
-    debug("Linking %d workflows to template: %s", body.workflowIds.length, templateId);
-
-    const response = await this.templatesApi.v4TemplatesTemplateIdLinkPost({
-      templateId,
-      linkWorkflowsBody: body,
-    });
-
-    return response.data;
-  }
-
-  /**
-   * Unlink workflows from a template.
-   */
-  async unlinkWorkflows(
-    templateId: string,
-    body: UnlinkWorkflowsRequest,
-  ): Promise<UnlinkWorkflowsResult> {
-    debug("Unlinking %d workflows from template: %s", body.workflowIds.length, templateId);
-
-    const response = await this.templatesApi.v4TemplatesTemplateIdUnlinkPost({
-      templateId,
-      unlinkWorkflowsBody: body,
-    });
-
-    return response.data;
-  }
-
-  /**
-   * Apply a template version update to specific workflows.
-   */
-  async applyUpdate(
-    templateId: string,
-    body: ApplyTemplateUpdateRequest,
-  ): Promise<ApplyTemplateUpdateResult> {
-    debug("Applying version %d to %d workflows for template: %s", body.targetVersion, body.workflowIds.length, templateId);
-
-    const response = await this.templatesApi.v4TemplatesTemplateIdApplyPost({
-      templateId,
-      applyTemplateUpdateBody: body,
-    });
-
-    return response.data;
   }
 
   /**
