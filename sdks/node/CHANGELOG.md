@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.28.0](https://github.com/kadoa-org/kadoa-sdks/compare/node-sdk-v0.27.1...node-sdk-v0.28.0) (2026-04-20)
+
+
+### Features
+
+* **node-sdk:** align templates with backend v1 ([#268](https://github.com/kadoa-org/kadoa-sdks/issues/268)) ([353a7f4](https://github.com/kadoa-org/kadoa-sdks/commit/353a7f439c5b9367ac83368e09c70c6d2137794e))
+
 ## [0.27.1](https://github.com/kadoa-org/kadoa-sdks/compare/node-sdk-v0.27.0...node-sdk-v0.27.1) (2026-04-15)
 
 
