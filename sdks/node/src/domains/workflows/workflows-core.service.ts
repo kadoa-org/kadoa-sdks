@@ -208,6 +208,12 @@ export class WorkflowsCoreService {
     return response.data;
   }
 
+  async pause(id: WorkflowId): Promise<void> {
+    await this.workflowsApi.v4WorkflowsWorkflowIdPausePut({
+      workflowId: id,
+    });
+  }
+
   async resume(id: WorkflowId): Promise<void> {
     await this.workflowsApi.v4WorkflowsWorkflowIdResumePut({
       workflowId: id,
