@@ -1,6 +1,7 @@
 """PY-WORKFLOWS: workflows/create.mdx snippets"""
 
 import asyncio
+import time
 import pytest
 from kadoa_sdk import KadoaClient, KadoaClientConfig
 from kadoa_sdk.extraction.types import ExtractOptions, ExtractionOptions, RunWorkflowOptions
@@ -740,3 +741,41 @@ class TestWorkflowsSnippets:
         # Cleanup
         if workflow.workflow_id:
             client.workflow.delete(workflow.workflow_id)
+
+    @pytest.mark.e2e
+    @pytest.mark.timeout(120)
+    def test_workflows_pause_resume(self, client):
+        """Test pausing and resuming a workflow."""
+        workflow_name = f"test-pause-resume-{int(time.time())}"
+        workflow = None
+        try:
+            workflow = (
+                client.extract(
+                    ExtractOptions(
+                        urls=["https://example.com"],
+                        name=workflow_name,
+                        extraction=lambda builder: builder.entity("Product").field(
+                            "title", "Product name", "STRING", FieldOptions(example="Sample")
+                        ),
+                    )
+                )
+                .create()
+            )
+            workflow_id = workflow.workflow_id
+
+            # Pause the workflow
+            client.workflow.pause(workflow_id)
+
+            # Verify state is PAUSED
+            paused = client.workflow.get(workflow_id)
+            assert paused.state == "PAUSED"
+
+            # Resume the workflow
+            client.workflow.resume(workflow_id)
+
+            # Verify state is ACTIVE
+            resumed = client.workflow.get(workflow_id)
+            assert resumed.state == "ACTIVE"
+        finally:
+            if workflow:
+                delete_workflow_by_name(client, workflow_name)
