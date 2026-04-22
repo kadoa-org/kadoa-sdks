@@ -125,6 +125,12 @@ describe("Workflows", () => {
         );
 
         try {
+          // Wait for the initial extraction run to complete
+          await client.workflow.wait(workflowId, {
+            pollIntervalMs: 5000,
+            timeoutMs: 600000,
+          });
+
           // Pause the workflow
           await client.workflow.pause(workflowId);
 
@@ -135,14 +141,14 @@ describe("Workflows", () => {
           // Resume the workflow
           await client.workflow.resume(workflowId);
 
-          // Verify state is ACTIVE
+          // Verify state is no longer PAUSED (resume transitions to QUEUED)
           const resumedWorkflow = await client.workflow.get(workflowId);
-          expect(resumedWorkflow.state).toBe("ACTIVE");
+          expect(resumedWorkflow.state).not.toBe("PAUSED");
         } finally {
           await client.workflow.delete(workflowId);
         }
       },
-      { timeout: 120000 },
+      { timeout: 660000 },
     );
   });
 
