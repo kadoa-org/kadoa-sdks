@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.19.0](https://github.com/kadoa-org/kadoa-sdks/compare/python-sdk-v0.18.5...python-sdk-v0.19.0) (2026-04-24)
+
+
+### Features
+
+* add pause() method to WorkflowsCoreService ([#273](https://github.com/kadoa-org/kadoa-sdks/issues/273)) ([0611dbd](https://github.com/kadoa-org/kadoa-sdks/commit/0611dbd0ac7165490ed8b47dd7cfc108b4b18282))
+
 ## [0.18.5](https://github.com/kadoa-org/kadoa-sdks/compare/python-sdk-v0.18.4...python-sdk-v0.18.5) (2026-04-15)
 
 
