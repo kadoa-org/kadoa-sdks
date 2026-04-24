@@ -35,7 +35,7 @@
     "axios": "1.13.6",
     "debug": "4.4.3",
     "es-toolkit": "1.45.1",
-    "uuid": "13.0.0",
+    "uuid": "14.0.0",
     "ws": "8.19.0"
   },
   "devDependencies": {
