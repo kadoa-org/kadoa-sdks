@@ -115,6 +115,43 @@ describe("Workflows", () => {
     );
   });
 
+  describe("Pause/Resume Operations", () => {
+    test(
+      "should pause and resume a workflow",
+      async () => {
+        const { workflowId } = await seedWorkflow(
+          { name: `test-pause-resume-${Date.now()}` },
+          client,
+        );
+
+        try {
+          // Wait for the initial extraction run to complete
+          await client.workflow.wait(workflowId, {
+            pollIntervalMs: 5000,
+            timeoutMs: 600000,
+          });
+
+          // Pause the workflow
+          await client.workflow.pause(workflowId);
+
+          // Verify state is PAUSED
+          const pausedWorkflow = await client.workflow.get(workflowId);
+          expect(pausedWorkflow.state).toBe("PAUSED");
+
+          // Resume the workflow
+          await client.workflow.resume(workflowId);
+
+          // Verify state is no longer PAUSED (resume transitions to QUEUED)
+          const resumedWorkflow = await client.workflow.get(workflowId);
+          expect(resumedWorkflow.state).not.toBe("PAUSED");
+        } finally {
+          await client.workflow.delete(workflowId);
+        }
+      },
+      { timeout: 660000 },
+    );
+  });
+
   describe("Destructive Operations", () => {
     test(
       "should delete workflow",
