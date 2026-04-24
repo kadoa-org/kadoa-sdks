@@ -370,6 +370,25 @@ class WorkflowsCoreService:
                 details={"workflowId": workflow_id},
             )
 
+    def pause(self, workflow_id: str) -> None:
+        """
+        Pause an active workflow.
+
+        Args:
+            workflow_id: Workflow ID
+
+        Raises:
+            KadoaHttpError: If pause fails
+        """
+        try:
+            self.workflows_api.v4_workflows_workflow_id_pause_put(workflow_id=workflow_id)
+        except Exception as error:
+            raise KadoaHttpError.wrap(
+                error,
+                message="Failed to pause workflow",
+                details={"workflowId": workflow_id},
+            )
+
     def resume(self, workflow_id: str) -> None:
         """
         Resume a paused workflow.
