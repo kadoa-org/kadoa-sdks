@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.29.1](https://github.com/kadoa-org/kadoa-sdks/compare/node-sdk-v0.29.0...node-sdk-v0.29.1) (2026-04-27)
+
+
+### Bug Fixes
+
+* **node-sdk:** allow underscores in schema field names (kad-6594) ([#278](https://github.com/kadoa-org/kadoa-sdks/issues/278)) ([ef583cf](https://github.com/kadoa-org/kadoa-sdks/commit/ef583cf21424bf3f9d475001b856d90779941980))
+
 ## [0.29.0](https://github.com/kadoa-org/kadoa-sdks/compare/node-sdk-v0.28.0...node-sdk-v0.29.0) (2026-04-24)
 
 
