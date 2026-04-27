@@ -64,6 +64,30 @@ describe("SchemaBuilder", () => {
           .field("inStock", "In Stock", "BOOLEAN");
       }).not.toThrow();
     });
+
+    test("allows underscores in field names", () => {
+      expect(() => {
+        new SchemaBuilder()
+          .entity("Company")
+          .field("company_name", "Company name", "STRING", { example: "Acme" });
+      }).not.toThrow();
+    });
+
+    test("rejects field names starting with a digit", () => {
+      expect(() => {
+        new SchemaBuilder()
+          .entity("Product")
+          .field("1title", "Title", "STRING", { example: "Example" });
+      }).toThrow(KadoaSdkException);
+    });
+
+    test("rejects field names with special characters", () => {
+      expect(() => {
+        new SchemaBuilder()
+          .entity("Product")
+          .field("title-name", "Title", "STRING", { example: "Example" });
+      }).toThrow(KadoaSdkException);
+    });
   });
 
   describe("Field Building", () => {

@@ -99,7 +99,7 @@ export interface FieldOptions {
  * Builder for defining custom schemas with fields
  */
 export class SchemaBuilder {
-  private static readonly FIELD_NAME_PATTERN = /^[A-Za-z0-9]+$/;
+  private static readonly FIELD_NAME_PATTERN = /^[A-Za-z][A-Za-z0-9_]*$/;
   private static readonly TYPES_REQUIRING_EXAMPLE: DataType[] = [
     "STRING",
     "IMAGE",
@@ -136,7 +136,7 @@ export class SchemaBuilder {
 
   /**
    * Add a structured field to the schema
-   * @param name - Field name (alphanumeric only)
+   * @param name - Field name (must start with a letter; letters, digits, and underscores allowed)
    * @param description - Field description
    * @param dataType - Data type (STRING, NUMBER, BOOLEAN, etc.)
    * @param options - Field configuration (example required for STRING, IMAGE, LINK, OBJECT, ARRAY)
@@ -149,7 +149,7 @@ export class SchemaBuilder {
   ): this;
   /**
    * Add a structured field to the schema
-   * @param name - Field name (alphanumeric only)
+   * @param name - Field name (must start with a letter; letters, digits, and underscores allowed)
    * @param description - Field description
    * @param dataType - Data type (STRING, NUMBER, BOOLEAN, etc.)
    * @param options - Optional field configuration
@@ -190,7 +190,7 @@ export class SchemaBuilder {
 
   /**
    * Add a classification field to categorize content
-   * @param name - Field name (alphanumeric only)
+   * @param name - Field name (must start with a letter; letters, digits, and underscores allowed)
    * @param description - Field description
    * @param categories - Array of category definitions
    */
@@ -253,10 +253,10 @@ export class SchemaBuilder {
   private validateFieldName(name: string) {
     if (!SchemaBuilder.FIELD_NAME_PATTERN.test(name)) {
       throw new KadoaSdkException(
-        `Field name "${name}" must be alphanumeric only (no underscores or special characters)`,
+        `Field name "${name}" must start with a letter and contain only letters, digits, and underscores`,
         {
           code: "VALIDATION_ERROR",
-          details: { name, pattern: "^[A-Za-z0-9]+$" },
+          details: { name, pattern: "^[A-Za-z][A-Za-z0-9_]*$" },
         },
       );
     }
