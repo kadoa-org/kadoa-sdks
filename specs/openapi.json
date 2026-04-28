@@ -2562,12 +2562,13 @@
                             "type": "string",
                             "enum": [
                               "IN_PROGRESS",
+                              "VALIDATING",
                               "FINISHED",
                               "FAILED",
                               "NOT_SUPPORTED",
                               "FAILED_INSUFFICIENT_FUNDS"
                             ],
-                            "description": "State of the workflow run"
+                            "description": "State of the workflow run. VALIDATING means the run finished extracting but is held for QA review before data is delivered."
                           },
                           "startedAt": {
                             "type": "string",
