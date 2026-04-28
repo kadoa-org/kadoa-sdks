@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.30.0](https://github.com/kadoa-org/kadoa-sdks/compare/node-sdk-v0.29.1...node-sdk-v0.30.0) (2026-04-28)
+
+
+### Features
+
+* **spec:** add validating state to workflow run history ([#281](https://github.com/kadoa-org/kadoa-sdks/issues/281)) ([ed4cbb6](https://github.com/kadoa-org/kadoa-sdks/commit/ed4cbb68f3c8675aff4fa1448b3b5ba6b98cf84e))
+
 ## [0.29.1](https://github.com/kadoa-org/kadoa-sdks/compare/node-sdk-v0.29.0...node-sdk-v0.29.1) (2026-04-27)
 
 
