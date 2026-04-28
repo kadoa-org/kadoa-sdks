@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.20.0](https://github.com/kadoa-org/kadoa-sdks/compare/python-sdk-v0.19.0...python-sdk-v0.20.0) (2026-04-28)
+
+
+### Features
+
+* **spec:** add validating state to workflow run history ([#281](https://github.com/kadoa-org/kadoa-sdks/issues/281)) ([ed4cbb6](https://github.com/kadoa-org/kadoa-sdks/commit/ed4cbb68f3c8675aff4fa1448b3b5ba6b98cf84e))
+
 ## [0.19.0](https://github.com/kadoa-org/kadoa-sdks/compare/python-sdk-v0.18.5...python-sdk-v0.19.0) (2026-04-24)
 
 
