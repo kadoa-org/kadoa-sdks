@@ -25,6 +25,7 @@ import {
   type RunWorkflowResponse,
   type UpdateWorkflowRequest,
   type UpdateWorkflowResponse,
+  type WorkflowAuditLogResponse,
   type WorkflowResponse,
   type WorkflowStateEnum,
   type WorkflowsApiInterface,
@@ -218,6 +219,24 @@ export class WorkflowsCoreService {
     await this.workflowsApi.v4WorkflowsWorkflowIdResumePut({
       workflowId: id,
     });
+  }
+
+  /**
+   * Get the configuration revision history (audit log) for a workflow.
+   * Each entry captures who changed the workflow, when, from which channel
+   * (UI/API/SDK/MCP/CLI/SYSTEM), and full before/after snapshots for UPDATE
+   * operations. CREATE entries have null `previousValue`/`newValue`.
+   */
+  async getAuditLog(
+    id: WorkflowId,
+    options?: { page?: number; limit?: number },
+  ): Promise<WorkflowAuditLogResponse> {
+    const response = await this.workflowsApi.v5WorkflowsWorkflowIdAuditlogGet({
+      workflowId: id,
+      page: options?.page,
+      limit: options?.limit,
+    });
+    return response.data;
   }
 
   /**
