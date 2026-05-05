@@ -269,6 +269,14 @@ export type WorkflowAuditLogEntry =
 export type WorkflowAuditLogPagination =
   V4WorkflowsWorkflowIdAuditlogGet200ResponsePagination;
 
+/**
+ * Pagination options accepted by `getAuditLog`.
+ */
+export interface WorkflowAuditLogOptions {
+  page?: number;
+  limit?: number;
+}
+
 export const WorkflowAuditOperation =
   V4WorkflowsWorkflowIdAuditlogGet200ResponseLogEntriesInnerOperationTypeEnum;
 
