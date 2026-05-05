@@ -17,6 +17,9 @@ import type {
   V4WorkflowsGetMonitoringEnum,
   V4WorkflowsGetStateEnum,
   V4WorkflowsGetUpdateIntervalEnum,
+  V4WorkflowsWorkflowIdAuditlogGet200Response,
+  V4WorkflowsWorkflowIdAuditlogGet200ResponseLogEntriesInner,
+  V4WorkflowsWorkflowIdAuditlogGet200ResponsePagination,
   V4WorkflowsWorkflowIdGet200Response,
   V4WorkflowsWorkflowIdMetadataPut200Response,
   V4WorkflowsWorkflowIdMetadataPutRequest,
@@ -27,6 +30,8 @@ import type {
   WorkflowWithEntityAndFields,
   WorkflowWithExistingSchema,
 } from "../../generated";
+
+import { V4WorkflowsWorkflowIdAuditlogGet200ResponseLogEntriesInnerOperationTypeEnum } from "../../generated";
 
 // ========================================
 // API Client
@@ -242,3 +247,30 @@ export type UpdateWorkflowRequest = V4WorkflowsWorkflowIdMetadataPutRequest;
 
 export type UpdateWorkflowResponse =
   V4WorkflowsWorkflowIdMetadataPut200Response;
+
+// ========================================
+// Audit Log
+// ========================================
+
+/**
+ * Response from `GET /v5/workflows/{workflowId}/auditlog`.
+ * Configuration revision history for a workflow.
+ */
+export type WorkflowAuditLogResponse =
+  V4WorkflowsWorkflowIdAuditlogGet200Response;
+
+/**
+ * Single revision entry. `previousValue`/`newValue` are full workflow config
+ * snapshots (CREATE entries return both as null).
+ */
+export type WorkflowAuditLogEntry =
+  V4WorkflowsWorkflowIdAuditlogGet200ResponseLogEntriesInner;
+
+export type WorkflowAuditLogPagination =
+  V4WorkflowsWorkflowIdAuditlogGet200ResponsePagination;
+
+export const WorkflowAuditOperation =
+  V4WorkflowsWorkflowIdAuditlogGet200ResponseLogEntriesInnerOperationTypeEnum;
+
+export type WorkflowAuditOperation =
+  (typeof WorkflowAuditOperation)[keyof typeof WorkflowAuditOperation];
