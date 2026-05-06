@@ -28,8 +28,11 @@ export class DataFetcherService {
       limit: options.limit ?? this.defaultLimit,
     });
 
-    const result = response.data;
-    return result;
+    // The endpoint's response union includes a `download=link` variant
+    // (which returns an exportId/downloadPath instead of paginated data).
+    // The SDK doesn't expose that option, so the response is always the
+    // streaming variant — narrow it for callers.
+    return response.data as FetchDataResult;
   }
 
   /**
