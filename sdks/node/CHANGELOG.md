@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.31.0](https://github.com/kadoa-org/kadoa-sdks/compare/node-sdk-v0.30.0...node-sdk-v0.31.0) (2026-05-06)
+
+
+### Features
+
+* **node-sdk:** expose workflow audit log via getAuditLog (KAD-6828) ([#289](https://github.com/kadoa-org/kadoa-sdks/issues/289)) ([e668044](https://github.com/kadoa-org/kadoa-sdks/commit/e668044782002f4254025160b31a4b990a92fb83))
+
 ## [0.30.0](https://github.com/kadoa-org/kadoa-sdks/compare/node-sdk-v0.29.1...node-sdk-v0.30.0) (2026-04-28)
 
 
