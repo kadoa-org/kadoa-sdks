@@ -324,7 +324,7 @@
                           },
                           "differences": {
                             "type": "array",
-                            "description": "Structured representation of changes with object-based diffing",
+                            "description": "Structured representation of changes with object-based diffing. List responses omit visualDiff metadata. Pass `exclude=differences` to omit this large field; counts are still returned via `differencesCounts`.",
                             "items": {
                               "type": "object",
                               "properties": {
@@ -358,6 +358,22 @@
                                     }
                                   }
                                 }
+                              }
+                            }
+                          },
+                          "differencesCounts": {
+                            "type": "object",
+                            "nullable": true,
+                            "description": "Pre-computed counts of differences by type. Always returned (even when `exclude=differences`) so list views can render summary badges without downloading the full diff.",
+                            "properties": {
+                              "added": {
+                                "type": "integer"
+                              },
+                              "removed": {
+                                "type": "integer"
+                              },
+                              "changed": {
+                                "type": "integer"
                               }
                             }
                           },
@@ -531,6 +547,117 @@
                                 }
                               }
                             }
+                          },
+                          "visualDiff": {
+                            "type": "object",
+                            "nullable": true,
+                            "description": "Screenshot-space boxes for this diff item. Present only when row grounding is available.",
+                            "properties": {
+                              "current": {
+                                "type": "object",
+                                "description": "Boxes on the current change screenshot for added or changed rows.",
+                                "properties": {
+                                  "url": {
+                                    "type": "string"
+                                  },
+                                  "width": {
+                                    "type": "number"
+                                  },
+                                  "height": {
+                                    "type": "number"
+                                  },
+                                  "rowBox": {
+                                    "type": "object",
+                                    "properties": {
+                                      "x": {
+                                        "type": "number"
+                                      },
+                                      "y": {
+                                        "type": "number"
+                                      },
+                                      "width": {
+                                        "type": "number"
+                                      },
+                                      "height": {
+                                        "type": "number"
+                                      }
+                                    }
+                                  },
+                                  "fieldBoxes": {
+                                    "type": "object",
+                                    "additionalProperties": {
+                                      "type": "object",
+                                      "properties": {
+                                        "x": {
+                                          "type": "number"
+                                        },
+                                        "y": {
+                                          "type": "number"
+                                        },
+                                        "width": {
+                                          "type": "number"
+                                        },
+                                        "height": {
+                                          "type": "number"
+                                        }
+                                      }
+                                    }
+                                  }
+                                }
+                              },
+                              "previous": {
+                                "type": "object",
+                                "description": "Boxes on the previous workflow job screenshot for removed or changed rows.",
+                                "properties": {
+                                  "url": {
+                                    "type": "string"
+                                  },
+                                  "width": {
+                                    "type": "number"
+                                  },
+                                  "height": {
+                                    "type": "number"
+                                  },
+                                  "rowBox": {
+                                    "type": "object",
+                                    "properties": {
+                                      "x": {
+                                        "type": "number"
+                                      },
+                                      "y": {
+                                        "type": "number"
+                                      },
+                                      "width": {
+                                        "type": "number"
+                                      },
+                                      "height": {
+                                        "type": "number"
+                                      }
+                                    }
+                                  },
+                                  "fieldBoxes": {
+                                    "type": "object",
+                                    "additionalProperties": {
+                                      "type": "object",
+                                      "properties": {
+                                        "x": {
+                                          "type": "number"
+                                        },
+                                        "y": {
+                                          "type": "number"
+                                        },
+                                        "width": {
+                                          "type": "number"
+                                        },
+                                        "height": {
+                                          "type": "number"
+                                        }
+                                      }
+                                    }
+                                  }
+                                }
+                              }
+                            }
                           }
                         }
                       }
@@ -547,6 +674,11 @@
                     "screenshotUrl": {
                       "type": "string",
                       "description": "URL of the screenshot taken when the change was detected"
+                    },
+                    "previousJobScreenshotUrl": {
+                      "type": "string",
+                      "nullable": true,
+                      "description": "Screenshot URL from the previous workflow job used by visualDiff.previous boxes."
                     },
                     "createdAt": {
                       "type": "string",
@@ -924,6 +1056,11 @@
                             "type": "string",
                             "format": "date-time",
                             "description": "Last update timestamp"
+                          },
+                          "resolutionMessage": {
+                            "type": "string",
+                            "nullable": true,
+                            "description": "Message explaining how the issue was resolved (null if not provided or issue is open)"
                           }
                         }
                       }
@@ -946,7 +1083,8 @@
                       "status": "Done",
                       "priority": 2,
                       "labels": [],
-                      "updatedAt": "2026-03-18T10:32:00.000Z"
+                      "updatedAt": "2026-03-18T10:32:00.000Z",
+                      "resolutionMessage": "Updated the CSS selectors to handle the new page layout."
                     }
                   ]
                 }
@@ -988,6 +1126,7 @@
                       "bug",
                       "feature",
                       "workflow_issue",
+                      "template_issue",
                       "integration",
                       "billing",
                       "data_diff"
@@ -1040,6 +1179,11 @@
                   "workflowId": {
                     "type": "string",
                     "description": "Optional workflow ID to link the issue"
+                  },
+                  "templateId": {
+                    "type": "string",
+                    "format": "uuid",
+                    "description": "Optional template ID to link the issue. Only relevant when category is template_issue."
                   },
                   "dataChangeId": {
                     "type": "string",
@@ -1238,6 +1382,10 @@
                   "reopenComment": {
                     "type": "string",
                     "description": "Optional comment explaining why the issue is being reopened. Max 2000 characters. Only used when reopening a resolved issue."
+                  },
+                  "resolutionMessage": {
+                    "type": "string",
+                    "description": "Optional message explaining how the issue was resolved. Max 2000 characters. When provided, a resolved email including this message is sent to the user."
                   }
                 }
               }
@@ -1382,6 +1530,24 @@
                             "type": "string",
                             "format": "date-time",
                             "description": "Timestamp when the operation was performed"
+                          },
+                          "requestSource": {
+                            "type": "string",
+                            "nullable": true,
+                            "enum": [
+                              "UI",
+                              "API",
+                              "SDK",
+                              "MCP",
+                              "CLI",
+                              "SYSTEM"
+                            ],
+                            "description": "Channel that originated the change"
+                          },
+                          "authMethod": {
+                            "type": "string",
+                            "nullable": true,
+                            "description": "Authentication method used (e.g. JWT_TOKEN, PERSONAL_API_KEY, TEAM_API_KEY, SYSTEM)"
                           }
                         }
                       }
@@ -1611,6 +1777,7 @@
                       "type": "string",
                       "enum": [
                         "ACTIVE",
+                        "DRAFT",
                         "ERROR",
                         "PAUSED",
                         "NOT_SUPPORTED",
@@ -1621,12 +1788,13 @@
                         "SETUP",
                         "DELETED"
                       ],
-                      "description": "Persisted workflow lifecycle state. ACTIVE = workflow is enabled, PAUSED = user paused it, DELETED = soft deleted."
+                      "description": "Persisted workflow lifecycle state. DRAFT = workflow exists but setup is incomplete, ACTIVE = workflow is enabled, PAUSED = user paused it, DELETED = soft deleted."
                     },
                     "displayState": {
                       "type": "string",
                       "enum": [
                         "ACTIVE",
+                        "DRAFT",
                         "ERROR",
                         "PAUSED",
                         "NOT_SUPPORTED",
@@ -1635,13 +1803,14 @@
                         "SETUP",
                         "PENDING_START",
                         "RUNNING",
+                        "VALIDATING",
                         "FAILED",
                         "DEGRADED",
                         "COMPLIANCE_REVIEW",
                         "COMPLIANCE_REJECTED",
                         "DELETED"
                       ],
-                      "description": "Computed status shown to users. Combines state + runState. ACTIVE = complete/scheduled, FAILED = last run failed, RUNNING = job in progress, DEGRADED = monitor experiencing issues (15-60 min stale)."
+                      "description": "Computed status shown to users. Combines state + runState. DRAFT = workflow exists but setup is incomplete, ACTIVE = complete/scheduled, RUNNING = job in progress, VALIDATING = run is held for QA review before data delivery, FAILED = last run failed, DEGRADED = monitor experiencing issues (15-60 min stale)."
                     },
                     "userId": {
                       "type": "string",
@@ -1723,6 +1892,12 @@
                       "type": "string",
                       "format": "date-time",
                       "description": "When the last job started"
+                    },
+                    "estimatedFinishedAtUtc": {
+                      "type": "string",
+                      "format": "date-time",
+                      "nullable": true,
+                      "description": "Estimated UTC finish time for the active job, when available."
                     },
                     "dataKey": {
                       "type": "string",
@@ -2419,6 +2594,20 @@
               "type": "boolean",
               "default": false
             }
+          },
+          {
+            "name": "download",
+            "in": "query",
+            "required": false,
+            "description": "\"stream\" (default) returns the data inline (subject to a 5-minute response timeout).\n\"link\" materializes the full result set as a CSV in object storage and returns a JSON\nbody with an export id; the caller then streams the file from\nGET /v4/workflows/{workflowId}/data/exports/{exportId}. Use \"link\" for large exports\nthat would exceed the streaming timeout. Currently requires format=csv.\n",
+            "schema": {
+              "type": "string",
+              "enum": [
+                "stream",
+                "link"
+              ],
+              "default": "stream"
+            }
           }
         ],
         "security": [
@@ -2431,53 +2620,106 @@
         ],
         "responses": {
           "200": {
-            "description": "Workflow data returned successfully",
+            "description": "Workflow data returned successfully. The application/json body has two shapes:\nthe default streaming shape (workflowId, data, pagination), and the download=link\nshape (export id pointing at a materialized CSV; fetch via the exports endpoint).\n",
             "content": {
               "application/json": {
                 "schema": {
-                  "type": "object",
-                  "required": [
-                    "workflowId",
-                    "data",
-                    "pagination"
-                  ],
-                  "properties": {
-                    "workflowId": {
-                      "type": "string"
-                    },
-                    "runId": {
-                      "type": "string",
-                      "nullable": true
-                    },
-                    "executedAt": {
-                      "type": "string",
-                      "format": "date-time",
-                      "nullable": true
-                    },
-                    "data": {
-                      "type": "array",
-                      "items": {
-                        "type": "object"
+                  "oneOf": [
+                    {
+                      "type": "object",
+                      "description": "Default streaming response (download omitted or download=stream).",
+                      "required": [
+                        "workflowId",
+                        "data",
+                        "pagination"
+                      ],
+                      "properties": {
+                        "workflowId": {
+                          "type": "string"
+                        },
+                        "runId": {
+                          "type": "string",
+                          "nullable": true
+                        },
+                        "executedAt": {
+                          "type": "string",
+                          "format": "date-time",
+                          "nullable": true
+                        },
+                        "data": {
+                          "type": "array",
+                          "items": {
+                            "type": "object"
+                          }
+                        },
+                        "pagination": {
+                          "type": "object",
+                          "properties": {
+                            "totalCount": {
+                              "type": "integer"
+                            },
+                            "page": {
+                              "type": "integer"
+                            },
+                            "totalPages": {
+                              "type": "integer"
+                            },
+                            "limit": {
+                              "type": "integer"
+                            }
+                          }
+                        }
                       }
                     },
-                    "pagination": {
+                    {
                       "type": "object",
+                      "description": "Returned when download=link. The CSV is materialized to object storage and fetched via GET /v4/workflows/{workflowId}/data/exports/{exportId}.",
+                      "required": [
+                        "workflowId",
+                        "format",
+                        "totalRows",
+                        "exportId",
+                        "downloadPath",
+                        "expiresAt"
+                      ],
                       "properties": {
-                        "totalCount": {
+                        "workflowId": {
+                          "type": "string"
+                        },
+                        "runId": {
+                          "type": "string",
+                          "nullable": true
+                        },
+                        "executedAt": {
+                          "type": "string",
+                          "format": "date-time",
+                          "nullable": true
+                        },
+                        "format": {
+                          "type": "string",
+                          "enum": [
+                            "csv"
+                          ]
+                        },
+                        "totalRows": {
                           "type": "integer"
                         },
-                        "page": {
-                          "type": "integer"
+                        "exportId": {
+                          "type": "string",
+                          "format": "uuid",
+                          "description": "Identifier of the materialized CSV. Pass to the exports endpoint to download."
                         },
-                        "totalPages": {
-                          "type": "integer"
+                        "downloadPath": {
+                          "type": "string",
+                          "description": "Authenticated download path; combine with the API base URL."
                         },
-                        "limit": {
-                          "type": "integer"
+                        "expiresAt": {
+                          "type": "string",
+                          "format": "date-time"
                         }
                       }
                     }
-                  }
+                  ]
                 }
               },
               "text/csv": {
@@ -2513,6 +2755,64 @@
             "source": "import requests\nimport json\n\nurl = \"https://api.kadoa.com/v4/workflows/123456789/data\"\nheaders = {\n    \"x-api-key\": \"YOUR_API_KEY\"\n}\nparams = {\n    \"format\": \"json\",\n    \"sortBy\": \"postedDate\",\n    \"order\": \"desc\",\n    \"filters\": json.dumps([\n        {\"field\": \"jobTitle\", \"operator\": \"CONTAINS\", \"value\": \"Manager\"},\n        {\"field\": \"postedDate\", \"operator\": \"GREATER_THAN\", \"value\": \"2023-01-01\"}\n    ]),\n    \"page\": 1,\n    \"limit\": 25\n}\n\nresponse = requests.get(url, headers=headers, params=params)\ndata = response.json()\nprint(data)\n"
           }
         ]
+      }
+    },
+    "/v4/workflows/{workflowId}/data/exports/{exportId}": {
+      "get": {
+        "summary": "Download a materialized CSV export",
+        "description": "Streams a CSV previously materialized via GET /v4/workflows/{workflowId}/data?format=csv&download=link.\nSets Content-Disposition: attachment so browsers trigger a download.\n",
+        "tags": [
+          "Workflows"
+        ],
+        "security": [
+          {
+            "ApiKeyAuth": []
+          },
+          {
+            "BearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "workflowId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "exportId",
+            "in": "path",
+            "required": true,
+            "description": "Export id returned by the download=link response.",
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "CSV bytes",
+            "content": {
+              "text/csv": {
+                "schema": {
+                  "type": "string"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid workflowId or exportId"
+          },
+          "401": {
+            "description": "Unauthorized"
+          },
+          "404": {
+            "description": "Workflow or export not found"
+          }
+        }
       }
     },
     "/v4/workflows/{workflowId}/history": {
@@ -2664,6 +2964,181 @@
       }
     },
     "/v4/workflows": {
+      "post": {
+        "description": "Create a workflow using natural-language instructions, with optional schema guidance for structured extraction.",
+        "summary": "Create a new workflow",
+        "tags": [
+          "Workflows"
+        ],
+        "parameters": [],
+        "requestBody": {
+          "description": "Body",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/PublicWorkflowCreateRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "201",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CreateWorkflowResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "400",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "error": {
+                      "type": "boolean",
+                      "description": "Indicates an error occurred"
+                    },
+                    "message": {
+                      "type": "string",
+                      "description": "Error message"
+                    },
+                    "details": {
+                      "nullable": true,
+                      "description": "Additional error details (e.g., validation errors)"
+                    }
+                  },
+                  "required": [
+                    "error",
+                    "message"
+                  ]
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "401",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "error": {
+                      "type": "boolean",
+                      "description": "Indicates an error occurred"
+                    },
+                    "message": {
+                      "type": "string",
+                      "description": "Error message"
+                    },
+                    "details": {
+                      "nullable": true,
+                      "description": "Additional error details (e.g., validation errors)"
+                    }
+                  },
+                  "required": [
+                    "error",
+                    "message"
+                  ]
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "403",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "error": {
+                      "type": "boolean",
+                      "description": "Indicates an error occurred"
+                    },
+                    "message": {
+                      "type": "string",
+                      "description": "Error message"
+                    },
+                    "details": {
+                      "nullable": true,
+                      "description": "Additional error details (e.g., validation errors)"
+                    }
+                  },
+                  "required": [
+                    "error",
+                    "message"
+                  ]
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "500",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "error": {
+                      "type": "boolean",
+                      "description": "Indicates an error occurred"
+                    },
+                    "message": {
+                      "type": "string",
+                      "description": "Error message"
+                    },
+                    "details": {
+                      "nullable": true,
+                      "description": "Additional error details (e.g., validation errors)"
+                    }
+                  },
+                  "required": [
+                    "error",
+                    "message"
+                  ]
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "503",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "error": {
+                      "type": "boolean",
+                      "description": "Indicates an error occurred"
+                    },
+                    "message": {
+                      "type": "string",
+                      "description": "Error message"
+                    },
+                    "details": {
+                      "nullable": true,
+                      "description": "Additional error details (e.g., validation errors)"
+                    }
+                  },
+                  "required": [
+                    "error",
+                    "message"
+                  ]
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "ApiKeyAuth": []
+          }
+        ]
+      },
       "get": {
         "summary": "Get a list of workflows",
         "description": "Retrieves a list of workflows with pagination and search capabilities",
@@ -2710,12 +3185,13 @@
           {
             "name": "state",
             "in": "query",
-            "description": "Filter workflows by persisted workflow state. Use inSupport param to filter by support status.",
+            "description": "Filter workflows by persisted workflow state. DRAFT workflows are excluded from default results unless explicitly requested. Use inSupport param to filter by support status.",
             "required": false,
             "schema": {
               "type": "string",
               "enum": [
                 "ACTIVE",
+                "DRAFT",
                 "PAUSED",
                 "PREVIEW",
                 "QUEUED",
@@ -2751,10 +3227,12 @@
               "type": "string",
               "enum": [
                 "ACTIVE",
+                "DRAFT",
                 "PAUSED",
                 "PREVIEW",
                 "FAILED",
                 "RUNNING",
+                "VALIDATING",
                 "PENDING_START",
                 "COMPLIANCE_REVIEW",
                 "COMPLIANCE_REJECTED"
@@ -2882,6 +3360,7 @@
                             "type": "string",
                             "enum": [
                               "ACTIVE",
+                              "DRAFT",
                               "ERROR",
                               "PAUSED",
                               "NOT_SUPPORTED",
@@ -2892,12 +3371,13 @@
                               "SETUP",
                               "DELETED"
                             ],
-                            "description": "Persisted workflow lifecycle state. ACTIVE = workflow is enabled, PAUSED = user paused it, DELETED = soft deleted. Use inSupport param to filter by support status."
+                            "description": "Persisted workflow lifecycle state. DRAFT = workflow exists but setup is incomplete, ACTIVE = workflow is enabled, PAUSED = user paused it, DELETED = soft deleted. Use inSupport param to filter by support status."
                           },
                           "displayState": {
                             "type": "string",
                             "enum": [
                               "ACTIVE",
+                              "DRAFT",
                               "ERROR",
                               "PAUSED",
                               "NOT_SUPPORTED",
@@ -2906,12 +3386,13 @@
                               "SETUP",
                               "PENDING_START",
                               "RUNNING",
+                              "VALIDATING",
                               "FAILED",
                               "COMPLIANCE_REVIEW",
                               "COMPLIANCE_REJECTED",
                               "DELETED"
                             ],
-                            "description": "Computed status shown to users. Combines state + runState. ACTIVE = complete/scheduled, FAILED = last run failed, RUNNING = job in progress. Use this for dashboard filtering."
+                            "description": "Computed status shown to users. Combines state + runState. DRAFT = workflow exists but setup is incomplete, ACTIVE = complete/scheduled, RUNNING = job in progress, VALIDATING = run is held for QA review before data delivery, FAILED = last run failed. Use this for dashboard filtering."
                           },
                           "openSupportRequests": {
                             "type": "array",
@@ -2961,6 +3442,12 @@
                             "type": "string",
                             "format": "date-time",
                             "description": "When the last job started"
+                          },
+                          "estimatedFinishedAtUtc": {
+                            "type": "string",
+                            "format": "date-time",
+                            "nullable": true,
+                            "description": "Estimated UTC finish time for the active job, when available."
                           },
                           "jobId": {
                             "type": "string",
@@ -3540,48 +4027,11 @@
                     "type": "object",
                     "description": "Additional static data for the workflow"
                   },
-                  "maxPages": {
-                    "type": "integer",
-                    "minimum": 1,
-                    "maximum": 100000,
-                    "description": "Maximum pages to crawl (only for crawler workflows)"
-                  },
-                  "maxDepth": {
-                    "type": "integer",
-                    "minimum": 1,
-                    "maximum": 200,
-                    "description": "Maximum crawl depth (only for crawler workflows)"
-                  },
-                  "pathsFilterIn": {
-                    "type": "array",
-                    "items": {
-                      "type": "string"
-                    },
-                    "description": "Regex patterns to include specific paths (only for crawler workflows)"
-                  },
-                  "pathsFilterOut": {
-                    "type": "array",
-                    "items": {
-                      "type": "string"
-                    },
-                    "description": "Regex patterns to exclude specific paths (only for crawler workflows)"
-                  },
-                  "navigationMode": {
-                    "type": "string",
-                    "enum": [
-                      "single-page",
-                      "paginated-page",
-                      "page-and-detail",
-                      "agentic-navigation",
-                      "all-pages"
-                    ],
-                    "description": "Navigation mode for scraping. Switching between modes may require additional fields:\n- To 'agentic-navigation': requires userPrompt (10-5000 characters)\n- From 'agentic-navigation' to other modes: requires schema and entity\n- To 'all-pages': requires all URLs to have the same hostname\n"
-                  },
                   "userPrompt": {
                     "type": "string",
                     "minLength": 10,
                     "maxLength": 5000,
-                    "description": "User prompt for agentic navigation mode (required when switching to agentic-navigation)"
+                    "description": "Natural language instructions for the workflow."
                   }
                 }
               }
@@ -3601,6 +4051,10 @@
                     },
                     "message": {
                       "type": "string"
+                    },
+                    "deprecationNotice": {
+                      "type": "string",
+                      "description": "Optional deprecation notice for legacy navigation modes"
                     }
                   }
                 }
@@ -3901,6 +4355,61 @@
                 }
               }
             }
+          }
+        }
+      }
+    },
+    "/v4/workflows/{workflowId}/stop": {
+      "put": {
+        "summary": "Stop a running workflow",
+        "description": "Cancels the active run for the specified workflow. Queued and pending steps are removed from the pipeline; the in-flight step may still complete.",
+        "tags": [
+          "Workflows"
+        ],
+        "parameters": [
+          {
+            "name": "workflowId",
+            "in": "path",
+            "required": true,
+            "description": "The ID of the workflow to stop",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "security": [
+          {
+            "ApiKeyAuth": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Workflow stop initiated",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "message": {
+                      "type": "string",
+                      "example": "Workflow run is being stopped"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "No running job found"
+          },
+          "401": {
+            "description": "x-api-key missing or not authorized"
+          },
+          "404": {
+            "description": "Workflow not found"
+          },
+          "409": {
+            "description": "Workflow run cannot be stopped (e.g. during initial Shelly build)"
           }
         }
       }
@@ -4417,7 +4926,7 @@
                           },
                           "differences": {
                             "type": "array",
-                            "description": "Structured representation of changes with object-based diffing",
+                            "description": "Structured representation of changes with object-based diffing. List responses omit visualDiff metadata.",
                             "items": {
                               "type": "object",
                               "properties": {
@@ -4624,6 +5133,117 @@
                                 }
                               }
                             }
+                          },
+                          "visualDiff": {
+                            "type": "object",
+                            "nullable": true,
+                            "description": "Screenshot-space boxes for this diff item. Present only when row grounding is available.",
+                            "properties": {
+                              "current": {
+                                "type": "object",
+                                "description": "Boxes on the current change screenshot for added or changed rows.",
+                                "properties": {
+                                  "url": {
+                                    "type": "string"
+                                  },
+                                  "width": {
+                                    "type": "number"
+                                  },
+                                  "height": {
+                                    "type": "number"
+                                  },
+                                  "rowBox": {
+                                    "type": "object",
+                                    "properties": {
+                                      "x": {
+                                        "type": "number"
+                                      },
+                                      "y": {
+                                        "type": "number"
+                                      },
+                                      "width": {
+                                        "type": "number"
+                                      },
+                                      "height": {
+                                        "type": "number"
+                                      }
+                                    }
+                                  },
+                                  "fieldBoxes": {
+                                    "type": "object",
+                                    "additionalProperties": {
+                                      "type": "object",
+                                      "properties": {
+                                        "x": {
+                                          "type": "number"
+                                        },
+                                        "y": {
+                                          "type": "number"
+                                        },
+                                        "width": {
+                                          "type": "number"
+                                        },
+                                        "height": {
+                                          "type": "number"
+                                        }
+                                      }
+                                    }
+                                  }
+                                }
+                              },
+                              "previous": {
+                                "type": "object",
+                                "description": "Boxes on the previous workflow job screenshot for removed or changed rows.",
+                                "properties": {
+                                  "url": {
+                                    "type": "string"
+                                  },
+                                  "width": {
+                                    "type": "number"
+                                  },
+                                  "height": {
+                                    "type": "number"
+                                  },
+                                  "rowBox": {
+                                    "type": "object",
+                                    "properties": {
+                                      "x": {
+                                        "type": "number"
+                                      },
+                                      "y": {
+                                        "type": "number"
+                                      },
+                                      "width": {
+                                        "type": "number"
+                                      },
+                                      "height": {
+                                        "type": "number"
+                                      }
+                                    }
+                                  },
+                                  "fieldBoxes": {
+                                    "type": "object",
+                                    "additionalProperties": {
+                                      "type": "object",
+                                      "properties": {
+                                        "x": {
+                                          "type": "number"
+                                        },
+                                        "y": {
+                                          "type": "number"
+                                        },
+                                        "width": {
+                                          "type": "number"
+                                        },
+                                        "height": {
+                                          "type": "number"
+                                        }
+                                      }
+                                    }
+                                  }
+                                }
+                              }
+                            }
                           }
                         }
                       }
@@ -4640,6 +5260,11 @@
                     "screenshotUrl": {
                       "type": "string",
                       "description": "URL of the screenshot taken when the change was detected"
+                    },
+                    "previousJobScreenshotUrl": {
+                      "type": "string",
+                      "nullable": true,
+                      "description": "Screenshot URL from the previous workflow job used by visualDiff.previous boxes."
                     },
                     "createdAt": {
                       "type": "string",
@@ -6324,6 +6949,24 @@
                             "type": "string",
                             "format": "date-time",
                             "description": "Timestamp when the operation was performed"
+                          },
+                          "requestSource": {
+                            "type": "string",
+                            "nullable": true,
+                            "enum": [
+                              "UI",
+                              "API",
+                              "SDK",
+                              "MCP",
+                              "CLI",
+                              "SYSTEM"
+                            ],
+                            "description": "Channel that originated the change"
+                          },
+                          "authMethod": {
+                            "type": "string",
+                            "nullable": true,
+                            "description": "Authentication method used (e.g. JWT_TOKEN, PERSONAL_API_KEY, TEAM_API_KEY, SYSTEM)"
                           }
                         }
                       }
@@ -6504,6 +7147,83 @@
         }
       }
     },
+    "/v5/workspaces/{workspaceId}/observability": {
+      "get": {
+        "summary": "Get observability uptime metrics for a workspace",
+        "description": "Returns per-workflow uptime (successful runs / total runs) aggregated daily.",
+        "tags": [
+          "Workspaces"
+        ],
+        "parameters": [
+          {
+            "name": "workspaceId",
+            "in": "path",
+            "required": true,
+            "description": "Workspace ID (team or organization)",
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
+          {
+            "name": "days",
+            "in": "query",
+            "required": false,
+            "description": "Time range for observability data (30, 90, or 365 days)",
+            "schema": {
+              "type": "string",
+              "enum": [
+                30,
+                90,
+                365
+              ],
+              "default": 30
+            }
+          },
+          {
+            "name": "x-api-key",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "Authorization",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "security": [
+          {
+            "ApiKeyAuth": []
+          },
+          {
+            "BearerAuth": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Observability data retrieved successfully"
+          },
+          "400": {
+            "description": "Bad request - invalid parameters"
+          },
+          "401": {
+            "description": "Unauthorized"
+          },
+          "404": {
+            "description": "Workspace not found"
+          },
+          "500": {
+            "description": "Internal server error"
+          }
+        }
+      }
+    },
     "/v5/workspaces/{workspaceId}/quotas": {
       "get": {
         "summary": "Get workspace quotas and usage (supports teams and organizations)",
@@ -6590,11 +7310,35 @@
                           "properties": {
                             "currentActiveWorkflows": {
                               "type": "integer",
-                              "description": "Current number of active workflows"
+                              "description": "Current number of workflows in ACTIVE state (legacy count)"
+                            },
+                            "currentApprovedWorkflows": {
+                              "type": "integer",
+                              "description": "Workflows that have at least one successful non-preview run AND are alive (or were deleted within the current billing period). KAD-6720."
                             },
                             "currentExtractedRows": {
                               "type": "integer",
                               "description": "Current number of extracted rows"
+                            }
+                          }
+                        },
+                        "billingPeriod": {
+                          "type": "object",
+                          "description": "The billing period the used-quota counts apply to. Enterprise uses the org's renewal_date (auto-rolled forward when stale); self-service uses the team owner's Stripe period; falls back to trailing 365d when neither is set.",
+                          "properties": {
+                            "start": {
+                              "type": "string",
+                              "format": "date-time"
+                            },
+                            "end": {
+                              "type": "string",
+                              "format": "date-time"
+                            },
+                            "renewalDate": {
+                              "type": "string",
+                              "format": "date",
+                              "nullable": true,
+                              "description": "The org's contractual renewal date (YYYY-MM-DD), or null if not set."
                             }
                           }
                         }
@@ -12626,7 +13370,7 @@
     },
     "/v4/templates/{templateId}/workflows": {
       "get": {
-        "description": "List all workflows created from this template with outdated version detection",
+        "description": "List all workflows created from this template (isOutdated flag is informational-only in v1 — applyUpdate is disabled)",
         "summary": "List template workflows",
         "tags": [
           "Templates"
@@ -12897,6 +13641,34 @@
                 }
               }
             }
+          },
+          "501": {
+            "description": "501",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "error": {
+                      "type": "boolean",
+                      "description": "Indicates an error occurred"
+                    },
+                    "message": {
+                      "type": "string",
+                      "description": "Error message"
+                    },
+                    "details": {
+                      "nullable": true,
+                      "description": "Additional error details (e.g., validation errors)"
+                    }
+                  },
+                  "required": [
+                    "error",
+                    "message"
+                  ]
+                }
+              }
+            }
           }
         },
         "security": [
@@ -13067,6 +13839,34 @@
                 }
               }
             }
+          },
+          "501": {
+            "description": "501",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "error": {
+                      "type": "boolean",
+                      "description": "Indicates an error occurred"
+                    },
+                    "message": {
+                      "type": "string",
+                      "description": "Error message"
+                    },
+                    "details": {
+                      "nullable": true,
+                      "description": "Additional error details (e.g., validation errors)"
+                    }
+                  },
+                  "required": [
+                    "error",
+                    "message"
+                  ]
+                }
+              }
+            }
           }
         },
         "security": [
@@ -13078,7 +13878,7 @@
     },
     "/v4/templates/from-workflow": {
       "post": {
-        "description": "Extract a workflow's prompt, schema, validation rules, and notifications into a new template or as a new version of an existing template. Auto-links the workflow.",
+        "description": "Extract a workflow's prompt, schema, validation rules, and notifications into a new template or as a new version of an existing template. The source workflow is not modified (v1: no auto-link).",
         "summary": "Save workflow as template",
         "tags": [
           "Templates"
@@ -13379,183 +14179,6 @@
           },
           "500": {
             "description": "500",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "type": "object",
-                  "properties": {
-                    "error": {
-                      "type": "boolean",
-                      "description": "Indicates an error occurred"
-                    },
-                    "message": {
-                      "type": "string",
-                      "description": "Error message"
-                    },
-                    "details": {
-                      "nullable": true,
-                      "description": "Additional error details (e.g., validation errors)"
-                    }
-                  },
-                  "required": [
-                    "error",
-                    "message"
-                  ]
-                }
-              }
-            }
-          }
-        },
-        "security": [
-          {
-            "ApiKeyAuth": []
-          }
-        ]
-      }
-    },
-    "/v4/workflows/": {
-      "post": {
-        "description": "Create a new workflow with schema, custom fields, or agentic navigation mode",
-        "summary": "Create a new workflow",
-        "tags": [
-          "Workflows"
-        ],
-        "parameters": [],
-        "requestBody": {
-          "description": "Body",
-          "content": {
-            "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/CreateWorkflowBody"
-              }
-            }
-          }
-        },
-        "responses": {
-          "201": {
-            "description": "201",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/CreateWorkflowResponse"
-                }
-              }
-            }
-          },
-          "400": {
-            "description": "400",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "type": "object",
-                  "properties": {
-                    "error": {
-                      "type": "boolean",
-                      "description": "Indicates an error occurred"
-                    },
-                    "message": {
-                      "type": "string",
-                      "description": "Error message"
-                    },
-                    "details": {
-                      "nullable": true,
-                      "description": "Additional error details (e.g., validation errors)"
-                    }
-                  },
-                  "required": [
-                    "error",
-                    "message"
-                  ]
-                }
-              }
-            }
-          },
-          "401": {
-            "description": "401",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "type": "object",
-                  "properties": {
-                    "error": {
-                      "type": "boolean",
-                      "description": "Indicates an error occurred"
-                    },
-                    "message": {
-                      "type": "string",
-                      "description": "Error message"
-                    },
-                    "details": {
-                      "nullable": true,
-                      "description": "Additional error details (e.g., validation errors)"
-                    }
-                  },
-                  "required": [
-                    "error",
-                    "message"
-                  ]
-                }
-              }
-            }
-          },
-          "403": {
-            "description": "403",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "type": "object",
-                  "properties": {
-                    "error": {
-                      "type": "boolean",
-                      "description": "Indicates an error occurred"
-                    },
-                    "message": {
-                      "type": "string",
-                      "description": "Error message"
-                    },
-                    "details": {
-                      "nullable": true,
-                      "description": "Additional error details (e.g., validation errors)"
-                    }
-                  },
-                  "required": [
-                    "error",
-                    "message"
-                  ]
-                }
-              }
-            }
-          },
-          "500": {
-            "description": "500",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "type": "object",
-                  "properties": {
-                    "error": {
-                      "type": "boolean",
-                      "description": "Indicates an error occurred"
-                    },
-                    "message": {
-                      "type": "string",
-                      "description": "Error message"
-                    },
-                    "details": {
-                      "nullable": true,
-                      "description": "Additional error details (e.g., validation errors)"
-                    }
-                  },
-                  "required": [
-                    "error",
-                    "message"
-                  ]
-                }
-              }
-            }
-          },
-          "503": {
-            "description": "503",
             "content": {
               "application/json": {
                 "schema": {
@@ -15185,7 +15808,7 @@
             "type": "string",
             "format": "uri",
             "description": "Slack webhook URL (optional)",
-            "example": "https://hooks.slack.com/services/T00000000/B00000000/XXXXXXXXXXXXXXXXXXXXXXXX"
+            "example": "https://example.com/slack-webhook"
           },
           "slackChannelId": {
             "type": "string",
@@ -18562,8 +19185,8 @@
         "properties": {
           "name": {
             "type": "string",
-            "pattern": "^[a-z][a-zA-Z0-9]*$",
-            "description": "Field name in camelCase (e.g., productName, reviewCount)"
+            "pattern": "^[a-zA-Z][a-zA-Z0-9_]*$",
+            "description": "Field name (e.g., productName, review_count)"
           },
           "description": {
             "type": "string",
@@ -18620,51 +19243,13 @@
         "title": "DataField",
         "description": "Extract and structure specific data from web pages with typed values (e.g., product prices, article titles, dates). Use this for actual data you want to capture."
       },
-      "RawContentField": {
-        "type": "object",
-        "properties": {
-          "name": {
-            "type": "string",
-            "pattern": "^[a-z][a-zA-Z0-9]*$",
-            "description": "Field name in camelCase (e.g., rawHtml, pageContent)"
-          },
-          "description": {
-            "type": "string",
-            "minLength": 1,
-            "description": "Optional field description"
-          },
-          "fieldType": {
-            "type": "string",
-            "enum": [
-              "METADATA"
-            ]
-          },
-          "metadataKey": {
-            "type": "string",
-            "enum": [
-              "HTML",
-              "MARKDOWN",
-              "PAGE_URL"
-            ],
-            "description": "Key of the metadata field (html or markdown)"
-          }
-        },
-        "required": [
-          "name",
-          "fieldType",
-          "metadataKey"
-        ],
-        "additionalProperties": true,
-        "title": "RawContentField",
-        "description": "Capture raw page content (HTML or Markdown) for further processing. Use this when you need the unstructured content for post-processing or AI analysis."
-      },
       "ClassificationField": {
         "type": "object",
         "properties": {
           "name": {
             "type": "string",
-            "pattern": "^[a-z][a-zA-Z0-9]*$",
-            "description": "Field name in camelCase (e.g., category, productType)"
+            "pattern": "^[a-zA-Z][a-zA-Z0-9_]*$",
+            "description": "Field name (e.g., category, product_type)"
           },
           "description": {
             "type": "string",
@@ -18708,6 +19293,55 @@
         "title": "ClassificationField",
         "description": "Categorize extracted data into predefined labels. Use this when you want the system to classify content into specific categories you define."
       },
+      "TransformOutputField": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string",
+            "pattern": "^[a-zA-Z][a-zA-Z0-9_]*$",
+            "description": "Field name produced by a transformation step"
+          },
+          "description": {
+            "type": "string",
+            "minLength": 1,
+            "description": "Optional field description"
+          },
+          "fieldType": {
+            "type": "string",
+            "enum": [
+              "TRANSFORM_OUTPUT"
+            ]
+          },
+          "dataType": {
+            "type": "string",
+            "description": "Data type produced by the transformation step"
+          },
+          "example": {
+            "oneOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "array",
+                "items": {
+                  "type": "string"
+                }
+              }
+            ]
+          },
+          "isKey": {
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "name",
+          "fieldType",
+          "dataType"
+        ],
+        "additionalProperties": true,
+        "title": "TransformOutputField",
+        "description": "Field appended to workflow.config.schema by a transformation step. Excluded from customer-input and schema-drift hashes."
+      },
       "SchemaResponse": {
         "type": "object",
         "properties": {
@@ -18735,10 +19369,43 @@
                   "$ref": "#/components/schemas/DataField"
                 },
                 {
-                  "$ref": "#/components/schemas/RawContentField"
+                  "type": "object",
+                  "properties": {
+                    "name": {
+                      "type": "string",
+                      "pattern": "^[a-zA-Z][a-zA-Z0-9_]*$"
+                    },
+                    "description": {
+                      "type": "string",
+                      "minLength": 1
+                    },
+                    "fieldType": {
+                      "type": "string",
+                      "enum": [
+                        "METADATA"
+                      ]
+                    },
+                    "metadataKey": {
+                      "type": "string",
+                      "enum": [
+                        "HTML",
+                        "MARKDOWN",
+                        "PAGE_URL"
+                      ]
+                    }
+                  },
+                  "required": [
+                    "name",
+                    "fieldType",
+                    "metadataKey"
+                  ],
+                  "additionalProperties": true
                 },
                 {
                   "$ref": "#/components/schemas/ClassificationField"
+                },
+                {
+                  "$ref": "#/components/schemas/TransformOutputField"
                 }
               ]
             },
@@ -18836,10 +19503,43 @@
                       "$ref": "#/components/schemas/DataField"
                     },
                     {
-                      "$ref": "#/components/schemas/RawContentField"
+                      "type": "object",
+                      "properties": {
+                        "name": {
+                          "type": "string",
+                          "pattern": "^[a-zA-Z][a-zA-Z0-9_]*$"
+                        },
+                        "description": {
+                          "type": "string",
+                          "minLength": 1
+                        },
+                        "fieldType": {
+                          "type": "string",
+                          "enum": [
+                            "METADATA"
+                          ]
+                        },
+                        "metadataKey": {
+                          "type": "string",
+                          "enum": [
+                            "HTML",
+                            "MARKDOWN",
+                            "PAGE_URL"
+                          ]
+                        }
+                      },
+                      "required": [
+                        "name",
+                        "fieldType",
+                        "metadataKey"
+                      ],
+                      "additionalProperties": true
                     },
                     {
                       "$ref": "#/components/schemas/ClassificationField"
+                    },
+                    {
+                      "$ref": "#/components/schemas/TransformOutputField"
                     }
                   ]
                 },
@@ -18908,15 +19608,12 @@
                   "$ref": "#/components/schemas/DataField"
                 },
                 {
-                  "$ref": "#/components/schemas/RawContentField"
-                },
-                {
                   "$ref": "#/components/schemas/ClassificationField"
                 }
               ]
             },
             "minItems": 1,
-            "description": "Schema fields for extraction - choose from Data Field (typed data), Raw Content Field (HTML/Markdown), or Classification Field (predefined categories)"
+            "description": "Schema fields for extraction - choose from Data Field (typed data) or Classification Field"
           }
         },
         "required": [
@@ -18993,9 +19690,6 @@
                   "$ref": "#/components/schemas/DataField"
                 },
                 {
-                  "$ref": "#/components/schemas/RawContentField"
-                },
-                {
                   "$ref": "#/components/schemas/ClassificationField"
                 }
               ]
@@ -19051,10 +19745,43 @@
                       "$ref": "#/components/schemas/DataField"
                     },
                     {
-                      "$ref": "#/components/schemas/RawContentField"
+                      "type": "object",
+                      "properties": {
+                        "name": {
+                          "type": "string",
+                          "pattern": "^[a-zA-Z][a-zA-Z0-9_]*$"
+                        },
+                        "description": {
+                          "type": "string",
+                          "minLength": 1
+                        },
+                        "fieldType": {
+                          "type": "string",
+                          "enum": [
+                            "METADATA"
+                          ]
+                        },
+                        "metadataKey": {
+                          "type": "string",
+                          "enum": [
+                            "HTML",
+                            "MARKDOWN",
+                            "PAGE_URL"
+                          ]
+                        }
+                      },
+                      "required": [
+                        "name",
+                        "fieldType",
+                        "metadataKey"
+                      ],
+                      "additionalProperties": true
                     },
                     {
                       "$ref": "#/components/schemas/ClassificationField"
+                    },
+                    {
+                      "$ref": "#/components/schemas/TransformOutputField"
                     }
                   ]
                 },
@@ -19164,10 +19891,6 @@
             "type": "boolean",
             "description": "Whether the latest version has a schema"
           },
-          "hasValidation": {
-            "type": "boolean",
-            "description": "Whether the latest version has validation rules"
-          },
           "hasNotifications": {
             "type": "boolean",
             "description": "Whether the latest version has notification settings"
@@ -19224,351 +19947,6 @@
         "title": "TemplateListResponse",
         "description": "Response wrapper for list of templates"
       },
-      "TemplateValidationRule": {
-        "type": "object",
-        "properties": {
-          "name": {
-            "type": "string",
-            "minLength": 1,
-            "maxLength": 255,
-            "description": "Rule name"
-          },
-          "description": {
-            "type": "string",
-            "description": "Rule description"
-          },
-          "ruleType": {
-            "type": "string",
-            "enum": [
-              "regex",
-              "custom_sql",
-              "llm"
-            ],
-            "description": "Type of validation rule"
-          },
-          "targetColumns": {
-            "type": "array",
-            "items": {
-              "type": "string"
-            },
-            "description": "Columns this rule targets"
-          },
-          "parameters": {
-            "type": "object",
-            "additionalProperties": {
-              "nullable": true
-            },
-            "description": "Rule parameters (e.g., sql, pattern)"
-          },
-          "status": {
-            "default": "enabled",
-            "type": "string",
-            "enum": [
-              "preview",
-              "enabled",
-              "disabled"
-            ],
-            "description": "Initial rule status"
-          },
-          "metadata": {
-            "type": "object",
-            "additionalProperties": {
-              "nullable": true
-            },
-            "description": "Additional metadata"
-          }
-        },
-        "required": [
-          "name",
-          "ruleType",
-          "parameters"
-        ],
-        "title": "TemplateValidationRule",
-        "description": "A data validation rule to be cloned into workflows"
-      },
-      "TemplateVersionDetailResponse": {
-        "type": "object",
-        "properties": {
-          "id": {
-            "type": "string",
-            "format": "uuid",
-            "description": "Version row ID"
-          },
-          "templateId": {
-            "type": "string",
-            "format": "uuid",
-            "description": "Parent template ID"
-          },
-          "version": {
-            "type": "number",
-            "description": "Version number"
-          },
-          "prompt": {
-            "type": "string",
-            "description": "User prompt",
-            "nullable": true
-          },
-          "schemaId": {
-            "type": "string",
-            "format": "uuid",
-            "description": "Referenced data_schemas ID",
-            "nullable": true
-          },
-          "schemaFields": {
-            "type": "array",
-            "items": {
-              "type": "object",
-              "properties": {
-                "name": {
-                  "type": "string",
-                  "description": "Field name"
-                },
-                "description": {
-                  "type": "string",
-                  "description": "Field description"
-                },
-                "fieldType": {
-                  "type": "string",
-                  "description": "Field type (SCHEMA, etc.)"
-                },
-                "example": {
-                  "type": "string",
-                  "description": "Example value"
-                },
-                "dataType": {
-                  "type": "string",
-                  "description": "Data type (STRING, NUMBER, DATE, LINK, etc.)"
-                },
-                "isKey": {
-                  "type": "boolean",
-                  "description": "Whether the field is a key field"
-                }
-              },
-              "required": [
-                "name"
-              ]
-            },
-            "nullable": true,
-            "description": "Fields from the linked schema"
-          },
-          "dataValidation": {
-            "type": "object",
-            "properties": {
-              "config": {
-                "type": "object",
-                "properties": {
-                  "enabled": {
-                    "type": "boolean",
-                    "description": "Whether data validation is enabled"
-                  },
-                  "alerting": {
-                    "type": "object",
-                    "properties": {
-                      "system": {
-                        "type": "object",
-                        "properties": {
-                          "enabled": {
-                            "type": "boolean"
-                          },
-                          "threshold": {
-                            "default": 1,
-                            "type": "number"
-                          }
-                        },
-                        "required": [
-                          "enabled"
-                        ],
-                        "description": "System alerting configuration"
-                      },
-                      "user": {
-                        "type": "object",
-                        "properties": {
-                          "enabled": {
-                            "type": "boolean"
-                          },
-                          "threshold": {
-                            "default": 1,
-                            "type": "number"
-                          }
-                        },
-                        "required": [
-                          "enabled"
-                        ],
-                        "description": "User alerting configuration"
-                      }
-                    },
-                    "description": "Alerting configuration"
-                  }
-                },
-                "required": [
-                  "enabled"
-                ],
-                "description": "Data validation config to copy into workflow.config.dataValidation"
-              },
-              "rules": {
-                "type": "array",
-                "items": {
-                  "$ref": "#/components/schemas/TemplateValidationRule"
-                },
-                "description": "Validation rules to clone as data_validation.validation_rules rows"
-              }
-            },
-            "description": "Data validation configuration for a template version",
-            "nullable": true
-          },
-          "notificationSettings": {
-            "type": "array",
-            "items": {
-              "type": "object",
-              "properties": {
-                "id": {
-                  "type": "string",
-                  "format": "uuid",
-                  "description": "Notification configuration ID"
-                },
-                "eventType": {
-                  "type": "string",
-                  "description": "Event type (e.g., workflow_finished, error)"
-                },
-                "eventConfiguration": {
-                  "type": "object",
-                  "additionalProperties": {
-                    "nullable": true
-                  },
-                  "description": "Event-specific config"
-                },
-                "enabled": {
-                  "type": "boolean",
-                  "description": "Whether this notification is enabled"
-                },
-                "channels": {
-                  "type": "array",
-                  "items": {
-                    "type": "object",
-                    "properties": {
-                      "channelId": {
-                        "type": "string",
-                        "format": "uuid"
-                      },
-                      "channelName": {
-                        "type": "string"
-                      },
-                      "channelType": {
-                        "type": "string"
-                      }
-                    },
-                    "required": [
-                      "channelId",
-                      "channelName",
-                      "channelType"
-                    ]
-                  },
-                  "description": "Linked notification channels"
-                }
-              },
-              "required": [
-                "id",
-                "eventType",
-                "eventConfiguration",
-                "enabled",
-                "channels"
-              ]
-            }
-          },
-          "validationRules": {
-            "type": "array",
-            "items": {
-              "type": "object",
-              "properties": {
-                "name": {
-                  "type": "string",
-                  "minLength": 1,
-                  "maxLength": 255,
-                  "description": "Rule name"
-                },
-                "description": {
-                  "type": "string",
-                  "description": "Rule description"
-                },
-                "ruleType": {
-                  "type": "string",
-                  "enum": [
-                    "regex",
-                    "custom_sql",
-                    "llm"
-                  ],
-                  "description": "Type of validation rule"
-                },
-                "targetColumns": {
-                  "type": "array",
-                  "items": {
-                    "type": "string"
-                  },
-                  "description": "Columns this rule targets"
-                },
-                "parameters": {
-                  "type": "object",
-                  "additionalProperties": {
-                    "nullable": true
-                  },
-                  "description": "Rule parameters (e.g., sql, pattern)"
-                },
-                "status": {
-                  "default": "enabled",
-                  "type": "string",
-                  "enum": [
-                    "preview",
-                    "enabled",
-                    "disabled"
-                  ],
-                  "description": "Initial rule status"
-                },
-                "metadata": {
-                  "type": "object",
-                  "additionalProperties": {
-                    "nullable": true
-                  },
-                  "description": "Additional metadata"
-                },
-                "id": {
-                  "type": "string",
-                  "format": "uuid"
-                }
-              },
-              "required": [
-                "name",
-                "ruleType",
-                "parameters",
-                "id"
-              ]
-            }
-          },
-          "createdAt": {
-            "type": "string",
-            "description": "Creation timestamp"
-          },
-          "schemaName": {
-            "type": "string",
-            "nullable": true,
-            "description": "Name of the linked schema"
-          },
-          "schemaEntity": {
-            "type": "string",
-            "nullable": true,
-            "description": "Entity name from the linked schema"
-          }
-        },
-        "required": [
-          "id",
-          "templateId",
-          "version",
-          "prompt",
-          "schemaId",
-          "createdAt"
-        ],
-        "title": "TemplateVersionDetailResponse",
-        "description": "Template version with schema details"
-      },
       "TemplateDetailResponseBody": {
         "type": "object",
         "properties": {
@@ -19618,10 +19996,6 @@
                 "type": "boolean",
                 "description": "Whether the latest version has a schema"
               },
-              "hasValidation": {
-                "type": "boolean",
-                "description": "Whether the latest version has validation rules"
-              },
               "hasNotifications": {
                 "type": "boolean",
                 "description": "Whether the latest version has notification settings"
@@ -19642,7 +20016,152 @@
               "versions": {
                 "type": "array",
                 "items": {
-                  "$ref": "#/components/schemas/TemplateVersionDetailResponse"
+                  "type": "object",
+                  "properties": {
+                    "id": {
+                      "type": "string",
+                      "format": "uuid",
+                      "description": "Version row ID"
+                    },
+                    "templateId": {
+                      "type": "string",
+                      "format": "uuid",
+                      "description": "Parent template ID"
+                    },
+                    "version": {
+                      "type": "number",
+                      "description": "Version number"
+                    },
+                    "prompt": {
+                      "type": "string",
+                      "description": "User prompt",
+                      "nullable": true
+                    },
+                    "schemaId": {
+                      "type": "string",
+                      "format": "uuid",
+                      "description": "Referenced data_schemas ID",
+                      "nullable": true
+                    },
+                    "schemaFields": {
+                      "type": "array",
+                      "items": {
+                        "type": "object",
+                        "properties": {
+                          "name": {
+                            "type": "string",
+                            "description": "Field name"
+                          },
+                          "description": {
+                            "type": "string",
+                            "description": "Field description"
+                          },
+                          "fieldType": {
+                            "type": "string",
+                            "description": "Field type (SCHEMA, etc.)"
+                          },
+                          "example": {
+                            "type": "string",
+                            "description": "Example value"
+                          },
+                          "dataType": {
+                            "type": "string",
+                            "description": "Data type (STRING, NUMBER, DATE, LINK, etc.)"
+                          },
+                          "isKey": {
+                            "type": "boolean",
+                            "description": "Whether the field is a key field"
+                          }
+                        },
+                        "required": [
+                          "name"
+                        ]
+                      },
+                      "nullable": true,
+                      "description": "Resolved schema fields from data_schemas"
+                    },
+                    "notifications": {
+                      "type": "array",
+                      "items": {
+                        "type": "object",
+                        "properties": {
+                          "id": {
+                            "type": "string",
+                            "format": "uuid",
+                            "description": "Notification configuration ID"
+                          },
+                          "eventType": {
+                            "type": "string",
+                            "description": "Event type (e.g., workflow_finished, error)"
+                          },
+                          "eventConfiguration": {
+                            "type": "object",
+                            "additionalProperties": {
+                              "nullable": true
+                            },
+                            "description": "Event-specific config"
+                          },
+                          "enabled": {
+                            "type": "boolean",
+                            "description": "Whether this notification is enabled"
+                          },
+                          "channels": {
+                            "type": "array",
+                            "items": {
+                              "type": "object",
+                              "properties": {
+                                "channelId": {
+                                  "type": "string",
+                                  "format": "uuid"
+                                },
+                                "channelName": {
+                                  "type": "string"
+                                },
+                                "channelType": {
+                                  "type": "string"
+                                }
+                              },
+                              "required": [
+                                "channelId",
+                                "channelName",
+                                "channelType"
+                              ]
+                            },
+                            "description": "Linked notification channels"
+                          }
+                        },
+                        "required": [
+                          "id",
+                          "eventType",
+                          "eventConfiguration",
+                          "enabled",
+                          "channels"
+                        ]
+                      }
+                    },
+                    "createdAt": {
+                      "type": "string",
+                      "description": "Creation timestamp"
+                    },
+                    "schemaName": {
+                      "type": "string",
+                      "nullable": true,
+                      "description": "Name of the linked schema"
+                    },
+                    "schemaEntity": {
+                      "type": "string",
+                      "nullable": true,
+                      "description": "Entity name from the linked schema"
+                    }
+                  },
+                  "required": [
+                    "id",
+                    "templateId",
+                    "version",
+                    "prompt",
+                    "schemaId",
+                    "createdAt"
+                  ]
                 },
                 "description": "All published versions"
               }
@@ -19744,10 +20263,6 @@
               "hasSchema": {
                 "type": "boolean",
                 "description": "Whether the latest version has a schema"
-              },
-              "hasValidation": {
-                "type": "boolean",
-                "description": "Whether the latest version has validation rules"
               },
               "hasNotifications": {
                 "type": "boolean",
@@ -19862,10 +20377,6 @@
               "hasSchema": {
                 "type": "boolean",
                 "description": "Whether the latest version has a schema"
-              },
-              "hasValidation": {
-                "type": "boolean",
-                "description": "Whether the latest version has validation rules"
               },
               "hasNotifications": {
                 "type": "boolean",
@@ -19987,70 +20498,6 @@
           "schemaEntity": {
             "type": "string",
             "description": "Entity name for the inline schema"
-          },
-          "dataValidation": {
-            "type": "object",
-            "properties": {
-              "config": {
-                "type": "object",
-                "properties": {
-                  "enabled": {
-                    "type": "boolean",
-                    "description": "Whether data validation is enabled"
-                  },
-                  "alerting": {
-                    "type": "object",
-                    "properties": {
-                      "system": {
-                        "type": "object",
-                        "properties": {
-                          "enabled": {
-                            "type": "boolean"
-                          },
-                          "threshold": {
-                            "default": 1,
-                            "type": "number"
-                          }
-                        },
-                        "required": [
-                          "enabled"
-                        ],
-                        "description": "System alerting configuration"
-                      },
-                      "user": {
-                        "type": "object",
-                        "properties": {
-                          "enabled": {
-                            "type": "boolean"
-                          },
-                          "threshold": {
-                            "default": 1,
-                            "type": "number"
-                          }
-                        },
-                        "required": [
-                          "enabled"
-                        ],
-                        "description": "User alerting configuration"
-                      }
-                    },
-                    "description": "Alerting configuration"
-                  }
-                },
-                "required": [
-                  "enabled"
-                ],
-                "description": "Data validation config to copy into workflow.config.dataValidation"
-              },
-              "rules": {
-                "type": "array",
-                "items": {
-                  "$ref": "#/components/schemas/TemplateValidationRule"
-                },
-                "description": "Validation rules to clone as data_validation.validation_rules rows"
-              }
-            },
-            "description": "Data validation rules and config"
           },
           "notifications": {
             "type": "array",
@@ -20184,72 +20631,7 @@
                 "nullable": true,
                 "description": "Resolved schema fields from data_schemas"
               },
-              "dataValidation": {
-                "type": "object",
-                "properties": {
-                  "config": {
-                    "type": "object",
-                    "properties": {
-                      "enabled": {
-                        "type": "boolean",
-                        "description": "Whether data validation is enabled"
-                      },
-                      "alerting": {
-                        "type": "object",
-                        "properties": {
-                          "system": {
-                            "type": "object",
-                            "properties": {
-                              "enabled": {
-                                "type": "boolean"
-                              },
-                              "threshold": {
-                                "default": 1,
-                                "type": "number"
-                              }
-                            },
-                            "required": [
-                              "enabled"
-                            ],
-                            "description": "System alerting configuration"
-                          },
-                          "user": {
-                            "type": "object",
-                            "properties": {
-                              "enabled": {
-                                "type": "boolean"
-                              },
-                              "threshold": {
-                                "default": 1,
-                                "type": "number"
-                              }
-                            },
-                            "required": [
-                              "enabled"
-                            ],
-                            "description": "User alerting configuration"
-                          }
-                        },
-                        "description": "Alerting configuration"
-                      }
-                    },
-                    "required": [
-                      "enabled"
-                    ],
-                    "description": "Data validation config to copy into workflow.config.dataValidation"
-                  },
-                  "rules": {
-                    "type": "array",
-                    "items": {
-                      "$ref": "#/components/schemas/TemplateValidationRule"
-                    },
-                    "description": "Validation rules to clone as data_validation.validation_rules rows"
-                  }
-                },
-                "description": "Data validation configuration for a template version",
-                "nullable": true
-              },
-              "notificationSettings": {
+              "notifications": {
                 "type": "array",
                 "items": {
                   "type": "object",
@@ -20305,74 +20687,6 @@
                     "eventConfiguration",
                     "enabled",
                     "channels"
-                  ]
-                }
-              },
-              "validationRules": {
-                "type": "array",
-                "items": {
-                  "type": "object",
-                  "properties": {
-                    "name": {
-                      "type": "string",
-                      "minLength": 1,
-                      "maxLength": 255,
-                      "description": "Rule name"
-                    },
-                    "description": {
-                      "type": "string",
-                      "description": "Rule description"
-                    },
-                    "ruleType": {
-                      "type": "string",
-                      "enum": [
-                        "regex",
-                        "custom_sql",
-                        "llm"
-                      ],
-                      "description": "Type of validation rule"
-                    },
-                    "targetColumns": {
-                      "type": "array",
-                      "items": {
-                        "type": "string"
-                      },
-                      "description": "Columns this rule targets"
-                    },
-                    "parameters": {
-                      "type": "object",
-                      "additionalProperties": {
-                        "nullable": true
-                      },
-                      "description": "Rule parameters (e.g., sql, pattern)"
-                    },
-                    "status": {
-                      "default": "enabled",
-                      "type": "string",
-                      "enum": [
-                        "preview",
-                        "enabled",
-                        "disabled"
-                      ],
-                      "description": "Initial rule status"
-                    },
-                    "metadata": {
-                      "type": "object",
-                      "additionalProperties": {
-                        "nullable": true
-                      },
-                      "description": "Additional metadata"
-                    },
-                    "id": {
-                      "type": "string",
-                      "format": "uuid"
-                    }
-                  },
-                  "required": [
-                    "name",
-                    "ruleType",
-                    "parameters",
-                    "id"
                   ]
                 }
               },
@@ -20482,13 +20796,23 @@
                 "isOutdated": {
                   "type": "boolean",
                   "description": "Whether a newer template version exists"
+                },
+                "state": {
+                  "type": "string",
+                  "description": "Current workflow state"
+                },
+                "isRealTime": {
+                  "type": "boolean",
+                  "description": "Whether this is a real-time monitor workflow"
                 }
               },
               "required": [
                 "workflowId",
                 "workflowName",
                 "templateVersion",
-                "isOutdated"
+                "isOutdated",
+                "state",
+                "isRealTime"
               ]
             },
             "description": "Workflows linked to this template"
@@ -20555,13 +20879,37 @@
               "format": "uuid"
             },
             "description": "IDs of updated workflows"
+          },
+          "controlledParts": {
+            "type": "object",
+            "properties": {
+              "prompt": {
+                "type": "boolean",
+                "description": "Whether the template controlled the prompt"
+              },
+              "schema": {
+                "type": "boolean",
+                "description": "Whether the template controlled the schema"
+              },
+              "notifications": {
+                "type": "boolean",
+                "description": "Whether the template controlled notifications"
+              }
+            },
+            "required": [
+              "prompt",
+              "schema",
+              "notifications"
+            ],
+            "description": "Which workflow parts were updated by this template version"
           }
         },
         "required": [
           "error",
           "success",
           "updatedCount",
-          "workflowIds"
+          "workflowIds",
+          "controlledParts"
         ],
         "title": "ApplyTemplateUpdateResponse",
         "description": "Response for template update application"
@@ -20707,6 +21055,19 @@
             "type": "string",
             "format": "uuid",
             "description": "Existing template ID to add a new version to (mutually exclusive with name)"
+          },
+          "includeParts": {
+            "type": "array",
+            "items": {
+              "type": "string",
+              "enum": [
+                "prompt",
+                "schema",
+                "notifications"
+              ]
+            },
+            "minItems": 1,
+            "description": "Which workflow parts to include in the template. If omitted, all parts are included."
           }
         },
         "required": [
@@ -21064,7 +21425,7 @@
         "title": "Interaction",
         "description": "Browser interaction definition. Accepts both simple format (with selector, text, url) and complex format from browser extensions"
       },
-      "AgenticWorkflow": {
+      "PromptWorkflow": {
         "type": "object",
         "properties": {
           "urls": {
@@ -21075,13 +21436,6 @@
             },
             "minItems": 1,
             "description": "List of URLs to scrape. Can be a single URL or multiple URLs to scrape across different pages or domains."
-          },
-          "navigationMode": {
-            "type": "string",
-            "enum": [
-              "agentic-navigation"
-            ],
-            "description": "Must be set to 'agentic-navigation' for agentic workflows"
           },
           "name": {
             "type": "string",
@@ -21148,11 +21502,6 @@
             "type": "boolean",
             "description": "Skip preview and validation, deploy scraper immediately. Use with caution - set to true only when you're confident the configuration is correct"
           },
-          "autoStart": {
-            "default": true,
-            "type": "boolean",
-            "description": "Automatically start the workflow after creation. Set to false if you want to test/review before starting"
-          },
           "interactions": {
             "type": "array",
             "items": {
@@ -21168,54 +21517,25 @@
             "nullable": true,
             "description": "Additional data for the workflow (e.g. IDs from your system to link data)"
           },
-          "maxPages": {
-            "type": "integer",
-            "minimum": 1,
-            "maximum": 100000,
-            "description": "Maximum pages to crawl (default: 10,000, max: 100,000). Only used when navigationMode is 'all-pages'"
-          },
-          "maxDepth": {
-            "type": "integer",
-            "minimum": 1,
-            "maximum": 200,
-            "description": "Maximum crawl depth (default: 50, max: 200). Only used when navigationMode is 'all-pages'"
-          },
-          "pathsFilterIn": {
-            "type": "array",
-            "items": {
-              "type": "string"
-            },
-            "description": "Regex patterns to include specific paths during crawling. Only used when navigationMode is 'all-pages'"
-          },
-          "pathsFilterOut": {
-            "type": "array",
-            "items": {
-              "type": "string"
-            },
-            "description": "Regex patterns to exclude specific paths during crawling. Only used when navigationMode is 'all-pages'"
-          },
-          "pageNumbers": {
-            "type": "array",
-            "items": {
-              "type": "integer",
-              "minimum": 1
-            },
-            "description": "PDF-specific: Array of page numbers to extract (1-indexed). If not provided, all pages are extracted. Example: [1, 5, 10]"
+          "templateId": {
+            "type": "string",
+            "format": "uuid",
+            "description": "Optional: ID of the template this workflow was created from. Records provenance only — the template's config is cloned at creation, not synced."
           },
           "userPrompt": {
             "type": "string",
             "minLength": 10,
             "maxLength": 5000,
-            "description": "Natural language instructions for the AI agent (10-5000 characters). Describe what data to extract and how to navigate the site"
+            "description": "Natural language instructions for the workflow (10-5000 characters). Describe what data to extract and how to navigate the site"
           },
           "schemaId": {
             "type": "string",
-            "description": "Optional: Schema ID to use with agentic extraction"
+            "description": "Optional: Schema ID to use with prompt-driven extraction"
           },
           "entity": {
             "type": "string",
             "minLength": 1,
-            "description": "Optional: Entity name for agentic extraction"
+            "description": "Optional: Entity name for prompt-driven extraction"
           },
           "fields": {
             "type": "array",
@@ -21229,23 +21549,19 @@
                   "$ref": "#/components/schemas/DataField"
                 },
                 {
-                  "$ref": "#/components/schemas/RawContentField"
-                },
-                {
                   "$ref": "#/components/schemas/ClassificationField"
                 }
               ]
             },
-            "description": "Optional: Additional extraction fields to guide the agent"
+            "description": "Optional: Additional extraction fields to guide the workflow"
           }
         },
         "required": [
           "urls",
-          "navigationMode",
           "userPrompt"
         ],
-        "title": "AgenticWorkflow",
-        "description": "Create an AI-powered workflow that uses natural language instructions to intelligently extract and adapt data extraction based on page content. The agent can navigate complex sites and understand context.\n\nExample: `{\"urls\": [\"https://example.com\"], \"navigationMode\": \"agentic-navigation\", \"userPrompt\": \"Extract all job listings with title, company, salary, and location. Click on each listing to get full details.\"}`"
+        "title": "WorkflowCreateRequest",
+        "description": "Create a workflow using natural-language instructions. Navigation is handled automatically for new integrations."
       },
       "RawDataWorkflow": {
         "type": "object",
@@ -21303,32 +21619,6 @@
               }
             }
           },
-          "maxPages": {
-            "type": "integer",
-            "minimum": 1,
-            "maximum": 100000,
-            "description": "Maximum pages to crawl (default: 10,000, max: 100,000)"
-          },
-          "maxDepth": {
-            "type": "integer",
-            "minimum": 1,
-            "maximum": 200,
-            "description": "Maximum crawl depth (default: 50, max: 200)"
-          },
-          "pathsFilterIn": {
-            "type": "array",
-            "items": {
-              "type": "string"
-            },
-            "description": "Regex patterns to include specific paths"
-          },
-          "pathsFilterOut": {
-            "type": "array",
-            "items": {
-              "type": "string"
-            },
-            "description": "Regex patterns to exclude specific paths"
-          },
           "interval": {
             "type": "string",
             "enum": [
@@ -21359,11 +21649,6 @@
               "type": "string"
             },
             "description": "Cron expressions for custom schedules"
-          },
-          "autoStart": {
-            "default": true,
-            "type": "boolean",
-            "description": "Auto-start workflow after creation"
           }
         },
         "required": [
@@ -21462,11 +21747,6 @@
             "type": "boolean",
             "description": "Skip preview and validation, deploy scraper immediately. Use with caution - set to true only when you're confident the configuration is correct"
           },
-          "autoStart": {
-            "default": true,
-            "type": "boolean",
-            "description": "Automatically start the workflow after creation. Set to false if you want to test/review before starting"
-          },
           "interactions": {
             "type": "array",
             "items": {
@@ -21515,6 +21795,11 @@
               "minimum": 1
             },
             "description": "PDF-specific: Array of page numbers to extract (1-indexed). If not provided, all pages are extracted. Example: [1, 5, 10]"
+          },
+          "templateId": {
+            "type": "string",
+            "format": "uuid",
+            "description": "Optional: ID of the template this workflow was created from. Records provenance only — the template's config is cloned at creation, not synced."
           },
           "schemaId": {
             "type": "string",
@@ -21617,11 +21902,6 @@
             "type": "boolean",
             "description": "Skip preview and validation, deploy scraper immediately. Use with caution - set to true only when you're confident the configuration is correct"
           },
-          "autoStart": {
-            "default": true,
-            "type": "boolean",
-            "description": "Automatically start the workflow after creation. Set to false if you want to test/review before starting"
-          },
           "interactions": {
             "type": "array",
             "items": {
@@ -21671,6 +21951,11 @@
             },
             "description": "PDF-specific: Array of page numbers to extract (1-indexed). If not provided, all pages are extracted. Example: [1, 5, 10]"
           },
+          "templateId": {
+            "type": "string",
+            "format": "uuid",
+            "description": "Optional: ID of the template this workflow was created from. Records provenance only — the template's config is cloned at creation, not synced."
+          },
           "entity": {
             "type": "string",
             "minLength": 1,
@@ -21686,9 +21971,6 @@
               "oneOf": [
                 {
                   "$ref": "#/components/schemas/DataField"
-                },
-                {
-                  "$ref": "#/components/schemas/RawContentField"
                 },
                 {
                   "$ref": "#/components/schemas/ClassificationField"
@@ -21708,22 +21990,142 @@
         "description": "Create a workflow by defining extraction entity and fields directly in the request. Inline your schema definition to quickly set up custom data extraction without creating a schema separately.\n\nExample: `{\"urls\": [\"https://example.com\"], \"entity\": \"Product\", \"fields\": [{\"name\": \"title\", \"description\": \"Product title\", \"fieldType\": \"SCHEMA\", \"dataType\": \"STRING\"}, {\"name\": \"price\", \"description\": \"Product price\", \"fieldType\": \"SCHEMA\", \"dataType\": \"NUMBER\"}]}`"
       },
       "CreateWorkflowBody": {
-        "oneOf": [
-          {
-            "$ref": "#/components/schemas/AgenticWorkflow"
+        "type": "object",
+        "properties": {
+          "urls": {
+            "type": "array",
+            "items": {
+              "type": "string",
+              "format": "uri"
+            },
+            "minItems": 1,
+            "description": "List of URLs to scrape. Can be a single URL or multiple URLs to scrape across different pages or domains."
           },
-          {
-            "$ref": "#/components/schemas/RawDataWorkflow"
+          "name": {
+            "type": "string",
+            "minLength": 1,
+            "description": "Human-readable name for this workflow (e.g., 'Product Catalog Scraper')"
           },
-          {
-            "$ref": "#/components/schemas/WorkflowWithExistingSchema"
+          "description": {
+            "type": "string",
+            "maxLength": 500,
+            "description": "Detailed description of what this workflow does and why it was created (maximum 500 characters)"
           },
-          {
-            "$ref": "#/components/schemas/WorkflowWithEntityAndFields"
+          "tags": {
+            "type": "array",
+            "items": {
+              "type": "string",
+              "minLength": 2
+            },
+            "description": "Tags for organizing and categorizing workflows (minimum 2 characters per tag)"
+          },
+          "limit": {
+            "type": "integer",
+            "minimum": 1,
+            "description": "Maximum number of items to scrape. Useful for limiting scope during development or cost control"
+          },
+          "location": {
+            "$ref": "#/components/schemas/Location"
+          },
+          "monitoring": {
+            "$ref": "#/components/schemas/MonitoringConfig"
+          },
+          "interval": {
+            "type": "string",
+            "enum": [
+              "ONLY_ONCE",
+              "EVERY_10_MINUTES",
+              "HALF_HOURLY",
+              "HOURLY",
+              "THREE_HOURLY",
+              "SIX_HOURLY",
+              "TWELVE_HOURLY",
+              "EIGHTEEN_HOURLY",
+              "DAILY",
+              "TWO_DAY",
+              "THREE_DAY",
+              "WEEKLY",
+              "BIWEEKLY",
+              "TRIWEEKLY",
+              "FOUR_WEEKS",
+              "MONTHLY",
+              "REAL_TIME",
+              "CUSTOM"
+            ],
+            "description": "How frequently this workflow should run (ONLY_ONCE, HOURLY, DAILY, WEEKLY, etc.)"
+          },
+          "schedules": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "description": "Cron expressions for custom schedules. Overrides the interval setting for fine-grained control"
+          },
+          "bypassPreview": {
+            "default": false,
+            "type": "boolean",
+            "description": "Skip preview and validation, deploy scraper immediately. Use with caution - set to true only when you're confident the configuration is correct"
+          },
+          "interactions": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/Interaction"
+            },
+            "description": "Browser interactions to perform before scraping (e.g., clicking buttons, filling forms, scrolling). See Interaction schema for available action types"
+          },
+          "dataValidationEnabled": {
+            "type": "boolean",
+            "description": "Enable data quality validation. When true, scraped data is validated against the schema and anomalies are detected"
+          },
+          "additionalData": {
+            "nullable": true,
+            "description": "Additional data for the workflow (e.g. IDs from your system to link data)"
+          },
+          "templateId": {
+            "type": "string",
+            "format": "uuid",
+            "description": "Optional: ID of the template this workflow was created from. Records provenance only — the template's config is cloned at creation, not synced."
+          },
+          "userPrompt": {
+            "type": "string",
+            "minLength": 10,
+            "maxLength": 5000,
+            "description": "Natural language instructions for the workflow (10-5000 characters). Describe what data to extract and how to navigate the site"
+          },
+          "schemaId": {
+            "type": "string",
+            "description": "Optional: Schema ID to use with prompt-driven extraction"
+          },
+          "entity": {
+            "type": "string",
+            "minLength": 1,
+            "description": "Optional: Entity name for prompt-driven extraction"
+          },
+          "fields": {
+            "type": "array",
+            "items": {
+              "description": "Extraction field schema",
+              "discriminator": {
+                "propertyName": "fieldType"
+              },
+              "oneOf": [
+                {
+                  "$ref": "#/components/schemas/DataField"
+                },
+                {
+                  "$ref": "#/components/schemas/ClassificationField"
+                }
+              ]
+            },
+            "description": "Optional: Additional extraction fields to guide the workflow"
           }
+        },
+        "required": [
+          "urls",
+          "userPrompt"
         ],
-        "title": "CreateWorkflowBody",
-        "description": "Request body for creating a new workflow"
+        "title": "WorkflowCreateRequest",
+        "description": "Create a workflow using natural-language instructions. Navigation is handled automatically for new integrations."
       },
       "CreateWorkflowResponse": {
         "type": "object",
@@ -21746,6 +22148,10 @@
           "message": {
             "type": "string",
             "description": "Success message"
+          },
+          "deprecationNotice": {
+            "type": "string",
+            "description": "Optional deprecation notice for legacy navigation modes"
           }
         },
         "required": [
@@ -21793,6 +22199,63 @@
         "title": "JobError",
         "description": "Error information for a job"
       },
+      "JobStatusSnapshotBlock": {
+        "type": "object",
+        "properties": {
+          "configHash": {
+            "type": "string",
+            "description": "sha256 of the canonical config the run was executed against"
+          },
+          "snapshotCreatedAt": {
+            "type": "string",
+            "format": "date-time",
+            "description": "When the snapshot draft was inserted (run entry)"
+          },
+          "snapshotConfirmedAt": {
+            "type": "string",
+            "format": "date-time",
+            "description": "When the snapshot was confirmed (terminal success); null while draft",
+            "nullable": true
+          },
+          "isConfigStaleVsCurrent": {
+            "type": "boolean",
+            "description": "True when the snapshot hash differs from the workflow's current canonical hash"
+          },
+          "driftKeys": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "description": "Top-level config keys that differ from the current config"
+          },
+          "runBuildId": {
+            "type": "string",
+            "description": "Shelly build that produced this run; null for legacy rows and non-SHELLY_SCRIPT workflows",
+            "nullable": true
+          },
+          "currentBuildId": {
+            "type": "string",
+            "description": "Latest completed Shelly build for the workflow's session, or null when none exists",
+            "nullable": true
+          },
+          "isBuildStaleVsCurrent": {
+            "type": "boolean",
+            "description": "True when runBuildId is set and differs from currentBuildId — the script that produced this run's data is no longer the latest"
+          }
+        },
+        "required": [
+          "configHash",
+          "snapshotCreatedAt",
+          "snapshotConfirmedAt",
+          "isConfigStaleVsCurrent",
+          "driftKeys",
+          "runBuildId",
+          "currentBuildId",
+          "isBuildStaleVsCurrent"
+        ],
+        "title": "JobStatusSnapshotBlock",
+        "description": "ADR-009 snapshot drift block; null for runs predating the snapshot migration"
+      },
       "JobStatusResponse": {
         "type": "object",
         "properties": {
@@ -21821,6 +22284,12 @@
             "format": "date-time",
             "description": "Finish date and time of the job (if completed)"
           },
+          "estimatedFinishedAtUtc": {
+            "type": "string",
+            "format": "date-time",
+            "nullable": true,
+            "description": "Estimated UTC finish time for an active workflow run"
+          },
           "limit": {
             "type": "integer",
             "nullable": true,
@@ -21843,6 +22312,14 @@
               "$ref": "#/components/schemas/JobError"
             },
             "description": "List of errors if the job failed"
+          },
+          "snapshot": {
+            "nullable": true,
+            "allOf": [
+              {
+                "$ref": "#/components/schemas/JobStatusSnapshotBlock"
+              }
+            ]
           }
         },
         "required": [
@@ -22148,6 +22625,144 @@
         },
         "title": "UpdateVariableBody",
         "description": "Request body for updating a variable (at least one field required)"
+      },
+      "PublicWorkflowCreateRequest": {
+        "type": "object",
+        "properties": {
+          "urls": {
+            "type": "array",
+            "items": {
+              "type": "string",
+              "format": "uri"
+            },
+            "minItems": 1,
+            "description": "List of URLs to scrape. Can be a single URL or multiple URLs to scrape across different pages or domains."
+          },
+          "name": {
+            "type": "string",
+            "minLength": 1,
+            "description": "Human-readable name for this workflow (e.g., 'Product Catalog Scraper')"
+          },
+          "description": {
+            "type": "string",
+            "maxLength": 500,
+            "description": "Detailed description of what this workflow does and why it was created (maximum 500 characters)"
+          },
+          "tags": {
+            "type": "array",
+            "items": {
+              "type": "string",
+              "minLength": 2
+            },
+            "description": "Tags for organizing and categorizing workflows (minimum 2 characters per tag)"
+          },
+          "limit": {
+            "type": "integer",
+            "minimum": 1,
+            "description": "Maximum number of items to scrape. Useful for limiting scope during development or cost control"
+          },
+          "location": {
+            "$ref": "#/components/schemas/Location"
+          },
+          "monitoring": {
+            "$ref": "#/components/schemas/MonitoringConfig"
+          },
+          "interval": {
+            "type": "string",
+            "enum": [
+              "ONLY_ONCE",
+              "EVERY_10_MINUTES",
+              "HALF_HOURLY",
+              "HOURLY",
+              "THREE_HOURLY",
+              "SIX_HOURLY",
+              "TWELVE_HOURLY",
+              "EIGHTEEN_HOURLY",
+              "DAILY",
+              "TWO_DAY",
+              "THREE_DAY",
+              "WEEKLY",
+              "BIWEEKLY",
+              "TRIWEEKLY",
+              "FOUR_WEEKS",
+              "MONTHLY",
+              "REAL_TIME",
+              "CUSTOM"
+            ],
+            "description": "How frequently this workflow should run (ONLY_ONCE, HOURLY, DAILY, WEEKLY, etc.)"
+          },
+          "schedules": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "description": "Cron expressions for custom schedules. Overrides the interval setting for fine-grained control"
+          },
+          "bypassPreview": {
+            "default": false,
+            "type": "boolean",
+            "description": "Skip preview and validation, deploy scraper immediately. Use with caution - set to true only when you're confident the configuration is correct"
+          },
+          "interactions": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/Interaction"
+            },
+            "description": "Browser interactions to perform before scraping (e.g., clicking buttons, filling forms, scrolling). See Interaction schema for available action types"
+          },
+          "dataValidationEnabled": {
+            "type": "boolean",
+            "description": "Enable data quality validation. When true, scraped data is validated against the schema and anomalies are detected"
+          },
+          "additionalData": {
+            "nullable": true,
+            "description": "Additional data for the workflow (e.g. IDs from your system to link data)"
+          },
+          "templateId": {
+            "type": "string",
+            "format": "uuid",
+            "description": "Optional: ID of the template this workflow was created from. Records provenance only — the template's config is cloned at creation, not synced."
+          },
+          "userPrompt": {
+            "type": "string",
+            "minLength": 10,
+            "maxLength": 5000,
+            "description": "Natural language instructions for the workflow (10-5000 characters). Describe what data to extract and how to navigate the site"
+          },
+          "schemaId": {
+            "type": "string",
+            "description": "Optional: Schema ID to use with prompt-driven extraction"
+          },
+          "entity": {
+            "type": "string",
+            "minLength": 1,
+            "description": "Optional: Entity name for prompt-driven extraction"
+          },
+          "fields": {
+            "type": "array",
+            "items": {
+              "description": "Extraction field schema",
+              "discriminator": {
+                "propertyName": "fieldType"
+              },
+              "oneOf": [
+                {
+                  "$ref": "#/components/schemas/DataField"
+                },
+                {
+                  "$ref": "#/components/schemas/ClassificationField"
+                }
+              ]
+            },
+            "description": "Optional: Additional extraction fields to guide the workflow"
+          }
+        },
+        "required": [
+          "urls",
+          "userPrompt"
+        ],
+        "title": "WorkflowCreateRequest",
+        "description": "Create a workflow using natural-language instructions. Navigation is handled automatically for new integrations."
       }
     },
     "securitySchemes": {
