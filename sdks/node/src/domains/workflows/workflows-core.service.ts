@@ -110,11 +110,17 @@ export class WorkflowsCoreService {
 
     const domainName = new URL(input.urls[0]).hostname;
 
-    const request: PromptWorkflow = {
+    // The OpenAPI spec dropped `navigationMode` when it consolidated the
+    // create-workflow body into `PublicWorkflowCreateRequest`, but the
+    // public-api handler still uses `detectWorkflowType` to route based
+    // on it (with a fallback that misroutes prompt-based workflows). Send
+    // it explicitly so the backend dispatches to the agentic branch.
+    const request = {
       urls: input.urls,
       name: input.name ?? domainName,
       description: input.description,
       userPrompt: input.userPrompt,
+      navigationMode: "agentic-navigation",
       schemaId: input.schemaId,
       ...(input.entity != null && { entity: input.entity }),
       fields: input.fields,
@@ -126,7 +132,7 @@ export class WorkflowsCoreService {
       schedules: input.schedules,
       additionalData: input.additionalData,
       limit: input.limit,
-    };
+    } as PromptWorkflow;
 
     const response = await this.workflowsApi.v4WorkflowsPost({
       publicWorkflowCreateRequest: request,
