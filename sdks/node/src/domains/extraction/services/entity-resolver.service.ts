@@ -97,9 +97,14 @@ export class EntityResolverService {
         const schema = await this.schemasService.getSchema(
           entityConfig.schemaId,
         );
+        // Backend may include transform/placeholder variants in the response
+        // union; the SDK only consumes structured/classification fields.
         return {
           entity: schema.entity ?? undefined,
-          fields: schema.schema,
+          fields: (schema.schema ?? []).filter(
+            (f): f is SchemaField =>
+              f.fieldType === "SCHEMA" || f.fieldType === "CLASSIFICATION",
+          ),
         };
       } else if ("fields" in entityConfig) {
         return {

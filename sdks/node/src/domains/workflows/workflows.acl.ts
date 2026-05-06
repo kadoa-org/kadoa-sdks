@@ -5,10 +5,10 @@
  */
 
 import type {
-  AgenticWorkflow,
   JobStatusResponse,
   JobStatusResponseStateEnum,
   MonitoringConfig,
+  PromptWorkflow,
   V4WorkflowsGet200ResponseWorkflowsInner,
   V4WorkflowsGet200ResponseWorkflowsInnerDisplayStateEnum,
   V4WorkflowsGet200ResponseWorkflowsInnerStateEnum,
@@ -52,6 +52,7 @@ export const WorkflowState = {
   Preview: "PREVIEW",
   Queued: "QUEUED",
   Setup: "SETUP",
+  Draft: "DRAFT",
   ComplianceReview: "COMPLIANCE_REVIEW",
   ComplianceRejected: "COMPLIANCE_REJECTED",
   NotSupported: "NOT_SUPPORTED",
@@ -122,6 +123,7 @@ export const WorkflowStateEnum = {
   Paused: "PAUSED",
   NotSupported: "NOT_SUPPORTED",
   Preview: "PREVIEW",
+  Draft: "DRAFT",
   ComplianceReview: "COMPLIANCE_REVIEW",
   ComplianceRejected: "COMPLIANCE_REJECTED",
   Queued: "QUEUED",
@@ -144,12 +146,14 @@ export const WorkflowDisplayStateEnum = {
   Paused: "PAUSED",
   NotSupported: "NOT_SUPPORTED",
   Preview: "PREVIEW",
+  Draft: "DRAFT",
   ComplianceReview: "COMPLIANCE_REVIEW",
   ComplianceRejected: "COMPLIANCE_REJECTED",
   Queued: "QUEUED",
   Setup: "SETUP",
   Running: "RUNNING",
   Failed: "FAILED",
+  Validating: "VALIDATING",
   Deleted: "DELETED",
   PendingStart: "PENDING_START",
 } as const satisfies Record<
@@ -197,7 +201,13 @@ export type CreateWorkflowRequest = WorkflowWithExistingSchema;
 
 export type CreateWorkflowWithCustomSchemaRequest = WorkflowWithEntityAndFields;
 
-export type { AgenticWorkflow };
+export type { PromptWorkflow };
+
+/**
+ * @deprecated Renamed to `PromptWorkflow` upstream. Kept for backwards
+ * compatibility; will be removed in a future major release.
+ */
+export type AgenticWorkflow = PromptWorkflow;
 
 // ========================================
 // Response Types

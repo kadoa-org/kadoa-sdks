@@ -11,13 +11,13 @@
  */
 
 import {
+  type ClassificationField,
   type ClassificationFieldCategoriesInner,
   type DataField,
   type DataFieldExample,
   type CreateSchemaBody as GeneratedCreateSchemaBody,
   type SchemaResponse as GeneratedSchemaResponse,
   type UpdateSchemaBody as GeneratedUpdateSchemaBody,
-  type SchemaResponseSchemaInner,
   SchemasApi,
 } from "../../generated";
 import type { DataType } from "../extraction/extraction.acl";
@@ -60,9 +60,14 @@ export type SchemaResponse = GeneratedSchemaResponse;
 
 /**
  * Schema field definition.
- * Re-exported from generated SchemaResponseSchemaInner model.
+ *
+ * The generated `SchemaResponseSchemaInner` is a wide union that includes
+ * placeholder/transformation variants. The SDK builder only produces and
+ * consumes structured `DataField` and categorical `ClassificationField`
+ * entries, so we narrow the public type accordingly. Code that reads a
+ * raw backend response should validate before treating it as `SchemaField`.
  */
-export type SchemaField = SchemaResponseSchemaInner;
+export type SchemaField = DataField | ClassificationField;
 
 // ========================================
 // Schema Builder Types

@@ -13,14 +13,12 @@ import type {
   WorkflowInterval,
 } from "../extraction/extraction.acl";
 import {
-  type AgenticWorkflow,
-  type CreateWorkflowRequest,
-  type CreateWorkflowWithCustomSchemaRequest,
   type GetJobResponse,
   type GetWorkflowResponse,
   JobStateEnum,
   type ListWorkflowsRequest,
   type MonitoringConfig,
+  type PromptWorkflow,
   type RunWorkflowRequest,
   type RunWorkflowResponse,
   type UpdateWorkflowRequest,
@@ -45,22 +43,35 @@ export interface JobWaitOptions extends PollingOptions {
 
 export interface CreateWorkflowInput {
   urls: string[];
-  navigationMode: NavigationMode;
+  /**
+   * Natural-language instructions for the workflow (10–5000 chars).
+   * Required by the backend on every create — navigation is inferred from the prompt.
+   */
+  userPrompt: string;
   name?: string;
   description?: string;
   schemaId?: string;
   entity?: string;
-  fields: Array<SchemaField>;
+  fields?: Array<SchemaField>;
   tags?: string[];
   interval?: WorkflowInterval;
   monitoring?: MonitoringConfig;
   location?: LocationConfig;
   bypassPreview?: boolean;
-  autoStart?: boolean;
   schedules?: string[];
   additionalData?: Record<string, unknown>;
-  userPrompt?: string;
   limit?: number;
+  /**
+   * @deprecated The backend no longer accepts a `navigationMode` field —
+   * navigation is inferred from `userPrompt`. Kept on the SDK input shape
+   * for backwards compatibility; the value is ignored.
+   */
+  navigationMode?: NavigationMode;
+  /**
+   * @deprecated The backend no longer accepts an `autoStart` field on create.
+   * Kept on the SDK input shape for backwards compatibility; the value is ignored.
+   */
+  autoStart?: boolean;
 }
 
 export const TERMINAL_JOB_STATES: Set<JobStateEnum> = new Set([
@@ -87,62 +98,30 @@ export class WorkflowsCoreService {
   async create(input: CreateWorkflowInput): Promise<{ id: WorkflowId }> {
     validateAdditionalData(input.additionalData);
 
-    const domainName = new URL(input.urls[0]).hostname;
-
-    // For agentic-navigation, use AgenticWorkflow type
-    if (input.navigationMode === "agentic-navigation") {
-      if (!input.userPrompt) {
-        throw new KadoaSdkException(
-          "userPrompt is required when navigationMode is 'agentic-navigation'",
-          {
-            code: "VALIDATION_ERROR",
-            details: { navigationMode: input.navigationMode },
-          },
-        );
-      }
-
-      const agenticRequest: AgenticWorkflow = {
-        urls: input.urls,
-        navigationMode: "agentic-navigation",
-        name: input.name ?? domainName,
-        description: input.description,
-        userPrompt: input.userPrompt,
-        schemaId: input.schemaId,
-        entity: input.entity,
-        fields: input.fields,
-        bypassPreview: input.bypassPreview ?? true,
-        tags: input.tags,
-        interval: input.interval,
-        monitoring: input.monitoring,
-        location: input.location,
-        autoStart: input.autoStart,
-        schedules: input.schedules,
-        additionalData: input.additionalData,
-        limit: input.limit,
-      };
-
-      const response = await this.workflowsApi.v4WorkflowsPost({
-        createWorkflowBody: agenticRequest,
-      });
-      const workflowId = response.data?.workflowId;
-
-      if (!workflowId) {
-        throw new KadoaSdkException(ERROR_MESSAGES.NO_WORKFLOW_ID, {
-          code: "INTERNAL_ERROR",
-          details: {
-            response: response.data,
-          },
-        });
-      }
-      return { id: workflowId };
+    if (!input.userPrompt) {
+      throw new KadoaSdkException(
+        "userPrompt is required to create a workflow",
+        {
+          code: "VALIDATION_ERROR",
+          details: { urls: input.urls },
+        },
+      );
     }
 
+    const domainName = new URL(input.urls[0]).hostname;
+
+    // The OpenAPI spec dropped `navigationMode` when it consolidated the
+    // create-workflow body into `PublicWorkflowCreateRequest`, but the
+    // public-api handler still uses `detectWorkflowType` to route based
+    // on it (with a fallback that misroutes prompt-based workflows). Send
+    // it explicitly so the backend dispatches to the agentic branch.
     const request = {
       urls: input.urls,
       name: input.name ?? domainName,
-      schemaId: input.schemaId,
       description: input.description,
-      navigationMode: input.navigationMode,
+      userPrompt: input.userPrompt,
+      navigationMode: "agentic-navigation",
+      schemaId: input.schemaId,
       ...(input.entity != null && { entity: input.entity }),
       fields: input.fields,
       bypassPreview: input.bypassPreview ?? true,
@@ -150,14 +129,13 @@ export class WorkflowsCoreService {
       interval: input.interval,
       monitoring: input.monitoring,
       location: input.location,
-      autoStart: input.autoStart,
       schedules: input.schedules,
       additionalData: input.additionalData,
       limit: input.limit,
-    } as CreateWorkflowRequest | CreateWorkflowWithCustomSchemaRequest;
+    } as PromptWorkflow;
 
     const response = await this.workflowsApi.v4WorkflowsPost({
-      createWorkflowBody: request,
+      publicWorkflowCreateRequest: request,
     });
     const workflowId = response.data?.workflowId;
 
