@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.31.1](https://github.com/kadoa-org/kadoa-sdks/compare/node-sdk-v0.31.0...node-sdk-v0.31.1) (2026-05-06)
+
+
+### Bug Fixes
+
+* **node-sdk:** align workflows + extraction with current spec ([#292](https://github.com/kadoa-org/kadoa-sdks/issues/292)) ([76b4ebf](https://github.com/kadoa-org/kadoa-sdks/commit/76b4ebf25695e0997b454911d6545c1c1671e0eb))
+
 ## [0.31.0](https://github.com/kadoa-org/kadoa-sdks/compare/node-sdk-v0.30.0...node-sdk-v0.31.0) (2026-05-06)
 
 
