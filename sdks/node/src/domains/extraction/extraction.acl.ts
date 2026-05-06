@@ -11,11 +11,8 @@ import type {
   DataField,
   DataFieldFieldTypeEnum,
   Location,
-  RawContentField,
-  RawContentFieldFieldTypeEnum,
-  RawContentFieldMetadataKeyEnum,
   V4WorkflowsWorkflowIdDataGet200Response,
-  V4WorkflowsWorkflowIdDataGet200ResponsePagination,
+  V4WorkflowsWorkflowIdDataGet200ResponseOneOfPagination,
   V4WorkflowsWorkflowIdDataGetOrderEnum,
   V4WorkflowsWorkflowIdMetadataPutRequestMonitoringFieldsInner,
   V4WorkflowsWorkflowIdMetadataPutRequestMonitoringFieldsInnerOperatorEnum,
@@ -32,7 +29,8 @@ import type {
 /**
  * Data pagination metadata.
  */
-export type DataPagination = V4WorkflowsWorkflowIdDataGet200ResponsePagination;
+export type DataPagination =
+  V4WorkflowsWorkflowIdDataGet200ResponseOneOfPagination;
 
 /**
  * Workflow data response.
@@ -102,7 +100,7 @@ export const SchemaFieldDataType = {
 export type SchemaFieldDataType =
   (typeof SchemaFieldDataType)[keyof typeof SchemaFieldDataType];
 
-export type SchemaField = DataField | ClassificationField | RawContentField;
+export type SchemaField = DataField | ClassificationField;
 
 export type NavigationMode =
   (typeof WorkflowWithExistingSchemaNavigationModeEnum)[keyof typeof WorkflowWithExistingSchemaNavigationModeEnum];
@@ -124,9 +122,6 @@ export type DataType = Exclude<
   | "ADDITIONAL_DATA"
 >;
 
-export type MetadataKey =
-  (typeof RawContentFieldMetadataKeyEnum)[keyof typeof RawContentFieldMetadataKeyEnum];
-
 export type WorkflowInterval =
   (typeof WorkflowWithExistingSchemaIntervalEnum)[keyof typeof WorkflowWithExistingSchemaIntervalEnum];
 
@@ -140,11 +135,21 @@ export type MonitoringField =
 
 export type LocationConfig = Location;
 
-export type RawFormat =
-  (typeof RawContentFieldMetadataKeyEnum)[keyof typeof RawContentFieldMetadataKeyEnum];
+/**
+ * Raw-content helper formats supported by `SchemaBuilder.raw()`.
+ * The SDK expands these into regular SCHEMA fields named `rawHtml`,
+ * `rawMarkdown`, `rawPageUrl` (see `schema-builder.ts`). The backend
+ * accepts them as standard `DataField` entries — no dedicated schema
+ * type is required.
+ */
+export type RawFormat = "HTML" | "MARKDOWN" | "PAGE_URL";
+
+/**
+ * @deprecated alias for `RawFormat`; kept for backwards compatibility.
+ */
+export type MetadataKey = RawFormat;
 
 export type FieldType =
-  | RawContentFieldFieldTypeEnum
   | ClassificationFieldFieldTypeEnum
   | DataFieldFieldTypeEnum;
 
