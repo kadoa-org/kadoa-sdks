@@ -100,9 +100,12 @@ export function createClientDomains(params: { client: KadoaClient }): {
   const settingsService = new NotificationSettingsService(
     client.apis.notifications,
   );
-  const workflowsCoreService = new WorkflowsCoreService(client.apis.workflows);
   const schemasService = new SchemasService(client);
   const templatesService = new TemplatesService(client);
+  const workflowsCoreService = new WorkflowsCoreService(
+    client.apis.workflows,
+    templatesService,
+  );
   const variablesService = new VariablesService(client);
   const channelSetupService = new NotificationSetupService(
     channelsService,

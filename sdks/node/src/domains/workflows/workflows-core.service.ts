@@ -1,5 +1,6 @@
 import { KadoaSdkException } from "../../runtime/exceptions";
 import { ERROR_MESSAGES } from "../../runtime/exceptions/base.exception";
+import type { TemplatesService } from "../templates/templates.service";
 import { logger } from "../../runtime/logger";
 import {
   type PollingOptions,
@@ -25,6 +26,7 @@ import {
   type UpdateWorkflowResponse,
   type WorkflowAuditLogOptions,
   type WorkflowAuditLogResponse,
+  type WorkflowFromTemplate,
   type WorkflowResponse,
   type WorkflowStateEnum,
   type WorkflowsApiInterface,
@@ -45,9 +47,11 @@ export interface CreateWorkflowInput {
   urls: string[];
   /**
    * Natural-language instructions for the workflow (10–5000 chars).
-   * Required by the backend on every create — navigation is inferred from the prompt.
+   * Required unless creating from a published template version
+   * (i.e. when both `templateId` and `templateVersion` are supplied) —
+   * in that case the prompt is inherited from the template version.
    */
-  userPrompt: string;
+  userPrompt?: string;
   name?: string;
   description?: string;
   schemaId?: string;
@@ -61,6 +65,22 @@ export interface CreateWorkflowInput {
   schedules?: string[];
   additionalData?: Record<string, unknown>;
   limit?: number;
+  /**
+   * Instantiate a workflow from a published template. When set, only `urls`
+   * is required — `userPrompt`, `entity`, `fields`, `schemaId`,
+   * `monitoring`, and `navigationMode` must NOT be supplied; they are
+   * inherited from the resolved template version.
+   *
+   * If `templateVersion` is omitted, the SDK resolves the template's
+   * latest published version automatically.
+   */
+  templateId?: string;
+  /**
+   * Optional: Specific published version (integer) of the template to
+   * instantiate. Defaults to the template's latest published version when
+   * `templateId` is set and this field is omitted.
+   */
+  templateVersion?: number;
   /**
    * @deprecated The backend no longer accepts a `navigationMode` field —
    * navigation is inferred from `userPrompt`. Kept on the SDK input shape
@@ -93,12 +113,34 @@ export const TERMINAL_RUN_STATES: Set<string> = new Set([
 const debug = logger.workflow;
 
 export class WorkflowsCoreService {
-  constructor(private readonly workflowsApi: WorkflowsApiInterface) {}
+  constructor(
+    private readonly workflowsApi: WorkflowsApiInterface,
+    private readonly templatesService?: TemplatesService,
+  ) {}
 
   async create(input: CreateWorkflowInput): Promise<{ id: WorkflowId }> {
     validateAdditionalData(input.additionalData);
 
-    if (!input.userPrompt) {
+    const isFromTemplate = input.templateId != null;
+
+    if (isFromTemplate) {
+      const conflicting: string[] = [];
+      if (input.userPrompt != null) conflicting.push("userPrompt");
+      if (input.entity != null) conflicting.push("entity");
+      if (input.fields != null) conflicting.push("fields");
+      if (input.schemaId != null) conflicting.push("schemaId");
+      if (input.monitoring != null) conflicting.push("monitoring");
+      if (input.navigationMode != null) conflicting.push("navigationMode");
+      if (conflicting.length > 0) {
+        throw new KadoaSdkException(
+          `Fields are defined by the template and cannot be supplied when creating from a template: ${conflicting.join(", ")}`,
+          {
+            code: "VALIDATION_ERROR",
+            details: { conflicting },
+          },
+        );
+      }
+    } else if (!input.userPrompt) {
       throw new KadoaSdkException(
         "userPrompt is required to create a workflow",
         {
@@ -110,32 +152,58 @@ export class WorkflowsCoreService {
 
     const domainName = new URL(input.urls[0]).hostname;
 
-    // The OpenAPI spec dropped `navigationMode` when it consolidated the
-    // create-workflow body into `PublicWorkflowCreateRequest`, but the
-    // public-api handler still uses `detectWorkflowType` to route based
-    // on it (with a fallback that misroutes prompt-based workflows). Send
-    // it explicitly so the backend dispatches to the agentic branch.
-    const request = {
-      urls: input.urls,
-      name: input.name ?? domainName,
-      description: input.description,
-      userPrompt: input.userPrompt,
-      navigationMode: "agentic-navigation",
-      schemaId: input.schemaId,
-      ...(input.entity != null && { entity: input.entity }),
-      fields: input.fields,
-      bypassPreview: input.bypassPreview ?? true,
-      tags: input.tags,
-      interval: input.interval,
-      monitoring: input.monitoring,
-      location: input.location,
-      schedules: input.schedules,
-      additionalData: input.additionalData,
-      limit: input.limit,
-    } as PromptWorkflow;
+    let request: PromptWorkflow | WorkflowFromTemplate;
+    if (isFromTemplate) {
+      const templateId = input.templateId as string;
+      const templateVersion =
+        input.templateVersion ?? (await this.resolveLatestVersion(templateId));
+
+      request = {
+        urls: input.urls,
+        templateId,
+        templateVersion,
+        ...(input.name != null && { name: input.name }),
+        ...(input.description != null && { description: input.description }),
+        ...(input.tags != null && { tags: input.tags }),
+        ...(input.interval != null && { interval: input.interval }),
+        ...(input.schedules != null && { schedules: input.schedules }),
+        ...(input.location != null && { location: input.location }),
+        ...(input.bypassPreview != null && {
+          bypassPreview: input.bypassPreview,
+        }),
+        ...(input.additionalData != null && {
+          additionalData: input.additionalData,
+        }),
+        ...(input.limit != null && { limit: input.limit }),
+      } as WorkflowFromTemplate;
+    } else {
+      // The OpenAPI spec dropped `navigationMode` when it consolidated the
+      // create-workflow body into `PublicWorkflowCreateRequest`, but the
+      // public-api handler still uses `detectWorkflowType` to route based
+      // on it (with a fallback that misroutes prompt-based workflows). Send
+      // it explicitly so the backend dispatches to the agentic branch.
+      request = {
+        urls: input.urls,
+        name: input.name ?? domainName,
+        description: input.description,
+        userPrompt: input.userPrompt,
+        navigationMode: "agentic-navigation",
+        schemaId: input.schemaId,
+        ...(input.entity != null && { entity: input.entity }),
+        fields: input.fields,
+        bypassPreview: input.bypassPreview ?? true,
+        tags: input.tags,
+        interval: input.interval,
+        monitoring: input.monitoring,
+        location: input.location,
+        schedules: input.schedules,
+        additionalData: input.additionalData,
+        limit: input.limit,
+      } as PromptWorkflow;
+    }
 
     const response = await this.workflowsApi.v4WorkflowsPost({
-      publicWorkflowCreateRequest: request,
+      publicWorkflowCreateRequest: request as PromptWorkflow,
     });
     const workflowId = response.data?.workflowId;
 
@@ -148,6 +216,30 @@ export class WorkflowsCoreService {
       });
     }
     return { id: workflowId };
+  }
+
+  private async resolveLatestVersion(templateId: string): Promise<number> {
+    if (!this.templatesService) {
+      throw new KadoaSdkException(
+        "TemplatesService is required to resolve a template's latest version. Pass `templateVersion` explicitly or construct WorkflowsCoreService with a TemplatesService.",
+        {
+          code: "INTERNAL_ERROR",
+          details: { templateId },
+        },
+      );
+    }
+    const template = await this.templatesService.get(templateId);
+    const latest = (template as { latestVersion?: number | null }).latestVersion;
+    if (latest == null) {
+      throw new KadoaSdkException(
+        `Template ${templateId} has no published versions; supply templateVersion explicitly or publish a version first.`,
+        {
+          code: "VALIDATION_ERROR",
+          details: { templateId },
+        },
+      );
+    }
+    return latest;
   }
 
   async get(id: WorkflowId): Promise<GetWorkflowResponse> {
