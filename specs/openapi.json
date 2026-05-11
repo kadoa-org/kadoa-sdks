@@ -1825,6 +1825,10 @@
                       "type": "string",
                       "description": "Update frequency"
                     },
+                    "isRealTime": {
+                      "type": "boolean",
+                      "description": "Whether this workflow should be displayed as realtime"
+                    },
                     "schedules": {
                       "type": "array",
                       "items": {
@@ -2757,6 +2761,150 @@
         ]
       }
     },
+    "/v4/workflows/{workflowId}/data/export": {
+      "get": {
+        "summary": "Materialize a full data export and return a signed download URL",
+        "description": "Materializes the full result set as CSV or JSON to object storage and returns a self-authenticating\nURL that can be opened by external clients (Claude Desktop, Claude for Excel, code execution sandboxes,\nbrowsers) without an Authorization header. The URL is HMAC-signed and bound to the exportId, workflowId,\nformat and expiry.\n",
+        "tags": [
+          "Workflows"
+        ],
+        "security": [
+          {
+            "ApiKeyAuth": []
+          },
+          {
+            "BearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "workflowId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "format",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "enum": [
+                "csv",
+                "json"
+              ],
+              "default": "csv"
+            }
+          },
+          {
+            "name": "runId",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "filters",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "sortBy",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "order",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "enum": [
+                "asc",
+                "desc"
+              ],
+              "default": "asc"
+            }
+          },
+          {
+            "name": "rowIds",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Export materialized",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": [
+                    "workflowId",
+                    "runId",
+                    "format",
+                    "rowCount",
+                    "url",
+                    "expiresAt"
+                  ],
+                  "properties": {
+                    "workflowId": {
+                      "type": "string"
+                    },
+                    "runId": {
+                      "type": "string"
+                    },
+                    "executedAt": {
+                      "type": "string",
+                      "format": "date-time"
+                    },
+                    "format": {
+                      "type": "string",
+                      "enum": [
+                        "csv",
+                        "json"
+                      ]
+                    },
+                    "rowCount": {
+                      "type": "integer"
+                    },
+                    "url": {
+                      "type": "string",
+                      "description": "Signed, self-authenticating download URL. Valid until expiresAt."
+                    },
+                    "expiresAt": {
+                      "type": "string",
+                      "format": "date-time"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid query params"
+          },
+          "401": {
+            "description": "Unauthorized"
+          },
+          "404": {
+            "description": "Workflow or run not found"
+          }
+        }
+      }
+    },
     "/v4/workflows/{workflowId}/data/exports/{exportId}": {
       "get": {
         "summary": "Download a materialized CSV export",
@@ -2958,7 +3106,7 @@
             "description": "Unauthorized access, either due to missing or invalid x-api-key"
           },
           "404": {
-            "description": "Workflow runs for the specified ID could not be found"
+            "description": "Workflow with the specified ID could not be found"
           }
         }
       }
@@ -3050,6 +3198,34 @@
           },
           "403": {
             "description": "403",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "error": {
+                      "type": "boolean",
+                      "description": "Indicates an error occurred"
+                    },
+                    "message": {
+                      "type": "string",
+                      "description": "Error message"
+                    },
+                    "details": {
+                      "nullable": true,
+                      "description": "Additional error details (e.g., validation errors)"
+                    }
+                  },
+                  "required": [
+                    "error",
+                    "message"
+                  ]
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "404",
             "content": {
               "application/json": {
                 "schema": {
@@ -3421,6 +3597,14 @@
                             "type": "string",
                             "format": "date-time",
                             "description": "Timestamp when the workflow was created"
+                          },
+                          "updateInterval": {
+                            "type": "string",
+                            "description": "Update frequency"
+                          },
+                          "isRealTime": {
+                            "type": "boolean",
+                            "description": "Whether this workflow should be displayed as realtime"
                           },
                           "tags": {
                             "type": "array",
@@ -21206,58 +21390,6 @@
         "title": "Location",
         "description": "Geographic location for scraping. Use 'auto' for automatic detection or 'manual' to specify a country"
       },
-      "MonitoredField": {
-        "type": "object",
-        "properties": {
-          "fieldName": {
-            "type": "string",
-            "description": "Name of the field to monitor"
-          },
-          "operator": {
-            "type": "string",
-            "enum": [
-              "changed",
-              "added",
-              "removed"
-            ],
-            "description": "Change operator"
-          }
-        },
-        "required": [
-          "fieldName",
-          "operator"
-        ],
-        "title": "MonitoredField",
-        "description": "Field monitoring configuration"
-      },
-      "MonitoringConfig": {
-        "description": "Monitoring configuration",
-        "type": "object",
-        "properties": {
-          "fields": {
-            "type": "array",
-            "items": {
-              "$ref": "#/components/schemas/MonitoredField"
-            },
-            "minItems": 1,
-            "description": "Fields to monitor (at least one required)"
-          },
-          "channels": {
-            "type": "array",
-            "items": {
-              "nullable": true
-            },
-            "description": "Notification channels"
-          },
-          "conditions": {
-            "description": "Condition group with logical operator and conditions"
-          }
-        },
-        "required": [
-          "fields"
-        ],
-        "title": "MonitoringConfig"
-      },
       "BrowserInteraction": {
         "type": "object",
         "properties": {
@@ -21425,6 +21557,167 @@
         "title": "Interaction",
         "description": "Browser interaction definition. Accepts both simple format (with selector, text, url) and complex format from browser extensions"
       },
+      "WorkflowFromTemplate": {
+        "type": "object",
+        "properties": {
+          "urls": {
+            "type": "array",
+            "items": {
+              "type": "string",
+              "format": "uri"
+            },
+            "minItems": 1,
+            "description": "List of URLs to scrape. Can be a single URL or multiple URLs to scrape across different pages or domains."
+          },
+          "name": {
+            "type": "string",
+            "minLength": 1,
+            "description": "Human-readable name for this workflow (e.g., 'Product Catalog Scraper')"
+          },
+          "description": {
+            "type": "string",
+            "maxLength": 500,
+            "description": "Detailed description of what this workflow does and why it was created (maximum 500 characters)"
+          },
+          "tags": {
+            "type": "array",
+            "items": {
+              "type": "string",
+              "minLength": 2
+            },
+            "description": "Tags for organizing and categorizing workflows (minimum 2 characters per tag)"
+          },
+          "interval": {
+            "type": "string",
+            "enum": [
+              "ONLY_ONCE",
+              "EVERY_10_MINUTES",
+              "HALF_HOURLY",
+              "HOURLY",
+              "THREE_HOURLY",
+              "SIX_HOURLY",
+              "TWELVE_HOURLY",
+              "EIGHTEEN_HOURLY",
+              "DAILY",
+              "TWO_DAY",
+              "THREE_DAY",
+              "WEEKLY",
+              "BIWEEKLY",
+              "TRIWEEKLY",
+              "FOUR_WEEKS",
+              "MONTHLY",
+              "REAL_TIME",
+              "CUSTOM"
+            ],
+            "description": "How frequently this workflow should run (ONLY_ONCE, HOURLY, DAILY, WEEKLY, etc.)"
+          },
+          "schedules": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "description": "Cron expressions for custom schedules. Overrides the interval setting for fine-grained control"
+          },
+          "location": {
+            "$ref": "#/components/schemas/Location"
+          },
+          "bypassPreview": {
+            "default": false,
+            "type": "boolean",
+            "description": "Skip preview and validation, deploy scraper immediately. Use with caution - set to true only when you're confident the configuration is correct"
+          },
+          "additionalData": {
+            "nullable": true,
+            "description": "Additional data for the workflow (e.g. IDs from your system to link data)"
+          },
+          "interactions": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/Interaction"
+            },
+            "description": "Browser interactions to perform before scraping (e.g., clicking buttons, filling forms, scrolling). See Interaction schema for available action types"
+          },
+          "dataValidationEnabled": {
+            "type": "boolean",
+            "description": "Enable data quality validation. When true, scraped data is validated against the schema and anomalies are detected"
+          },
+          "limit": {
+            "type": "integer",
+            "minimum": 1,
+            "description": "Maximum number of items to scrape. Useful for limiting scope during development or cost control"
+          },
+          "templateId": {
+            "type": "string",
+            "format": "uuid",
+            "description": "ID of the template to instantiate."
+          },
+          "templateVersion": {
+            "type": "integer",
+            "minimum": 1,
+            "description": "Version (integer) of the template to instantiate. Both templateId and templateVersion must be provided together."
+          }
+        },
+        "required": [
+          "urls",
+          "templateId",
+          "templateVersion"
+        ],
+        "additionalProperties": true,
+        "title": "WorkflowFromTemplate",
+        "description": "Create a workflow by instantiating a published template version. Only `urls` is required; prompt, schema, and notifications are inherited from the template version.\n\nExample: `{\"urls\": [\"https://example.com\"], \"templateId\": \"...\", \"templateVersion\": 1}`"
+      },
+      "MonitoredField": {
+        "type": "object",
+        "properties": {
+          "fieldName": {
+            "type": "string",
+            "description": "Name of the field to monitor"
+          },
+          "operator": {
+            "type": "string",
+            "enum": [
+              "changed",
+              "added",
+              "removed"
+            ],
+            "description": "Change operator"
+          }
+        },
+        "required": [
+          "fieldName",
+          "operator"
+        ],
+        "title": "MonitoredField",
+        "description": "Field monitoring configuration"
+      },
+      "MonitoringConfig": {
+        "description": "Monitoring configuration",
+        "type": "object",
+        "properties": {
+          "fields": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/MonitoredField"
+            },
+            "minItems": 1,
+            "description": "Fields to monitor (at least one required)"
+          },
+          "channels": {
+            "type": "array",
+            "items": {
+              "nullable": true
+            },
+            "description": "Notification channels"
+          },
+          "conditions": {
+            "description": "Condition group with logical operator and conditions"
+          }
+        },
+        "required": [
+          "fields"
+        ],
+        "title": "MonitoringConfig"
+      },
       "PromptWorkflow": {
         "type": "object",
         "properties": {
@@ -21521,6 +21814,10 @@
             "type": "string",
             "format": "uuid",
             "description": "Optional: ID of the template this workflow was created from. Records provenance only — the template's config is cloned at creation, not synced."
+          },
+          "templateVersion": {
+            "readOnly": true,
+            "description": "Reserved: only valid in the WorkflowFromTemplate variant. Pairs with templateId to instantiate a specific template version."
           },
           "userPrompt": {
             "type": "string",
@@ -21649,6 +21946,10 @@
               "type": "string"
             },
             "description": "Cron expressions for custom schedules"
+          },
+          "templateVersion": {
+            "readOnly": true,
+            "description": "Reserved: only valid in the WorkflowFromTemplate variant."
           }
         },
         "required": [
@@ -21800,6 +22101,10 @@
             "type": "string",
             "format": "uuid",
             "description": "Optional: ID of the template this workflow was created from. Records provenance only — the template's config is cloned at creation, not synced."
+          },
+          "templateVersion": {
+            "readOnly": true,
+            "description": "Reserved: only valid in the WorkflowFromTemplate variant. Pairs with templateId to instantiate a specific template version."
           },
           "schemaId": {
             "type": "string",
@@ -21956,6 +22261,10 @@
             "format": "uuid",
             "description": "Optional: ID of the template this workflow was created from. Records provenance only — the template's config is cloned at creation, not synced."
           },
+          "templateVersion": {
+            "readOnly": true,
+            "description": "Reserved: only valid in the WorkflowFromTemplate variant. Pairs with templateId to instantiate a specific template version."
+          },
           "entity": {
             "type": "string",
             "minLength": 1,
@@ -22085,6 +22394,10 @@
             "type": "string",
             "format": "uuid",
             "description": "Optional: ID of the template this workflow was created from. Records provenance only — the template's config is cloned at creation, not synced."
+          },
+          "templateVersion": {
+            "readOnly": true,
+            "description": "Reserved: only valid in the WorkflowFromTemplate variant. Pairs with templateId to instantiate a specific template version."
           },
           "userPrompt": {
             "type": "string",
@@ -22241,6 +22554,22 @@
           "isBuildStaleVsCurrent": {
             "type": "boolean",
             "description": "True when runBuildId is set and differs from currentBuildId — the script that produced this run's data is no longer the latest"
+          },
+          "workspaceClean": {
+            "type": "boolean",
+            "description": "True when the live Shelly workspace matches the latest completed build input; null when unknown",
+            "nullable": true
+          },
+          "freshnessReason": {
+            "type": "string",
+            "enum": [
+              "config_drift",
+              "build_drift",
+              "workspace_dirty",
+              "no_build_yet"
+            ],
+            "description": "Priority freshness reason for the snapshot block; null when config, build, and workspace are fresh",
+            "nullable": true
           }
         },
         "required": [
@@ -22251,7 +22580,9 @@
           "driftKeys",
           "runBuildId",
           "currentBuildId",
-          "isBuildStaleVsCurrent"
+          "isBuildStaleVsCurrent",
+          "workspaceClean",
+          "freshnessReason"
         ],
         "title": "JobStatusSnapshotBlock",
         "description": "ADR-009 snapshot drift block; null for runs predating the snapshot migration"
@@ -22722,6 +23053,10 @@
             "type": "string",
             "format": "uuid",
             "description": "Optional: ID of the template this workflow was created from. Records provenance only — the template's config is cloned at creation, not synced."
+          },
+          "templateVersion": {
+            "readOnly": true,
+            "description": "Reserved: only valid in the WorkflowFromTemplate variant. Pairs with templateId to instantiate a specific template version."
           },
           "userPrompt": {
             "type": "string",
