@@ -205,4 +205,41 @@ describe("ExtractionService", () => {
       userPrompt: "extract only in-stock items",
     });
   });
+
+  test("exportData delegates to data fetcher and returns the signed URL payload", async () => {
+    const exportData = mock(async () => ({
+      workflowId: "wf-export",
+      runId: "run-1",
+      executedAt: "2026-05-11T12:00:00Z",
+      format: "csv" as const,
+      rowCount: 1234,
+      url: "https://exports.kadoa.com/signed/abc?sig=xyz",
+      expiresAt: "2026-05-12T00:00:00Z",
+    }));
+
+    const service = new ExtractionService(
+      {} as ConstructorParameters<typeof ExtractionService>[0],
+      { exportData } as unknown as ConstructorParameters<
+        typeof ExtractionService
+      >[1],
+      {} as ConstructorParameters<typeof ExtractionService>[2],
+      {} as ConstructorParameters<typeof ExtractionService>[3],
+      {} as ConstructorParameters<typeof ExtractionService>[4],
+    );
+
+    const result = await service.exportData({
+      workflowId: "wf-export",
+      format: "csv",
+    });
+
+    expect(exportData).toHaveBeenCalledWith({
+      workflowId: "wf-export",
+      format: "csv",
+    });
+    expect(result).toMatchObject({
+      url: "https://exports.kadoa.com/signed/abc?sig=xyz",
+      rowCount: 1234,
+      format: "csv",
+    });
+  });
 });
