@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.33.0](https://github.com/kadoa-org/kadoa-sdks/compare/node-sdk-v0.32.0...node-sdk-v0.33.0) (2026-05-11)
+
+
+### Features
+
+* **node-sdk:** support templateid on workflow.create (kad-6630) ([#294](https://github.com/kadoa-org/kadoa-sdks/issues/294)) ([18b3822](https://github.com/kadoa-org/kadoa-sdks/commit/18b3822b0729b8f0c9ae0ebedd186ed730deed6f))
+
 ## [0.32.0](https://github.com/kadoa-org/kadoa-sdks/compare/node-sdk-v0.31.1...node-sdk-v0.32.0) (2026-05-11)
 
 
