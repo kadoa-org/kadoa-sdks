@@ -25,6 +25,7 @@ import type {
   V4WorkflowsWorkflowIdMetadataPutRequest,
   V4WorkflowsWorkflowIdRunPut200Response,
   V4WorkflowsWorkflowIdRunPutRequest,
+  WorkflowFromTemplate,
   WorkflowsApiInterface,
   WorkflowsApiV4WorkflowsGetRequest,
   WorkflowWithEntityAndFields,
@@ -201,7 +202,7 @@ export type CreateWorkflowRequest = WorkflowWithExistingSchema;
 
 export type CreateWorkflowWithCustomSchemaRequest = WorkflowWithEntityAndFields;
 
-export type { PromptWorkflow };
+export type { PromptWorkflow, WorkflowFromTemplate };
 
 /**
  * @deprecated Renamed to `PromptWorkflow` upstream. Kept for backwards
