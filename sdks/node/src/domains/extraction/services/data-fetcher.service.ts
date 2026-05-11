@@ -1,5 +1,6 @@
 import { PagedIterator, type PagedResponse } from "../../../runtime/pagination";
 import type {
+  DataSortOrder,
   FetchDataOptions,
   WorkflowsApiInterface,
 } from "../extraction.acl";
@@ -8,6 +9,46 @@ export interface FetchDataResult extends PagedResponse<object> {
   workflowId: string;
   runId?: string | null;
   executedAt?: string | null;
+}
+
+export type ExportDataFormat = "csv" | "json";
+
+/**
+ * Options for requesting a materialized data export.
+ */
+export interface ExportDataOptions {
+  workflowId: string;
+  /**
+   * Output format for the materialized export. Defaults to `"csv"`.
+   */
+  format?: ExportDataFormat;
+  runId?: string;
+  /**
+   * JSON-encoded filter array; same shape accepted by the `/data` endpoint.
+   */
+  filters?: string;
+  sortBy?: string;
+  order?: DataSortOrder;
+  /**
+   * Comma-separated list (or JSON array) of row ids to include.
+   */
+  rowIds?: string;
+}
+
+/**
+ * Result of {@link DataFetcherService.exportData}. The backend materializes
+ * the full result set and returns a self-authenticating signed URL that can
+ * be opened by external clients (browsers, Claude Desktop, sandboxes, etc.)
+ * without an Authorization header. Valid until `expiresAt`.
+ */
+export interface ExportDataResult {
+  workflowId: string;
+  runId: string;
+  executedAt?: string;
+  format: ExportDataFormat;
+  rowCount: number;
+  url: string;
+  expiresAt: string;
 }
 
 /**
@@ -44,6 +85,29 @@ export class DataFetcherService {
     );
 
     return iterator.fetchAll({ limit: options.limit ?? this.defaultLimit });
+  }
+
+  /**
+   * Materialize the workflow's full data set and return a signed,
+   * self-authenticating download URL. The URL works without an
+   * Authorization header (suitable for browsers, Claude Desktop, code
+   * execution sandboxes, etc.) and is valid until `expiresAt`. Callers
+   * download with a plain `fetch(result.url)`.
+   */
+  async exportData(options: ExportDataOptions): Promise<ExportDataResult> {
+    const response = await this.workflowsApi.v4WorkflowsWorkflowIdDataExportGet(
+      {
+        workflowId: options.workflowId,
+        format: options.format,
+        runId: options.runId,
+        filters: options.filters,
+        sortBy: options.sortBy,
+        order: options.order,
+        rowIds: options.rowIds,
+      },
+    );
+
+    return response.data as ExportDataResult;
   }
 
   /**

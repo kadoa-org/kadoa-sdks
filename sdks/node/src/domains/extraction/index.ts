@@ -23,7 +23,12 @@ export type {
 export { FetchDataOptions, SchemaFieldDataType } from "./extraction.acl";
 
 // Data fetcher types and service (owned by data-fetcher.service.ts)
-export type { FetchDataResult } from "./services/data-fetcher.service";
+export type {
+  ExportDataFormat,
+  ExportDataOptions,
+  ExportDataResult,
+  FetchDataResult,
+} from "./services/data-fetcher.service";
 export { DataFetcherService } from "./services/data-fetcher.service";
 // Entity resolver service
 export { EntityResolverService } from "./services/entity-resolver.service";

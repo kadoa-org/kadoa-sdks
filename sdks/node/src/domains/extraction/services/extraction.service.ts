@@ -27,6 +27,8 @@ import type {
 } from "../extraction.acl";
 import type {
   DataFetcherService,
+  ExportDataOptions,
+  ExportDataResult,
   FetchDataResult,
 } from "./data-fetcher.service";
 import type { EntityConfig } from "./entity-resolver.service";
@@ -182,6 +184,16 @@ export class ExtractionService {
    */
   async fetchAllData(options: FetchDataOptions): Promise<object[]> {
     return await this.dataFetcherService.fetchAllData(options);
+  }
+
+  /**
+   * Materialize a full data export and receive a signed, self-authenticating
+   * download URL. Supports `format: "csv" | "json"` (default `"csv"`). The
+   * URL is valid until `expiresAt` and can be opened by external clients
+   * without auth headers — download with `fetch(result.url)`.
+   */
+  async exportData(options: ExportDataOptions): Promise<ExportDataResult> {
+    return await this.dataFetcherService.exportData(options);
   }
 
   /**
