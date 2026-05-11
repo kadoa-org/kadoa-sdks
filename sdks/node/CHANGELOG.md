@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.32.0](https://github.com/kadoa-org/kadoa-sdks/compare/node-sdk-v0.31.1...node-sdk-v0.32.0) (2026-05-11)
+
+
+### Features
+
+* **node-sdk:** add extraction.exportdata for signed-url data export (kad-7026) ([#296](https://github.com/kadoa-org/kadoa-sdks/issues/296)) ([4818f33](https://github.com/kadoa-org/kadoa-sdks/commit/4818f33c2c4ae74ffbfad838d06f348ebe531b7c))
+
 ## [0.31.1](https://github.com/kadoa-org/kadoa-sdks/compare/node-sdk-v0.31.0...node-sdk-v0.31.1) (2026-05-06)
 
 
