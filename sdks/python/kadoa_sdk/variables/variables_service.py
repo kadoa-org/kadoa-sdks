@@ -58,20 +58,44 @@ class VariablesService:
     def update(
         self, variable_id: str, body: Union[UpdateVariableBody, dict]
     ) -> Variable:
-        """Update an existing variable."""
+        """Update an existing variable.
+
+        The API's PATCH response only returns the changed fields (``id`` and
+        ``updatedAt``); the strict generated ``Variable`` model rejects that
+        shape. We fetch the variable after update to return the full record.
+        """
+        import json
+
         payload = body if isinstance(body, UpdateVariableBody) else UpdateVariableBody(**body)
-        response = self._api().v4_variables_variable_id_patch(
+        # Use the no-preload variant so we can parse the partial PATCH body
+        # ourselves without tripping the generated model's required-field
+        # validation.
+        resp = self._api().v4_variables_variable_id_patch_without_preload_content(
             variable_id=variable_id, update_variable_body=payload
         )
-        variable = getattr(response, "variable", None)
-        if not variable:
+        raw = resp.read()
+        resp.release_conn()
+        try:
+            data = json.loads(raw) if raw else {}
+        except json.JSONDecodeError:
+            data = {}
+        if data.get("error"):
             raise KadoaSdkError(
                 f"Failed to update variable: {variable_id}",
                 code=KadoaErrorCode.INTERNAL_ERROR,
-                details={"variableId": variable_id},
+                details={"variableId": variable_id, "error": data.get("error")},
             )
-        return variable
+        # Round-trip via GET to return the fully-typed Variable
+        return self.get(variable_id)
 
     def delete(self, variable_id: str) -> None:
         """Delete a variable by ID."""
-        self._api().v4_variables_variable_id_delete(variable_id=variable_id)
+        # Use the no-preload variant: the API's DELETE response only returns
+        # ``{"variable":{"id":"..."}}`` but the OpenAPI spec types it as a
+        # full Variable (with required key/value/createdAt) — strict
+        # deserialization would error. We don't need the body anyway.
+        resp = self._api().v4_variables_variable_id_delete_without_preload_content(
+            variable_id=variable_id
+        )
+        resp.read()
+        resp.release_conn()

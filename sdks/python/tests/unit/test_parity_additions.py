@@ -124,7 +124,10 @@ def test_variables_delete_calls_endpoint(monkeypatch):
 
     monkeypatch.setattr(var_mod, "get_variables_api", lambda _c: mock_api)
     svc.delete("var-1")
-    mock_api.v4_variables_variable_id_delete.assert_called_once_with(variable_id="var-1")
+    # Uses no-preload variant to skip strict response deserialization
+    mock_api.v4_variables_variable_id_delete_without_preload_content.assert_called_once_with(
+        variable_id="var-1"
+    )
 
 
 # ---------------------------------------------------------------------------
