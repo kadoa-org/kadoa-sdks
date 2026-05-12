@@ -14,7 +14,6 @@ import kadoa_sdk.extraction.services.data_fetcher_service as df_mod
 import kadoa_sdk.templates.templates_service as tpl_mod
 import kadoa_sdk.variables.variables_service as var_mod
 from kadoa_sdk.changes import ChangesService, ListChangesOptions
-from kadoa_sdk.changes.changes_service import _coalesce_differences
 from kadoa_sdk.extraction import ExportDataOptions, ExtractionModule
 from kadoa_sdk.templates import TemplatesService
 from kadoa_sdk.validation.validation_acl import DeleteRuleRequest
@@ -175,7 +174,7 @@ def test_changes_coalesce_pairs_added_removed_same_row():
         fields=[Mock(key="name", value="old", previous_value=None)],
         row_ref=Mock(current_row_id=None, previous_row_id="row-1"),
     )
-    result = _coalesce_differences([added, removed])
+    result = ch_mod._coalesce_differences([added, removed])
     assert result is not None
     assert len(result) == 1
     assert result[0].type == "changed"
