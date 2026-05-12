@@ -9,7 +9,10 @@ from unittest.mock import Mock
 
 import pytest
 
-import kadoa_sdk.core.http as http_module
+import kadoa_sdk.changes.changes_service as ch_mod
+import kadoa_sdk.extraction.services.data_fetcher_service as df_mod
+import kadoa_sdk.templates.templates_service as tpl_mod
+import kadoa_sdk.variables.variables_service as var_mod
 from kadoa_sdk.changes import ChangesService, ListChangesOptions
 from kadoa_sdk.changes.changes_service import _coalesce_differences
 from kadoa_sdk.extraction import ExportDataOptions, ExtractionModule
@@ -39,7 +42,6 @@ def test_extraction_export_data_returns_signed_url(monkeypatch):
         expires_at=datetime(2026, 1, 2, 0, 0, 0),
     )
     # data_fetcher uses get_workflows_api imported into its module
-    import kadoa_sdk.extraction.services.data_fetcher_service as df_mod
 
     monkeypatch.setattr(df_mod, "get_workflows_api", lambda _c: mock_api)
 
@@ -76,7 +78,6 @@ def test_templates_list_unwraps_data(monkeypatch):
     svc = TemplatesService(client)
     mock_api = Mock()
     mock_api.v4_templates_get.return_value = Mock(data=["t1", "t2"])
-    import kadoa_sdk.templates.templates_service as tpl_mod
 
     monkeypatch.setattr(tpl_mod, "get_templates_api", lambda _c: mock_api)
     assert svc.list() == ["t1", "t2"]
@@ -88,7 +89,6 @@ def test_templates_get_raises_when_missing(monkeypatch):
     svc = TemplatesService(client)
     mock_api = Mock()
     mock_api.v4_templates_template_id_get.return_value = Mock(data=None)
-    import kadoa_sdk.templates.templates_service as tpl_mod
 
     monkeypatch.setattr(tpl_mod, "get_templates_api", lambda _c: mock_api)
 
@@ -109,7 +109,6 @@ def test_variables_list_unwraps_variables(monkeypatch):
     svc = VariablesService(client)
     mock_api = Mock()
     mock_api.v4_variables_get.return_value = Mock(variables=["v1"])
-    import kadoa_sdk.variables.variables_service as var_mod
 
     monkeypatch.setattr(var_mod, "get_variables_api", lambda _c: mock_api)
     assert svc.list() == ["v1"]
@@ -120,7 +119,6 @@ def test_variables_delete_calls_endpoint(monkeypatch):
     client = Mock()
     svc = VariablesService(client)
     mock_api = Mock()
-    import kadoa_sdk.variables.variables_service as var_mod
 
     monkeypatch.setattr(var_mod, "get_variables_api", lambda _c: mock_api)
     svc.delete("var-1")
@@ -155,7 +153,6 @@ def test_changes_list_maps_response(monkeypatch):
         pagination={"total": 1},
         changes_count=1,
     )
-    import kadoa_sdk.changes.changes_service as ch_mod
 
     monkeypatch.setattr(ch_mod, "get_workflows_api", lambda _c: mock_api)
 

@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, Any, List, Union
+from typing import TYPE_CHECKING, List, Union
 
 from openapi_client.models.create_template_body import CreateTemplateBody
 from openapi_client.models.create_template_version_body import CreateTemplateVersionBody
