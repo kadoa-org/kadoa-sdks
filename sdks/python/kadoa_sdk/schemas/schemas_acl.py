@@ -20,7 +20,6 @@ from openapi_client.models.classification_field_categories_inner import (
 from openapi_client.models.create_schema_body import CreateSchemaBody
 from openapi_client.models.data_field import DataField
 from openapi_client.models.data_field_example import DataFieldExample
-from openapi_client.models.raw_content_field import RawContentField
 from openapi_client.models.schema_response import SchemaResponse
 from openapi_client.models.schema_response_schema_inner import SchemaResponseSchemaInner
 from openapi_client.models.update_schema_body import UpdateSchemaBody
@@ -97,7 +96,6 @@ __all__ = [
     "ClassificationField",
     "DataField",
     "DataFieldExample",
-    "RawContentField",
     "FieldExample",
     "Category",
     "DataFieldFor",

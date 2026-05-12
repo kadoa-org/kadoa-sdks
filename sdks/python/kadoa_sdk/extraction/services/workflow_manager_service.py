@@ -6,7 +6,8 @@ from urllib.parse import urlparse
 from typing import TYPE_CHECKING, Any, Dict, List, Optional
 
 from kadoa_sdk.core.logger import workflow as logger
-from openapi_client.models.agentic_workflow import AgenticWorkflow
+from openapi_client.models.create_schema_body_fields_inner import CreateSchemaBodyFieldsInner
+from openapi_client.models.prompt_workflow import PromptWorkflow as AgenticWorkflow
 
 from ..extraction_acl import (
     ClassificationField,
@@ -14,8 +15,6 @@ from ..extraction_acl import (
     DataField,
     DataFieldExample,
     GetWorkflowResponse,
-    RawContentField,
-    SchemaResponseSchemaInner,
     V4WorkflowsWorkflowIdGet200Response,
 )
 
@@ -78,16 +77,14 @@ class WorkflowManagerService:
         domain_name = urlparse(config.urls[0]).hostname
         schema_fields = []
         for field in fields:
-            if isinstance(field, SchemaResponseSchemaInner):
+            if isinstance(field, CreateSchemaBodyFieldsInner):
                 schema_fields.append(field)
-            elif isinstance(field, (DataField, ClassificationField, RawContentField)):
-                schema_fields.append(SchemaResponseSchemaInner(actual_instance=field))
+            elif isinstance(field, (DataField, ClassificationField)):
+                schema_fields.append(CreateSchemaBodyFieldsInner(actual_instance=field))
             elif isinstance(field, dict):
                 field_type = field.get("fieldType") or field.get("field_type")
                 if field_type == "CLASSIFICATION":
                     field_obj = ClassificationField(**field)
-                elif field_type == "METADATA":
-                    field_obj = RawContentField(**field)
                 else:
                     field_dict = dict(field)
                     if "example" in field_dict and field_dict["example"] is not None:
@@ -97,28 +94,25 @@ class WorkflowManagerService:
                         else:
                             field_dict["example"] = example_value
                     field_obj = DataField(**field_dict)
-                schema_fields.append(SchemaResponseSchemaInner(actual_instance=field_obj))
+                schema_fields.append(CreateSchemaBodyFieldsInner(actual_instance=field_obj))
             else:
                 if hasattr(field, "model_dump"):
                     field_dict = field.model_dump()
                     field_type = field_dict.get("fieldType") or field_dict.get("field_type")
                     if field_type == "CLASSIFICATION":
                         field_obj = ClassificationField(**field_dict)
-                    elif field_type == "METADATA":
-                        field_obj = RawContentField(**field_dict)
                     else:
                         field_obj = DataField(**field_dict)
-                    schema_fields.append(SchemaResponseSchemaInner(actual_instance=field_obj))
+                    schema_fields.append(CreateSchemaBodyFieldsInner(actual_instance=field_obj))
                 else:
                     field_dict = dict(field) if hasattr(field, "__dict__") else field
                     field_obj = DataField(**field_dict)
-                    schema_fields.append(SchemaResponseSchemaInner(actual_instance=field_obj))
+                    schema_fields.append(CreateSchemaBodyFieldsInner(actual_instance=field_obj))
 
         user_prompt = config.user_prompt or DEFAULTS["user_prompt"]
 
         inner = AgenticWorkflow(
             urls=config.urls,
-            navigation_mode=DEFAULTS["navigation_mode"],
             entity=entity,
             name=(config.name or domain_name),
             fields=schema_fields,
@@ -130,7 +124,7 @@ class WorkflowManagerService:
             user_prompt=user_prompt,
         )
         try:
-            wrapper = CreateWorkflowBody(inner)
+            wrapper = CreateWorkflowBody.model_validate(inner.model_dump(by_alias=True, exclude_none=True))
             resp = api.v4_workflows_post(create_workflow_body=wrapper)
 
             workflow_id = getattr(resp, "workflow_id", None) or getattr(resp, "workflowId", None)

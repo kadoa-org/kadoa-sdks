@@ -43,7 +43,6 @@ if TYPE_CHECKING:
         ClassificationField,
         DataField,
         DataFieldExample,
-        RawContentField,
         SchemaResponseSchemaInner,
     )
 
@@ -186,7 +185,6 @@ def _get_schema_types():
         ClassificationField,
         DataField,
         DataFieldExample,
-        RawContentField,
         SchemaResponseSchemaInner,
     )
 
@@ -194,28 +192,28 @@ def _get_schema_types():
         ClassificationField,
         DataField,
         DataFieldExample,
-        RawContentField,
         SchemaResponseSchemaInner,
     )
+
+
+_LEGACY_SCHEMA_NAMES = (
+    "ClassificationField",
+    "DataField",
+    "DataFieldExample",
+    "SchemaResponseSchemaInner",
+)
 
 
 # Re-export schema builder models from schemas_acl (lazy)
 def __getattr__(name: str):
     """Lazy import of schema types."""
-    if name in (
-        "ClassificationField",
-        "DataField",
-        "DataFieldExample",
-        "RawContentField",
-        "SchemaResponseSchemaInner",
-    ):
+    if name in _LEGACY_SCHEMA_NAMES:
         types = _get_schema_types()
         type_map = {
             "ClassificationField": types[0],
             "DataField": types[1],
             "DataFieldExample": types[2],
-            "RawContentField": types[3],
-            "SchemaResponseSchemaInner": types[4],
+            "SchemaResponseSchemaInner": types[3],
         }
         return type_map[name]
     raise AttributeError(f"module {__name__!r} has no attribute {name!r}")
@@ -244,6 +242,5 @@ __all__ = [
     "ClassificationField",
     "DataField",
     "DataFieldExample",
-    "RawContentField",
     "SchemaResponseSchemaInner",
 ]

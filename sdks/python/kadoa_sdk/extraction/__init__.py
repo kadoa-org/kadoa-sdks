@@ -1,5 +1,8 @@
 from .extraction_module import ExtractionModule, run_extraction
 from .types import (
+    ExportDataFormat,
+    ExportDataOptions,
+    ExportDataResult,
     ExtractionOptions,
     ExtractionResult,
     FetchDataOptions,
@@ -10,6 +13,9 @@ from .types import (
 )
 
 __all__ = [
+    "ExportDataFormat",
+    "ExportDataOptions",
+    "ExportDataResult",
     "ExtractionModule",
     "ExtractionOptions",
     "ExtractionResult",
