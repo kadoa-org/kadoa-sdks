@@ -13,6 +13,8 @@ from .services import (
 )
 from .types import (
     DEFAULTS,
+    ExportDataOptions,
+    ExportDataResult,
     ExtractionOptions,
     ExtractionResult,
     FetchDataOptions,
@@ -363,6 +365,61 @@ class ExtractionModule:
         """
         async for page in self.data_fetcher.fetch_data_pages(options):
             yield page
+
+    def export_data(self, options: ExportDataOptions) -> ExportDataResult:
+        """Materialize the workflow's full data set and return a signed
+        self-authenticating download URL.
+
+        The URL works without an Authorization header (suitable for browsers,
+        Claude Desktop, code execution sandboxes, etc.) and is valid until
+        ``expires_at``. Callers download with a plain HTTP GET on ``url``.
+
+        Args:
+            options: Export options including:
+                - workflow_id: The workflow ID (required)
+                - format: Output format, "csv" (default) or "json"
+                - run_id: Specific run ID (optional)
+                - filters: JSON-encoded filter array (optional)
+                - sort_by: Field to sort by (optional)
+                - order: Sort order, "asc" or "desc" (optional)
+                - row_ids: Comma-separated or JSON list of row ids (optional)
+
+        Returns:
+            ExportDataResult: workflow_id, run_id, executed_at, format,
+                row_count, url (signed download URL), expires_at.
+
+        Example:
+            ```python
+            result = client.extraction.export_data(
+                ExportDataOptions(workflow_id="workflow-123", format="csv")
+            )
+            print(result.url)  # Open or fetch without auth headers
+            ```
+        """
+        return self.data_fetcher.export_data(options)
+
+    def download_export(
+        self, result: ExportDataResult, timeout: Optional[float] = None
+    ) -> bytes:
+        """Download the materialized export bytes from a signed URL.
+
+        Convenience helper that performs a plain HTTP GET on
+        ``result.url`` and returns the raw response body. The URL is
+        self-authenticating — no auth header is sent.
+
+        Args:
+            result: The ExportDataResult returned by :meth:`export_data`.
+            timeout: Optional request timeout in seconds.
+
+        Returns:
+            bytes: The raw export file contents (CSV or JSON, per
+                ``result.format``).
+        """
+        import urllib.request
+
+        req = urllib.request.Request(result.url, method="GET")
+        with urllib.request.urlopen(req, timeout=timeout) as response:  # noqa: S310
+            return response.read()
 
     def run_job(
         self, workflow_id: str, input: Optional[RunWorkflowOptions] = None

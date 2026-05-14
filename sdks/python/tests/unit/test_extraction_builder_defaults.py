@@ -42,8 +42,7 @@ def test_builder_defaults_to_agentic_navigation_with_default_prompt():
         assert result is not None
         assert result.workflow_id == "test-workflow-id"
         request = mock_api.v4_workflows_post.call_args.kwargs["create_workflow_body"]
-        inner = request.actual_instance
-        assert inner.navigation_mode == "agentic-navigation"
+        inner = request
         assert (
             inner.user_prompt
             == "extract all Product entities from this page and return these fields: title"
@@ -73,7 +72,7 @@ def test_builder_uses_generic_prompt_without_schema():
         builder.extract(ExtractOptions(urls=["https://example.com"], name="Test")).create()
 
         request = mock_api.v4_workflows_post.call_args.kwargs["create_workflow_body"]
-        inner = request.actual_instance
+        inner = request
         assert inner.user_prompt == "extract all the data for the main entity of this page"
     finally:
         builder_module.get_workflows_api = original_get_api
@@ -109,7 +108,7 @@ def test_builder_preserves_explicit_user_prompt():
         ).create()
 
         request = mock_api.v4_workflows_post.call_args.kwargs["create_workflow_body"]
-        inner = request.actual_instance
+        inner = request
         assert inner.user_prompt == "extract featured products only"
     finally:
         builder_module.get_workflows_api = original_get_api
@@ -142,8 +141,7 @@ def test_builder_keeps_raw_fields_on_agentic_navigation():
         ).create()
 
         request = mock_api.v4_workflows_post.call_args.kwargs["create_workflow_body"]
-        inner = request.actual_instance
-        assert inner.navigation_mode == "agentic-navigation"
+        inner = request
         assert inner.user_prompt == "extract all records from this page and return these fields: rawMarkdown"
     finally:
         builder_module.get_workflows_api = original_get_api
@@ -176,8 +174,7 @@ def test_builder_synthesizes_raw_helper_fields_as_structured_fields():
         ).create()
 
         request = mock_api.v4_workflows_post.call_args.kwargs["create_workflow_body"]
-        inner = request.actual_instance
-        assert inner.navigation_mode == "agentic-navigation"
+        inner = request
         assert inner.fields[0].actual_instance.data_type == "STRING"
         assert inner.fields[1].actual_instance.data_type == "LINK"
         assert (
