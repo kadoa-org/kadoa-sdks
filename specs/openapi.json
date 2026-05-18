@@ -2196,6 +2196,28 @@
                           "description": "When health was last evaluated"
                         }
                       }
+                    },
+                    "lighthouseSessionId": {
+                      "type": "string",
+                      "nullable": true,
+                      "description": "Newest Lighthouse assistant session linked to this workflow, regardless of status. Null if the user does not have the SHELLY_LIGHTHOUSE feature flag or no session exists."
+                    },
+                    "sessionStatus": {
+                      "type": "string",
+                      "nullable": true,
+                      "enum": [
+                        "pending",
+                        "created",
+                        "active",
+                        "idle",
+                        "inactive",
+                        "failed",
+                        "interrupted",
+                        "errored",
+                        "aborted",
+                        "timed_out"
+                      ],
+                      "description": "Status of the linked Lighthouse session. Useful for deciding whether the Assistant can accept new input (failed/errored/aborted/timed_out are closed)."
                     }
                   }
                 }
@@ -19416,7 +19438,7 @@
           },
           "isKey": {
             "type": "boolean",
-            "description": "Whether the field is a key field"
+            "description": "Marks this field as part of the record's primary key. Key fields define row identity across runs and enable data linking (records with the same key values are treated as the same record over time, used for dedupe and change detection). Set true ONLY when the field is (1) unique per record on the source, (2) stable across runs (does not change for the same logical record), and (3) reliably present (not nullable/missing). Good candidates: external IDs, SKUs, canonical URLs, posting IDs. Bad candidates: prices, counts, timestamps, free-text titles/descriptions, or anything that can change between runs. Multiple fields may be marked isKey to form a composite key (all parts must hold the same guarantees). If no field satisfies these guarantees, leave isKey unset on every field — data linking will simply be disabled, which is preferable to a wrong key. Choosing a non-stable or non-unique key causes duplicate rows and missed updates."
           }
         },
         "required": [
@@ -20254,7 +20276,7 @@
                           },
                           "isKey": {
                             "type": "boolean",
-                            "description": "Whether the field is a key field"
+                            "description": "Marks this field as part of the record's primary key. Key fields define row identity across runs and enable data linking (records with the same key values are treated as the same record over time, used for dedupe and change detection). Set true ONLY when the field is (1) unique per record on the source, (2) stable across runs (does not change for the same logical record), and (3) reliably present (not nullable/missing). Good candidates: external IDs, SKUs, canonical URLs, posting IDs. Bad candidates: prices, counts, timestamps, free-text titles/descriptions, or anything that can change between runs. Multiple fields may be marked isKey to form a composite key (all parts must hold the same guarantees). If no field satisfies these guarantees, leave isKey unset on every field — data linking will simply be disabled, which is preferable to a wrong key. Choosing a non-stable or non-unique key causes duplicate rows and missed updates."
                           }
                         },
                         "required": [
@@ -20670,7 +20692,7 @@
                 },
                 "isKey": {
                   "type": "boolean",
-                  "description": "Whether the field is a key field"
+                  "description": "Marks this field as part of the record's primary key. Key fields define row identity across runs and enable data linking (records with the same key values are treated as the same record over time, used for dedupe and change detection). Set true ONLY when the field is (1) unique per record on the source, (2) stable across runs (does not change for the same logical record), and (3) reliably present (not nullable/missing). Good candidates: external IDs, SKUs, canonical URLs, posting IDs. Bad candidates: prices, counts, timestamps, free-text titles/descriptions, or anything that can change between runs. Multiple fields may be marked isKey to form a composite key (all parts must hold the same guarantees). If no field satisfies these guarantees, leave isKey unset on every field — data linking will simply be disabled, which is preferable to a wrong key. Choosing a non-stable or non-unique key causes duplicate rows and missed updates."
                 }
               },
               "required": [
@@ -20805,7 +20827,7 @@
                     },
                     "isKey": {
                       "type": "boolean",
-                      "description": "Whether the field is a key field"
+                      "description": "Marks this field as part of the record's primary key. Key fields define row identity across runs and enable data linking (records with the same key values are treated as the same record over time, used for dedupe and change detection). Set true ONLY when the field is (1) unique per record on the source, (2) stable across runs (does not change for the same logical record), and (3) reliably present (not nullable/missing). Good candidates: external IDs, SKUs, canonical URLs, posting IDs. Bad candidates: prices, counts, timestamps, free-text titles/descriptions, or anything that can change between runs. Multiple fields may be marked isKey to form a composite key (all parts must hold the same guarantees). If no field satisfies these guarantees, leave isKey unset on every field — data linking will simply be disabled, which is preferable to a wrong key. Choosing a non-stable or non-unique key causes duplicate rows and missed updates."
                     }
                   },
                   "required": [
@@ -21024,8 +21046,8 @@
               "format": "uuid"
             },
             "minItems": 1,
-            "maxItems": 100,
-            "description": "Workflow IDs to update (max 100)"
+            "maxItems": 2000,
+            "description": "Workflow IDs to update (max 2000)"
           }
         },
         "required": [
@@ -21108,7 +21130,7 @@
               "format": "uuid"
             },
             "minItems": 1,
-            "maxItems": 100,
+            "maxItems": 2000,
             "description": "Workflow IDs to link to this template"
           },
           "force": {
@@ -21319,7 +21341,7 @@
               "format": "uuid"
             },
             "minItems": 1,
-            "maxItems": 100,
+            "maxItems": 2000,
             "description": "Workflow IDs to unlink from this template"
           }
         },
