@@ -1,6 +1,7 @@
 export { KadoaClient } from "./client/kadoa-client";
 export type {
   BearerAuthOptions,
+  BearerTokenProvider,
   KadoaClientConfig,
   KadoaClientStatus,
   NotificationDomain,

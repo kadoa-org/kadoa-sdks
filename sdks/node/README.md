@@ -313,6 +313,32 @@ const client = new KadoaClient({
 });
 ```
 
+### User Bearer Auth (Frontend / Per-User Context)
+
+Use a JWT (e.g. Supabase session token) instead of a team API key when the
+SDK should act as the signed-in human user. Pass `bearerToken` as a string,
+or as a function returning the current token — the function runs on each
+request, so a refreshed token is picked up automatically without
+reconstructing the client.
+
+```typescript
+// Static token
+const client = new KadoaClient({ bearerToken: session.access_token });
+
+// Lazy — recommended for frontend integrations with refresh
+const client = new KadoaClient({
+  bearerToken: async () => {
+    const { data } = await supabase.auth.getSession();
+    return data.session?.access_token ?? '';
+  },
+});
+```
+
+**API key vs Bearer token:** use a team API key (`tk-...`) for backend
+service accounts or scripts that act on behalf of a team. Use a bearer
+token (user JWT) when the SDK runs in a logged-in user context (frontend,
+CLI under user login) and requests should authenticate as that user.
+
 ### WebSocket & Realtime Events
 
 Enable realtime notifications using an API key:
