@@ -1,6 +1,6 @@
 import { describe, expect, mock, test } from "bun:test";
-import axios from "axios";
 import type { InternalAxiosRequestConfig } from "axios";
+import axios from "axios";
 import { KadoaClient } from "../../src/client/kadoa-client";
 import { KadoaSdkException } from "../../src/runtime/exceptions";
 
@@ -56,9 +56,8 @@ describe("KadoaClient auth", () => {
       initial: Partial<InternalAxiosRequestConfig>,
     ): InternalAxiosRequestConfig {
       // Access the interceptor handlers from axios internals
-      const handlers = (
-        client.axiosInstance.interceptors.request as any
-      ).handlers as Array<{
+      const handlers = (client.axiosInstance.interceptors.request as any)
+        .handlers as Array<{
         fulfilled: (
           config: InternalAxiosRequestConfig,
         ) => InternalAxiosRequestConfig;
@@ -101,6 +100,20 @@ describe("KadoaClient auth", () => {
       expect(result.headers["Authorization"]).toBeUndefined();
     });
 
+    test("injects x-api-key when only apiKey is used", () => {
+      const client = new KadoaClient({ apiKey: "tk-test" });
+      const result = runInterceptors(client, {});
+      expect(result.headers["x-api-key"]).toBe("tk-test");
+    });
+
+    test("does not override existing x-api-key header in apiKey mode", () => {
+      const client = new KadoaClient({ apiKey: "tk-test" });
+      const result = runInterceptors(client, {
+        headers: new axios.AxiosHeaders({ "x-api-key": "override-key" }),
+      });
+      expect(result.headers["x-api-key"]).toBe("override-key");
+    });
+
     test("does not override existing Authorization header", () => {
       const client = new KadoaClient({ bearerToken: "instance-jwt" });
       const result = runInterceptors(client, {
@@ -117,9 +130,8 @@ describe("KadoaClient auth", () => {
       const client = new KadoaClient({ apiKey: "tk-test" });
 
       // Initially no bearer — interceptor should not set Authorization
-      const handlers = (
-        client.axiosInstance.interceptors.request as any
-      ).handlers as Array<{
+      const handlers = (client.axiosInstance.interceptors.request as any)
+        .handlers as Array<{
         fulfilled: (
           config: InternalAxiosRequestConfig,
         ) => InternalAxiosRequestConfig;

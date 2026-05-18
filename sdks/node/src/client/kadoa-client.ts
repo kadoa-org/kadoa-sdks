@@ -9,9 +9,9 @@ import type {
 } from "../domains/extraction/services/extraction-builder.service";
 import { Realtime, type RealtimeConfig } from "../domains/realtime";
 import type { SchemasService } from "../domains/schemas/schemas.service";
+import type { TemplatesService } from "../domains/templates/templates.service";
 import type { UserService } from "../domains/user/user.service";
 import type { ValidationDomain } from "../domains/validation/validation.facade";
-import type { TemplatesService } from "../domains/templates/templates.service";
 import type { VariablesService } from "../domains/variables/variables.service";
 import type { WorkflowsCoreService } from "../domains/workflows/workflows-core.service";
 import { PUBLIC_API_URI } from "../runtime/config";
@@ -95,6 +95,10 @@ export class KadoaClient {
           reqConfig.headers["Authorization"] = `Bearer ${this._bearerToken}`;
         }
         delete reqConfig.headers["x-api-key"];
+      } else if (this._apiKey && !reqConfig.headers["x-api-key"]) {
+        // ApiKey mode: ensure x-api-key for direct axios calls that
+        // bypass the generated clients (which set x-api-key via Configuration).
+        reqConfig.headers["x-api-key"] = this._apiKey;
       }
       return reqConfig;
     });
