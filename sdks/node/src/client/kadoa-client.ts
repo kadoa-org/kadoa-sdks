@@ -9,17 +9,19 @@ import type {
 } from "../domains/extraction/services/extraction-builder.service";
 import { Realtime, type RealtimeConfig } from "../domains/realtime";
 import type { SchemasService } from "../domains/schemas/schemas.service";
+import type { TemplatesService } from "../domains/templates/templates.service";
 import type { UserService } from "../domains/user/user.service";
 import type { ValidationDomain } from "../domains/validation/validation.facade";
-import type { TemplatesService } from "../domains/templates/templates.service";
 import type { VariablesService } from "../domains/variables/variables.service";
 import type { WorkflowsCoreService } from "../domains/workflows/workflows-core.service";
 import { PUBLIC_API_URI } from "../runtime/config";
 import { KadoaSdkException } from "../runtime/exceptions";
 import { checkForUpdates } from "../runtime/utils/version-check";
 import { ApiRegistry } from "./api-registry";
+import { resolveBearerToken } from "./resolve-bearer-token";
 import type {
   BearerAuthOptions,
+  BearerTokenProvider,
   KadoaClientConfig,
   KadoaClientStatus,
   NotificationDomain,
@@ -52,7 +54,7 @@ export class KadoaClient {
   private readonly _axiosInstance: AxiosInstance;
   private readonly _baseUrl: string;
   private readonly _apiKey: string;
-  private _bearerToken: string | undefined;
+  private _bearerToken: BearerTokenProvider | undefined;
 
   private _realtime?: Realtime;
   private readonly _extractionBuilderService: ExtractionBuilderService;
@@ -88,11 +90,12 @@ export class KadoaClient {
 
     // Auth interceptor: injects the correct auth header on every request.
     // Runs after per-request headers are set, so it can override them.
-    this._axiosInstance.interceptors.request.use((reqConfig) => {
+    // Async so that function-form bearer tokens can return a Promise.
+    this._axiosInstance.interceptors.request.use(async (reqConfig) => {
       if (this._bearerToken) {
-        // Bearer mode: ensure Authorization header, remove stale x-api-key
+        const token = await resolveBearerToken(this._bearerToken);
         if (!reqConfig.headers["Authorization"]) {
-          reqConfig.headers["Authorization"] = `Bearer ${this._bearerToken}`;
+          reqConfig.headers["Authorization"] = `Bearer ${token}`;
         }
         delete reqConfig.headers["x-api-key"];
       }
@@ -159,9 +162,10 @@ export class KadoaClient {
   /**
    * Update the Bearer token used for authentication.
    * Call this after a Supabase JWT refresh so that subsequent requests
-   * use the new token.
+   * use the new token. Accepts either a string or a function returning
+   * one (sync or async); functions are resolved on each request.
    */
-  setBearerToken(token: string): void {
+  setBearerToken(token: BearerTokenProvider): void {
     this._bearerToken = token;
   }
 
@@ -248,7 +252,9 @@ export class KadoaClient {
     // When opts.bearerToken is provided, override the instance-level auth.
     // Otherwise let the axios auth interceptor handle it.
     const headers: Record<string, string> | undefined = opts?.bearerToken
-      ? { Authorization: `Bearer ${opts.bearerToken}` }
+      ? {
+          Authorization: `Bearer ${await resolveBearerToken(opts.bearerToken)}`,
+        }
       : undefined;
 
     const response = await this._axiosInstance.get("/v5/user", {

@@ -1,6 +1,6 @@
 import { describe, expect, mock, test } from "bun:test";
-import axios from "axios";
 import type { InternalAxiosRequestConfig } from "axios";
+import axios from "axios";
 import { KadoaClient } from "../../src/client/kadoa-client";
 import { KadoaSdkException } from "../../src/runtime/exceptions";
 
@@ -51,17 +51,16 @@ describe("KadoaClient auth", () => {
      * Runs a request config through all registered request interceptors
      * on the client's axios instance without making a real HTTP call.
      */
-    function runInterceptors(
+    async function runInterceptors(
       client: KadoaClient,
       initial: Partial<InternalAxiosRequestConfig>,
-    ): InternalAxiosRequestConfig {
+    ): Promise<InternalAxiosRequestConfig> {
       // Access the interceptor handlers from axios internals
-      const handlers = (
-        client.axiosInstance.interceptors.request as any
-      ).handlers as Array<{
+      const handlers = (client.axiosInstance.interceptors.request as any)
+        .handlers as Array<{
         fulfilled: (
           config: InternalAxiosRequestConfig,
-        ) => InternalAxiosRequestConfig;
+        ) => InternalAxiosRequestConfig | Promise<InternalAxiosRequestConfig>;
       }>;
 
       let config = {
@@ -75,35 +74,35 @@ describe("KadoaClient auth", () => {
 
       for (const handler of handlers) {
         if (handler?.fulfilled) {
-          config = handler.fulfilled(config);
+          config = await handler.fulfilled(config);
         }
       }
       return config;
     }
 
-    test("injects Authorization header when bearerToken is set", () => {
+    test("injects Authorization header when bearerToken is set", async () => {
       const client = new KadoaClient({ bearerToken: "my-jwt" });
-      const result = runInterceptors(client, {});
+      const result = await runInterceptors(client, {});
       expect(result.headers["Authorization"]).toBe("Bearer my-jwt");
     });
 
-    test("removes x-api-key header when bearerToken is set", () => {
+    test("removes x-api-key header when bearerToken is set", async () => {
       const client = new KadoaClient({ bearerToken: "my-jwt" });
-      const result = runInterceptors(client, {
+      const result = await runInterceptors(client, {
         headers: new axios.AxiosHeaders({ "x-api-key": "stale-key" }),
       });
       expect(result.headers["x-api-key"]).toBeUndefined();
     });
 
-    test("does not inject Authorization when only apiKey is used", () => {
+    test("does not inject Authorization when only apiKey is used", async () => {
       const client = new KadoaClient({ apiKey: "tk-test" });
-      const result = runInterceptors(client, {});
+      const result = await runInterceptors(client, {});
       expect(result.headers["Authorization"]).toBeUndefined();
     });
 
-    test("does not override existing Authorization header", () => {
+    test("does not override existing Authorization header", async () => {
       const client = new KadoaClient({ bearerToken: "instance-jwt" });
-      const result = runInterceptors(client, {
+      const result = await runInterceptors(client, {
         headers: new axios.AxiosHeaders({
           Authorization: "Bearer override-jwt",
         }),
@@ -112,17 +111,84 @@ describe("KadoaClient auth", () => {
     });
   });
 
+  describe("lazy bearer token", () => {
+    async function captureFinalRequest(
+      client: KadoaClient,
+      call: () => Promise<unknown>,
+      responseData: unknown = {},
+    ): Promise<InternalAxiosRequestConfig> {
+      let captured: InternalAxiosRequestConfig | undefined;
+      client.axiosInstance.defaults.adapter = async (config) => {
+        captured = config;
+        return {
+          data: responseData,
+          status: 200,
+          statusText: "OK",
+          headers: {},
+          config,
+        } as any;
+      };
+      await call();
+      if (!captured) throw new Error("no request captured");
+      return captured;
+    }
+
+    test("resolves sync function per request", async () => {
+      const fn = mock(() => "lazy-jwt");
+      const client = new KadoaClient({ bearerToken: fn });
+      const req = await captureFinalRequest(client, () => client.listTeams());
+      expect(req.headers["Authorization"]).toBe("Bearer lazy-jwt");
+      expect(fn).toHaveBeenCalledTimes(1);
+    });
+
+    test("resolves async function per request", async () => {
+      const fn = mock(async () => "async-jwt");
+      const client = new KadoaClient({ bearerToken: fn });
+      const req = await captureFinalRequest(client, () => client.listTeams());
+      expect(req.headers["Authorization"]).toBe("Bearer async-jwt");
+      expect(fn).toHaveBeenCalledTimes(1);
+    });
+
+    test("re-invokes function on each request reflecting updated value", async () => {
+      let token = "v1";
+      const fn = mock(() => token);
+      const client = new KadoaClient({ bearerToken: fn });
+
+      const req1 = await captureFinalRequest(client, () => client.listTeams());
+      expect(req1.headers["Authorization"]).toBe("Bearer v1");
+
+      token = "v2";
+      const req2 = await captureFinalRequest(client, () => client.listTeams());
+      expect(req2.headers["Authorization"]).toBe("Bearer v2");
+      expect(fn).toHaveBeenCalledTimes(2);
+    });
+
+    test("setBearerToken accepts a function", async () => {
+      const client = new KadoaClient({ apiKey: "tk-test" });
+      client.setBearerToken(() => "from-setter");
+      const req = await captureFinalRequest(client, () => client.listTeams());
+      expect(req.headers["Authorization"]).toBe("Bearer from-setter");
+    });
+
+    test("listTeams BearerAuthOptions accepts a function", async () => {
+      const client = new KadoaClient({ apiKey: "tk-test" });
+      const req = await captureFinalRequest(client, () =>
+        client.listTeams({ bearerToken: () => "per-call-jwt" }),
+      );
+      expect(req.headers["Authorization"]).toBe("Bearer per-call-jwt");
+    });
+  });
+
   describe("setBearerToken", () => {
-    test("updates token used by interceptor", () => {
+    test("updates token used by interceptor", async () => {
       const client = new KadoaClient({ apiKey: "tk-test" });
 
       // Initially no bearer — interceptor should not set Authorization
-      const handlers = (
-        client.axiosInstance.interceptors.request as any
-      ).handlers as Array<{
+      const handlers = (client.axiosInstance.interceptors.request as any)
+        .handlers as Array<{
         fulfilled: (
           config: InternalAxiosRequestConfig,
-        ) => InternalAxiosRequestConfig;
+        ) => InternalAxiosRequestConfig | Promise<InternalAxiosRequestConfig>;
       }>;
 
       const makeConfig = () =>
@@ -132,7 +198,7 @@ describe("KadoaClient auth", () => {
 
       let config = makeConfig();
       for (const h of handlers) {
-        if (h?.fulfilled) config = h.fulfilled(config);
+        if (h?.fulfilled) config = await h.fulfilled(config);
       }
       expect(config.headers["Authorization"]).toBeUndefined();
 
@@ -141,7 +207,7 @@ describe("KadoaClient auth", () => {
 
       config = makeConfig();
       for (const h of handlers) {
-        if (h?.fulfilled) config = h.fulfilled(config);
+        if (h?.fulfilled) config = await h.fulfilled(config);
       }
       expect(config.headers["Authorization"]).toBe("Bearer new-jwt");
     });
