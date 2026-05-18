@@ -98,6 +98,10 @@ export class KadoaClient {
           reqConfig.headers["Authorization"] = `Bearer ${token}`;
         }
         delete reqConfig.headers["x-api-key"];
+      } else if (this._apiKey && !reqConfig.headers["x-api-key"]) {
+        // ApiKey mode: ensure x-api-key for direct axios calls that
+        // bypass the generated clients (which set x-api-key via Configuration).
+        reqConfig.headers["x-api-key"] = this._apiKey;
       }
       return reqConfig;
     });

@@ -100,6 +100,20 @@ describe("KadoaClient auth", () => {
       expect(result.headers["Authorization"]).toBeUndefined();
     });
 
+    test("injects x-api-key when only apiKey is used", async () => {
+      const client = new KadoaClient({ apiKey: "tk-test" });
+      const result = await runInterceptors(client, {});
+      expect(result.headers["x-api-key"]).toBe("tk-test");
+    });
+
+    test("does not override existing x-api-key header in apiKey mode", async () => {
+      const client = new KadoaClient({ apiKey: "tk-test" });
+      const result = await runInterceptors(client, {
+        headers: new axios.AxiosHeaders({ "x-api-key": "override-key" }),
+      });
+      expect(result.headers["x-api-key"]).toBe("override-key");
+    });
+
     test("does not override existing Authorization header", async () => {
       const client = new KadoaClient({ bearerToken: "instance-jwt" });
       const result = await runInterceptors(client, {
