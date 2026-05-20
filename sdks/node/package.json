@@ -36,7 +36,7 @@
     "debug": "4.4.3",
     "es-toolkit": "1.46.0",
     "uuid": "14.0.0",
-    "ws": "8.20.0"
+    "ws": "8.20.1"
   },
   "devDependencies": {
     "@types/debug": "^4.1.12",
