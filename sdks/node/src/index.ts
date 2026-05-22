@@ -22,8 +22,9 @@ export * from "./domains/workflows";
 // Core Client & Configuration
 // ============================================================================
 export {
-  KadoaClient,
   type BearerAuthOptions,
+  type BearerTokenProvider,
+  KadoaClient,
   type KadoaClientConfig,
   type KadoaClientStatus,
   type NotificationDomain,
