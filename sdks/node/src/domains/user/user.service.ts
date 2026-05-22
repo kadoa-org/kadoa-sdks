@@ -18,7 +18,6 @@ export class UserService {
     const response = await this.client.axiosInstance.get("/v5/user", {
       baseURL: this.client.baseUrl,
       headers: {
-        "x-api-key": this.client.apiKey,
         "Content-Type": "application/json",
       },
     });
