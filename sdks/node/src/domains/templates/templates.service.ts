@@ -1,19 +1,26 @@
 import type { KadoaClient } from "../../kadoa-client";
-import { KadoaSdkException } from "../../runtime/exceptions";
+import {
+  KadoaHttpException,
+  KadoaSdkException,
+} from "../../runtime/exceptions";
 import {
   ERROR_MESSAGES,
   KadoaErrorCode,
 } from "../../runtime/exceptions/base.exception";
 import { logger } from "../../runtime/logger";
 import type {
+  ApplyVersionRequest,
+  ApplyVersionResult,
   CreateTemplateRequest,
   CreateTemplateVersionRequest,
+  LinkWorkflowsConflict,
   LinkWorkflowsRequest,
   LinkWorkflowsResult,
   SaveFromWorkflowRequest,
   SaveFromWorkflowResult,
   Template,
   TemplateDetail,
+  TemplateLinkedWorkflow,
   TemplateListItem,
   TemplateSchema,
   TemplateVersion,
@@ -176,9 +183,78 @@ export class TemplatesService {
       templateId,
     );
 
-    const response = await this.templatesApi.v4TemplatesTemplateIdLinkPost({
+    try {
+      const response = await this.templatesApi.v4TemplatesTemplateIdLinkPost({
+        templateId,
+        linkWorkflowsBody: body,
+      });
+
+      return response.data;
+    } catch (error) {
+      // The API responds 409 with a `conflicts` list when some workflows are
+      // already linked to another template and `force` was not set. Surface
+      // those conflicts in the result instead of throwing, so callers can
+      // inspect them and retry with `force: true`.
+      if (KadoaHttpException.isInstance(error)) {
+        const httpError = error as InstanceType<typeof KadoaHttpException>;
+        const conflicts =
+          httpError.httpStatus === 409
+            ? (
+                httpError.responseBody as
+                  | { conflicts?: LinkWorkflowsConflict[] }
+                  | undefined
+              )?.conflicts
+            : undefined;
+        if (conflicts) {
+          return {
+            error: true,
+            success: false,
+            linkedCount: 0,
+            workflowIds: [],
+            conflicts,
+          };
+        }
+      }
+      throw error;
+    }
+  }
+
+  /**
+   * List the workflows linked to a template, including each workflow's pinned
+   * template version and an `isOutdated` flag when a newer version exists.
+   */
+  async getLinkedWorkflows(
+    templateId: string,
+  ): Promise<TemplateLinkedWorkflow[]> {
+    debug("Listing workflows linked to template: %s", templateId);
+
+    const response = await this.templatesApi.v4TemplatesTemplateIdWorkflowsGet({
       templateId,
-      linkWorkflowsBody: body,
+    });
+
+    return response.data.data ?? [];
+  }
+
+  /**
+   * Apply a template version to a set of its linked workflows, pushing the
+   * template-controlled parts (prompt, schema, validation rules, notifications,
+   * frequency) onto each. Returns how many workflows were updated and which
+   * parts the template controls.
+   */
+  async applyVersion(
+    templateId: string,
+    body: ApplyVersionRequest,
+  ): Promise<ApplyVersionResult> {
+    debug(
+      "Applying template %s version %d to %d workflow(s)",
+      templateId,
+      body.targetVersion,
+      body.workflowIds?.length ?? 0,
+    );
+
+    const response = await this.templatesApi.v4TemplatesTemplateIdApplyPost({
+      templateId,
+      applyTemplateUpdateBody: body,
     });
 
     return response.data;
