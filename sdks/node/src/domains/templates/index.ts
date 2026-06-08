@@ -1,6 +1,8 @@
 export type {
   CreateTemplateRequest,
   CreateTemplateVersionRequest,
+  LinkWorkflowsRequest,
+  LinkWorkflowsResult,
   SaveFromWorkflowRequest,
   SaveFromWorkflowResult,
   Template,
@@ -8,6 +10,8 @@ export type {
   TemplateListItem,
   TemplateSchema,
   TemplateVersion,
+  UnlinkWorkflowsRequest,
+  UnlinkWorkflowsResult,
   UpdateTemplateRequest,
 } from "./templates.acl";
 

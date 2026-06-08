@@ -8,6 +8,8 @@ import { logger } from "../../runtime/logger";
 import type {
   CreateTemplateRequest,
   CreateTemplateVersionRequest,
+  LinkWorkflowsRequest,
+  LinkWorkflowsResult,
   SaveFromWorkflowRequest,
   SaveFromWorkflowResult,
   Template,
@@ -15,6 +17,8 @@ import type {
   TemplateListItem,
   TemplateSchema,
   TemplateVersion,
+  UnlinkWorkflowsRequest,
+  UnlinkWorkflowsResult,
   UpdateTemplateRequest,
 } from "./templates.acl";
 
@@ -158,6 +162,51 @@ export class TemplatesService {
   }
 
   /**
+   * Link one or more workflows to a template. Linked workflows adopt the
+   * template's configuration (prompt, schema, notifications) and stay in sync.
+   * Set `force: true` to relink workflows already linked to another template.
+   */
+  async linkWorkflows(
+    templateId: string,
+    body: LinkWorkflowsRequest,
+  ): Promise<LinkWorkflowsResult> {
+    debug(
+      "Linking %d workflow(s) to template: %s",
+      body.workflowIds?.length ?? 0,
+      templateId,
+    );
+
+    const response = await this.templatesApi.v4TemplatesTemplateIdLinkPost({
+      templateId,
+      linkWorkflowsBody: body,
+    });
+
+    return response.data;
+  }
+
+  /**
+   * Unlink one or more workflows from a template. Unlinked workflows keep their
+   * current configuration but no longer track the template.
+   */
+  async unlinkWorkflows(
+    templateId: string,
+    body: UnlinkWorkflowsRequest,
+  ): Promise<UnlinkWorkflowsResult> {
+    debug(
+      "Unlinking %d workflow(s) from template: %s",
+      body.workflowIds?.length ?? 0,
+      templateId,
+    );
+
+    const response = await this.templatesApi.v4TemplatesTemplateIdUnlinkPost({
+      templateId,
+      unlinkWorkflowsBody: body,
+    });
+
+    return response.data;
+  }
+
+  /**
    * List schemas associated with a template.
    */
   async listSchemas(templateId: string): Promise<TemplateSchema[]> {
@@ -173,7 +222,9 @@ export class TemplatesService {
   /**
    * Save a workflow's configuration as a new template or new version of an existing template.
    */
-  async createFromWorkflow(body: SaveFromWorkflowRequest): Promise<SaveFromWorkflowResult> {
+  async createFromWorkflow(
+    body: SaveFromWorkflowRequest,
+  ): Promise<SaveFromWorkflowResult> {
     debug("Creating template from workflow: %s", body.workflowId);
 
     const response = await this.templatesApi.v4TemplatesFromWorkflowPost({
