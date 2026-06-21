@@ -2196,6 +2196,37 @@
                           "description": "When health was last evaluated"
                         }
                       }
+                    },
+                    "assistantSessionId": {
+                      "type": "string",
+                      "nullable": true,
+                      "description": "Newest assistant session linked to this workflow, regardless of status. Null if no assistant session has been created for this workflow."
+                    },
+                    "assistantThreadId": {
+                      "type": "string",
+                      "nullable": true,
+                      "description": "Newest assistant thread within the assistant session."
+                    },
+                    "assistantEligible": {
+                      "type": "boolean",
+                      "description": "True when this workflow has no assistant session yet and is eligible to start one (SHELLY_SCRIPT and SHELLY_REAL_TIME_SCRIPT workflows)."
+                    },
+                    "sessionStatus": {
+                      "type": "string",
+                      "nullable": true,
+                      "enum": [
+                        "pending",
+                        "created",
+                        "active",
+                        "idle",
+                        "inactive",
+                        "failed",
+                        "interrupted",
+                        "errored",
+                        "aborted",
+                        "timed_out"
+                      ],
+                      "description": "Status of the linked assistant session. Useful for deciding whether the Assistant can accept new input (failed/errored/aborted/timed_out are closed)."
                     }
                   }
                 }
@@ -3145,24 +3176,31 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "type": "object",
-                  "properties": {
-                    "error": {
-                      "type": "boolean",
-                      "description": "Indicates an error occurred"
+                  "oneOf": [
+                    {
+                      "type": "object",
+                      "properties": {
+                        "error": {
+                          "type": "boolean",
+                          "description": "Indicates an error occurred"
+                        },
+                        "message": {
+                          "type": "string",
+                          "description": "Error message"
+                        },
+                        "details": {
+                          "nullable": true,
+                          "description": "Additional error details (e.g., validation errors)"
+                        }
+                      },
+                      "required": [
+                        "error",
+                        "message"
+                      ]
                     },
-                    "message": {
-                      "type": "string",
-                      "description": "Error message"
-                    },
-                    "details": {
-                      "nullable": true,
-                      "description": "Additional error details (e.g., validation errors)"
+                    {
+                      "$ref": "#/components/schemas/TemplateControlledFieldError"
                     }
-                  },
-                  "required": [
-                    "error",
-                    "message"
                   ]
                 }
               }
@@ -3474,6 +3512,19 @@
                 "DAILY",
                 "WEEKLY",
                 "MONTHLY"
+              ]
+            }
+          },
+          {
+            "name": "scheduleType",
+            "in": "query",
+            "description": "Filter workflows by schedule type. RUN_ONCE = no recurring schedule (Complete), RECURRING = has a recurring/real-time schedule (Scheduled).",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "enum": [
+                "RUN_ONCE",
+                "RECURRING"
               ]
             }
           },
@@ -4539,6 +4590,190 @@
                 }
               }
             }
+          }
+        }
+      }
+    },
+    "/v4/workflows/{workflowId}/schema-validation-rules": {
+      "get": {
+        "summary": "Get data quality rules for a workflow",
+        "tags": [
+          "Data Quality"
+        ],
+        "description": "Returns the per-field data quality rules persisted on the workflow.\nThe response is a map keyed by schema field name. A workflow without any rules returns `rules: null`.\n",
+        "parameters": [
+          {
+            "name": "workflowId",
+            "in": "path",
+            "required": true,
+            "description": "ID of the workflow",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "security": [
+          {
+            "ApiKeyAuth": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Rules retrieved successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "rules": {
+                      "nullable": true,
+                      "allOf": [
+                        {
+                          "$ref": "#/components/schemas/WorkflowSchemaValidationRules"
+                        }
+                      ]
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid workflow ID format"
+          },
+          "401": {
+            "description": "Unauthorized"
+          },
+          "404": {
+            "description": "Workflow not found"
+          },
+          "500": {
+            "description": "Internal server error"
+          }
+        }
+      },
+      "put": {
+        "summary": "Upsert data quality rules for a workflow",
+        "tags": [
+          "Data Quality"
+        ],
+        "description": "Patch-merge the per-field data quality rules persisted on the workflow. Fields included in the\nrequest body replace any existing rules for those fields; fields not included are left untouched.\nTo remove a field's rules, call the corresponding `DELETE` endpoint instead.\nRule edits take effect on the next workflow run.\n",
+        "parameters": [
+          {
+            "name": "workflowId",
+            "in": "path",
+            "required": true,
+            "description": "ID of the workflow",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "security": [
+          {
+            "ApiKeyAuth": []
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/WorkflowSchemaValidationRules"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Rules updated successfully. Returns the merged ruleset.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "rules": {
+                      "$ref": "#/components/schemas/WorkflowSchemaValidationRules"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid workflow ID or invalid rule payload"
+          },
+          "401": {
+            "description": "Unauthorized"
+          },
+          "404": {
+            "description": "Workflow not found"
+          },
+          "500": {
+            "description": "Internal server error"
+          }
+        }
+      }
+    },
+    "/v4/workflows/{workflowId}/schema-validation-rules/{fieldName}": {
+      "delete": {
+        "summary": "Delete data quality rules for a single field",
+        "tags": [
+          "Data Quality"
+        ],
+        "description": "Remove all data quality rules for a single schema field on a workflow.\nOther fields' rules are left untouched.\n",
+        "parameters": [
+          {
+            "name": "workflowId",
+            "in": "path",
+            "required": true,
+            "description": "ID of the workflow",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "fieldName",
+            "in": "path",
+            "required": true,
+            "description": "Name of the schema field whose rules should be removed",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "security": [
+          {
+            "ApiKeyAuth": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Rules removed (or no-op if the field had no rules). Returns the remaining ruleset.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "rules": {
+                      "$ref": "#/components/schemas/WorkflowSchemaValidationRules"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid workflow ID format or missing fieldName"
+          },
+          "401": {
+            "description": "Unauthorized"
+          },
+          "404": {
+            "description": "Workflow not found"
+          },
+          "500": {
+            "description": "Internal server error"
           }
         }
       }
@@ -7196,6 +7431,138 @@
         }
       }
     },
+    "/v5/workspaces/{workspaceId}/billable-workflows": {
+      "get": {
+        "summary": "List the billable workflows behind the current billing period (teams and organizations)",
+        "description": "The per-workflow detail behind the approved-workflows count. A workflow is billable if it has at least one successful (FINISHED), non-preview run whose finished_at falls inside the current billing period — of any current state, deleted included (deleted workflows still bill if they ran). Sourced from workflow jobs (immutable run facts), so the result is drift-free and reproducible.\n",
+        "tags": [
+          "Workspaces"
+        ],
+        "parameters": [
+          {
+            "name": "workspaceId",
+            "in": "path",
+            "required": true,
+            "description": "Workspace ID (team or organization)",
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
+          {
+            "name": "x-api-key",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "Authorization",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "security": [
+          {
+            "ApiKeyAuth": []
+          },
+          {
+            "BearerAuth": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Billable workflows retrieved successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "billingPeriod": {
+                      "type": "object",
+                      "nullable": true,
+                      "description": "Null for a renewal-anchored workspace with no renewal_date (trial); the workflows list is then empty.",
+                      "properties": {
+                        "start": {
+                          "type": "string",
+                          "format": "date-time"
+                        },
+                        "end": {
+                          "type": "string",
+                          "format": "date-time"
+                        }
+                      }
+                    },
+                    "count": {
+                      "type": "integer",
+                      "description": "Number of billable workflows in the period"
+                    },
+                    "scheduledWorkflows": {
+                      "type": "integer",
+                      "description": "ACTIVE workflows with an active schedule (auto-run, roll over to next cycle)"
+                    },
+                    "workflows": {
+                      "type": "array",
+                      "items": {
+                        "type": "object",
+                        "properties": {
+                          "workflowId": {
+                            "type": "string",
+                            "format": "uuid"
+                          },
+                          "name": {
+                            "type": "string",
+                            "nullable": true
+                          },
+                          "state": {
+                            "type": "string",
+                            "description": "Current workflow state (includes DELETED)"
+                          },
+                          "scheduled": {
+                            "type": "boolean",
+                            "description": "ACTIVE and on an active schedule (recurring); else completed/one-off"
+                          },
+                          "firstRunAt": {
+                            "type": "string",
+                            "format": "date-time"
+                          },
+                          "runsInPeriod": {
+                            "type": "integer"
+                          },
+                          "totalRows": {
+                            "type": "integer",
+                            "description": "Total rows extracted across the in-period runs"
+                          }
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad request"
+          },
+          "401": {
+            "description": "Unauthorized"
+          },
+          "403": {
+            "description": "Forbidden - insufficient permissions"
+          },
+          "404": {
+            "description": "Workspace not found"
+          },
+          "500": {
+            "description": "Internal server error"
+          }
+        }
+      }
+    },
     "/v5/workspaces/{workspaceId}/details": {
       "get": {
         "summary": "Get workspace details (supports users, teams, and organizations)",
@@ -7331,6 +7698,109 @@
         }
       }
     },
+    "/v5/workspaces/{workspaceId}/monthly-active": {
+      "get": {
+        "summary": "Daily history for the Active and Active-35 workflow models (teams and organizations)",
+        "description": "For each of the last N days, two values. active35 = distinct workflows that ran successfully (FINISHED, non-preview) in the trailing 35 days ending that day, plus live real-time monitors; fully backfilled from run facts. active = the scheduled count: the exact team_ledger daily snapshot where present (forward), else the run-based 35-day backfill (currently-ACTIVE workflows that ran in the trailing 35 days, plus live real-time monitors) for days predating the snapshot.\n",
+        "tags": [
+          "Workspaces"
+        ],
+        "parameters": [
+          {
+            "name": "workspaceId",
+            "in": "path",
+            "required": true,
+            "description": "Workspace ID (team or organization)",
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
+          {
+            "name": "days",
+            "in": "query",
+            "required": false,
+            "description": "Number of trailing days to return (1-400, default 120).",
+            "schema": {
+              "type": "integer"
+            }
+          },
+          {
+            "name": "x-api-key",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "Authorization",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "security": [
+          {
+            "ApiKeyAuth": []
+          },
+          {
+            "BearerAuth": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Monthly-active daily history retrieved successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "days": {
+                      "type": "array",
+                      "items": {
+                        "type": "object",
+                        "properties": {
+                          "date": {
+                            "type": "string",
+                            "description": "Day (UTC), YYYY-MM-DD"
+                          },
+                          "active": {
+                            "type": "integer",
+                            "description": "Scheduled count — team_ledger snapshot where present, else the run-based 35-day backfill"
+                          },
+                          "active35": {
+                            "type": "integer",
+                            "description": "Distinct workflows that ran in the 35 days ending this day, plus live real-time monitors"
+                          }
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad request"
+          },
+          "401": {
+            "description": "Unauthorized"
+          },
+          "403": {
+            "description": "Forbidden - insufficient permissions"
+          },
+          "404": {
+            "description": "Workspace not found"
+          },
+          "500": {
+            "description": "Internal server error"
+          }
+        }
+      }
+    },
     "/v5/workspaces/{workspaceId}/observability": {
       "get": {
         "summary": "Get observability uptime metrics for a workspace",
@@ -7353,14 +7823,9 @@
             "name": "days",
             "in": "query",
             "required": false,
-            "description": "Time range for observability data (30, 90, or 365 days)",
+            "description": "Time range for observability data, in days (1-365)",
             "schema": {
               "type": "string",
-              "enum": [
-                30,
-                90,
-                365
-              ],
               "default": 30
             }
           },
@@ -7398,6 +7863,109 @@
           },
           "401": {
             "description": "Unauthorized"
+          },
+          "404": {
+            "description": "Workspace not found"
+          },
+          "500": {
+            "description": "Internal server error"
+          }
+        }
+      }
+    },
+    "/v5/workspaces/{workspaceId}/period-series": {
+      "get": {
+        "summary": "Daily per-billing-period cumulative series for Approved workflows and extracted rows (teams and organizations)",
+        "description": "For each of the last N days, the Approved-workflow count and extracted-row sum accumulated since the start of the billing period that day falls in, resetting at each renewal anniversary (a sawtooth across renewals). approved = distinct workflows with at least one FINISHED non-preview run in [periodStart(day), day]; rows = sum of total_records over those runs. Both are run-fact-based, so they are drift-free and fully backfilled. At today, approved equals currentContractActiveWorkflows and rows equals currentPeriodExtractedRows from the quotas endpoint.\n",
+        "tags": [
+          "Workspaces"
+        ],
+        "parameters": [
+          {
+            "name": "workspaceId",
+            "in": "path",
+            "required": true,
+            "description": "Workspace ID (team or organization)",
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
+          {
+            "name": "days",
+            "in": "query",
+            "required": false,
+            "description": "Number of trailing days to return (1-400, default 400 so at least one renewal reset is visible).",
+            "schema": {
+              "type": "integer"
+            }
+          },
+          {
+            "name": "x-api-key",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "Authorization",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "security": [
+          {
+            "ApiKeyAuth": []
+          },
+          {
+            "BearerAuth": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Period-cumulative daily history retrieved successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "days": {
+                      "type": "array",
+                      "items": {
+                        "type": "object",
+                        "properties": {
+                          "date": {
+                            "type": "string",
+                            "description": "Day (UTC), YYYY-MM-DD"
+                          },
+                          "approved": {
+                            "type": "integer",
+                            "description": "Distinct workflows that ran (FINISHED, non-preview) since the start of that day's billing period"
+                          },
+                          "rows": {
+                            "type": "integer",
+                            "description": "Extracted rows (sum of total_records) for those in-period runs up to that day"
+                          }
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad request"
+          },
+          "401": {
+            "description": "Unauthorized"
+          },
+          "403": {
+            "description": "Forbidden - insufficient permissions"
           },
           "404": {
             "description": "Workspace not found"
@@ -7476,6 +8044,17 @@
                           ],
                           "description": "Workspace type"
                         },
+                        "billingType": {
+                          "type": "string",
+                          "enum": [
+                            "enterprise_approved",
+                            "enterprise_active",
+                            "enterprise_active_35",
+                            "flex"
+                          ],
+                          "nullable": true,
+                          "description": "The org-level billing model (drives the default usage model on the dashboard), or null until set."
+                        },
                         "availableQuotas": {
                           "type": "object",
                           "properties": {
@@ -7498,17 +8077,41 @@
                             },
                             "currentApprovedWorkflows": {
                               "type": "integer",
-                              "description": "Workflows that have at least one successful non-preview run AND are alive (or were deleted within the current billing period). KAD-6720."
+                              "description": "Workflows that have at least one successful non-preview run AND are alive (or were deleted within the current billing period). Billing Type 3 (per-contract). KAD-6720."
+                            },
+                            "currentScheduledWorkflows": {
+                              "type": "integer",
+                              "description": "Active (scheduled). Distinct ACTIVE workflows with a next run scheduled on our scheduler (an active schedule with next_run_at set) OR a live real-time monitor. The live headline for the \"Active\" billing model; daily history comes from the team_ledger snapshot (forward) or a run-based 35-day backfill. KAD-7956."
+                            },
+                            "currentActive35Workflows": {
+                              "type": "integer",
+                              "description": "Active-35. Distinct workflows that ran successfully (non-preview) in the trailing 35 days via any trigger (our scheduler, the client's API cron, or a manual run), OR are a live real-time monitor. The \"recent usage\" billing model; 35 days so monthly-cadence workflows don't flicker. KAD-7956."
+                            },
+                            "currentContractActiveWorkflows": {
+                              "type": "integer",
+                              "nullable": true,
+                              "description": "Contract active. Distinct workflows that ran successfully (non-preview) at least once during the current contract period. The cumulative \"used this term\" billing model. Same definition as the billable-workflows list count. Null when there's no billing period (trial / no renewal_date)."
+                            },
+                            "previousContractActiveWorkflows": {
+                              "type": "integer",
+                              "nullable": true,
+                              "description": "Contract active for the PREVIOUS billing period (one cycle back). Same definition as currentContractActiveWorkflows; used for renewal sizing comparisons. Null when there's no billing period."
                             },
                             "currentExtractedRows": {
                               "type": "integer",
-                              "description": "Current number of extracted rows"
+                              "description": "All-time cumulative extracted rows (latest team_ledger snapshot)."
+                            },
+                            "currentPeriodExtractedRows": {
+                              "type": "integer",
+                              "nullable": true,
+                              "description": "Extracted rows attributed to FINISHED non-preview runs inside the current billing period. The \"by billing period\" companion to the all-time currentExtractedRows. Null when there's no billing period."
                             }
                           }
                         },
                         "billingPeriod": {
                           "type": "object",
-                          "description": "The billing period the used-quota counts apply to. Enterprise uses the org's renewal_date (auto-rolled forward when stale); self-service uses the team owner's Stripe period; falls back to trailing 365d when neither is set.",
+                          "nullable": true,
+                          "description": "The billing period the used-quota counts apply to. Enterprise uses the org's renewal_date (auto-rolled forward when stale); self-service uses the team owner's Stripe period. Null for a renewal-anchored workspace (enterprise/org) with no renewal_date — e.g. a trial — in which case the period-scoped counts above are also null.",
                           "properties": {
                             "start": {
                               "type": "string",
@@ -7523,6 +8126,21 @@
                               "format": "date",
                               "nullable": true,
                               "description": "The org's contractual renewal date (YYYY-MM-DD), or null if not set."
+                            }
+                          }
+                        },
+                        "previousBillingPeriod": {
+                          "type": "object",
+                          "nullable": true,
+                          "description": "The billing period immediately before billingPeriod (the prior contract cycle). Null when the precise counts couldn't be computed.",
+                          "properties": {
+                            "start": {
+                              "type": "string",
+                              "format": "date-time"
+                            },
+                            "end": {
+                              "type": "string",
+                              "format": "date-time"
                             }
                           }
                         }
@@ -7573,14 +8191,9 @@
             "name": "resultRange",
             "in": "query",
             "required": false,
-            "description": "Time range for usage data (30, 90, or 365 days)",
+            "description": "Time range for usage data, in days (1-365)",
             "schema": {
               "type": "string",
-              "enum": [
-                30,
-                90,
-                365
-              ],
               "default": 30
             }
           },
@@ -13150,7 +13763,7 @@
         ]
       },
       "delete": {
-        "description": "Soft-delete (archive) a template. Existing workflows are unaffected.",
+        "description": "Soft-delete (archive) a template and cascade-unlink any workflows that referenced it.",
         "summary": "Archive template",
         "tags": [
           "Templates"
@@ -13825,34 +14438,6 @@
                 }
               }
             }
-          },
-          "501": {
-            "description": "501",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "type": "object",
-                  "properties": {
-                    "error": {
-                      "type": "boolean",
-                      "description": "Indicates an error occurred"
-                    },
-                    "message": {
-                      "type": "string",
-                      "description": "Error message"
-                    },
-                    "details": {
-                      "nullable": true,
-                      "description": "Additional error details (e.g., validation errors)"
-                    }
-                  },
-                  "required": [
-                    "error",
-                    "message"
-                  ]
-                }
-              }
-            }
           }
         },
         "security": [
@@ -13998,34 +14583,6 @@
           },
           "500": {
             "description": "500",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "type": "object",
-                  "properties": {
-                    "error": {
-                      "type": "boolean",
-                      "description": "Indicates an error occurred"
-                    },
-                    "message": {
-                      "type": "string",
-                      "description": "Error message"
-                    },
-                    "details": {
-                      "nullable": true,
-                      "description": "Additional error details (e.g., validation errors)"
-                    }
-                  },
-                  "required": [
-                    "error",
-                    "message"
-                  ]
-                }
-              }
-            }
-          },
-          "501": {
-            "description": "501",
             "content": {
               "application/json": {
                 "schema": {
@@ -15955,6 +16512,448 @@
   },
   "components": {
     "schemas": {
+      "Attribution": {
+        "type": "object",
+        "required": [
+          "editedBy",
+          "editedAt"
+        ],
+        "description": "Who last edited this specific rule and when.",
+        "properties": {
+          "editedBy": {
+            "type": "string",
+            "enum": [
+              "default",
+              "llm",
+              "agent",
+              "ops",
+              "user"
+            ],
+            "description": "Actor type that produced the last edit."
+          },
+          "editedByLabel": {
+            "type": "string",
+            "description": "Optional human-readable label for the editor (e.g. email for users, agent name for agents)."
+          },
+          "editedAt": {
+            "type": "string",
+            "format": "date-time",
+            "description": "ISO-8601 timestamp of the last edit."
+          }
+        }
+      },
+      "PresenceRule": {
+        "description": "Minimum percentage of rows that must have a value for this field.",
+        "allOf": [
+          {
+            "$ref": "#/components/schemas/Attribution"
+          },
+          {
+            "type": "object",
+            "required": [
+              "target"
+            ],
+            "properties": {
+              "target": {
+                "type": "integer",
+                "enum": [
+                  0,
+                  20,
+                  40,
+                  60,
+                  80,
+                  100
+                ]
+              }
+            }
+          }
+        ]
+      },
+      "UniquenessRule": {
+        "description": "Minimum percentage of values that must be unique in this column.",
+        "allOf": [
+          {
+            "$ref": "#/components/schemas/Attribution"
+          },
+          {
+            "type": "object",
+            "required": [
+              "target"
+            ],
+            "properties": {
+              "target": {
+                "type": "integer",
+                "enum": [
+                  0,
+                  20,
+                  40,
+                  60,
+                  80,
+                  100
+                ]
+              }
+            }
+          }
+        ]
+      },
+      "StringLengthRule": {
+        "allOf": [
+          {
+            "$ref": "#/components/schemas/Attribution"
+          },
+          {
+            "type": "object",
+            "required": [
+              "value"
+            ],
+            "properties": {
+              "value": {
+                "type": "integer",
+                "minimum": 0
+              }
+            }
+          }
+        ]
+      },
+      "NumberBoundRule": {
+        "allOf": [
+          {
+            "$ref": "#/components/schemas/Attribution"
+          },
+          {
+            "type": "object",
+            "required": [
+              "value"
+            ],
+            "properties": {
+              "value": {
+                "type": "number"
+              }
+            }
+          }
+        ]
+      },
+      "NumberMaxDecimalPlacesRule": {
+        "allOf": [
+          {
+            "$ref": "#/components/schemas/Attribution"
+          },
+          {
+            "type": "object",
+            "required": [
+              "value"
+            ],
+            "properties": {
+              "value": {
+                "type": "integer",
+                "minimum": 0,
+                "maximum": 16
+              }
+            }
+          }
+        ]
+      },
+      "StringFormatFreeTextRule": {
+        "description": "Free-text format. A character-class restriction; length rules apply only with this kind.",
+        "allOf": [
+          {
+            "$ref": "#/components/schemas/Attribution"
+          },
+          {
+            "type": "object",
+            "required": [
+              "kind",
+              "charset"
+            ],
+            "properties": {
+              "kind": {
+                "type": "string",
+                "enum": [
+                  "FREE_TEXT"
+                ]
+              },
+              "charset": {
+                "type": "object",
+                "required": [
+                  "kind",
+                  "preset"
+                ],
+                "properties": {
+                  "kind": {
+                    "type": "string",
+                    "enum": [
+                      "PRESET"
+                    ]
+                  },
+                  "preset": {
+                    "type": "string",
+                    "enum": [
+                      "natural_language",
+                      "alphanumeric",
+                      "alpha"
+                    ]
+                  }
+                }
+              }
+            }
+          }
+        ]
+      },
+      "StringFormatFormatRule": {
+        "description": "Pattern format. Values must match a named pattern preset or a custom regular expression.",
+        "allOf": [
+          {
+            "$ref": "#/components/schemas/Attribution"
+          },
+          {
+            "type": "object",
+            "required": [
+              "kind",
+              "source"
+            ],
+            "properties": {
+              "kind": {
+                "type": "string",
+                "enum": [
+                  "FORMAT"
+                ]
+              },
+              "source": {
+                "oneOf": [
+                  {
+                    "type": "object",
+                    "required": [
+                      "kind",
+                      "preset"
+                    ],
+                    "properties": {
+                      "kind": {
+                        "type": "string",
+                        "enum": [
+                          "PRESET"
+                        ]
+                      },
+                      "preset": {
+                        "type": "string",
+                        "enum": [
+                          "url",
+                          "email",
+                          "phone",
+                          "date",
+                          "datetime",
+                          "time",
+                          "uuid",
+                          "slug"
+                        ]
+                      }
+                    }
+                  },
+                  {
+                    "type": "object",
+                    "required": [
+                      "kind",
+                      "pattern"
+                    ],
+                    "properties": {
+                      "kind": {
+                        "type": "string",
+                        "enum": [
+                          "CUSTOM"
+                        ]
+                      },
+                      "pattern": {
+                        "type": "string",
+                        "minLength": 1,
+                        "description": "Must be a valid regular expression."
+                      }
+                    }
+                  }
+                ],
+                "discriminator": {
+                  "propertyName": "kind"
+                }
+              }
+            }
+          }
+        ]
+      },
+      "StringFormatListRule": {
+        "description": "List format. Values must come from a named enum preset or a custom list.",
+        "allOf": [
+          {
+            "$ref": "#/components/schemas/Attribution"
+          },
+          {
+            "type": "object",
+            "required": [
+              "kind",
+              "source"
+            ],
+            "properties": {
+              "kind": {
+                "type": "string",
+                "enum": [
+                  "LIST"
+                ]
+              },
+              "source": {
+                "oneOf": [
+                  {
+                    "type": "object",
+                    "required": [
+                      "kind",
+                      "preset"
+                    ],
+                    "properties": {
+                      "kind": {
+                        "type": "string",
+                        "enum": [
+                          "PRESET"
+                        ]
+                      },
+                      "preset": {
+                        "type": "string",
+                        "enum": [
+                          "language2",
+                          "country2",
+                          "country3",
+                          "currency3",
+                          "month3",
+                          "usState2"
+                        ]
+                      }
+                    }
+                  },
+                  {
+                    "type": "object",
+                    "required": [
+                      "kind",
+                      "values"
+                    ],
+                    "properties": {
+                      "kind": {
+                        "type": "string",
+                        "enum": [
+                          "CUSTOM"
+                        ]
+                      },
+                      "values": {
+                        "type": "array",
+                        "items": {
+                          "type": "string",
+                          "minLength": 1
+                        },
+                        "minItems": 1,
+                        "description": "The closed set of allowed values."
+                      }
+                    }
+                  }
+                ],
+                "discriminator": {
+                  "propertyName": "kind"
+                }
+              }
+            }
+          }
+        ]
+      },
+      "StringFormatRule": {
+        "description": "Format rule for string fields. The `kind` discriminator selects one of three shapes:\n  - `FREE_TEXT` (see `StringFormatFreeTextRule`): a character-class restriction. Length rules apply only with this kind.\n  - `FORMAT` (see `StringFormatFormatRule`): a named pattern preset or a custom regex.\n  - `LIST` (see `StringFormatListRule`): a named enum preset or a custom list of allowed values.\n",
+        "oneOf": [
+          {
+            "$ref": "#/components/schemas/StringFormatFreeTextRule"
+          },
+          {
+            "$ref": "#/components/schemas/StringFormatFormatRule"
+          },
+          {
+            "$ref": "#/components/schemas/StringFormatListRule"
+          }
+        ],
+        "discriminator": {
+          "propertyName": "kind"
+        }
+      },
+      "StringFieldRules": {
+        "type": "object",
+        "required": [
+          "kind"
+        ],
+        "description": "Validation rules for string fields.",
+        "properties": {
+          "kind": {
+            "type": "string",
+            "enum": [
+              "STRING"
+            ]
+          },
+          "presence": {
+            "$ref": "#/components/schemas/PresenceRule"
+          },
+          "uniqueness": {
+            "$ref": "#/components/schemas/UniquenessRule"
+          },
+          "minLength": {
+            "$ref": "#/components/schemas/StringLengthRule"
+          },
+          "maxLength": {
+            "$ref": "#/components/schemas/StringLengthRule"
+          },
+          "format": {
+            "$ref": "#/components/schemas/StringFormatRule"
+          }
+        }
+      },
+      "NumberFieldRules": {
+        "type": "object",
+        "required": [
+          "kind"
+        ],
+        "description": "Validation rules for number fields.",
+        "properties": {
+          "kind": {
+            "type": "string",
+            "enum": [
+              "NUMBER"
+            ]
+          },
+          "presence": {
+            "$ref": "#/components/schemas/PresenceRule"
+          },
+          "uniqueness": {
+            "$ref": "#/components/schemas/UniquenessRule"
+          },
+          "minimum": {
+            "$ref": "#/components/schemas/NumberBoundRule"
+          },
+          "maximum": {
+            "$ref": "#/components/schemas/NumberBoundRule"
+          },
+          "maxDecimalPlaces": {
+            "$ref": "#/components/schemas/NumberMaxDecimalPlacesRule"
+          }
+        }
+      },
+      "FieldValidationRules": {
+        "oneOf": [
+          {
+            "$ref": "#/components/schemas/StringFieldRules"
+          },
+          {
+            "$ref": "#/components/schemas/NumberFieldRules"
+          }
+        ],
+        "discriminator": {
+          "propertyName": "kind"
+        }
+      },
+      "WorkflowSchemaValidationRules": {
+        "type": "object",
+        "description": "Map keyed by schema field name, with the per-field data quality rules for that field.",
+        "additionalProperties": {
+          "$ref": "#/components/schemas/FieldValidationRules"
+        }
+      },
       "EmailChannelConfig": {
         "type": "object",
         "required": [
@@ -16136,6 +17135,15 @@
               "preview",
               "enabled",
               "disabled"
+            ]
+          },
+          "source": {
+            "type": "string",
+            "enum": [
+              "user_input",
+              "ai_agent",
+              "preview_suggestion",
+              "unknown"
             ]
           },
           "disabledReason": {
@@ -17523,6 +18531,7 @@
                   "curl-cffi",
                   "patchright",
                   "camoufox",
+                  "cloakbrowser",
                   "brightdata"
                 ],
                 "description": "Explicit Scrape V2 worker override. BrightData is blocked in crawler runtime."
@@ -17878,6 +18887,7 @@
                   "curl-cffi",
                   "patchright",
                   "camoufox",
+                  "cloakbrowser",
                   "brightdata"
                 ],
                 "description": "Explicit Scrape V2 worker override. BrightData is blocked in crawler runtime."
@@ -18250,6 +19260,7 @@
                   "curl-cffi",
                   "patchright",
                   "camoufox",
+                  "cloakbrowser",
                   "brightdata"
                 ],
                 "description": "Explicit Scrape V2 worker override. BrightData is blocked in crawler runtime."
@@ -18655,6 +19666,7 @@
                   "curl-cffi",
                   "patchright",
                   "camoufox",
+                  "cloakbrowser",
                   "brightdata"
                 ],
                 "description": "Explicit Scrape V2 worker override. BrightData is blocked in crawler runtime."
@@ -19416,7 +20428,7 @@
           },
           "isKey": {
             "type": "boolean",
-            "description": "Whether the field is a key field"
+            "description": "Marks this field as part of the record's primary key. Key fields define row identity across runs and enable data linking (records with the same key values are treated as the same record over time, used for dedupe and change detection). Set true ONLY when the field is (1) unique per record on the source, (2) stable across runs (does not change for the same logical record), and (3) reliably present (not nullable/missing). Good candidates: external IDs, SKUs, canonical URLs, posting IDs. Bad candidates: prices, counts, timestamps, free-text titles/descriptions, or anything that can change between runs. Multiple fields may be marked isKey to form a composite key (all parts must hold the same guarantees). If no field satisfies these guarantees, leave isKey unset on every field — data linking will simply be disabled, which is preferable to a wrong key. Choosing a non-stable or non-unique key causes duplicate rows and missed updates."
           }
         },
         "required": [
@@ -20075,9 +21087,17 @@
             "type": "boolean",
             "description": "Whether the latest version has a schema"
           },
+          "hasSchemaValidationRules": {
+            "type": "boolean",
+            "description": "Whether the latest version has schema validation rules"
+          },
           "hasNotifications": {
             "type": "boolean",
             "description": "Whether the latest version has notification settings"
+          },
+          "hasFrequency": {
+            "type": "boolean",
+            "description": "Whether the latest version controls frequency"
           },
           "archivedAt": {
             "type": "string",
@@ -20180,9 +21200,17 @@
                 "type": "boolean",
                 "description": "Whether the latest version has a schema"
               },
+              "hasSchemaValidationRules": {
+                "type": "boolean",
+                "description": "Whether the latest version has schema validation rules"
+              },
               "hasNotifications": {
                 "type": "boolean",
                 "description": "Whether the latest version has notification settings"
+              },
+              "hasFrequency": {
+                "type": "boolean",
+                "description": "Whether the latest version controls frequency"
               },
               "archivedAt": {
                 "type": "string",
@@ -20242,11 +21270,11 @@
                           },
                           "fieldType": {
                             "type": "string",
-                            "description": "Field type (SCHEMA, etc.)"
+                            "description": "Field type (SCHEMA, CLASSIFICATION, etc.)"
                           },
                           "example": {
-                            "type": "string",
-                            "description": "Example value"
+                            "nullable": true,
+                            "description": "Example value (string, array, or object for OBJECT/ARRAY dataTypes)"
                           },
                           "dataType": {
                             "type": "string",
@@ -20254,7 +21282,28 @@
                           },
                           "isKey": {
                             "type": "boolean",
-                            "description": "Whether the field is a key field"
+                            "description": "Marks this field as part of the record's primary key. Key fields define row identity across runs and enable data linking (records with the same key values are treated as the same record over time, used for dedupe and change detection). Set true ONLY when the field is (1) unique per record on the source, (2) stable across runs (does not change for the same logical record), and (3) reliably present (not nullable/missing). Good candidates: external IDs, SKUs, canonical URLs, posting IDs. Bad candidates: prices, counts, timestamps, free-text titles/descriptions, or anything that can change between runs. Multiple fields may be marked isKey to form a composite key (all parts must hold the same guarantees). If no field satisfies these guarantees, leave isKey unset on every field — data linking will simply be disabled, which is preferable to a wrong key. Choosing a non-stable or non-unique key causes duplicate rows and missed updates."
+                          },
+                          "categories": {
+                            "type": "array",
+                            "items": {
+                              "type": "object",
+                              "properties": {
+                                "title": {
+                                  "type": "string",
+                                  "description": "Short title/label of the category"
+                                },
+                                "definition": {
+                                  "type": "string",
+                                  "description": "Full definition/description of the category"
+                                }
+                              },
+                              "required": [
+                                "title",
+                                "definition"
+                              ]
+                            },
+                            "description": "Predefined categories for CLASSIFICATION fields"
                           }
                         },
                         "required": [
@@ -20263,6 +21312,17 @@
                       },
                       "nullable": true,
                       "description": "Resolved schema fields from data_schemas"
+                    },
+                    "schemaValidationRules": {
+                      "type": "object",
+                      "additionalProperties": {
+                        "type": "object",
+                        "additionalProperties": {
+                          "nullable": true
+                        }
+                      },
+                      "description": "Schema validation rules for this version",
+                      "nullable": true
                     },
                     "notifications": {
                       "type": "array",
@@ -20323,6 +21383,68 @@
                         ]
                       }
                     },
+                    "frequency": {
+                      "type": "object",
+                      "properties": {
+                        "interval": {
+                          "type": "string",
+                          "enum": [
+                            "ONLY_ONCE",
+                            "EVERY_10_MINUTES",
+                            "HALF_HOURLY",
+                            "HOURLY",
+                            "THREE_HOURLY",
+                            "SIX_HOURLY",
+                            "TWELVE_HOURLY",
+                            "EIGHTEEN_HOURLY",
+                            "DAILY",
+                            "TWO_DAY",
+                            "THREE_DAY",
+                            "WEEKLY",
+                            "BIWEEKLY",
+                            "TRIWEEKLY",
+                            "FOUR_WEEKS",
+                            "MONTHLY",
+                            "REAL_TIME",
+                            "CUSTOM"
+                          ],
+                          "description": "Update interval enum (HOURLY/DAILY/REAL_TIME/CUSTOM/...). When CUSTOM, schedules must be provided."
+                        },
+                        "schedules": {
+                          "type": "array",
+                          "items": {
+                            "type": "object",
+                            "properties": {
+                              "type": {
+                                "type": "string",
+                                "enum": [
+                                  "repeat",
+                                  "cron"
+                                ],
+                                "description": "Schedule type"
+                              },
+                              "interval": {
+                                "type": "string",
+                                "description": "Repeat token (e.g., '1h', '1d') when type=repeat"
+                              },
+                              "expressions": {
+                                "type": "array",
+                                "items": {
+                                  "type": "string"
+                                },
+                                "description": "Cron expressions when type=cron"
+                              }
+                            },
+                            "required": [
+                              "type"
+                            ]
+                          },
+                          "description": "Cron/repeat schedule specs. Required when interval=CUSTOM."
+                        }
+                      },
+                      "description": "Frequency configuration for this version",
+                      "nullable": true
+                    },
                     "createdAt": {
                       "type": "string",
                       "description": "Creation timestamp"
@@ -20344,6 +21466,7 @@
                     "version",
                     "prompt",
                     "schemaId",
+                    "frequency",
                     "createdAt"
                   ]
                 },
@@ -20448,9 +21571,17 @@
                 "type": "boolean",
                 "description": "Whether the latest version has a schema"
               },
+              "hasSchemaValidationRules": {
+                "type": "boolean",
+                "description": "Whether the latest version has schema validation rules"
+              },
               "hasNotifications": {
                 "type": "boolean",
                 "description": "Whether the latest version has notification settings"
+              },
+              "hasFrequency": {
+                "type": "boolean",
+                "description": "Whether the latest version controls frequency"
               },
               "archivedAt": {
                 "type": "string",
@@ -20562,9 +21693,17 @@
                 "type": "boolean",
                 "description": "Whether the latest version has a schema"
               },
+              "hasSchemaValidationRules": {
+                "type": "boolean",
+                "description": "Whether the latest version has schema validation rules"
+              },
               "hasNotifications": {
                 "type": "boolean",
                 "description": "Whether the latest version has notification settings"
+              },
+              "hasFrequency": {
+                "type": "boolean",
+                "description": "Whether the latest version controls frequency"
               },
               "archivedAt": {
                 "type": "string",
@@ -20621,12 +21760,18 @@
           "message": {
             "type": "string",
             "description": "Archive confirmation message"
+          },
+          "unlinkedWorkflowCount": {
+            "type": "integer",
+            "minimum": 0,
+            "description": "Number of workflows unlinked by this archive"
           }
         },
         "required": [
           "error",
           "success",
-          "message"
+          "message",
+          "unlinkedWorkflowCount"
         ],
         "title": "TemplateArchivedResponse",
         "description": "Response for template archival"
@@ -20658,11 +21803,11 @@
                 },
                 "fieldType": {
                   "type": "string",
-                  "description": "Field type (SCHEMA, etc.)"
+                  "description": "Field type (SCHEMA, CLASSIFICATION, etc.)"
                 },
                 "example": {
-                  "type": "string",
-                  "description": "Example value"
+                  "nullable": true,
+                  "description": "Example value (string, array, or object for OBJECT/ARRAY dataTypes)"
                 },
                 "dataType": {
                   "type": "string",
@@ -20670,7 +21815,28 @@
                 },
                 "isKey": {
                   "type": "boolean",
-                  "description": "Whether the field is a key field"
+                  "description": "Marks this field as part of the record's primary key. Key fields define row identity across runs and enable data linking (records with the same key values are treated as the same record over time, used for dedupe and change detection). Set true ONLY when the field is (1) unique per record on the source, (2) stable across runs (does not change for the same logical record), and (3) reliably present (not nullable/missing). Good candidates: external IDs, SKUs, canonical URLs, posting IDs. Bad candidates: prices, counts, timestamps, free-text titles/descriptions, or anything that can change between runs. Multiple fields may be marked isKey to form a composite key (all parts must hold the same guarantees). If no field satisfies these guarantees, leave isKey unset on every field — data linking will simply be disabled, which is preferable to a wrong key. Choosing a non-stable or non-unique key causes duplicate rows and missed updates."
+                },
+                "categories": {
+                  "type": "array",
+                  "items": {
+                    "type": "object",
+                    "properties": {
+                      "title": {
+                        "type": "string",
+                        "description": "Short title/label of the category"
+                      },
+                      "definition": {
+                        "type": "string",
+                        "description": "Full definition/description of the category"
+                      }
+                    },
+                    "required": [
+                      "title",
+                      "definition"
+                    ]
+                  },
+                  "description": "Predefined categories for CLASSIFICATION fields"
                 }
               },
               "required": [
@@ -20682,6 +21848,16 @@
           "schemaEntity": {
             "type": "string",
             "description": "Entity name for the inline schema"
+          },
+          "schemaValidationRules": {
+            "type": "object",
+            "additionalProperties": {
+              "type": "object",
+              "additionalProperties": {
+                "nullable": true
+              }
+            },
+            "description": "Schema validation rules to include in this version"
           },
           "notifications": {
             "type": "array",
@@ -20728,6 +21904,66 @@
               ]
             },
             "description": "Notification configuration for this version"
+          },
+          "frequency": {
+            "type": "object",
+            "properties": {
+              "interval": {
+                "type": "string",
+                "enum": [
+                  "ONLY_ONCE",
+                  "EVERY_10_MINUTES",
+                  "HALF_HOURLY",
+                  "HOURLY",
+                  "THREE_HOURLY",
+                  "SIX_HOURLY",
+                  "TWELVE_HOURLY",
+                  "EIGHTEEN_HOURLY",
+                  "DAILY",
+                  "TWO_DAY",
+                  "THREE_DAY",
+                  "WEEKLY",
+                  "BIWEEKLY",
+                  "TRIWEEKLY",
+                  "FOUR_WEEKS",
+                  "MONTHLY",
+                  "REAL_TIME",
+                  "CUSTOM"
+                ],
+                "description": "Update interval enum (HOURLY/DAILY/REAL_TIME/CUSTOM/...). When CUSTOM, schedules must be provided."
+              },
+              "schedules": {
+                "type": "array",
+                "items": {
+                  "type": "object",
+                  "properties": {
+                    "type": {
+                      "type": "string",
+                      "enum": [
+                        "repeat",
+                        "cron"
+                      ],
+                      "description": "Schedule type"
+                    },
+                    "interval": {
+                      "type": "string",
+                      "description": "Repeat token (e.g., '1h', '1d') when type=repeat"
+                    },
+                    "expressions": {
+                      "type": "array",
+                      "items": {
+                        "type": "string"
+                      },
+                      "description": "Cron expressions when type=cron"
+                    }
+                  },
+                  "required": [
+                    "type"
+                  ]
+                },
+                "description": "Cron/repeat schedule specs. Required when interval=CUSTOM."
+              }
+            }
           }
         },
         "title": "CreateTemplateVersionBody",
@@ -20793,11 +22029,11 @@
                     },
                     "fieldType": {
                       "type": "string",
-                      "description": "Field type (SCHEMA, etc.)"
+                      "description": "Field type (SCHEMA, CLASSIFICATION, etc.)"
                     },
                     "example": {
-                      "type": "string",
-                      "description": "Example value"
+                      "nullable": true,
+                      "description": "Example value (string, array, or object for OBJECT/ARRAY dataTypes)"
                     },
                     "dataType": {
                       "type": "string",
@@ -20805,7 +22041,28 @@
                     },
                     "isKey": {
                       "type": "boolean",
-                      "description": "Whether the field is a key field"
+                      "description": "Marks this field as part of the record's primary key. Key fields define row identity across runs and enable data linking (records with the same key values are treated as the same record over time, used for dedupe and change detection). Set true ONLY when the field is (1) unique per record on the source, (2) stable across runs (does not change for the same logical record), and (3) reliably present (not nullable/missing). Good candidates: external IDs, SKUs, canonical URLs, posting IDs. Bad candidates: prices, counts, timestamps, free-text titles/descriptions, or anything that can change between runs. Multiple fields may be marked isKey to form a composite key (all parts must hold the same guarantees). If no field satisfies these guarantees, leave isKey unset on every field — data linking will simply be disabled, which is preferable to a wrong key. Choosing a non-stable or non-unique key causes duplicate rows and missed updates."
+                    },
+                    "categories": {
+                      "type": "array",
+                      "items": {
+                        "type": "object",
+                        "properties": {
+                          "title": {
+                            "type": "string",
+                            "description": "Short title/label of the category"
+                          },
+                          "definition": {
+                            "type": "string",
+                            "description": "Full definition/description of the category"
+                          }
+                        },
+                        "required": [
+                          "title",
+                          "definition"
+                        ]
+                      },
+                      "description": "Predefined categories for CLASSIFICATION fields"
                     }
                   },
                   "required": [
@@ -20814,6 +22071,17 @@
                 },
                 "nullable": true,
                 "description": "Resolved schema fields from data_schemas"
+              },
+              "schemaValidationRules": {
+                "type": "object",
+                "additionalProperties": {
+                  "type": "object",
+                  "additionalProperties": {
+                    "nullable": true
+                  }
+                },
+                "description": "Schema validation rules for this version",
+                "nullable": true
               },
               "notifications": {
                 "type": "array",
@@ -20874,6 +22142,68 @@
                   ]
                 }
               },
+              "frequency": {
+                "type": "object",
+                "properties": {
+                  "interval": {
+                    "type": "string",
+                    "enum": [
+                      "ONLY_ONCE",
+                      "EVERY_10_MINUTES",
+                      "HALF_HOURLY",
+                      "HOURLY",
+                      "THREE_HOURLY",
+                      "SIX_HOURLY",
+                      "TWELVE_HOURLY",
+                      "EIGHTEEN_HOURLY",
+                      "DAILY",
+                      "TWO_DAY",
+                      "THREE_DAY",
+                      "WEEKLY",
+                      "BIWEEKLY",
+                      "TRIWEEKLY",
+                      "FOUR_WEEKS",
+                      "MONTHLY",
+                      "REAL_TIME",
+                      "CUSTOM"
+                    ],
+                    "description": "Update interval enum (HOURLY/DAILY/REAL_TIME/CUSTOM/...). When CUSTOM, schedules must be provided."
+                  },
+                  "schedules": {
+                    "type": "array",
+                    "items": {
+                      "type": "object",
+                      "properties": {
+                        "type": {
+                          "type": "string",
+                          "enum": [
+                            "repeat",
+                            "cron"
+                          ],
+                          "description": "Schedule type"
+                        },
+                        "interval": {
+                          "type": "string",
+                          "description": "Repeat token (e.g., '1h', '1d') when type=repeat"
+                        },
+                        "expressions": {
+                          "type": "array",
+                          "items": {
+                            "type": "string"
+                          },
+                          "description": "Cron expressions when type=cron"
+                        }
+                      },
+                      "required": [
+                        "type"
+                      ]
+                    },
+                    "description": "Cron/repeat schedule specs. Required when interval=CUSTOM."
+                  }
+                },
+                "description": "Frequency configuration for this version",
+                "nullable": true
+              },
               "createdAt": {
                 "type": "string",
                 "description": "Creation timestamp"
@@ -20885,6 +22215,7 @@
               "version",
               "prompt",
               "schemaId",
+              "frequency",
               "createdAt"
             ],
             "description": "Created version"
@@ -21024,8 +22355,8 @@
               "format": "uuid"
             },
             "minItems": 1,
-            "maxItems": 100,
-            "description": "Workflow IDs to update (max 100)"
+            "maxItems": 2000,
+            "description": "Workflow IDs to update (max 2000)"
           }
         },
         "required": [
@@ -21075,15 +22406,25 @@
                 "type": "boolean",
                 "description": "Whether the template controlled the schema"
               },
+              "schemaValidationRules": {
+                "type": "boolean",
+                "description": "Whether the template controlled the schema validation rules"
+              },
               "notifications": {
                 "type": "boolean",
                 "description": "Whether the template controlled notifications"
+              },
+              "frequency": {
+                "type": "boolean",
+                "description": "Whether the template controlled the frequency"
               }
             },
             "required": [
               "prompt",
               "schema",
-              "notifications"
+              "schemaValidationRules",
+              "notifications",
+              "frequency"
             ],
             "description": "Which workflow parts were updated by this template version"
           }
@@ -21108,7 +22449,7 @@
               "format": "uuid"
             },
             "minItems": 1,
-            "maxItems": 100,
+            "maxItems": 2000,
             "description": "Workflow IDs to link to this template"
           },
           "force": {
@@ -21247,7 +22588,9 @@
               "enum": [
                 "prompt",
                 "schema",
-                "notifications"
+                "schemaValidationRules",
+                "notifications",
+                "frequency"
               ]
             },
             "minItems": 1,
@@ -21319,7 +22662,7 @@
               "format": "uuid"
             },
             "minItems": 1,
-            "maxItems": 100,
+            "maxItems": 2000,
             "description": "Workflow IDs to unlink from this template"
           }
         },
@@ -21644,7 +22987,8 @@
           "limit": {
             "type": "integer",
             "minimum": 1,
-            "description": "Maximum number of items to scrape. Useful for limiting scope during development or cost control"
+            "nullable": true,
+            "description": "Maximum number of items to scrape. Useful for limiting scope during development or cost control. Pass null to clear an existing limit (unlimited)."
           },
           "templateId": {
             "type": "string",
@@ -21654,17 +22998,16 @@
           "templateVersion": {
             "type": "integer",
             "minimum": 1,
-            "description": "Version (integer) of the template to instantiate. Both templateId and templateVersion must be provided together."
+            "description": "Optional version (integer) of the template to instantiate. Omit to use the latest published version (resolved once at request time). Provide it to pin a specific version."
           }
         },
         "required": [
           "urls",
-          "templateId",
-          "templateVersion"
+          "templateId"
         ],
         "additionalProperties": true,
         "title": "WorkflowFromTemplate",
-        "description": "Create a workflow by instantiating a published template version. Only `urls` is required; prompt, schema, and notifications are inherited from the template version.\n\nExample: `{\"urls\": [\"https://example.com\"], \"templateId\": \"...\", \"templateVersion\": 1}`"
+        "description": "Create a workflow by instantiating a published template. Only `urls` and `templateId` are required; prompt, schema, frequency, and notifications are inherited from the template version. `templateVersion` is optional — omit it to use the latest published version.\n\nExample: `{\"urls\": [\"https://example.com\"], \"templateId\": \"...\"}`"
       },
       "MonitoredField": {
         "type": "object",
@@ -21681,6 +23024,10 @@
               "removed"
             ],
             "description": "Change operator"
+          },
+          "isKeyField": {
+            "type": "boolean",
+            "description": "Optional explicit schema-key metadata update for this field. Omit to leave workflow schema key flags unchanged."
           }
         },
         "required": [
@@ -21751,7 +23098,8 @@
           "limit": {
             "type": "integer",
             "minimum": 1,
-            "description": "Maximum number of items to scrape. Useful for limiting scope during development or cost control"
+            "nullable": true,
+            "description": "Maximum number of items to scrape. Useful for limiting scope during development or cost control. Pass null to clear an existing limit (unlimited)."
           },
           "location": {
             "$ref": "#/components/schemas/Location"
@@ -22004,7 +23352,8 @@
           "limit": {
             "type": "integer",
             "minimum": 1,
-            "description": "Maximum number of items to scrape. Useful for limiting scope during development or cost control"
+            "nullable": true,
+            "description": "Maximum number of items to scrape. Useful for limiting scope during development or cost control. Pass null to clear an existing limit (unlimited)."
           },
           "location": {
             "$ref": "#/components/schemas/Location"
@@ -22163,7 +23512,8 @@
           "limit": {
             "type": "integer",
             "minimum": 1,
-            "description": "Maximum number of items to scrape. Useful for limiting scope during development or cost control"
+            "nullable": true,
+            "description": "Maximum number of items to scrape. Useful for limiting scope during development or cost control. Pass null to clear an existing limit (unlimited)."
           },
           "location": {
             "$ref": "#/components/schemas/Location"
@@ -22331,7 +23681,8 @@
           "limit": {
             "type": "integer",
             "minimum": 1,
-            "description": "Maximum number of items to scrape. Useful for limiting scope during development or cost control"
+            "nullable": true,
+            "description": "Maximum number of items to scrape. Useful for limiting scope during development or cost control. Pass null to clear an existing limit (unlimited)."
           },
           "location": {
             "$ref": "#/components/schemas/Location"
@@ -22475,6 +23826,49 @@
         ],
         "title": "CreateWorkflowResponse",
         "description": "Response for workflow creation"
+      },
+      "TemplateControlledFieldError": {
+        "type": "object",
+        "properties": {
+          "error": {
+            "type": "boolean",
+            "enum": [
+              true
+            ],
+            "description": "Error flag"
+          },
+          "code": {
+            "type": "string",
+            "enum": [
+              "TEMPLATE_CONTROLLED_FIELD"
+            ],
+            "description": "Stable error code"
+          },
+          "message": {
+            "type": "string",
+            "description": "Human-readable error message"
+          },
+          "templateId": {
+            "type": "string",
+            "format": "uuid",
+            "description": "Template that controls the offending fields"
+          },
+          "fields": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "description": "Controlled field names the caller tried to override"
+          }
+        },
+        "required": [
+          "error",
+          "code",
+          "message",
+          "templateId",
+          "fields"
+        ],
+        "title": "TemplateControlledFieldError"
       },
       "JobError": {
         "type": "object",
@@ -22990,7 +24384,8 @@
           "limit": {
             "type": "integer",
             "minimum": 1,
-            "description": "Maximum number of items to scrape. Useful for limiting scope during development or cost control"
+            "nullable": true,
+            "description": "Maximum number of items to scrape. Useful for limiting scope during development or cost control. Pass null to clear an existing limit (unlimited)."
           },
           "location": {
             "$ref": "#/components/schemas/Location"
