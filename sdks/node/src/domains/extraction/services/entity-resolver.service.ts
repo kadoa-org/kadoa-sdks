@@ -142,7 +142,6 @@ export class EntityResolverService {
         headers: {
           "Content-Type": "application/json",
           Accept: "application/json",
-          "x-api-key": this.client.apiKey,
         },
       });
 

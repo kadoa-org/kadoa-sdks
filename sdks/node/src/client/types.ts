@@ -17,8 +17,16 @@ export interface TeamInfo {
   adminEmail: string | null;
 }
 
+/**
+ * A Bearer token, or a function that returns one (sync or async).
+ * Functions are invoked on each request, letting integrations supply a
+ * fresh JWT from a session store without re-constructing the client or
+ * calling {@link KadoaClient.setBearerToken} after every refresh.
+ */
+export type BearerTokenProvider = string | (() => string | Promise<string>);
+
 export interface BearerAuthOptions {
-  bearerToken: string;
+  bearerToken: BearerTokenProvider;
 }
 
 export interface KadoaClientStatus {
@@ -33,11 +41,24 @@ export interface KadoaClientConfig {
    */
   apiKey?: string;
   /**
-   * = JWT for Bearer auth. When set, requests send
-   * `Authorization: Bearer <token>` instead of `x-api-key`.
-   * Use {@link KadoaClient.setBearerToken} to update after refresh.
+   * JWT for Bearer auth, or a function returning one (sync or async).
+   * When set, requests send `Authorization: Bearer <token>` instead of
+   * `x-api-key`.
+   *
+   * Passing a function enables lazy resolution: the function is invoked
+   * on each request, so frontend integrations can return the current
+   * Supabase session token without manually calling
+   * {@link KadoaClient.setBearerToken} after every refresh.
+   *
+   * @example
+   * ```ts
+   * new KadoaClient({
+   *   bearerToken: () =>
+   *     supabase.auth.getSession().then((s) => s.data.session?.access_token ?? ""),
+   * });
+   * ```
    */
-  bearerToken?: string;
+  bearerToken?: BearerTokenProvider;
   /**
    * Override the base URL for the public API.
    *
