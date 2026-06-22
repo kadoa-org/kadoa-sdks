@@ -20,6 +20,7 @@ from .validation_acl import (
     DataValidationApi,
     DeleteAllRulesRequest,
     DeleteAllRulesResponseData,
+    DeleteRuleRequest,
     DisableRuleRequest,
     GenerateRuleRequest,
     GenerateRulesRequest,
@@ -604,4 +605,37 @@ class ValidationRulesService:
             raise KadoaHttpError.wrap(
                 error,
                 message="Failed to delete all validation rules",
+            )
+
+    def delete_rule(self, data: DeleteRuleRequest):
+        """Delete a single validation rule by ID.
+
+        Args:
+            data: Delete request with ``rule_id`` and optional
+                ``workflow_id`` + ``reason``.
+
+        Returns:
+            RuleDeleteResponse from the API.
+
+        Raises:
+            KadoaHttpError: If the API request fails.
+        """
+        from openapi_client.models.delete_rule_with_reason import DeleteRuleWithReason
+
+        body = None
+        if data.workflow_id is not None:
+            body = DeleteRuleWithReason(
+                workflowId=data.workflow_id,
+                **({"reason": data.reason} if data.reason is not None else {}),
+            )
+        try:
+            return self.validation_api.v4_data_validation_rules_rule_id_delete(
+                rule_id=data.rule_id,
+                delete_rule_with_reason=body,
+            )
+        except Exception as error:
+            raise KadoaHttpError.wrap(
+                error,
+                message="Failed to delete validation rule",
+                details={"ruleId": data.rule_id},
             )

@@ -11,7 +11,7 @@ if TYPE_CHECKING:  # pragma: no cover
 from ...core.exceptions import KadoaHttpError, KadoaSdkError
 from ...core.http import get_workflows_api
 from ...core.pagination import PagedIterator, PageInfo, PageOptions, PagedResponse
-from ..types import FetchDataOptions, FetchDataResult
+from ..types import ExportDataOptions, ExportDataResult, FetchDataOptions, FetchDataResult
 
 
 class DataFetcherService:
@@ -237,4 +237,64 @@ class DataFetcherService:
                 workflow_id=options.workflow_id,
                 run_id=options.run_id,
                 pagination=page.pagination,
+            )
+
+    def export_data(self, options: ExportDataOptions) -> ExportDataResult:
+        """Materialize the workflow's full data set and return a signed
+        self-authenticating download URL.
+
+        The URL works without an Authorization header (suitable for browsers,
+        Claude Desktop, code execution sandboxes, etc.) and is valid until
+        ``expires_at``. Callers download with a plain HTTP GET on ``url``.
+
+        Args:
+            options: Export options including workflow_id and optional
+                format ("csv" or "json", default "csv"), run_id, filters,
+                sort_by, order, and row_ids.
+
+        Returns:
+            ExportDataResult: Signed URL plus metadata (row_count, expires_at,
+                executed_at, format, run_id).
+
+        Raises:
+            KadoaHttpError: If the API request fails.
+        """
+        api = get_workflows_api(self.client)
+        try:
+            response = api.v4_workflows_workflow_id_data_export_get(
+                workflow_id=options.workflow_id,
+                format=options.format,
+                run_id=options.run_id,
+                filters=options.filters,
+                sort_by=options.sort_by,
+                order=options.order,
+                row_ids=options.row_ids,
+            )
+
+            executed_at = getattr(response, "executed_at", None)
+            if isinstance(executed_at, datetime):
+                executed_at = executed_at.isoformat()
+
+            expires_at = response.expires_at
+            if isinstance(expires_at, datetime):
+                expires_at = expires_at.isoformat()
+
+            return ExportDataResult(
+                workflow_id=response.workflow_id,
+                run_id=response.run_id,
+                executed_at=executed_at,
+                format=response.format,
+                row_count=response.row_count,
+                url=response.url,
+                expires_at=expires_at,
+            )
+        except Exception as error:
+            raise KadoaHttpError.wrap(
+                error,
+                message=KadoaSdkError.ERROR_MESSAGES["DATA_FETCH_FAILED"],
+                details={
+                    "workflowId": options.workflow_id,
+                    "runId": options.run_id,
+                    "format": options.format,
+                },
             )

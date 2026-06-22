@@ -98,6 +98,36 @@ class FetchDataResult(BaseModel):
     pagination: Optional[PageInfo] = None
 
 
+ExportDataFormat = Literal["csv", "json"]
+
+
+class ExportDataOptions(BaseModel):
+    workflow_id: str
+    format: Optional[ExportDataFormat] = None
+    run_id: Optional[str] = None
+    filters: Optional[str] = None
+    sort_by: Optional[str] = None
+    order: Optional[Literal["asc", "desc"]] = None
+    row_ids: Optional[str] = None
+
+
+class ExportDataResult(BaseModel):
+    """Result of an export-data request.
+
+    The backend materializes the full result set and returns a
+    self-authenticating signed URL that can be opened without an
+    Authorization header. Valid until ``expires_at``.
+    """
+
+    workflow_id: str
+    run_id: str
+    executed_at: Optional[str] = None
+    format: ExportDataFormat
+    row_count: int
+    url: str
+    expires_at: str
+
+
 class ExtractOptions(BaseModel):
     """Options for extraction builder"""
 

@@ -7,6 +7,9 @@ from .client import (
 )
 from .core import KadoaHttpError, KadoaSdkError
 from .extraction import (
+    ExportDataFormat,
+    ExportDataOptions,
+    ExportDataResult,
     ExtractionModule,
     ExtractionOptions,
     ExtractionResult,
@@ -35,6 +38,9 @@ __all__ = [
     "KadoaHttpError",
     "TestNotificationRequest",
     "TestNotificationResult",
+    "ExportDataFormat",
+    "ExportDataOptions",
+    "ExportDataResult",
     "ExtractionModule",
     "ExtractionOptions",
     "ExtractionResult",

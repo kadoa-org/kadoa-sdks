@@ -8,6 +8,7 @@ from ..core.exceptions import KadoaErrorCode, KadoaHttpError, KadoaSdkError
 from ..core.realtime import Realtime, RealtimeConfig
 from ..core.settings import get_settings
 from ..core.version_check import check_for_updates
+from ..changes import ChangesService
 from ..extraction import ExtractionModule
 from ..extraction.services.extraction_builder_service import (
     ExtractionBuilderService,
@@ -15,7 +16,9 @@ from ..extraction.services.extraction_builder_service import (
 )
 from ..extraction.types import ExtractOptions
 from ..schemas import SchemasService
+from ..templates import TemplatesService
 from ..user import UserService
+from ..variables import VariablesService
 from ..workflows import WorkflowsCoreService
 from .models import KadoaClientConfig, KadoaClientStatus, RealtimeOptions
 from .wiring import create_crawler_domain, create_notification_domain, create_validation_domain
@@ -107,6 +110,9 @@ class KadoaClient:
         self.user = UserService(self)
         self.schema = SchemasService(self)
         self.workflow = WorkflowsCoreService(self)
+        self.template = TemplatesService(self)
+        self.variable = VariablesService(self)
+        self.changes = ChangesService(self)
         self._extraction_builder = ExtractionBuilderService(self)
 
         # domains

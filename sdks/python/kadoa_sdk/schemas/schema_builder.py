@@ -12,7 +12,6 @@ from .schemas_acl import (
     DataField,
     DataFieldExample,
     FieldExample,
-    RawContentField,
 )
 
 # ========================================
@@ -31,7 +30,7 @@ TYPES_REQUIRING_EXAMPLE = ["STRING", "IMAGE", "LINK", "OBJECT", "ARRAY"]
 # Valid data types
 DataType = str  # STRING, NUMBER, BOOLEAN, DATE, DATETIME, MONEY, IMAGE, LINK, OBJECT, ARRAY
 RawFormat = str  # HTML, MARKDOWN, PAGE_URL
-SchemaField = Union[DataField, ClassificationField, RawContentField]
+SchemaField = Union[DataField, ClassificationField]
 
 RAW_HELPER_FIELD_CONFIG = {
     "HTML": {

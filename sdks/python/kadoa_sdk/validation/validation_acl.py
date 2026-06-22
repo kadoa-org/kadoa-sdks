@@ -110,6 +110,16 @@ BulkDeleteRulesRequest = BulkDeleteRules
 DeleteAllRulesRequest = DeleteRuleWithReason
 
 
+class DeleteRuleRequest(BaseModel):
+    """Request to delete a single validation rule."""
+
+    rule_id: str
+    workflow_id: Optional[str] = None
+    reason: Optional[str] = None
+
+    model_config = ConfigDict(populate_by_name=True)
+
+
 class ListWorkflowValidationsRequest(BaseModel):
     """Request to list validations for a workflow/job"""
 
@@ -150,6 +160,7 @@ __all__ = [
     "BulkApproveRulesRequest",
     "BulkDeleteRulesRequest",
     "DeleteAllRulesRequest",
+    "DeleteRuleRequest",
     "ListWorkflowValidationsRequest",
     "Rule",
     "ListRulesResponse",

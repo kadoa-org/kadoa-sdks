@@ -9,10 +9,10 @@ from ..extraction_acl import (
     CreateWorkflowBody,
     DataField,
     DataFieldExample,
-    SchemaResponseSchemaInner,
     V4WorkflowsWorkflowIdGet200Response,
 )
-from openapi_client.models.agentic_workflow import AgenticWorkflow
+from openapi_client.models.create_schema_body_fields_inner import CreateSchemaBodyFieldsInner
+from openapi_client.models.prompt_workflow import PromptWorkflow as AgenticWorkflow
 
 if TYPE_CHECKING:  # pragma: no cover
     from ...client import KadoaClient
@@ -506,10 +506,10 @@ class ExtractionBuilderService:
 
         schema_fields = []
         for field in fields:
-            if isinstance(field, SchemaResponseSchemaInner):
+            if isinstance(field, CreateSchemaBodyFieldsInner):
                 schema_fields.append(field)
             elif isinstance(field, (DataField, ClassificationField)):
-                schema_fields.append(SchemaResponseSchemaInner(actual_instance=field))
+                schema_fields.append(CreateSchemaBodyFieldsInner(actual_instance=field))
             elif isinstance(field, dict):
                 field_type = field.get("fieldType") or field.get("field_type")
                 if field_type == "CLASSIFICATION":
@@ -523,7 +523,7 @@ class ExtractionBuilderService:
                         else:
                             field_dict["example"] = example_value
                     field_obj = DataField(**field_dict)
-                schema_fields.append(SchemaResponseSchemaInner(actual_instance=field_obj))
+                schema_fields.append(CreateSchemaBodyFieldsInner(actual_instance=field_obj))
             else:
                 if hasattr(field, "model_dump"):
                     field_dict = field.model_dump()
@@ -540,15 +540,14 @@ class ExtractionBuilderService:
                             else:
                                 field_dict["example"] = example_value
                         field_obj = DataField(**field_dict)
-                    schema_fields.append(SchemaResponseSchemaInner(actual_instance=field_obj))
+                    schema_fields.append(CreateSchemaBodyFieldsInner(actual_instance=field_obj))
                 else:
                     field_dict = dict(field) if hasattr(field, "__dict__") else field
                     field_obj = DataField(**field_dict)
-                    schema_fields.append(SchemaResponseSchemaInner(actual_instance=field_obj))
+                    schema_fields.append(CreateSchemaBodyFieldsInner(actual_instance=field_obj))
 
         inner = AgenticWorkflow(
             urls=urls,
-            navigation_mode="agentic-navigation",
             name=name,
             description=description,
             user_prompt=user_prompt or DEFAULT_AGENTIC_PROMPT,
@@ -570,7 +569,7 @@ class ExtractionBuilderService:
             inner.schedules = schedules
 
         try:
-            wrapper = CreateWorkflowBody(inner)
+            wrapper = CreateWorkflowBody.model_validate(inner.model_dump(by_alias=True, exclude_none=True))
             resp = api.v4_workflows_post(create_workflow_body=wrapper)
             workflow_id = getattr(resp, "workflow_id", None) or getattr(resp, "workflowId", None)
             if not workflow_id:
