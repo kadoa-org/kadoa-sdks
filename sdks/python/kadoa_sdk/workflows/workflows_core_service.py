@@ -33,7 +33,7 @@ from ..extraction.extraction_acl import (
     WorkflowsApi,
     WorkflowWithEntityAndFields,
 )
-from openapi_client.models.agentic_workflow import AgenticWorkflow
+from openapi_client.models.prompt_workflow import PromptWorkflow as AgenticWorkflow
 from openapi_client.models.create_workflow_response import CreateWorkflowResponse
 from openapi_client.models.workflow_with_existing_schema import WorkflowWithExistingSchema
 from openapi_client.models.location import Location
@@ -296,6 +296,42 @@ class WorkflowsCoreService:
                 error,
                 message="Failed to list workflows",
                 details={"filters": filter_dict if "filter_dict" in locals() else {}},
+            )
+
+    def get_audit_log(
+        self,
+        workflow_id: str,
+        page: Optional[int] = None,
+        limit: Optional[int] = None,
+    ):
+        """Get the configuration revision history (audit log) for a workflow.
+
+        Each entry captures who changed the workflow, when, from which channel
+        (UI/API/SDK/MCP/CLI/SYSTEM), and full before/after snapshots for UPDATE
+        operations. CREATE entries have null ``previous_value``/``new_value``.
+
+        Args:
+            workflow_id: Workflow ID.
+            page: Page number for pagination.
+            limit: Items per page.
+
+        Returns:
+            Audit log response object with ``entries`` and ``pagination``.
+
+        Raises:
+            KadoaHttpError: If the API request fails.
+        """
+        try:
+            return self.workflows_api.v5_workflows_workflow_id_auditlog_get(
+                workflow_id=workflow_id,
+                page=page,
+                limit=limit,
+            )
+        except Exception as error:
+            raise KadoaHttpError.wrap(
+                error,
+                message="Failed to get workflow audit log",
+                details={"workflowId": workflow_id},
             )
 
     def get_by_name(self, name: str) -> Optional[WorkflowListItemResponse]:

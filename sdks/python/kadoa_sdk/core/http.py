@@ -7,6 +7,9 @@ from ..notifications.notifications_acl import NotificationsApi
 from .core_acl import create_api_client
 
 if TYPE_CHECKING:  # pragma: no cover
+    from openapi_client.api.templates_api import TemplatesApi
+    from openapi_client.api.variables_api import VariablesApi
+
     from ..client import KadoaClient
     from ..extraction.extraction_acl import CrawlApi, WorkflowsApi
     from ..schemas.schemas_acl import SchemasApi
@@ -22,6 +25,12 @@ _notifications_cache: weakref.WeakKeyDictionary["KadoaClient", NotificationsApi]
 )
 _schemas_cache: weakref.WeakKeyDictionary["KadoaClient", "SchemasApi"] = weakref.WeakKeyDictionary()
 _validation_cache: weakref.WeakKeyDictionary["KadoaClient", "DataValidationApi"] = (
+    weakref.WeakKeyDictionary()
+)
+_templates_cache: weakref.WeakKeyDictionary["KadoaClient", "TemplatesApi"] = (
+    weakref.WeakKeyDictionary()
+)
+_variables_cache: weakref.WeakKeyDictionary["KadoaClient", "VariablesApi"] = (
     weakref.WeakKeyDictionary()
 )
 
@@ -71,4 +80,24 @@ def get_validation_api(client: "KadoaClient") -> "DataValidationApi":
     if api is None:
         api = DataValidationApi(create_api_client(client.configuration))
         _validation_cache[client] = api
+    return api
+
+
+def get_templates_api(client: "KadoaClient") -> "TemplatesApi":
+    from openapi_client.api.templates_api import TemplatesApi  # noqa: PLC0415
+
+    api = _templates_cache.get(client)
+    if api is None:
+        api = TemplatesApi(create_api_client(client.configuration))
+        _templates_cache[client] = api
+    return api
+
+
+def get_variables_api(client: "KadoaClient") -> "VariablesApi":
+    from openapi_client.api.variables_api import VariablesApi  # noqa: PLC0415
+
+    api = _variables_cache.get(client)
+    if api is None:
+        api = VariablesApi(create_api_client(client.configuration))
+        _variables_cache[client] = api
     return api
