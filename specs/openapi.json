@@ -2936,6 +2936,68 @@
         }
       }
     },
+    "/v4/workflows/{workflowId}/data/parquet": {
+      "get": {
+        "summary": "Download workflow data as Parquet",
+        "description": "Streams the canonical Parquet artifact for the latest successful workflow run, or for a\nspecific run when `runId` is provided. The file is the full, unfiltered dataset for that run.\nUse this endpoint for typed analytical ingestion into engines such as DuckDB, Spark, Polars,\nSnowflake, or BigQuery.\n",
+        "tags": [
+          "Workflows"
+        ],
+        "security": [
+          {
+            "ApiKeyAuth": []
+          },
+          {
+            "BearerAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "workflowId",
+            "in": "path",
+            "required": true,
+            "description": "ID of the workflow whose Parquet data should be downloaded.",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "runId",
+            "in": "query",
+            "required": false,
+            "description": "Optional workflow run ID. Omit to download the latest successful run.",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Parquet file bytes.",
+            "content": {
+              "application/vnd.apache.parquet": {
+                "schema": {
+                  "type": "string",
+                  "format": "binary"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid workflowId or runId."
+          },
+          "401": {
+            "description": "Unauthorized."
+          },
+          "404": {
+            "description": "Workflow, run, or Parquet artifact not found."
+          },
+          "500": {
+            "description": "Internal server error."
+          }
+        }
+      }
+    },
     "/v4/workflows/{workflowId}/data/exports/{exportId}": {
       "get": {
         "summary": "Download a materialized CSV export",
@@ -20428,7 +20490,7 @@
           },
           "isKey": {
             "type": "boolean",
-            "description": "Marks this field as part of the record's primary key. Key fields define row identity across runs and enable data linking (records with the same key values are treated as the same record over time, used for dedupe and change detection). Set true ONLY when the field is (1) unique per record on the source, (2) stable across runs (does not change for the same logical record), and (3) reliably present (not nullable/missing). Good candidates: external IDs, SKUs, canonical URLs, posting IDs. Bad candidates: prices, counts, timestamps, free-text titles/descriptions, or anything that can change between runs. Multiple fields may be marked isKey to form a composite key (all parts must hold the same guarantees). If no field satisfies these guarantees, leave isKey unset on every field — data linking will simply be disabled, which is preferable to a wrong key. Choosing a non-stable or non-unique key causes duplicate rows and missed updates."
+            "description": "Marks this field as part of the record's primary key. Key fields define row identity across runs and enable data linking (records with the same key values are treated as the same record over time, used for dedupe and change detection). Set true ONLY when the field is (1) unique per record on the source, (2) stable across runs (does not change for the same logical record), and (3) reliably present (not nullable/missing). Key fields should be scalar STRING, NUMBER, or LINK fields; avoid structured, semantic, boolean, image, and timestamp/date fields as keys. Good candidates: external IDs, SKUs, canonical URLs, posting IDs. Bad candidates: prices, counts, timestamps, free-text titles/descriptions, or anything that can change between runs. Multiple fields may be marked isKey to form a composite key (all parts must hold the same guarantees). If no field satisfies these guarantees, leave isKey unset on every field — data linking will simply be disabled, which is preferable to a wrong key. Choosing a non-stable or non-unique key causes duplicate rows and missed updates."
           }
         },
         "required": [
@@ -21282,7 +21344,7 @@
                           },
                           "isKey": {
                             "type": "boolean",
-                            "description": "Marks this field as part of the record's primary key. Key fields define row identity across runs and enable data linking (records with the same key values are treated as the same record over time, used for dedupe and change detection). Set true ONLY when the field is (1) unique per record on the source, (2) stable across runs (does not change for the same logical record), and (3) reliably present (not nullable/missing). Good candidates: external IDs, SKUs, canonical URLs, posting IDs. Bad candidates: prices, counts, timestamps, free-text titles/descriptions, or anything that can change between runs. Multiple fields may be marked isKey to form a composite key (all parts must hold the same guarantees). If no field satisfies these guarantees, leave isKey unset on every field — data linking will simply be disabled, which is preferable to a wrong key. Choosing a non-stable or non-unique key causes duplicate rows and missed updates."
+                            "description": "Marks this field as part of the record's primary key. Key fields define row identity across runs and enable data linking (records with the same key values are treated as the same record over time, used for dedupe and change detection). Set true ONLY when the field is (1) unique per record on the source, (2) stable across runs (does not change for the same logical record), and (3) reliably present (not nullable/missing). Key fields should be scalar STRING, NUMBER, or LINK fields; avoid structured, semantic, boolean, image, and timestamp/date fields as keys. Good candidates: external IDs, SKUs, canonical URLs, posting IDs. Bad candidates: prices, counts, timestamps, free-text titles/descriptions, or anything that can change between runs. Multiple fields may be marked isKey to form a composite key (all parts must hold the same guarantees). If no field satisfies these guarantees, leave isKey unset on every field — data linking will simply be disabled, which is preferable to a wrong key. Choosing a non-stable or non-unique key causes duplicate rows and missed updates."
                           },
                           "categories": {
                             "type": "array",
@@ -21815,7 +21877,7 @@
                 },
                 "isKey": {
                   "type": "boolean",
-                  "description": "Marks this field as part of the record's primary key. Key fields define row identity across runs and enable data linking (records with the same key values are treated as the same record over time, used for dedupe and change detection). Set true ONLY when the field is (1) unique per record on the source, (2) stable across runs (does not change for the same logical record), and (3) reliably present (not nullable/missing). Good candidates: external IDs, SKUs, canonical URLs, posting IDs. Bad candidates: prices, counts, timestamps, free-text titles/descriptions, or anything that can change between runs. Multiple fields may be marked isKey to form a composite key (all parts must hold the same guarantees). If no field satisfies these guarantees, leave isKey unset on every field — data linking will simply be disabled, which is preferable to a wrong key. Choosing a non-stable or non-unique key causes duplicate rows and missed updates."
+                  "description": "Marks this field as part of the record's primary key. Key fields define row identity across runs and enable data linking (records with the same key values are treated as the same record over time, used for dedupe and change detection). Set true ONLY when the field is (1) unique per record on the source, (2) stable across runs (does not change for the same logical record), and (3) reliably present (not nullable/missing). Key fields should be scalar STRING, NUMBER, or LINK fields; avoid structured, semantic, boolean, image, and timestamp/date fields as keys. Good candidates: external IDs, SKUs, canonical URLs, posting IDs. Bad candidates: prices, counts, timestamps, free-text titles/descriptions, or anything that can change between runs. Multiple fields may be marked isKey to form a composite key (all parts must hold the same guarantees). If no field satisfies these guarantees, leave isKey unset on every field — data linking will simply be disabled, which is preferable to a wrong key. Choosing a non-stable or non-unique key causes duplicate rows and missed updates."
                 },
                 "categories": {
                   "type": "array",
@@ -22041,7 +22103,7 @@
                     },
                     "isKey": {
                       "type": "boolean",
-                      "description": "Marks this field as part of the record's primary key. Key fields define row identity across runs and enable data linking (records with the same key values are treated as the same record over time, used for dedupe and change detection). Set true ONLY when the field is (1) unique per record on the source, (2) stable across runs (does not change for the same logical record), and (3) reliably present (not nullable/missing). Good candidates: external IDs, SKUs, canonical URLs, posting IDs. Bad candidates: prices, counts, timestamps, free-text titles/descriptions, or anything that can change between runs. Multiple fields may be marked isKey to form a composite key (all parts must hold the same guarantees). If no field satisfies these guarantees, leave isKey unset on every field — data linking will simply be disabled, which is preferable to a wrong key. Choosing a non-stable or non-unique key causes duplicate rows and missed updates."
+                      "description": "Marks this field as part of the record's primary key. Key fields define row identity across runs and enable data linking (records with the same key values are treated as the same record over time, used for dedupe and change detection). Set true ONLY when the field is (1) unique per record on the source, (2) stable across runs (does not change for the same logical record), and (3) reliably present (not nullable/missing). Key fields should be scalar STRING, NUMBER, or LINK fields; avoid structured, semantic, boolean, image, and timestamp/date fields as keys. Good candidates: external IDs, SKUs, canonical URLs, posting IDs. Bad candidates: prices, counts, timestamps, free-text titles/descriptions, or anything that can change between runs. Multiple fields may be marked isKey to form a composite key (all parts must hold the same guarantees). If no field satisfies these guarantees, leave isKey unset on every field — data linking will simply be disabled, which is preferable to a wrong key. Choosing a non-stable or non-unique key causes duplicate rows and missed updates."
                     },
                     "categories": {
                       "type": "array",
