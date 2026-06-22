@@ -1,5 +1,13 @@
 # Changelog
 
+## [0.34.0](https://github.com/kadoa-org/kadoa-sdks/compare/node-sdk-v0.33.0...node-sdk-v0.34.0) (2026-06-08)
+
+
+### Features
+
+* **node-sdk:** add template link/unlink workflow service methods ([#317](https://github.com/kadoa-org/kadoa-sdks/issues/317)) ([4c02b70](https://github.com/kadoa-org/kadoa-sdks/commit/4c02b702221b71dc770d49183c85b23a57451e0f))
+* **node-sdk:** user bearer auth support (lazy token + interceptor cleanup) ([#304](https://github.com/kadoa-org/kadoa-sdks/issues/304)) ([ede2d0a](https://github.com/kadoa-org/kadoa-sdks/commit/ede2d0a3e4a73811f06cab61095b77a8cccfa72e))
+
 ## [0.33.0](https://github.com/kadoa-org/kadoa-sdks/compare/node-sdk-v0.32.0...node-sdk-v0.33.0) (2026-05-11)
 
 

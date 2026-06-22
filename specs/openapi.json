@@ -2197,10 +2197,19 @@
                         }
                       }
                     },
-                    "lighthouseSessionId": {
+                    "assistantSessionId": {
                       "type": "string",
                       "nullable": true,
-                      "description": "Newest Lighthouse assistant session linked to this workflow, regardless of status. Null if no Lighthouse session has been created for this workflow."
+                      "description": "Newest assistant session linked to this workflow, regardless of status. Null if no assistant session has been created for this workflow."
+                    },
+                    "assistantThreadId": {
+                      "type": "string",
+                      "nullable": true,
+                      "description": "Newest assistant thread within the assistant session."
+                    },
+                    "assistantEligible": {
+                      "type": "boolean",
+                      "description": "True when this workflow has no assistant session yet and is eligible to start one (SHELLY_SCRIPT and SHELLY_REAL_TIME_SCRIPT workflows)."
                     },
                     "sessionStatus": {
                       "type": "string",
@@ -2217,7 +2226,7 @@
                         "aborted",
                         "timed_out"
                       ],
-                      "description": "Status of the linked Lighthouse session. Useful for deciding whether the Assistant can accept new input (failed/errored/aborted/timed_out are closed)."
+                      "description": "Status of the linked assistant session. Useful for deciding whether the Assistant can accept new input (failed/errored/aborted/timed_out are closed)."
                     }
                   }
                 }
@@ -7475,6 +7484,8 @@
                   "properties": {
                     "billingPeriod": {
                       "type": "object",
+                      "nullable": true,
+                      "description": "Null for a renewal-anchored workspace with no renewal_date (trial); the workflows list is then empty.",
                       "properties": {
                         "start": {
                           "type": "string",
@@ -7687,6 +7698,109 @@
         }
       }
     },
+    "/v5/workspaces/{workspaceId}/monthly-active": {
+      "get": {
+        "summary": "Daily history for the Active and Active-35 workflow models (teams and organizations)",
+        "description": "For each of the last N days, two values. active35 = distinct workflows that ran successfully (FINISHED, non-preview) in the trailing 35 days ending that day, plus live real-time monitors; fully backfilled from run facts. active = the scheduled count: the exact team_ledger daily snapshot where present (forward), else the run-based 35-day backfill (currently-ACTIVE workflows that ran in the trailing 35 days, plus live real-time monitors) for days predating the snapshot.\n",
+        "tags": [
+          "Workspaces"
+        ],
+        "parameters": [
+          {
+            "name": "workspaceId",
+            "in": "path",
+            "required": true,
+            "description": "Workspace ID (team or organization)",
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
+          {
+            "name": "days",
+            "in": "query",
+            "required": false,
+            "description": "Number of trailing days to return (1-400, default 120).",
+            "schema": {
+              "type": "integer"
+            }
+          },
+          {
+            "name": "x-api-key",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "Authorization",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "security": [
+          {
+            "ApiKeyAuth": []
+          },
+          {
+            "BearerAuth": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Monthly-active daily history retrieved successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "days": {
+                      "type": "array",
+                      "items": {
+                        "type": "object",
+                        "properties": {
+                          "date": {
+                            "type": "string",
+                            "description": "Day (UTC), YYYY-MM-DD"
+                          },
+                          "active": {
+                            "type": "integer",
+                            "description": "Scheduled count — team_ledger snapshot where present, else the run-based 35-day backfill"
+                          },
+                          "active35": {
+                            "type": "integer",
+                            "description": "Distinct workflows that ran in the 35 days ending this day, plus live real-time monitors"
+                          }
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad request"
+          },
+          "401": {
+            "description": "Unauthorized"
+          },
+          "403": {
+            "description": "Forbidden - insufficient permissions"
+          },
+          "404": {
+            "description": "Workspace not found"
+          },
+          "500": {
+            "description": "Internal server error"
+          }
+        }
+      }
+    },
     "/v5/workspaces/{workspaceId}/observability": {
       "get": {
         "summary": "Get observability uptime metrics for a workspace",
@@ -7749,6 +7863,109 @@
           },
           "401": {
             "description": "Unauthorized"
+          },
+          "404": {
+            "description": "Workspace not found"
+          },
+          "500": {
+            "description": "Internal server error"
+          }
+        }
+      }
+    },
+    "/v5/workspaces/{workspaceId}/period-series": {
+      "get": {
+        "summary": "Daily per-billing-period cumulative series for Approved workflows and extracted rows (teams and organizations)",
+        "description": "For each of the last N days, the Approved-workflow count and extracted-row sum accumulated since the start of the billing period that day falls in, resetting at each renewal anniversary (a sawtooth across renewals). approved = distinct workflows with at least one FINISHED non-preview run in [periodStart(day), day]; rows = sum of total_records over those runs. Both are run-fact-based, so they are drift-free and fully backfilled. At today, approved equals currentContractActiveWorkflows and rows equals currentPeriodExtractedRows from the quotas endpoint.\n",
+        "tags": [
+          "Workspaces"
+        ],
+        "parameters": [
+          {
+            "name": "workspaceId",
+            "in": "path",
+            "required": true,
+            "description": "Workspace ID (team or organization)",
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
+          {
+            "name": "days",
+            "in": "query",
+            "required": false,
+            "description": "Number of trailing days to return (1-400, default 400 so at least one renewal reset is visible).",
+            "schema": {
+              "type": "integer"
+            }
+          },
+          {
+            "name": "x-api-key",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "Authorization",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "security": [
+          {
+            "ApiKeyAuth": []
+          },
+          {
+            "BearerAuth": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Period-cumulative daily history retrieved successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "days": {
+                      "type": "array",
+                      "items": {
+                        "type": "object",
+                        "properties": {
+                          "date": {
+                            "type": "string",
+                            "description": "Day (UTC), YYYY-MM-DD"
+                          },
+                          "approved": {
+                            "type": "integer",
+                            "description": "Distinct workflows that ran (FINISHED, non-preview) since the start of that day's billing period"
+                          },
+                          "rows": {
+                            "type": "integer",
+                            "description": "Extracted rows (sum of total_records) for those in-period runs up to that day"
+                          }
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad request"
+          },
+          "401": {
+            "description": "Unauthorized"
+          },
+          "403": {
+            "description": "Forbidden - insufficient permissions"
           },
           "404": {
             "description": "Workspace not found"
@@ -7827,6 +8044,17 @@
                           ],
                           "description": "Workspace type"
                         },
+                        "billingType": {
+                          "type": "string",
+                          "enum": [
+                            "enterprise_approved",
+                            "enterprise_active",
+                            "enterprise_active_35",
+                            "flex"
+                          ],
+                          "nullable": true,
+                          "description": "The org-level billing model (drives the default usage model on the dashboard), or null until set."
+                        },
                         "availableQuotas": {
                           "type": "object",
                           "properties": {
@@ -7849,17 +8077,41 @@
                             },
                             "currentApprovedWorkflows": {
                               "type": "integer",
-                              "description": "Workflows that have at least one successful non-preview run AND are alive (or were deleted within the current billing period). KAD-6720."
+                              "description": "Workflows that have at least one successful non-preview run AND are alive (or were deleted within the current billing period). Billing Type 3 (per-contract). KAD-6720."
+                            },
+                            "currentScheduledWorkflows": {
+                              "type": "integer",
+                              "description": "Active (scheduled). Distinct ACTIVE workflows with a next run scheduled on our scheduler (an active schedule with next_run_at set) OR a live real-time monitor. The live headline for the \"Active\" billing model; daily history comes from the team_ledger snapshot (forward) or a run-based 35-day backfill. KAD-7956."
+                            },
+                            "currentActive35Workflows": {
+                              "type": "integer",
+                              "description": "Active-35. Distinct workflows that ran successfully (non-preview) in the trailing 35 days via any trigger (our scheduler, the client's API cron, or a manual run), OR are a live real-time monitor. The \"recent usage\" billing model; 35 days so monthly-cadence workflows don't flicker. KAD-7956."
+                            },
+                            "currentContractActiveWorkflows": {
+                              "type": "integer",
+                              "nullable": true,
+                              "description": "Contract active. Distinct workflows that ran successfully (non-preview) at least once during the current contract period. The cumulative \"used this term\" billing model. Same definition as the billable-workflows list count. Null when there's no billing period (trial / no renewal_date)."
+                            },
+                            "previousContractActiveWorkflows": {
+                              "type": "integer",
+                              "nullable": true,
+                              "description": "Contract active for the PREVIOUS billing period (one cycle back). Same definition as currentContractActiveWorkflows; used for renewal sizing comparisons. Null when there's no billing period."
                             },
                             "currentExtractedRows": {
                               "type": "integer",
-                              "description": "Current number of extracted rows"
+                              "description": "All-time cumulative extracted rows (latest team_ledger snapshot)."
+                            },
+                            "currentPeriodExtractedRows": {
+                              "type": "integer",
+                              "nullable": true,
+                              "description": "Extracted rows attributed to FINISHED non-preview runs inside the current billing period. The \"by billing period\" companion to the all-time currentExtractedRows. Null when there's no billing period."
                             }
                           }
                         },
                         "billingPeriod": {
                           "type": "object",
-                          "description": "The billing period the used-quota counts apply to. Enterprise uses the org's renewal_date (auto-rolled forward when stale); self-service uses the team owner's Stripe period; falls back to trailing 365d when neither is set.",
+                          "nullable": true,
+                          "description": "The billing period the used-quota counts apply to. Enterprise uses the org's renewal_date (auto-rolled forward when stale); self-service uses the team owner's Stripe period. Null for a renewal-anchored workspace (enterprise/org) with no renewal_date — e.g. a trial — in which case the period-scoped counts above are also null.",
                           "properties": {
                             "start": {
                               "type": "string",
@@ -7874,6 +8126,21 @@
                               "format": "date",
                               "nullable": true,
                               "description": "The org's contractual renewal date (YYYY-MM-DD), or null if not set."
+                            }
+                          }
+                        },
+                        "previousBillingPeriod": {
+                          "type": "object",
+                          "nullable": true,
+                          "description": "The billing period immediately before billingPeriod (the prior contract cycle). Null when the precise counts couldn't be computed.",
+                          "properties": {
+                            "start": {
+                              "type": "string",
+                              "format": "date-time"
+                            },
+                            "end": {
+                              "type": "string",
+                              "format": "date-time"
                             }
                           }
                         }
@@ -8975,100 +9242,6 @@
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/ValidationListResponse"
-                }
-              }
-            }
-          },
-          "401": {
-            "description": "Unauthorized - Authentication required or failed",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "type": "object",
-                  "properties": {
-                    "error": {
-                      "type": "boolean",
-                      "description": "Indicates an error occurred",
-                      "example": true
-                    },
-                    "message": {
-                      "type": "string",
-                      "description": "Error message",
-                      "example": "Authentication required"
-                    }
-                  },
-                  "required": [
-                    "error",
-                    "message"
-                  ]
-                }
-              }
-            }
-          },
-          "500": {
-            "description": "Internal Server Error - Unexpected system error",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "type": "object",
-                  "properties": {
-                    "error": {
-                      "type": "boolean",
-                      "description": "Indicates an error occurred",
-                      "example": true
-                    },
-                    "message": {
-                      "type": "string",
-                      "description": "Error message",
-                      "example": "Internal server error"
-                    },
-                    "details": {
-                      "type": "object",
-                      "description": "Additional error details"
-                    }
-                  },
-                  "required": [
-                    "error",
-                    "message"
-                  ]
-                }
-              }
-            }
-          }
-        },
-        "security": [
-          {
-            "ApiKeyAuth": []
-          }
-        ]
-      }
-    },
-    "/v4/data-validation/jobs/validations/batch": {
-      "post": {
-        "description": "Batch-fetch the latest non-dry-run anomaly count for many jobs in one request. Powers the ops jobs-list warning state without one request per card.",
-        "summary": "Batch job validation anomaly counts",
-        "tags": [
-          "Data Validation",
-          "Data Validation Report"
-        ],
-        "parameters": [],
-        "requestBody": {
-          "description": "Body",
-          "content": {
-            "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/BatchJobValidationsRequest"
-              }
-            }
-          }
-        },
-        "responses": {
-          "200": {
-            "description": "200",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/BatchJobValidationsResponse"
                 }
               }
             }
@@ -17741,48 +17914,6 @@
         "title": "ValidationListResponse",
         "description": "Paginated validation history with summary information"
       },
-      "BatchJobValidationsRequest": {
-        "type": "object",
-        "properties": {
-          "jobIds": {
-            "type": "array",
-            "items": {
-              "type": "string"
-            },
-            "minItems": 1,
-            "maxItems": 500
-          }
-        },
-        "required": [
-          "jobIds"
-        ],
-        "title": "BatchJobValidationsRequest",
-        "description": "Job ids to fetch latest non-dry-run anomaly counts for, in one request"
-      },
-      "BatchJobValidationsResponse": {
-        "type": "object",
-        "properties": {
-          "results": {
-            "type": "object",
-            "additionalProperties": {
-              "type": "object",
-              "properties": {
-                "anomaliesCountTotal": {
-                  "type": "number"
-                }
-              },
-              "required": [
-                "anomaliesCountTotal"
-              ]
-            }
-          }
-        },
-        "required": [
-          "results"
-        ],
-        "title": "BatchJobValidationsResponse",
-        "description": "Latest non-dry-run anomaly count per job id. Jobs without a validation report are omitted from results."
-      },
       "AnomalyRow": {
         "type": "object",
         "properties": {
@@ -18400,6 +18531,7 @@
                   "curl-cffi",
                   "patchright",
                   "camoufox",
+                  "cloakbrowser",
                   "brightdata"
                 ],
                 "description": "Explicit Scrape V2 worker override. BrightData is blocked in crawler runtime."
@@ -18755,6 +18887,7 @@
                   "curl-cffi",
                   "patchright",
                   "camoufox",
+                  "cloakbrowser",
                   "brightdata"
                 ],
                 "description": "Explicit Scrape V2 worker override. BrightData is blocked in crawler runtime."
@@ -19127,6 +19260,7 @@
                   "curl-cffi",
                   "patchright",
                   "camoufox",
+                  "cloakbrowser",
                   "brightdata"
                 ],
                 "description": "Explicit Scrape V2 worker override. BrightData is blocked in crawler runtime."
@@ -19532,6 +19666,7 @@
                   "curl-cffi",
                   "patchright",
                   "camoufox",
+                  "cloakbrowser",
                   "brightdata"
                 ],
                 "description": "Explicit Scrape V2 worker override. BrightData is blocked in crawler runtime."
@@ -21135,7 +21270,7 @@
                           },
                           "fieldType": {
                             "type": "string",
-                            "description": "Field type (SCHEMA, etc.)"
+                            "description": "Field type (SCHEMA, CLASSIFICATION, etc.)"
                           },
                           "example": {
                             "nullable": true,
@@ -21148,6 +21283,27 @@
                           "isKey": {
                             "type": "boolean",
                             "description": "Marks this field as part of the record's primary key. Key fields define row identity across runs and enable data linking (records with the same key values are treated as the same record over time, used for dedupe and change detection). Set true ONLY when the field is (1) unique per record on the source, (2) stable across runs (does not change for the same logical record), and (3) reliably present (not nullable/missing). Good candidates: external IDs, SKUs, canonical URLs, posting IDs. Bad candidates: prices, counts, timestamps, free-text titles/descriptions, or anything that can change between runs. Multiple fields may be marked isKey to form a composite key (all parts must hold the same guarantees). If no field satisfies these guarantees, leave isKey unset on every field — data linking will simply be disabled, which is preferable to a wrong key. Choosing a non-stable or non-unique key causes duplicate rows and missed updates."
+                          },
+                          "categories": {
+                            "type": "array",
+                            "items": {
+                              "type": "object",
+                              "properties": {
+                                "title": {
+                                  "type": "string",
+                                  "description": "Short title/label of the category"
+                                },
+                                "definition": {
+                                  "type": "string",
+                                  "description": "Full definition/description of the category"
+                                }
+                              },
+                              "required": [
+                                "title",
+                                "definition"
+                              ]
+                            },
+                            "description": "Predefined categories for CLASSIFICATION fields"
                           }
                         },
                         "required": [
@@ -21647,7 +21803,7 @@
                 },
                 "fieldType": {
                   "type": "string",
-                  "description": "Field type (SCHEMA, etc.)"
+                  "description": "Field type (SCHEMA, CLASSIFICATION, etc.)"
                 },
                 "example": {
                   "nullable": true,
@@ -21660,6 +21816,27 @@
                 "isKey": {
                   "type": "boolean",
                   "description": "Marks this field as part of the record's primary key. Key fields define row identity across runs and enable data linking (records with the same key values are treated as the same record over time, used for dedupe and change detection). Set true ONLY when the field is (1) unique per record on the source, (2) stable across runs (does not change for the same logical record), and (3) reliably present (not nullable/missing). Good candidates: external IDs, SKUs, canonical URLs, posting IDs. Bad candidates: prices, counts, timestamps, free-text titles/descriptions, or anything that can change between runs. Multiple fields may be marked isKey to form a composite key (all parts must hold the same guarantees). If no field satisfies these guarantees, leave isKey unset on every field — data linking will simply be disabled, which is preferable to a wrong key. Choosing a non-stable or non-unique key causes duplicate rows and missed updates."
+                },
+                "categories": {
+                  "type": "array",
+                  "items": {
+                    "type": "object",
+                    "properties": {
+                      "title": {
+                        "type": "string",
+                        "description": "Short title/label of the category"
+                      },
+                      "definition": {
+                        "type": "string",
+                        "description": "Full definition/description of the category"
+                      }
+                    },
+                    "required": [
+                      "title",
+                      "definition"
+                    ]
+                  },
+                  "description": "Predefined categories for CLASSIFICATION fields"
                 }
               },
               "required": [
@@ -21852,7 +22029,7 @@
                     },
                     "fieldType": {
                       "type": "string",
-                      "description": "Field type (SCHEMA, etc.)"
+                      "description": "Field type (SCHEMA, CLASSIFICATION, etc.)"
                     },
                     "example": {
                       "nullable": true,
@@ -21865,6 +22042,27 @@
                     "isKey": {
                       "type": "boolean",
                       "description": "Marks this field as part of the record's primary key. Key fields define row identity across runs and enable data linking (records with the same key values are treated as the same record over time, used for dedupe and change detection). Set true ONLY when the field is (1) unique per record on the source, (2) stable across runs (does not change for the same logical record), and (3) reliably present (not nullable/missing). Good candidates: external IDs, SKUs, canonical URLs, posting IDs. Bad candidates: prices, counts, timestamps, free-text titles/descriptions, or anything that can change between runs. Multiple fields may be marked isKey to form a composite key (all parts must hold the same guarantees). If no field satisfies these guarantees, leave isKey unset on every field — data linking will simply be disabled, which is preferable to a wrong key. Choosing a non-stable or non-unique key causes duplicate rows and missed updates."
+                    },
+                    "categories": {
+                      "type": "array",
+                      "items": {
+                        "type": "object",
+                        "properties": {
+                          "title": {
+                            "type": "string",
+                            "description": "Short title/label of the category"
+                          },
+                          "definition": {
+                            "type": "string",
+                            "description": "Full definition/description of the category"
+                          }
+                        },
+                        "required": [
+                          "title",
+                          "definition"
+                        ]
+                      },
+                      "description": "Predefined categories for CLASSIFICATION fields"
                     }
                   },
                   "required": [
@@ -22800,17 +22998,16 @@
           "templateVersion": {
             "type": "integer",
             "minimum": 1,
-            "description": "Version (integer) of the template to instantiate. Both templateId and templateVersion must be provided together."
+            "description": "Optional version (integer) of the template to instantiate. Omit to use the latest published version (resolved once at request time). Provide it to pin a specific version."
           }
         },
         "required": [
           "urls",
-          "templateId",
-          "templateVersion"
+          "templateId"
         ],
         "additionalProperties": true,
         "title": "WorkflowFromTemplate",
-        "description": "Create a workflow by instantiating a published template version. Only `urls` is required; prompt, schema, and notifications are inherited from the template version.\n\nExample: `{\"urls\": [\"https://example.com\"], \"templateId\": \"...\", \"templateVersion\": 1}`"
+        "description": "Create a workflow by instantiating a published template. Only `urls` and `templateId` are required; prompt, schema, frequency, and notifications are inherited from the template version. `templateVersion` is optional — omit it to use the latest published version.\n\nExample: `{\"urls\": [\"https://example.com\"], \"templateId\": \"...\"}`"
       },
       "MonitoredField": {
         "type": "object",
