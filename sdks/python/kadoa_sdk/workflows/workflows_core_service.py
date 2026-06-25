@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 import json
-from typing import TYPE_CHECKING, Any, Dict, List, Optional, Union
+from typing import TYPE_CHECKING, Any, Dict, List, Optional
 from urllib.parse import urlparse
 
 from pydantic import BaseModel, ConfigDict, Field
@@ -17,9 +17,13 @@ if TYPE_CHECKING:  # pragma: no cover
 from kadoa_sdk.core.exceptions import KadoaErrorCode, KadoaHttpError, KadoaSdkError
 from kadoa_sdk.core.http import get_workflows_api
 from kadoa_sdk.extraction.types import RunWorkflowOptions
+from openapi_client.models.location import Location
+from openapi_client.models.monitoring_config import MonitoringConfig
+from openapi_client.models.prompt_workflow import PromptWorkflow as AgenticWorkflow
 from openapi_client.models.v4_workflows_workflow_id_run_put_request import (
     V4WorkflowsWorkflowIdRunPutRequest,
 )
+from openapi_client.models.workflow_with_existing_schema import WorkflowWithExistingSchema
 
 from ..extraction.extraction_acl import (
     CreateWorkflowBody,
@@ -33,18 +37,12 @@ from ..extraction.extraction_acl import (
     WorkflowsApi,
     WorkflowWithEntityAndFields,
 )
-from openapi_client.models.prompt_workflow import PromptWorkflow as AgenticWorkflow
-from openapi_client.models.create_workflow_response import CreateWorkflowResponse
-from openapi_client.models.workflow_with_existing_schema import WorkflowWithExistingSchema
-from openapi_client.models.location import Location
-from openapi_client.models.monitoring_config import MonitoringConfig
 
 
 class CreateWorkflowInput(BaseModel):
     """Input for creating a workflow."""
 
     urls: List[str]
-    navigation_mode: str = Field(alias="navigationMode")
     name: Optional[str] = None
     description: Optional[str] = None
     schema_id: Optional[str] = Field(default=None, alias="schemaId")
@@ -131,7 +129,7 @@ class WorkflowsCoreService:
         Create a new workflow.
 
         Args:
-            input: Workflow creation input with urls, navigationMode, fields, etc.
+            input: Workflow creation input with urls, userPrompt, fields, etc.
 
         Returns:
             CreateWorkflowResult with workflow id
@@ -145,24 +143,19 @@ class WorkflowsCoreService:
         domain_name = urlparse(input.urls[0]).hostname
 
         try:
-            if input.navigation_mode == "agentic-navigation":
-                if not input.user_prompt:
-                    raise KadoaSdkError(
-                        "userPrompt is required when navigationMode is 'agentic-navigation'",
-                        code=KadoaErrorCode.VALIDATION_ERROR,
-                        details={"navigationMode": input.navigation_mode},
-                    )
-
+            # Prompt-driven (agentic) workflows are routed by the presence of user_prompt.
+            if input.user_prompt:
                 agentic_request = AgenticWorkflow(
                     urls=input.urls,
-                    navigation_mode="agentic-navigation",
                     name=input.name or domain_name,
                     description=input.description,
                     user_prompt=input.user_prompt,
                     schema_id=input.schema_id,
                     entity=input.entity,
                     fields=input.fields,
-                    bypass_preview=input.bypass_preview if input.bypass_preview is not None else True,
+                    bypass_preview=input.bypass_preview
+                    if input.bypass_preview is not None
+                    else True,
                     tags=input.tags,
                     interval=input.interval,
                     monitoring=input.monitoring,
@@ -177,11 +170,12 @@ class WorkflowsCoreService:
                 # Use existing schema
                 schema_request = WorkflowWithExistingSchema(
                     urls=input.urls,
-                    navigation_mode=input.navigation_mode,
                     name=input.name or domain_name,
                     description=input.description,
                     schema_id=input.schema_id,
-                    bypass_preview=input.bypass_preview if input.bypass_preview is not None else True,
+                    bypass_preview=input.bypass_preview
+                    if input.bypass_preview is not None
+                    else True,
                     tags=input.tags,
                     interval=input.interval,
                     monitoring=input.monitoring,
@@ -196,12 +190,13 @@ class WorkflowsCoreService:
                 # Use entity and fields
                 workflow_request = WorkflowWithEntityAndFields(
                     urls=input.urls,
-                    navigation_mode=input.navigation_mode,
                     name=input.name or domain_name,
                     description=input.description,
                     entity=input.entity,
                     fields=input.fields,
-                    bypass_preview=input.bypass_preview if input.bypass_preview is not None else True,
+                    bypass_preview=input.bypass_preview
+                    if input.bypass_preview is not None
+                    else True,
                     tags=input.tags,
                     interval=input.interval,
                     monitoring=input.monitoring,
@@ -223,7 +218,9 @@ class WorkflowsCoreService:
                     KadoaSdkError.ERROR_MESSAGES["NO_WORKFLOW_ID"],
                     code=KadoaErrorCode.INTERNAL_ERROR,
                     details={
-                        "response": response.model_dump() if hasattr(response, "model_dump") else response
+                        "response": response.model_dump()
+                        if hasattr(response, "model_dump")
+                        else response
                     },
                 )
 
@@ -290,6 +287,7 @@ class WorkflowsCoreService:
                 return []
             # Convert to WorkflowResponse with enum remapping
             from ..extraction.extraction_acl import WorkflowResponse
+
             return [WorkflowResponse.from_generated(wf) for wf in workflows]
         except Exception as error:
             raise KadoaHttpError.wrap(

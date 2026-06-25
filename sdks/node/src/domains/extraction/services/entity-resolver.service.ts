@@ -24,7 +24,6 @@ export interface EntityResponse {
 export interface EntityRequestOptions {
   link: string;
   location?: LocationConfig;
-  navigationMode?: string;
   selectorMode?: boolean;
 }
 
@@ -33,10 +32,7 @@ export interface ResolvedEntity {
   fields: SchemaField[];
 }
 
-export type EntityConfig =
-  | "ai-detection"
-  | { schemaId: string }
-  | { name?: string; fields: SchemaField[] };
+export type EntityConfig = "ai-detection" | { schemaId: string } | { name?: string; fields: SchemaField[] };
 
 export const ENTITY_API_ENDPOINT = "/v4/entity";
 
@@ -66,7 +62,6 @@ export class EntityResolverService {
     options?: {
       link?: string;
       location?: LocationConfig;
-      navigationMode?: string;
       selectorMode?: boolean;
     },
   ): Promise<ResolvedEntity> {
@@ -82,7 +77,6 @@ export class EntityResolverService {
       const entityPrediction = await this.fetchEntityFields({
         link: options.link,
         location: options.location,
-        navigationMode: options.navigationMode,
         selectorMode: options.selectorMode ?? false,
       });
 
@@ -94,16 +88,13 @@ export class EntityResolverService {
     } else if (entityConfig) {
       if ("schemaId" in entityConfig) {
         // Fetch schema from API to get entity and fields
-        const schema = await this.schemasService.getSchema(
-          entityConfig.schemaId,
-        );
+        const schema = await this.schemasService.getSchema(entityConfig.schemaId);
         // Backend may include transform/placeholder variants in the response
         // union; the SDK only consumes structured/classification fields.
         return {
           entity: schema.entity ?? undefined,
           fields: (schema.schema ?? []).filter(
-            (f): f is SchemaField =>
-              f.fieldType === "SCHEMA" || f.fieldType === "CLASSIFICATION",
+            (f): f is SchemaField => f.fieldType === "SCHEMA" || f.fieldType === "CLASSIFICATION",
           ),
         };
       } else if ("fields" in entityConfig) {
@@ -129,29 +120,22 @@ export class EntityResolverService {
    * @param options Request options including the link to analyze
    * @returns EntityPrediction containing the detected entity type and fields
    */
-  async fetchEntityFields(
-    options: EntityRequestOptions,
-  ): Promise<EntityPrediction> {
+  async fetchEntityFields(options: EntityRequestOptions): Promise<EntityPrediction> {
     this.validateEntityOptions(options);
 
     const url = `${this.client.baseUrl}${ENTITY_API_ENDPOINT}`;
     const requestBody: EntityRequestOptions = options;
 
-    const response: AxiosResponse<EntityResponse> =
-      await this.client.axiosInstance.post(url, requestBody, {
-        headers: {
-          "Content-Type": "application/json",
-          Accept: "application/json",
-        },
-      });
+    const response: AxiosResponse<EntityResponse> = await this.client.axiosInstance.post(url, requestBody, {
+      headers: {
+        "Content-Type": "application/json",
+        Accept: "application/json",
+      },
+    });
 
     const data = response.data;
 
-    if (
-      !data.success ||
-      !data.entityPrediction ||
-      data.entityPrediction.length === 0
-    ) {
+    if (!data.success || !data.entityPrediction || data.entityPrediction.length === 0) {
       throw new KadoaSdkException(ERROR_MESSAGES.NO_PREDICTIONS, {
         code: "NOT_FOUND",
         details: {

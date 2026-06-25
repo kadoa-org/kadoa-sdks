@@ -17,20 +17,14 @@ import type {
   V4WorkflowsWorkflowIdMetadataPutRequestMonitoringFieldsInner,
   V4WorkflowsWorkflowIdMetadataPutRequestMonitoringFieldsInnerOperatorEnum,
   WorkflowWithExistingSchemaIntervalEnum,
-  WorkflowWithExistingSchemaNavigationModeEnum,
 } from "../../generated";
 import { DataFieldDataTypeEnum } from "../../generated";
-import type {
-  GetWorkflowResponse,
-  MonitoringConfig,
-  WorkflowsApiInterface,
-} from "../workflows/workflows.acl";
+import type { GetWorkflowResponse, MonitoringConfig, WorkflowsApiInterface } from "../workflows/workflows.acl";
 
 /**
  * Data pagination metadata.
  */
-export type DataPagination =
-  V4WorkflowsWorkflowIdDataGet200ResponseOneOfPagination;
+export type DataPagination = V4WorkflowsWorkflowIdDataGet200ResponseOneOfPagination;
 
 /**
  * Workflow data response.
@@ -44,10 +38,7 @@ export type WorkflowDataResponse = V4WorkflowsWorkflowIdDataGet200Response;
 export const DataSortOrder = {
   Asc: "asc",
   Desc: "desc",
-} as const satisfies Record<
-  keyof typeof V4WorkflowsWorkflowIdDataGetOrderEnum,
-  V4WorkflowsWorkflowIdDataGetOrderEnum
->;
+} as const satisfies Record<keyof typeof V4WorkflowsWorkflowIdDataGetOrderEnum, V4WorkflowsWorkflowIdDataGetOrderEnum>;
 
 export type DataSortOrder = (typeof DataSortOrder)[keyof typeof DataSortOrder];
 
@@ -80,10 +71,7 @@ const CanonicalSchemaFieldDataType = {
   Link: DataFieldDataTypeEnum.Link,
   Object: DataFieldDataTypeEnum.Object,
   Array: DataFieldDataTypeEnum.Array,
-} as const satisfies Record<
-  keyof typeof DataFieldDataTypeEnum,
-  DataFieldDataTypeEnum
->;
+} as const satisfies Record<keyof typeof DataFieldDataTypeEnum, DataFieldDataTypeEnum>;
 
 /**
  * Curated field data type enum exposed by the SDK.
@@ -97,16 +85,11 @@ export const SchemaFieldDataType = {
   Url: DataFieldDataTypeEnum.Link,
 } as const satisfies Record<string, DataFieldDataTypeEnum>;
 
-export type SchemaFieldDataType =
-  (typeof SchemaFieldDataType)[keyof typeof SchemaFieldDataType];
+export type SchemaFieldDataType = (typeof SchemaFieldDataType)[keyof typeof SchemaFieldDataType];
 
 export type SchemaField = DataField | ClassificationField;
 
-export type NavigationMode =
-  (typeof WorkflowWithExistingSchemaNavigationModeEnum)[keyof typeof WorkflowWithExistingSchemaNavigationModeEnum];
-
-export type DataTypeInternal =
-  (typeof DataFieldDataTypeEnum)[keyof typeof DataFieldDataTypeEnum];
+export type DataTypeInternal = (typeof DataFieldDataTypeEnum)[keyof typeof DataFieldDataTypeEnum];
 
 export type DataType = Exclude<
   DataTypeInternal,
@@ -128,10 +111,9 @@ export type WorkflowInterval =
 export type MonitoringOperator =
   (typeof V4WorkflowsWorkflowIdMetadataPutRequestMonitoringFieldsInnerOperatorEnum)[keyof typeof V4WorkflowsWorkflowIdMetadataPutRequestMonitoringFieldsInnerOperatorEnum];
 
-export type MonitoringField =
-  V4WorkflowsWorkflowIdMetadataPutRequestMonitoringFieldsInner & {
-    isKeyField?: boolean;
-  };
+export type MonitoringField = V4WorkflowsWorkflowIdMetadataPutRequestMonitoringFieldsInner & {
+  isKeyField?: boolean;
+};
 
 export type LocationConfig = Location;
 
@@ -149,9 +131,7 @@ export type RawFormat = "HTML" | "MARKDOWN" | "PAGE_URL";
  */
 export type MetadataKey = RawFormat;
 
-export type FieldType =
-  | ClassificationFieldFieldTypeEnum
-  | DataFieldFieldTypeEnum;
+export type FieldType = ClassificationFieldFieldTypeEnum | DataFieldFieldTypeEnum;
 
 export type WorkflowMonitoringConfig = MonitoringConfig;
 
