@@ -1211,8 +1211,8 @@
           }
         },
         "responses": {
-          "200": {
-            "description": "Issue created successfully",
+          "202": {
+            "description": "Issue creation accepted",
             "content": {
               "application/json": {
                 "schema": {
@@ -1221,9 +1221,44 @@
                     "success": {
                       "type": "boolean"
                     },
-                    "issueIdentifier": {
+                    "issueId": {
                       "type": "string",
-                      "description": "Kadoa issue identifier (e.g., KAD-123)"
+                      "description": "Local support request ID"
+                    },
+                    "supportRequestId": {
+                      "type": "string",
+                      "description": "Local support request ID"
+                    },
+                    "jobId": {
+                      "type": "string",
+                      "description": "Engine event job ID"
+                    },
+                    "status": {
+                      "type": "string",
+                      "enum": [
+                        "accepted"
+                      ]
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "The linked workflow already has an open support issue",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "error": {
+                      "type": "string"
+                    },
+                    "supportRequestId": {
+                      "type": "string"
+                    },
+                    "issueId": {
+                      "type": "string"
                     }
                   }
                 }
@@ -2794,8 +2829,8 @@
     },
     "/v4/workflows/{workflowId}/data/export": {
       "get": {
-        "summary": "Materialize a full data export and return a signed download URL",
-        "description": "Materializes the full result set as CSV or JSON to object storage and returns a self-authenticating\nURL that can be opened by external clients (Claude Desktop, Claude for Excel, code execution sandboxes,\nbrowsers) without an Authorization header. The URL is HMAC-signed and bound to the exportId, workflowId,\nformat and expiry.\n",
+        "summary": "Create workflow data export",
+        "description": "Materializes the full result set as CSV, JSON, or Parquet to object storage and returns a self-authenticating\nURL that can be opened by external clients (Claude Desktop, Claude for Excel, code execution sandboxes,\nbrowsers) without an Authorization header. The URL is HMAC-signed and bound to the exportId, workflowId,\nformat and expiry.\n",
         "tags": [
           "Workflows"
         ],
@@ -2824,7 +2859,8 @@
               "type": "string",
               "enum": [
                 "csv",
-                "json"
+                "json",
+                "parquet"
               ],
               "default": "csv"
             }
@@ -2905,7 +2941,8 @@
                       "type": "string",
                       "enum": [
                         "csv",
-                        "json"
+                        "json",
+                        "parquet"
                       ]
                     },
                     "rowCount": {
@@ -2938,7 +2975,7 @@
     },
     "/v4/workflows/{workflowId}/data/parquet": {
       "get": {
-        "summary": "Download workflow data as Parquet",
+        "summary": "Workflow data Parquet option",
         "description": "Streams the canonical Parquet artifact for the latest successful workflow run, or for a\nspecific run when `runId` is provided. The file is the full, unfiltered dataset for that run.\nUse this endpoint for typed analytical ingestion into engines such as DuckDB, Spark, Polars,\nSnowflake, or BigQuery.\n",
         "tags": [
           "Workflows"
@@ -3000,8 +3037,8 @@
     },
     "/v4/workflows/{workflowId}/data/exports/{exportId}": {
       "get": {
-        "summary": "Download a materialized CSV export",
-        "description": "Streams a CSV previously materialized via GET /v4/workflows/{workflowId}/data?format=csv&download=link.\nSets Content-Disposition: attachment so browsers trigger a download.\n",
+        "summary": "Download workflow data export",
+        "description": "Streams a file previously materialized via GET /v4/workflows/{workflowId}/data/export.\nSets Content-Disposition: attachment so browsers trigger a download.\n",
         "tags": [
           "Workflows"
         ],
@@ -3026,7 +3063,7 @@
             "name": "exportId",
             "in": "path",
             "required": true,
-            "description": "Export id returned by the download=link response.",
+            "description": "Export id returned by the export response.",
             "schema": {
               "type": "string",
               "format": "uuid"
@@ -3035,11 +3072,22 @@
         ],
         "responses": {
           "200": {
-            "description": "CSV bytes",
+            "description": "Export bytes",
             "content": {
               "text/csv": {
                 "schema": {
                   "type": "string"
+                }
+              },
+              "application/json": {
+                "schema": {
+                  "type": "string"
+                }
+              },
+              "application/vnd.apache.parquet": {
+                "schema": {
+                  "type": "string",
+                  "format": "binary"
                 }
               }
             }
@@ -13980,7 +14028,177 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/TemplateVersionCreatedResponse"
+                  "$ref": "#/components/schemas/TemplateVersionMutationResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "400",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "error": {
+                      "type": "boolean",
+                      "description": "Indicates an error occurred"
+                    },
+                    "message": {
+                      "type": "string",
+                      "description": "Error message"
+                    },
+                    "details": {
+                      "nullable": true,
+                      "description": "Additional error details (e.g., validation errors)"
+                    }
+                  },
+                  "required": [
+                    "error",
+                    "message"
+                  ]
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "401",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "error": {
+                      "type": "boolean",
+                      "description": "Indicates an error occurred"
+                    },
+                    "message": {
+                      "type": "string",
+                      "description": "Error message"
+                    },
+                    "details": {
+                      "nullable": true,
+                      "description": "Additional error details (e.g., validation errors)"
+                    }
+                  },
+                  "required": [
+                    "error",
+                    "message"
+                  ]
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "404",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "error": {
+                      "type": "boolean",
+                      "description": "Indicates an error occurred"
+                    },
+                    "message": {
+                      "type": "string",
+                      "description": "Error message"
+                    },
+                    "details": {
+                      "nullable": true,
+                      "description": "Additional error details (e.g., validation errors)"
+                    }
+                  },
+                  "required": [
+                    "error",
+                    "message"
+                  ]
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "500",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "error": {
+                      "type": "boolean",
+                      "description": "Indicates an error occurred"
+                    },
+                    "message": {
+                      "type": "string",
+                      "description": "Error message"
+                    },
+                    "details": {
+                      "nullable": true,
+                      "description": "Additional error details (e.g., validation errors)"
+                    }
+                  },
+                  "required": [
+                    "error",
+                    "message"
+                  ]
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "ApiKeyAuth": []
+          }
+        ]
+      }
+    },
+    "/v4/templates/{templateId}/versions/{version}": {
+      "patch": {
+        "description": "Set or clear the display name of a published template version. The version content stays immutable; only the label changes.",
+        "summary": "Rename template version",
+        "tags": [
+          "Templates"
+        ],
+        "parameters": [
+          {
+            "name": "templateId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            },
+            "description": "Template ID"
+          },
+          {
+            "name": "version",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "integer",
+              "minimum": 1
+            },
+            "description": "Template version number"
+          }
+        ],
+        "requestBody": {
+          "description": "Body",
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateTemplateVersionBody"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "200",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TemplateVersionMutationResponse"
                 }
               }
             }
@@ -21306,6 +21524,11 @@
                       "type": "number",
                       "description": "Version number"
                     },
+                    "name": {
+                      "type": "string",
+                      "description": "Custom display name (null = default 'v.N')",
+                      "nullable": true
+                    },
                     "prompt": {
                       "type": "string",
                       "description": "User prompt",
@@ -21526,6 +21749,7 @@
                     "id",
                     "templateId",
                     "version",
+                    "name",
                     "prompt",
                     "schemaId",
                     "frequency",
@@ -22031,7 +22255,7 @@
         "title": "CreateTemplateVersionBody",
         "description": "Request body for publishing a new template version"
       },
-      "TemplateVersionCreatedResponse": {
+      "TemplateVersionMutationResponse": {
         "type": "object",
         "properties": {
           "error": {
@@ -22064,6 +22288,11 @@
               "version": {
                 "type": "number",
                 "description": "Version number"
+              },
+              "name": {
+                "type": "string",
+                "description": "Custom display name (null = default 'v.N')",
+                "nullable": true
               },
               "prompt": {
                 "type": "string",
@@ -22275,12 +22504,13 @@
               "id",
               "templateId",
               "version",
+              "name",
               "prompt",
               "schemaId",
               "frequency",
               "createdAt"
             ],
-            "description": "Created version"
+            "description": "Template version"
           }
         },
         "required": [
@@ -22288,8 +22518,24 @@
           "success",
           "data"
         ],
-        "title": "TemplateVersionCreatedResponse",
-        "description": "Response for template version creation"
+        "title": "TemplateVersionMutationResponse",
+        "description": "Response for template version create/update"
+      },
+      "UpdateTemplateVersionBody": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "description": "Custom display name. null, 'null', empty, or whitespace clears the name and restores the default 'v.N' label.",
+            "type": "string",
+            "maxLength": 100,
+            "nullable": true
+          }
+        },
+        "required": [
+          "name"
+        ],
+        "title": "UpdateTemplateVersionBody",
+        "description": "Request body for renaming a template version"
       },
       "TemplateSchemasResponse": {
         "type": "object",
