@@ -29,7 +29,6 @@ describe("ExtractionBuilderService", () => {
     expect(create).toHaveBeenCalledTimes(1);
     expect(create.mock.calls[0]?.[0]).toMatchObject({
       urls: ["https://example.com"],
-      navigationMode: "agentic-navigation",
       userPrompt:
         "extract all Product entities from this page and return these fields: title",
       entity: "Product",
@@ -58,7 +57,6 @@ describe("ExtractionBuilderService", () => {
       .create();
 
     expect(create.mock.calls[0]?.[0]).toMatchObject({
-      navigationMode: "agentic-navigation",
       userPrompt: "extract all the data for the main entity of this page",
       fields: [],
     });
@@ -90,7 +88,6 @@ describe("ExtractionBuilderService", () => {
       .create();
 
     expect(create.mock.calls[0]?.[0]).toMatchObject({
-      navigationMode: "agentic-navigation",
       userPrompt: "extract featured products only",
     });
   });
@@ -117,7 +114,6 @@ describe("ExtractionBuilderService", () => {
       .create();
 
     expect(create.mock.calls[0]?.[0]).toMatchObject({
-      navigationMode: "agentic-navigation",
       userPrompt:
         "extract all records from this page and return these fields: rawMarkdown",
     });
@@ -145,7 +141,6 @@ describe("ExtractionBuilderService", () => {
       .create();
 
     expect(create.mock.calls[0]?.[0]).toMatchObject({
-      navigationMode: "agentic-navigation",
       fields: [
         {
           name: "rawMarkdown",

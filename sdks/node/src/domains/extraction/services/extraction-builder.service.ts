@@ -1,13 +1,7 @@
 import assert from "node:assert";
-import {
-  KadoaHttpException,
-  KadoaSdkException,
-} from "../../../runtime/exceptions";
+import { KadoaHttpException, KadoaSdkException } from "../../../runtime/exceptions";
 import { logger } from "../../../runtime/logger";
-import type {
-  NotificationOptions,
-  NotificationSetupService,
-} from "../../notifications/notification-setup.service";
+import type { NotificationOptions, NotificationSetupService } from "../../notifications/notification-setup.service";
 import { SchemaBuilder } from "../../schemas/schema-builder";
 import type { GetWorkflowResponse } from "../../workflows/workflows.acl";
 import type { WorkflowsCoreService } from "../../workflows/workflows-core.service";
@@ -18,43 +12,24 @@ import type {
   WorkflowInterval,
   WorkflowMonitoringConfig,
 } from "../extraction.acl";
-import type {
-  DataFetcherService,
-  FetchDataResult,
-} from "./data-fetcher.service";
+import type { DataFetcherService, FetchDataResult } from "./data-fetcher.service";
 import type { EntityConfig } from "./entity-resolver.service";
 
 const debug = logger.extraction;
-const DEFAULT_AGENTIC_PROMPT =
-  "extract all the data for the main entity of this page";
+const DEFAULT_AGENTIC_PROMPT = "extract all the data for the main entity of this page";
 const BUILD_NOT_READY_ERROR = "No completed build. Build the project first.";
-const TERMINAL_RUN_STATES = new Set([
-  "FINISHED",
-  "SUCCESS",
-  "FAILED",
-  "ERROR",
-  "STOPPED",
-  "CANCELLED",
-]);
+const TERMINAL_RUN_STATES = new Set(["FINISHED", "SUCCESS", "FAILED", "ERROR", "STOPPED", "CANCELLED"]);
 
 function getFieldName(field: SchemaField): string | undefined {
-  return "name" in field && typeof field.name === "string"
-    ? field.name
-    : undefined;
+  return "name" in field && typeof field.name === "string" ? field.name : undefined;
 }
 
-function buildAgenticPrompt(params: {
-  entity?: string;
-  fields: Array<SchemaField>;
-  userPrompt?: string;
-}): string {
+function buildAgenticPrompt(params: { entity?: string; fields: Array<SchemaField>; userPrompt?: string }): string {
   if (params.userPrompt) {
     return params.userPrompt;
   }
 
-  const fieldNames = params.fields
-    .map((field) => getFieldName(field))
-    .filter((name): name is string => Boolean(name));
+  const fieldNames = params.fields.map((field) => getFieldName(field)).filter((name): name is string => Boolean(name));
 
   if (fieldNames.length === 0) {
     return DEFAULT_AGENTIC_PROMPT;
@@ -91,9 +66,7 @@ export interface PreparedExtraction {
 
   withMonitoring: (options: WorkflowMonitoringConfig) => PreparedExtraction;
 
-  setInterval: (
-    options: { interval: WorkflowInterval } | { schedules: string[] },
-  ) => PreparedExtraction;
+  setInterval: (options: { interval: WorkflowInterval } | { schedules: string[] }) => PreparedExtraction;
 
   bypassPreview: () => PreparedExtraction;
 
@@ -138,12 +111,8 @@ export interface SubmittedExtraction {
 export interface FinishedExtraction {
   jobId: string;
 
-  fetchData: (
-    options: Omit<FetchDataOptions, "workflowId" | "runId">,
-  ) => Promise<FetchDataResult>;
-  fetchAllData: (
-    options: Omit<FetchDataOptions, "workflowId" | "runId" | "page" | "limit">,
-  ) => Promise<object[]>;
+  fetchData: (options: Omit<FetchDataOptions, "workflowId" | "runId">) => Promise<FetchDataResult>;
+  fetchAllData: (options: Omit<FetchDataOptions, "workflowId" | "runId" | "page" | "limit">) => Promise<object[]>;
 }
 
 export class ExtractionBuilderService {
@@ -229,9 +198,7 @@ export class ExtractionBuilderService {
     return this;
   }
 
-  withNotifications(
-    options: Omit<NotificationOptions, "workflowId">,
-  ): PreparedExtraction {
+  withNotifications(options: Omit<NotificationOptions, "workflowId">): PreparedExtraction {
     this._notificationOptions = options;
 
     return this;
@@ -248,9 +215,7 @@ export class ExtractionBuilderService {
     return this;
   }
 
-  setInterval(
-    options: { interval: WorkflowInterval } | { schedules: string[] },
-  ): PreparedExtraction {
+  setInterval(options: { interval: WorkflowInterval } | { schedules: string[] }): PreparedExtraction {
     assert(this._options, "Options are not set");
     if ("interval" in options) {
       this._options.interval = options.interval;
@@ -279,12 +244,8 @@ export class ExtractionBuilderService {
     const { urls, name, description, entity } = this.options;
 
     const resolvedEntity: { entity?: string; fields: Array<SchemaField> } = {
-      entity:
-        typeof entity === "object" && "name" in entity
-          ? entity.name
-          : undefined,
-      fields:
-        typeof entity === "object" && "fields" in entity ? entity.fields : [],
+      entity: typeof entity === "object" && "name" in entity ? entity.name : undefined,
+      fields: typeof entity === "object" && "fields" in entity ? entity.fields : [],
     };
 
     this._userPrompt = buildAgenticPrompt({
@@ -294,17 +255,13 @@ export class ExtractionBuilderService {
     });
     this._options.userPrompt = this._userPrompt;
 
-    const schemaId =
-      typeof entity === "object" && "schemaId" in entity
-        ? entity.schemaId
-        : undefined;
+    const schemaId = typeof entity === "object" && "schemaId" in entity ? entity.schemaId : undefined;
     const hasSchemaId = Boolean(schemaId);
 
     const workflow = await this.workflowsCoreService.create({
       urls,
       name,
       description,
-      navigationMode: "agentic-navigation",
       monitoring: this._monitoringOptions,
       ...(hasSchemaId
         ? {
@@ -332,17 +289,12 @@ export class ExtractionBuilderService {
     return this;
   }
 
-  async waitForReady(
-    options?: WaitForReadyOptions,
-  ): Promise<GetWorkflowResponse> {
+  async waitForReady(options?: WaitForReadyOptions): Promise<GetWorkflowResponse> {
     assert(this._workflowId, "Workflow ID is not set");
     const targetState = options?.targetState ?? "PREVIEW";
 
     const current = await this.workflowsCoreService.get(this._workflowId);
-    if (
-      current.state === targetState ||
-      (targetState === "PREVIEW" && current.state === "ACTIVE")
-    ) {
+    if (current.state === targetState || (targetState === "PREVIEW" && current.state === "ACTIVE")) {
       return current;
     }
 
@@ -380,10 +332,7 @@ export class ExtractionBuilderService {
     debug("Job started: %O", startedJob);
     this._jobId = startedJob.jobId;
 
-    const finishedJob = await this.workflowsCoreService.waitForJobCompletion(
-      this._workflowId,
-      startedJob.jobId,
-    );
+    const finishedJob = await this.workflowsCoreService.waitForJobCompletion(this._workflowId, startedJob.jobId);
     debug("Job finished: %O", finishedJob);
 
     return this;
@@ -420,9 +369,7 @@ export class ExtractionBuilderService {
     };
   }
 
-  async fetchData(
-    options: Omit<FetchDataOptions, "workflowId" | "runId">,
-  ): Promise<FetchDataResult> {
+  async fetchData(options: Omit<FetchDataOptions, "workflowId" | "runId">): Promise<FetchDataResult> {
     assert(this._workflowId, "Workflow ID is not set");
     assert(this._jobId, "Job ID is not set");
     return this.dataFetcherService.fetchData({
@@ -434,9 +381,7 @@ export class ExtractionBuilderService {
     });
   }
 
-  async fetchAllData(
-    options: Omit<FetchDataOptions, "workflowId" | "runId" | "page" | "limit">,
-  ): Promise<object[]> {
+  async fetchAllData(options: Omit<FetchDataOptions, "workflowId" | "runId" | "page" | "limit">): Promise<object[]> {
     assert(this._jobId, "Job ID is not set");
     assert(this._workflowId, "Workflow ID is not set");
     return this.dataFetcherService.fetchAllData({
@@ -446,10 +391,7 @@ export class ExtractionBuilderService {
     });
   }
 
-  private async startOrReuseWorkflowRun(
-    workflowId: string,
-    input: RunWorkflowOptions,
-  ) {
+  private async startOrReuseWorkflowRun(workflowId: string, input: RunWorkflowOptions) {
     // Some agentic workflows already have an active job by the time create()
     // returns, so reuse that run instead of issuing a duplicate /run request.
     const currentJob = await this.findActiveWorkflowJob(workflowId);
@@ -467,10 +409,7 @@ export class ExtractionBuilderService {
 
       const recoveredJob = await this.waitForWorkflowJob(workflowId);
       if (recoveredJob) {
-        debug(
-          "Recovered active workflow job after run rejection: %O",
-          recoveredJob,
-        );
+        debug("Recovered active workflow job after run rejection: %O", recoveredJob);
         return recoveredJob;
       }
 
@@ -523,8 +462,6 @@ export class ExtractionBuilderService {
       return responseBody.error.includes(BUILD_NOT_READY_ERROR);
     }
 
-    return typeof error.message === "string"
-      ? error.message.includes(BUILD_NOT_READY_ERROR)
-      : false;
+    return typeof error.message === "string" ? error.message.includes(BUILD_NOT_READY_ERROR) : false;
   }
 }

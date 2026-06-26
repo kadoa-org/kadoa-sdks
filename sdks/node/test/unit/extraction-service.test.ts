@@ -48,7 +48,6 @@ describe("ExtractionService", () => {
     expect(create).toHaveBeenCalledTimes(1);
     expect(create.mock.calls[0]?.[0]).toMatchObject({
       urls: ["https://example.com"],
-      navigationMode: "agentic-navigation",
       userPrompt: "extract all the data for the main entity of this page",
       fields: [],
       autoStart: true,
@@ -107,7 +106,6 @@ describe("ExtractionService", () => {
     });
 
     expect(create.mock.calls[0]?.[0]).toMatchObject({
-      navigationMode: "agentic-navigation",
       userPrompt:
         "extract all Product entities from this page and return these fields: title, price",
     });
@@ -175,7 +173,6 @@ describe("ExtractionService", () => {
 
     expect(result).toEqual({ workflowId: "wf-submit" });
     expect(create.mock.calls[0]?.[0]).toMatchObject({
-      navigationMode: "agentic-navigation",
       userPrompt: "extract all the data for the main entity of this page",
     });
   });
