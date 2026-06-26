@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, Any, Dict, Optional, Union
+from typing import TYPE_CHECKING, Any, Dict, Union
 
 from ...core.exceptions import KadoaErrorCode, KadoaHttpError, KadoaSdkError
 
@@ -16,7 +16,7 @@ class EntityDetectorService:
         self.client = client
 
     def fetch_entity_fields(
-        self, *, link: str, location: Union[Dict[str, Any], "LocationConfig"], navigation_mode: str
+        self, *, link: str, location: Union[Dict[str, Any], "LocationConfig"]
     ) -> Dict[str, Any]:
         if not link:
             raise KadoaSdkError(
@@ -36,15 +36,15 @@ class EntityDetectorService:
         else:
             location_dict = {"type": "auto"}
 
-        body = {"link": link, "location": location_dict, "navigationMode": navigation_mode}
+        body = {"link": link, "location": location_dict}
 
         try:
             data = self.client.make_raw_request(
-                    "POST",
+                "POST",
                 ENTITY_API_ENDPOINT,
-                    body=body,
+                body=body,
                 error_message=KadoaSdkError.ERROR_MESSAGES["ENTITY_FETCH_FAILED"],
-                )
+            )
 
             if not data.get("success") or not data.get("entityPrediction"):
                 raise KadoaSdkError(

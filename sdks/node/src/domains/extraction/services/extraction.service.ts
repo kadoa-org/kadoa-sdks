@@ -11,12 +11,7 @@ import type {
   NotificationSettingsService,
   NotificationSetupService,
 } from "../../notifications";
-import type {
-  GetJobResponse,
-  RunWorkflowRequest,
-  RunWorkflowResponse,
-  WorkflowsCoreService,
-} from "../../workflows";
+import type { GetJobResponse, RunWorkflowRequest, RunWorkflowResponse, WorkflowsCoreService } from "../../workflows";
 import type {
   FetchDataOptions,
   LocationConfig,
@@ -25,12 +20,7 @@ import type {
   WorkflowInterval,
   WorkflowMonitoringConfig,
 } from "../extraction.acl";
-import type {
-  DataFetcherService,
-  ExportDataOptions,
-  ExportDataResult,
-  FetchDataResult,
-} from "./data-fetcher.service";
+import type { DataFetcherService, ExportDataOptions, ExportDataResult, FetchDataResult } from "./data-fetcher.service";
 import type { EntityConfig } from "./entity-resolver.service";
 
 const debug = logger.extraction;
@@ -74,27 +64,18 @@ export interface SubmitExtractionResult {
 
 // Use TERMINAL_RUN_STATES from WorkflowsCoreService for consistency
 const SUCCESSFUL_RUN_STATES = new Set(["FINISHED", "SUCCESS"]);
-const DEFAULT_AGENTIC_PROMPT =
-  "extract all the data for the main entity of this page";
+const DEFAULT_AGENTIC_PROMPT = "extract all the data for the main entity of this page";
 
 function getFieldName(field: SchemaField): string | undefined {
-  return "name" in field && typeof field.name === "string"
-    ? field.name
-    : undefined;
+  return "name" in field && typeof field.name === "string" ? field.name : undefined;
 }
 
-function buildAgenticPrompt(params: {
-  entity?: string;
-  fields: Array<SchemaField>;
-  userPrompt?: string;
-}): string {
+function buildAgenticPrompt(params: { entity?: string; fields: Array<SchemaField>; userPrompt?: string }): string {
   if (params.userPrompt) {
     return params.userPrompt;
   }
 
-  const fieldNames = params.fields
-    .map((field) => getFieldName(field))
-    .filter((name): name is string => Boolean(name));
+  const fieldNames = params.fields.map((field) => getFieldName(field)).filter((name): name is string => Boolean(name));
 
   if (fieldNames.length === 0) {
     return DEFAULT_AGENTIC_PROMPT;
@@ -108,10 +89,7 @@ function buildAgenticPrompt(params: {
   return `extract all records from this page and return these fields: ${fieldList}`;
 }
 
-export const DEFAULT_OPTIONS: Omit<
-  ExtractionOptionsInternal,
-  "urls" | "entity" | "fields" | "description"
-> = {
+export const DEFAULT_OPTIONS: Omit<ExtractionOptionsInternal, "urls" | "entity" | "fields" | "description"> = {
   mode: "run",
   pollingInterval: 5000,
   maxWaitTime: 300000,
@@ -148,28 +126,16 @@ export class ExtractionService {
   /**
    * Trigger a workflow run without waiting for completion.
    */
-  async runJob(
-    workflowId: string,
-    input: RunWorkflowRequest,
-  ): Promise<RunWorkflowResponse> {
+  async runJob(workflowId: string, input: RunWorkflowRequest): Promise<RunWorkflowResponse> {
     return await this.workflowsCoreService.runWorkflow(workflowId, input);
   }
 
   /**
    * Trigger a workflow run and wait for the job to complete.
    */
-  async runJobAndWait(
-    workflowId: string,
-    input: RunWorkflowRequest,
-  ): Promise<GetJobResponse> {
-    const result = await this.workflowsCoreService.runWorkflow(
-      workflowId,
-      input,
-    );
-    return await this.workflowsCoreService.waitForJobCompletion(
-      workflowId,
-      result.jobId || "",
-    );
+  async runJobAndWait(workflowId: string, input: RunWorkflowRequest): Promise<GetJobResponse> {
+    const result = await this.workflowsCoreService.runWorkflow(workflowId, input);
+    return await this.workflowsCoreService.waitForJobCompletion(workflowId, result.jobId || "");
   }
 
   /**
@@ -199,39 +165,29 @@ export class ExtractionService {
   /**
    * Iterate through extraction data pages.
    */
-  fetchDataPages(
-    options: FetchDataOptions,
-  ): AsyncGenerator<FetchDataResult, void, unknown> {
+  fetchDataPages(options: FetchDataOptions): AsyncGenerator<FetchDataResult, void, unknown> {
     return this.dataFetcherService.fetchDataPages(options);
   }
 
   /**
    * List notification channels for a workflow.
    */
-  async getNotificationChannels(
-    workflowId: string,
-  ): Promise<NotificationChannel[]> {
+  async getNotificationChannels(workflowId: string): Promise<NotificationChannel[]> {
     return await this.notificationChannelsService.listChannels({ workflowId });
   }
 
   /**
    * List notification settings for a workflow.
    */
-  async getNotificationSettings(
-    workflowId: string,
-  ): Promise<NotificationSettings[]> {
+  async getNotificationSettings(workflowId: string): Promise<NotificationSettings[]> {
     return await this.notificationSettingsService.listSettings({ workflowId });
   }
 
   /**
    * execute extraction workflow
    */
-  private async executeExtraction(
-    options: ExtractionOptions & { mode?: "run" },
-  ): Promise<ExtractionResult>;
-  private async executeExtraction(
-    options: ExtractionOptions & { mode: "submit" },
-  ): Promise<SubmitExtractionResult>;
+  private async executeExtraction(options: ExtractionOptions & { mode?: "run" }): Promise<ExtractionResult>;
+  private async executeExtraction(options: ExtractionOptions & { mode: "submit" }): Promise<SubmitExtractionResult>;
   private async executeExtraction(
     options: ExtractionOptions & { mode?: "run" | "submit" },
   ): Promise<ExtractionResult | SubmitExtractionResult> {
@@ -260,14 +216,8 @@ export class ExtractionService {
 
     const entityConfig = options.entity;
     const resolvedEntity: { entity?: string; fields: Array<SchemaField> } = {
-      entity:
-        typeof entityConfig === "object" && "name" in entityConfig
-          ? entityConfig.name
-          : undefined,
-      fields:
-        typeof entityConfig === "object" && "fields" in entityConfig
-          ? entityConfig.fields
-          : [],
+      entity: typeof entityConfig === "object" && "name" in entityConfig ? entityConfig.name : undefined,
+      fields: typeof entityConfig === "object" && "fields" in entityConfig ? entityConfig.fields : [],
     };
 
     const hasNotifications = !!config.notifications;
@@ -280,11 +230,8 @@ export class ExtractionService {
 
     const workflowRequest = {
       ...config,
-      navigationMode: "agentic-navigation" as const,
       fields: resolvedEntity.fields,
-      ...(resolvedEntity.entity !== undefined
-        ? { entity: resolvedEntity.entity }
-        : {}),
+      ...(resolvedEntity.entity !== undefined ? { entity: resolvedEntity.entity } : {}),
       userPrompt,
     };
 
@@ -326,17 +273,14 @@ export class ExtractionService {
       data = dataPage.data;
       pagination = dataPage.pagination;
     } else {
-      throw new KadoaSdkException(
-        `${ERROR_MESSAGES.WORKFLOW_UNEXPECTED_STATUS}: ${workflow.runState}`,
-        {
-          code: "INTERNAL_ERROR",
-          details: {
-            workflowId,
-            runState: workflow.runState,
-            state: workflow.state,
-          },
+      throw new KadoaSdkException(`${ERROR_MESSAGES.WORKFLOW_UNEXPECTED_STATUS}: ${workflow.runState}`, {
+        code: "INTERNAL_ERROR",
+        details: {
+          workflowId,
+          runState: workflow.runState,
+          state: workflow.state,
         },
-      );
+      });
     }
 
     return {
@@ -378,17 +322,14 @@ export class ExtractionService {
       data = dataPage.data;
       pagination = dataPage.pagination;
     } else {
-      throw new KadoaSdkException(
-        `${ERROR_MESSAGES.WORKFLOW_UNEXPECTED_STATUS}: ${workflow.runState}`,
-        {
-          code: "INTERNAL_ERROR",
-          details: {
-            workflowId,
-            runState: workflow.runState,
-            state: workflow.state,
-          },
+      throw new KadoaSdkException(`${ERROR_MESSAGES.WORKFLOW_UNEXPECTED_STATUS}: ${workflow.runState}`, {
+        code: "INTERNAL_ERROR",
+        details: {
+          workflowId,
+          runState: workflow.runState,
+          state: workflow.state,
         },
-      );
+      });
     }
 
     return {
