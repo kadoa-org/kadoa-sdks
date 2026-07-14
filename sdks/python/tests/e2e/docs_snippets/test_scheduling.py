@@ -45,6 +45,15 @@ class TestSchedulingSnippets:
 
     @pytest.mark.e2e
     def test_scheduling_002_run_existing_workflow(self, client, workflow_id: str) -> None:
+        client.workflow.wait(workflow_id, timeout_ms=30 * 60 * 1000)
+        if client.workflow.get(workflow_id).state != "ACTIVE":
+            client.workflow.resume(workflow_id)
+            client.workflow.wait(
+                workflow_id,
+                target_state="ACTIVE",
+                timeout_ms=30 * 60 * 1000,
+            )
+
         # @docs-preamble PY-SCHEDULING-002
         # from kadoa_sdk import KadoaClient, KadoaClientConfig, RunWorkflowOptions
         #

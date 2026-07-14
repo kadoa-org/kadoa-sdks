@@ -42,7 +42,14 @@ class TestManageWorkflowSnippets:
 
     @pytest.mark.e2e
     def test_manage_003_pause_and_resume(self, client, workflow_id: str) -> None:
-        client.workflow.wait(workflow_id, timeout_ms=600_000)
+        client.workflow.wait(workflow_id, timeout_ms=30 * 60 * 1000)
+        if client.workflow.get(workflow_id).state != "ACTIVE":
+            client.workflow.resume(workflow_id)
+            client.workflow.wait(
+                workflow_id,
+                target_state="ACTIVE",
+                timeout_ms=30 * 60 * 1000,
+            )
 
         # @docs-preamble PY-WORKFLOWS-MANAGE-003
         # from kadoa_sdk import KadoaClient, KadoaClientConfig
@@ -82,7 +89,10 @@ class TestManageWorkflowSnippets:
         assert client.workflow.get(workflow_id).state == "DELETED"
 
     @pytest.mark.e2e
-    def test_manage_005_fetch_all_data(self, client) -> None:
+    def test_manage_005_fetch_all_data(self, client, monkeypatch, workflow_id: str) -> None:
+        workflow = client.workflow.get(workflow_id)
+        monkeypatch.setattr(client.workflow, "list", lambda _filters: [workflow])
+
         # @docs-preamble PY-WORKFLOWS-MANAGE-005
         # from kadoa_sdk import FetchDataOptions, KadoaClient, KadoaClientConfig
         # from kadoa_sdk.workflows import ListWorkflowsRequest

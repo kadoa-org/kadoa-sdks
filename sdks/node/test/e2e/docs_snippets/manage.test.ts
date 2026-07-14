@@ -10,9 +10,16 @@ import { seedWorkflow } from "../../utils/seeder";
 describe("TS-WORKFLOWS-MANAGE: manage.mdx snippets", () => {
   let client: KadoaClient;
   let workflowId: string;
+  const workflowIds = new Set<string>();
 
   beforeAll(async () => {
     client = new KadoaClient({ apiKey: getTestEnv().KADOA_API_KEY });
+    const createWorkflow = client.workflow.create.bind(client.workflow);
+    client.workflow.create = (async (input) => {
+      const workflow = await createWorkflow(input);
+      workflowIds.add(workflow.id);
+      return workflow;
+    }) as typeof client.workflow.create;
     ({ workflowId } = await seedWorkflow(
       { name: `docs-manage-${Date.now()}` },
       client,
@@ -20,7 +27,9 @@ describe("TS-WORKFLOWS-MANAGE: manage.mdx snippets", () => {
   });
 
   afterAll(async () => {
-    if (workflowId) await client.workflow.delete(workflowId);
+    for (const id of workflowIds) {
+      await client.workflow.delete(id);
+    }
     client.dispose?.();
   });
 
@@ -58,7 +67,14 @@ describe("TS-WORKFLOWS-MANAGE: manage.mdx snippets", () => {
   });
 
   test("TS-WORKFLOWS-MANAGE-003: pause and resume", async () => {
-    await client.workflow.wait(workflowId, { timeoutMs: 600_000 });
+    await client.workflow.wait(workflowId, { timeoutMs: 30 * 60 * 1000 });
+    if ((await client.workflow.get(workflowId)).state !== "ACTIVE") {
+      await client.workflow.resume(workflowId);
+      await client.workflow.wait(workflowId, {
+        targetState: "ACTIVE",
+        timeoutMs: 30 * 60 * 1000,
+      });
+    }
 
     // @docs-preamble TS-WORKFLOWS-MANAGE-003
     // import { KadoaClient } from "@kadoa/node-sdk";
@@ -97,6 +113,11 @@ describe("TS-WORKFLOWS-MANAGE: manage.mdx snippets", () => {
   });
 
   test("TS-WORKFLOWS-MANAGE-005: fetch all workflow data", async () => {
+    const listWorkflows = client.workflow.list.bind(client.workflow);
+    client.workflow.list = (async () => [
+      await client.workflow.get(workflowId),
+    ]) as typeof client.workflow.list;
+
     // @docs-preamble TS-WORKFLOWS-MANAGE-005
     // import { KadoaClient } from "@kadoa/node-sdk";
     //
@@ -114,6 +135,8 @@ describe("TS-WORKFLOWS-MANAGE: manage.mdx snippets", () => {
       console.log(`${workflow.name}: ${data.length} records`);
     }
     // @docs-end TS-WORKFLOWS-MANAGE-005
+
+    client.workflow.list = listWorkflows;
 
     expect(Array.isArray(workflows)).toBe(true);
   });

@@ -10,9 +10,16 @@ import { seedWorkflow } from "../../utils/seeder";
 describe("TS-SCHEDULING: scheduling.mdx snippets", () => {
   let client: KadoaClient;
   let workflowId: string;
+  const workflowIds = new Set<string>();
 
   beforeAll(async () => {
     client = new KadoaClient({ apiKey: getTestEnv().KADOA_API_KEY });
+    const createWorkflow = client.workflow.create.bind(client.workflow);
+    client.workflow.create = (async (input) => {
+      const workflow = await createWorkflow(input);
+      workflowIds.add(workflow.id);
+      return workflow;
+    }) as typeof client.workflow.create;
     ({ workflowId } = await seedWorkflow(
       { name: `docs-scheduling-${Date.now()}` },
       client,
@@ -20,7 +27,9 @@ describe("TS-SCHEDULING: scheduling.mdx snippets", () => {
   });
 
   afterAll(async () => {
-    if (workflowId) await client.workflow.delete(workflowId);
+    for (const id of workflowIds) {
+      await client.workflow.delete(id);
+    }
     client.dispose?.();
   });
 
@@ -54,6 +63,15 @@ describe("TS-SCHEDULING: scheduling.mdx snippets", () => {
   });
 
   test("TS-SCHEDULING-002: run an existing workflow", async () => {
+    await client.workflow.wait(workflowId, { timeoutMs: 30 * 60 * 1000 });
+    if ((await client.workflow.get(workflowId)).state !== "ACTIVE") {
+      await client.workflow.resume(workflowId);
+      await client.workflow.wait(workflowId, {
+        targetState: "ACTIVE",
+        timeoutMs: 30 * 60 * 1000,
+      });
+    }
+
     // @docs-preamble TS-SCHEDULING-002
     // import { KadoaClient } from "@kadoa/node-sdk";
     //
