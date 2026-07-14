@@ -9,7 +9,7 @@ from ..extraction_acl import (
     CreateWorkflowBody,
     DataField,
     DataFieldExample,
-    V4WorkflowsWorkflowIdGet200Response,
+    GetWorkflowResponse,
 )
 from openapi_client.models.create_schema_body_fields_inner import CreateSchemaBodyFieldsInner
 from openapi_client.models.prompt_workflow import PromptWorkflow as AgenticWorkflow
@@ -240,7 +240,7 @@ class CreatedExtraction:
 
     def wait_for_ready(
         self, options: Optional[WaitForReadyOptions] = None
-    ) -> V4WorkflowsWorkflowIdGet200Response:
+    ) -> GetWorkflowResponse:
         """Wait for workflow to be ready"""
         return self._builder._wait_for_ready(self._workflow_id, options)
 
@@ -330,12 +330,10 @@ class ExtractionBuilderService:
         self._monitoring_options: Optional[WorkflowMonitoringConfig] = None
         self._user_prompt: Optional[str] = None
 
-    def _get_workflow_status(self, workflow_id: str) -> V4WorkflowsWorkflowIdGet200Response:
+    def _get_workflow_status(self, workflow_id: str) -> GetWorkflowResponse:
         """Get workflow status"""
-        api = get_workflows_api(self.client)
         try:
-            resp = api.v4_workflows_workflow_id_get(workflow_id=workflow_id)
-            return resp.data if hasattr(resp, "data") else resp
+            return self.client.workflow.get(workflow_id)
         except Exception as error:
             raise KadoaHttpError.wrap(
                 error,
@@ -592,16 +590,16 @@ class ExtractionBuilderService:
         self,
         workflow_id: str,
         options: Optional[WaitForReadyOptions] = None,
-    ) -> V4WorkflowsWorkflowIdGet200Response:
+    ) -> GetWorkflowResponse:
         """Wait for workflow to be ready"""
         target_state = (options.target_state if options else None) or "PREVIEW"
         poll_interval_ms = (options.poll_interval_ms if options else None) or 5000
         timeout_ms = (options.timeout_ms if options else None) or 300000
 
-        def poll_fn() -> V4WorkflowsWorkflowIdGet200Response:
+        def poll_fn() -> GetWorkflowResponse:
             return self._get_workflow_status(workflow_id)
 
-        def is_complete(workflow: V4WorkflowsWorkflowIdGet200Response) -> bool:
+        def is_complete(workflow: GetWorkflowResponse) -> bool:
             return workflow.state == target_state or (
                 target_state == "PREVIEW" and workflow.state == "ACTIVE"
             )

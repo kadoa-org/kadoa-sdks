@@ -3,7 +3,10 @@ from unittest.mock import Mock
 
 import pytest
 
+import kadoa_sdk.extraction.services.extraction_builder_service as builder_module
 import kadoa_sdk.extraction.services.workflow_manager_service as manager_module
+from kadoa_sdk.core.exceptions import KadoaHttpError
+from kadoa_sdk.extraction.services.extraction_builder_service import ExtractionBuilderService
 from kadoa_sdk.extraction.services.workflow_manager_service import WorkflowManagerService
 from kadoa_sdk.extraction.types import ExtractionOptions
 from kadoa_sdk.workflows.workflows_core_service import (
@@ -13,8 +16,9 @@ from kadoa_sdk.workflows.workflows_core_service import (
 
 
 class RawResponse:
-    def __init__(self, body: dict) -> None:
+    def __init__(self, body: dict, status: int = 200) -> None:
         self.body = body
+        self.status = status
         self.released = False
 
     def read(self) -> bytes:
@@ -74,6 +78,7 @@ def test_workflow_list_preserves_unknown_schema_data_types(monkeypatch):
                     "id": "workflow-id",
                     "name": "Job workflow",
                     "state": "DRAFT",
+                    "displayState": "VALIDATING",
                     "schema": [
                         {
                             "name": "job_description",
@@ -99,4 +104,74 @@ def test_workflow_list_preserves_unknown_schema_data_types(monkeypatch):
 
     assert workflows[0].var_schema[0].data_type == "JOB_DESCRIPTION"
     assert workflows[0].state == "DRAFT"
+    assert workflows[0].display_state == "VALIDATING"
+    assert raw_response.released is True
+
+
+@pytest.mark.unit
+def test_workflow_get_preserves_non_string_schema_examples(monkeypatch):
+    raw_response = RawResponse(
+        {
+            "id": "workflow-id",
+            "name": "Product workflow",
+            "state": "ACTIVE",
+            "displayState": "VALIDATING",
+            "entity": "Product",
+            "schema": [
+                {
+                    "name": "price",
+                    "description": "Product price",
+                    "dataType": "MONEY",
+                    "example": 155,
+                }
+            ],
+        }
+    )
+    api = Mock()
+    api.v4_workflows_workflow_id_get_without_preload_content.return_value = raw_response
+    service = WorkflowsCoreService(Mock())
+    monkeypatch.setattr(
+        WorkflowsCoreService,
+        "workflows_api",
+        property(lambda _self: api),
+    )
+
+    workflow = service.get("workflow-id")
+
+    assert workflow.var_schema[0].example == 155
+    assert workflow.display_state == "VALIDATING"
+    assert workflow.entity == "Product"
+    assert raw_response.released is True
+
+
+@pytest.mark.unit
+def test_extraction_pollers_use_the_relaxed_workflow_facade(monkeypatch):
+    workflow = Mock(run_state="FINISHED")
+    client = Mock()
+    client.workflow.get.return_value = workflow
+    monkeypatch.setattr(manager_module, "get_workflows_api", Mock())
+    monkeypatch.setattr(builder_module, "get_workflows_api", Mock())
+
+    assert WorkflowManagerService(client).get_workflow_status("workflow-id") is workflow
+    assert ExtractionBuilderService(client)._get_workflow_status("workflow-id") is workflow
+    assert client.workflow.get.call_count == 2
+
+
+@pytest.mark.unit
+def test_workflow_get_preserves_http_errors(monkeypatch):
+    raw_response = RawResponse({"error": "Workflow not found"}, status=404)
+    api = Mock()
+    api.v4_workflows_workflow_id_get_without_preload_content.return_value = raw_response
+    service = WorkflowsCoreService(Mock())
+    monkeypatch.setattr(
+        WorkflowsCoreService,
+        "workflows_api",
+        property(lambda _self: api),
+    )
+
+    with pytest.raises(KadoaHttpError) as exc_info:
+        service.get("missing-workflow")
+
+    assert exc_info.value.http_status == 404
+    assert exc_info.value.response_body == {"error": "Workflow not found"}
     assert raw_response.released is True

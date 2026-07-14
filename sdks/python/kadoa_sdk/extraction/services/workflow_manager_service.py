@@ -15,7 +15,6 @@ from ..extraction_acl import (
     DataField,
     DataFieldExample,
     GetWorkflowResponse,
-    V4WorkflowsWorkflowIdGet200Response,
 )
 
 if TYPE_CHECKING:  # pragma: no cover
@@ -145,10 +144,8 @@ class WorkflowManagerService:
             )
 
     def get_workflow_status(self, workflow_id: str) -> GetWorkflowResponse:
-        api = get_workflows_api(self.client)
         try:
-            resp = api.v4_workflows_workflow_id_get(workflow_id=workflow_id)
-            return GetWorkflowResponse.from_generated(resp)
+            return self.client.workflow.get(workflow_id)
         except Exception as error:
             raise KadoaHttpError.wrap(
                 error,

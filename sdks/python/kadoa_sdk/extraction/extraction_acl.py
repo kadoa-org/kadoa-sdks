@@ -6,7 +6,7 @@ Downstream code must import from this module instead of `openapi_client/**`.
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, Literal, List, Optional, Dict, Any
+from typing import TYPE_CHECKING, Literal, List, Optional, Dict, Any, Union
 
 from pydantic import BaseModel, ConfigDict, Field
 
@@ -70,6 +70,8 @@ WorkflowStateEnum = Literal[
 
 WorkflowDisplayStateEnum = Literal[
     "ACTIVE",
+    "DRAFT",
+    "DEGRADED",
     "ERROR",
     "PAUSED",
     "NOT_SUPPORTED",
@@ -80,6 +82,7 @@ WorkflowDisplayStateEnum = Literal[
     "SETUP",
     "PENDING_START",
     "RUNNING",
+    "VALIDATING",
     "FAILED",
     "DELETED",
 ]
@@ -104,9 +107,15 @@ class WorkflowResponse(V4WorkflowsGet200ResponseWorkflowsInner):
     """
 
     state: Optional[WorkflowStateEnum] = None
-    display_state: Optional[WorkflowDisplayStateEnum] = None
-    additional_data: Optional[Dict[str, Any]] = None
-    var_schema: Optional[List["WorkflowSchemaField"]] = Field(default=None, alias="schema")
+    display_state: Optional[WorkflowDisplayStateEnum] = Field(
+        default=None, alias="displayState"
+    )
+    additional_data: Optional[Dict[str, Any]] = Field(
+        default=None, alias="additionalData"
+    )
+    var_schema: Optional[List["WorkflowSchemaField"]] = Field(  # type: ignore[assignment]
+        default=None, alias="schema"
+    )
 
     @classmethod
     def from_generated(
@@ -123,9 +132,16 @@ class GetWorkflowResponse(V4WorkflowsWorkflowIdGet200Response):
     """
 
     state: Optional[WorkflowStateEnum] = None
-    display_state: Optional[WorkflowDisplayStateEnum] = None
-    additional_data: Optional[Dict[str, Any]] = None
-    var_schema: Optional[List["WorkflowSchemaField"]] = Field(default=None, alias="schema")
+    display_state: Optional[WorkflowDisplayStateEnum] = Field(
+        default=None, alias="displayState"
+    )
+    additional_data: Optional[Dict[str, Any]] = Field(
+        default=None, alias="additionalData"
+    )
+    entity: Optional[Union[str, Dict[str, Any]]] = None  # type: ignore[assignment]
+    var_schema: Optional[List["WorkflowSchemaField"]] = Field(  # type: ignore[assignment]
+        default=None, alias="schema"
+    )
 
     @classmethod
     def from_generated(

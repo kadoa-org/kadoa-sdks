@@ -257,8 +257,23 @@ class WorkflowsCoreService:
             KadoaHttpError: If workflow not found or request fails
         """
         try:
-            response = self.workflows_api.v4_workflows_workflow_id_get(workflow_id=workflow_id)
-            return GetWorkflowResponse.from_generated(response)
+            response = self.workflows_api.v4_workflows_workflow_id_get_without_preload_content(
+                workflow_id=workflow_id
+            )
+            try:
+                raw = response.read()
+                response_data = json.loads(raw) if raw else {}
+            finally:
+                response.release_conn()
+            if response.status != 200:
+                raise KadoaHttpError(
+                    "Failed to get workflow",
+                    http_status=response.status,
+                    response_body=response_data,
+                    code=KadoaHttpError.map_status_to_code(response.status),
+                    details={"workflowId": workflow_id},
+                )
+            return GetWorkflowResponse.model_validate(response_data)
         except Exception as error:
             raise KadoaHttpError.wrap(
                 error,
