@@ -6,6 +6,7 @@ import {
   checkUntaggedBlocks,
   checkUnusedTags,
   syncSnippets,
+  verifySnippets,
 } from "../lib/sync-docs";
 
 const DEFAULT_SOURCE_GLOBS = [
@@ -34,6 +35,7 @@ export function registerSyncDocs(program: Command): void {
       "--untagged",
       "Find untagged code blocks (typescript/python blocks without sync tags)",
     )
+    .option("--verify", "Verify exact snippet content without writing")
     .option("-w, --watch", "Watch source files and sync on changes")
     .action(
       async (opts: {
@@ -43,6 +45,7 @@ export function registerSyncDocs(program: Command): void {
         check?: boolean;
         unused?: boolean;
         untagged?: boolean;
+        verify?: boolean;
         watch?: boolean;
       }) => {
         if (!opts.target) {
@@ -67,6 +70,8 @@ export function registerSyncDocs(program: Command): void {
             runUnused(config);
           } else if (opts.untagged) {
             runUntagged(config.targetDir, config.targetGlob);
+          } else if (opts.verify) {
+            runVerify(config);
           } else if (opts.watch) {
             runWatch(config);
           } else {
@@ -78,6 +83,42 @@ export function registerSyncDocs(program: Command): void {
         }
       },
     );
+}
+
+function runVerify(config: {
+  sourceDir: string;
+  targetDir: string;
+  sourceGlobs: string[];
+  targetGlob: string;
+}) {
+  console.log("Verifying exact documentation snippet content\n");
+
+  const result = verifySnippets(config);
+
+  if (result.drifted.length === 0 && result.missingSources.length === 0) {
+    console.log("All documentation snippets are byte-exact.");
+    return;
+  }
+
+  if (result.drifted.length > 0) {
+    const driftedCount = result.drifted.reduce(
+      (count, file) => count + file.tags.length,
+      0,
+    );
+    console.log(`Drifted snippets (${driftedCount}):\n`);
+    for (const file of result.drifted) {
+      console.log(`  ${file.file}: ${file.tags.join(", ")}`);
+    }
+  }
+
+  if (result.missingSources.length > 0) {
+    console.log(`\nMissing sources (${result.missingSources.length}):\n`);
+    for (const source of result.missingSources) {
+      console.log(`  ${source.file}: ${source.tag}`);
+    }
+  }
+
+  process.exit(1);
 }
 
 function runCheck(config: {
@@ -256,7 +297,10 @@ function runWatch(config: {
     const fullPath = resolve(dir);
     try {
       watch(fullPath, { recursive: true }, (_event, filename) => {
-        if (filename && (filename.endsWith(".ts") || filename.endsWith(".py"))) {
+        if (
+          filename &&
+          (filename.endsWith(".ts") || filename.endsWith(".py"))
+        ) {
           triggerSync(filename);
         }
       });

@@ -46,6 +46,16 @@ export interface OrphanTag {
   file: string;
 }
 
+export interface DriftedFile {
+  file: string;
+  tags: string[];
+}
+
+export interface VerifyResult {
+  drifted: DriftedFile[];
+  missingSources: OrphanTag[];
+}
+
 export interface CheckResult {
   sourceTags: number;
   docTags: number;
@@ -91,11 +101,20 @@ const DOC_TAG_PATTERN =
 function buildMarkerPatterns(start: string, end: string): RegExp[] {
   return [
     // Line comments: // @start TAG ... // @end TAG
-    new RegExp(`\\/\\/\\s*${start}\\s+([\\w-]+)\\s*\\n([\\s\\S]*?)\\/\\/\\s*${end}\\s+\\1`, "g"),
+    new RegExp(
+      `\\/\\/\\s*${start}\\s+([\\w-]+)\\s*\\n([\\s\\S]*?)\\/\\/\\s*${end}\\s+\\1`,
+      "g",
+    ),
     // Block comments: /* @start TAG ... @end TAG */
-    new RegExp(`\\/\\*\\s*${start}\\s+([\\w-]+)\\s*\\n([\\s\\S]*?)${end}\\s+\\1\\s*\\*\\/`, "g"),
+    new RegExp(
+      `\\/\\*\\s*${start}\\s+([\\w-]+)\\s*\\n([\\s\\S]*?)${end}\\s+\\1\\s*\\*\\/`,
+      "g",
+    ),
     // Python comments: # @start TAG ... # @end TAG
-    new RegExp(`#\\s*${start}\\s+([\\w-]+)\\s*\\n([\\s\\S]*?)#\\s*${end}\\s+\\1`, "g"),
+    new RegExp(
+      `#\\s*${start}\\s+([\\w-]+)\\s*\\n([\\s\\S]*?)#\\s*${end}\\s+\\1`,
+      "g",
+    ),
   ];
 }
 
@@ -184,9 +203,15 @@ function extractPreambles(content: string, source: string): TaggedCode[] {
 function replaceSnippets(
   content: string,
   snippets: Map<string, string>,
-): { content: string; updated: string[]; skipped: string[] } {
+): {
+  content: string;
+  updated: string[];
+  skipped: string[];
+  changed: string[];
+} {
   const updated: string[] = [];
   const skipped: string[] = [];
+  const changed: string[] = [];
 
   // Pattern: {/* TAG */} followed by ```typescript or ```python ... ```
   // Handles optional indentation before tag and code block
@@ -199,14 +224,18 @@ function replaceSnippets(
       const newCode = snippets.get(tag);
       if (newCode != null) {
         updated.push(tag);
-        return `${tagLine}${langLine}${newCode}\n${closing}`;
+        const replacement = `${tagLine}${langLine}${newCode}\n${closing}`;
+        if (replacement !== match) {
+          changed.push(tag);
+        }
+        return replacement;
       }
       skipped.push(tag);
       return match;
     },
   );
 
-  return { content: newContent, updated, skipped };
+  return { content: newContent, updated, skipped, changed };
 }
 
 function findDocTags(content: string): string[] {
@@ -224,7 +253,10 @@ export function analyzeTags(config: Omit<SyncConfig, "dryRun">): TagAnalysis {
     const content = readFileSync(file, "utf-8");
     for (const s of extractSnippets(content, file)) {
       sourceTagSet.add(s.tag);
-      sourceSnippets.push({ tag: s.tag, file: relative(config.sourceDir, file) });
+      sourceSnippets.push({
+        tag: s.tag,
+        file: relative(config.sourceDir, file),
+      });
     }
   }
 
@@ -248,12 +280,16 @@ export function analyzeTags(config: Omit<SyncConfig, "dryRun">): TagAnalysis {
   };
 }
 
-export function checkOrphanTags(config: Omit<SyncConfig, "dryRun">): CheckResult {
+export function checkOrphanTags(
+  config: Omit<SyncConfig, "dryRun">,
+): CheckResult {
   const { sourceTags, docTags, orphans } = analyzeTags(config);
   return { sourceTags, docTags, orphans };
 }
 
-export function checkUnusedTags(config: Omit<SyncConfig, "dryRun">): UnusedResult {
+export function checkUnusedTags(
+  config: Omit<SyncConfig, "dryRun">,
+): UnusedResult {
   const { sourceTags, docTags, unused } = analyzeTags(config);
   return { sourceTags, docTags, unused };
 }
@@ -324,6 +360,51 @@ export function checkUntaggedBlocks(config: UntaggedConfig): UntaggedResult {
 }
 
 export function syncSnippets(config: SyncConfig): SyncStats {
+  const { sourceFiles, snippetMap, preambles } = buildSnippetMap(config);
+
+  // Find and update target files
+  const targetFiles = findFiles(config.targetDir, config.targetGlob);
+
+  let totalUpdated = 0;
+  const results: SyncResult[] = [];
+
+  for (const file of targetFiles) {
+    const content = readFileSync(file, "utf-8");
+    const {
+      content: newContent,
+      updated,
+      skipped,
+    } = replaceSnippets(content, snippetMap);
+
+    if (updated.length > 0) {
+      if (!config.dryRun) {
+        writeFileSync(file, newContent);
+      }
+      totalUpdated += updated.length;
+      results.push({
+        file: relative(config.targetDir, file),
+        updated,
+        skipped,
+      });
+    }
+  }
+
+  return {
+    sourceFiles,
+    snippets: snippetMap.size,
+    preambles,
+    targetFiles: targetFiles.length,
+    updatedSnippets: totalUpdated,
+    updatedFiles: results.length,
+    results,
+  };
+}
+
+function buildSnippetMap(config: Omit<SyncConfig, "dryRun">): {
+  sourceFiles: number;
+  snippetMap: Map<string, string>;
+  preambles: number;
+} {
   const sourceFiles = findFilesMulti(config.sourceDir, config.sourceGlobs);
 
   const allSnippets: TaggedCode[] = [];
@@ -357,40 +438,33 @@ export function syncSnippets(config: SyncConfig): SyncStats {
     snippetMap.set(s.tag, code);
   }
 
-  // Find and update target files
-  const targetFiles = findFiles(config.targetDir, config.targetGlob);
+  return {
+    sourceFiles: sourceFiles.length,
+    snippetMap,
+    preambles: allPreambles.length,
+  };
+}
 
-  let totalUpdated = 0;
-  const results: SyncResult[] = [];
+export function verifySnippets(
+  config: Omit<SyncConfig, "dryRun">,
+): VerifyResult {
+  const { snippetMap } = buildSnippetMap(config);
+  const targetFiles = findFiles(config.targetDir, config.targetGlob);
+  const drifted: DriftedFile[] = [];
+  const missingSources: OrphanTag[] = [];
 
   for (const file of targetFiles) {
     const content = readFileSync(file, "utf-8");
-    const {
-      content: newContent,
-      updated,
-      skipped,
-    } = replaceSnippets(content, snippetMap);
+    const { changed, skipped } = replaceSnippets(content, snippetMap);
+    const relativeFile = relative(config.targetDir, file);
 
-    if (updated.length > 0) {
-      if (!config.dryRun) {
-        writeFileSync(file, newContent);
-      }
-      totalUpdated += updated.length;
-      results.push({
-        file: relative(config.targetDir, file),
-        updated,
-        skipped,
-      });
+    if (changed.length > 0) {
+      drifted.push({ file: relativeFile, tags: changed });
+    }
+    for (const tag of skipped) {
+      missingSources.push({ file: relativeFile, tag });
     }
   }
 
-  return {
-    sourceFiles: sourceFiles.length,
-    snippets: snippetMap.size,
-    preambles: allPreambles.length,
-    targetFiles: targetFiles.length,
-    updatedSnippets: totalUpdated,
-    updatedFiles: results.length,
-    results,
-  };
+  return { drifted, missingSources };
 }
