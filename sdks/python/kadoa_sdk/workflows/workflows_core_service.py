@@ -165,7 +165,9 @@ class WorkflowsCoreService:
                     additional_data=input.additional_data,
                     limit=input.limit,
                 )
-                wrapper = CreateWorkflowBody(agentic_request)
+                wrapper = CreateWorkflowBody.model_validate(
+                    agentic_request.model_dump(by_alias=True, exclude_none=True)
+                )
             elif input.schema_id:
                 # Use existing schema
                 schema_request = WorkflowWithExistingSchema(
@@ -185,7 +187,9 @@ class WorkflowsCoreService:
                     additional_data=input.additional_data,
                     limit=input.limit,
                 )
-                wrapper = CreateWorkflowBody(schema_request)
+                wrapper = CreateWorkflowBody.model_validate(
+                    schema_request.model_dump(by_alias=True, exclude_none=True)
+                )
             else:
                 # Use entity and fields
                 workflow_request = WorkflowWithEntityAndFields(
@@ -206,9 +210,13 @@ class WorkflowsCoreService:
                     additional_data=input.additional_data,
                     limit=input.limit,
                 )
-                wrapper = CreateWorkflowBody(workflow_request)
+                wrapper = CreateWorkflowBody.model_validate(
+                    workflow_request.model_dump(by_alias=True, exclude_none=True)
+                )
 
-            response = self.workflows_api.v4_workflows_post(create_workflow_body=wrapper)
+            response = self.workflows_api.v4_workflows_post(
+                public_workflow_create_request=wrapper
+            )
             workflow_id = getattr(response, "workflow_id", None) or getattr(
                 response, "workflowId", None
             )
@@ -279,16 +287,20 @@ class WorkflowsCoreService:
             if filters is not None:
                 filter_dict = filters.model_dump(exclude_none=True, by_alias=True)
 
-            response = self.workflows_api.v4_workflows_get(**filter_dict)
-            # The API returns a response object with .data attribute containing V4WorkflowsGet200Response
-            response_data = response.data if hasattr(response, "data") else response
-            workflows = getattr(response_data, "workflows", None) or []
+            response = self.workflows_api.v4_workflows_get_without_preload_content(
+                **filter_dict
+            )
+            try:
+                raw = response.read()
+                response_data = json.loads(raw) if raw else {}
+            finally:
+                response.release_conn()
+            workflows = response_data.get("workflows", [])
             if not workflows:
                 return []
-            # Convert to WorkflowResponse with enum remapping
             from ..extraction.extraction_acl import WorkflowResponse
 
-            return [WorkflowResponse.from_generated(wf) for wf in workflows]
+            return [WorkflowResponse.model_validate(workflow) for workflow in workflows]
         except Exception as error:
             raise KadoaHttpError.wrap(
                 error,

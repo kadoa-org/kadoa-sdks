@@ -570,7 +570,7 @@ class ExtractionBuilderService:
 
         try:
             wrapper = CreateWorkflowBody.model_validate(inner.model_dump(by_alias=True, exclude_none=True))
-            resp = api.v4_workflows_post(create_workflow_body=wrapper)
+            resp = api.v4_workflows_post(public_workflow_create_request=wrapper)
             workflow_id = getattr(resp, "workflow_id", None) or getattr(resp, "workflowId", None)
             if not workflow_id:
                 raise KadoaSdkError(
@@ -756,7 +756,7 @@ class ExtractionBuilderService:
 
     def _wait_for_job_completion(self, workflow_id: str, job_id: str) -> None:
         """Wait for job to complete using polling utility"""
-        max_wait_time_ms = 300000  # 5 minutes default
+        max_wait_time_ms = 30 * 60 * 1000
         poll_interval_ms = 5000  # 5 seconds
 
         def poll_fn() -> Optional[str]:

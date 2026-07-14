@@ -8,7 +8,7 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING, Literal, List, Optional, Dict, Any
 
-from pydantic import BaseModel, ConfigDict
+from pydantic import BaseModel, ConfigDict, Field
 
 try:  # pragma: no cover - compatibility shim for generator rename
     from openapi_client.api.crawler_api import CrawlerApi as CrawlApi  # type: ignore[attr-defined]
@@ -16,7 +16,9 @@ except ImportError:  # pragma: no cover
     from openapi_client.api.crawl_api import CrawlApi  # type: ignore[attr-defined]
 
 from openapi_client.api.workflows_api import WorkflowsApi
-from openapi_client.models.create_workflow_body import CreateWorkflowBody
+from openapi_client.models.public_workflow_create_request import (
+    PublicWorkflowCreateRequest as CreateWorkflowBody,
+)
 from openapi_client.models.v4_workflows_workflow_id_data_get200_response import (
     V4WorkflowsWorkflowIdDataGet200Response,
 )
@@ -54,6 +56,7 @@ __all__ = ["WorkflowsApi", "CrawlApi"]
 
 WorkflowStateEnum = Literal[
     "ACTIVE",
+    "DRAFT",
     "ERROR",
     "PAUSED",
     "NOT_SUPPORTED",
@@ -103,6 +106,7 @@ class WorkflowResponse(V4WorkflowsGet200ResponseWorkflowsInner):
     state: Optional[WorkflowStateEnum] = None
     display_state: Optional[WorkflowDisplayStateEnum] = None
     additional_data: Optional[Dict[str, Any]] = None
+    var_schema: Optional[List["WorkflowSchemaField"]] = Field(default=None, alias="schema")
 
     @classmethod
     def from_generated(
@@ -121,6 +125,7 @@ class GetWorkflowResponse(V4WorkflowsWorkflowIdGet200Response):
     state: Optional[WorkflowStateEnum] = None
     display_state: Optional[WorkflowDisplayStateEnum] = None
     additional_data: Optional[Dict[str, Any]] = None
+    var_schema: Optional[List["WorkflowSchemaField"]] = Field(default=None, alias="schema")
 
     @classmethod
     def from_generated(
@@ -142,6 +147,20 @@ class GetJobResponse(JobStatusResponse):
     def from_generated(cls, response: JobStatusResponse) -> "GetJobResponse":
         """Create GetJobResponse from generated type."""
         return cls.model_validate(response.model_dump())
+
+
+class WorkflowSchemaField(BaseModel):
+    """Workflow schema field with forward-compatible data types."""
+
+    name: str
+    description: Optional[str] = None
+    example: Any = None
+    data_type: Optional[str] = Field(default=None, alias="dataType")
+    is_key: Optional[bool] = Field(default=None, alias="isKey")
+    is_required: Optional[bool] = Field(default=None, alias="isRequired")
+    is_unique: Optional[bool] = Field(default=None, alias="isUnique")
+
+    model_config = ConfigDict(populate_by_name=True, extra="allow")
 
 
 # ========================================

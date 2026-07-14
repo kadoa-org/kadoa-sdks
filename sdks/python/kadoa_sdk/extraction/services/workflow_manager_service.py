@@ -125,7 +125,7 @@ class WorkflowManagerService:
         )
         try:
             wrapper = CreateWorkflowBody.model_validate(inner.model_dump(by_alias=True, exclude_none=True))
-            resp = api.v4_workflows_post(create_workflow_body=wrapper)
+            resp = api.v4_workflows_post(public_workflow_create_request=wrapper)
 
             workflow_id = getattr(resp, "workflow_id", None) or getattr(resp, "workflowId", None)
             if not workflow_id:

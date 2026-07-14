@@ -332,7 +332,11 @@ export class ExtractionBuilderService {
     debug("Job started: %O", startedJob);
     this._jobId = startedJob.jobId;
 
-    const finishedJob = await this.workflowsCoreService.waitForJobCompletion(this._workflowId, startedJob.jobId);
+    const finishedJob = await this.workflowsCoreService.waitForJobCompletion(
+      this._workflowId,
+      startedJob.jobId,
+      { timeoutMs: 30 * 60 * 1000 },
+    );
     debug("Job finished: %O", finishedJob);
 
     return this;
