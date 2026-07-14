@@ -96,6 +96,43 @@ describe("ExtractionService", () => {
     });
   });
 
+  test("an explicit max wait time does not change later defaults", async () => {
+    const create = mock(async () => ({ id: "wf-123" }));
+    const wait = mock(async () => ({
+      runState: "FINISHED",
+      state: "FINISHED",
+    }));
+    const fetchData = mock(async () => ({
+      data: [],
+      pagination: { page: 1, totalPages: 1, totalCount: 0, limit: 100 },
+    }));
+
+    const service = new ExtractionService(
+      { create, wait } as unknown as ConstructorParameters<
+        typeof ExtractionService
+      >[0],
+      { fetchData } as unknown as ConstructorParameters<
+        typeof ExtractionService
+      >[1],
+      { setup: mock(async () => []) } as unknown as ConstructorParameters<
+        typeof ExtractionService
+      >[2],
+      {} as ConstructorParameters<typeof ExtractionService>[3],
+      {} as ConstructorParameters<typeof ExtractionService>[4],
+    );
+
+    await service.run({
+      urls: ["https://example.com"],
+      maxWaitTime: 60_000,
+    });
+    await service.run({ urls: ["https://example.com"] });
+
+    expect(wait.mock.calls.map((call) => call[1]?.timeoutMs)).toEqual([
+      60_000,
+      30 * 60 * 1000,
+    ]);
+  });
+
   test("run uses a schema-aware default prompt when entity and fields are provided", async () => {
     const create = mock(async (_input: Record<string, unknown>) => ({
       id: "wf-456",

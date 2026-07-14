@@ -15,10 +15,25 @@ describe("TS-VARIABLES: variables/overview.mdx snippets", () => {
   });
 
   afterAll(async () => {
-    for (const variableId of variableIds) {
-      await client.variable.delete(variableId);
+    try {
+      const results = await Promise.allSettled(
+        [...variableIds].map((variableId) =>
+          client.variable.delete(variableId),
+        ),
+      );
+      const failures = results.filter(
+        (result): result is PromiseRejectedResult =>
+          result.status === "rejected",
+      );
+      if (failures.length > 0) {
+        throw new AggregateError(
+          failures.map((failure) => failure.reason),
+          "Failed to delete one or more variable fixtures",
+        );
+      }
+    } finally {
+      client?.dispose?.();
     }
-    client.dispose?.();
   });
 
   test("TS-VARIABLES-001: create a variable", async () => {
@@ -120,6 +135,7 @@ describe("TS-VARIABLES: variables/overview.mdx snippets", () => {
       value: "example",
       dataType: "STRING",
     });
+    variableIds.add(created.id);
     const variableId = created.id;
 
     // @docs-preamble TS-VARIABLES-005
@@ -133,6 +149,7 @@ describe("TS-VARIABLES: variables/overview.mdx snippets", () => {
     await client.variable.delete(variableId);
     // @docs-end TS-VARIABLES-005
 
-    expect(client.variable.get(variableId)).rejects.toThrow();
+    await expect(client.variable.get(variableId)).rejects.toThrow();
+    variableIds.delete(variableId);
   });
 });

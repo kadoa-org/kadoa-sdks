@@ -238,7 +238,7 @@ export class ExtractionService {
     this.validateOptions(options);
 
     const config: Omit<ExtractionOptionsInternal, "entity" | "fields"> = {
-      ...merge(DEFAULT_OPTIONS, options),
+      ...merge(merge({}, DEFAULT_OPTIONS), options),
     };
 
     const isRealTime = config.interval === "REAL_TIME";

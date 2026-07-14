@@ -17,16 +17,18 @@ if TYPE_CHECKING:  # pragma: no cover
 from kadoa_sdk.core.exceptions import KadoaErrorCode, KadoaHttpError, KadoaSdkError
 from kadoa_sdk.core.http import get_workflows_api
 from kadoa_sdk.extraction.types import RunWorkflowOptions
+from openapi_client.models.create_schema_body_fields_inner import CreateSchemaBodyFieldsInner
 from openapi_client.models.location import Location
 from openapi_client.models.monitoring_config import MonitoringConfig
-from openapi_client.models.prompt_workflow import PromptWorkflow as AgenticWorkflow
 from openapi_client.models.v4_workflows_workflow_id_run_put_request import (
     V4WorkflowsWorkflowIdRunPutRequest,
 )
-from openapi_client.models.workflow_with_existing_schema import WorkflowWithExistingSchema
 
 from ..extraction.extraction_acl import (
+    ClassificationField,
     CreateWorkflowBody,
+    DataField,
+    DataFieldExample,
     GetJobResponse,
     GetWorkflowResponse,
     ListWorkflowsRequest,
@@ -35,7 +37,6 @@ from ..extraction.extraction_acl import (
     UpdateWorkflowResponse,
     WorkflowListItemResponse,
     WorkflowsApi,
-    WorkflowWithEntityAndFields,
 )
 
 
@@ -85,6 +86,7 @@ TERMINAL_RUN_STATES = {
 }
 
 debug = logger.debug
+DEFAULT_AGENTIC_PROMPT = "extract all the data for the main entity of this page"
 
 
 class WorkflowsCoreService:
@@ -143,80 +145,51 @@ class WorkflowsCoreService:
         domain_name = urlparse(input.urls[0]).hostname
 
         try:
-            # Prompt-driven (agentic) workflows are routed by the presence of user_prompt.
-            if input.user_prompt:
-                agentic_request = AgenticWorkflow(
-                    urls=input.urls,
-                    name=input.name or domain_name,
-                    description=input.description,
-                    user_prompt=input.user_prompt,
-                    schema_id=input.schema_id,
-                    entity=input.entity,
-                    fields=input.fields,
-                    bypass_preview=input.bypass_preview
-                    if input.bypass_preview is not None
-                    else True,
-                    tags=input.tags,
-                    interval=input.interval,
-                    monitoring=input.monitoring,
-                    location=input.location,
-                    auto_start=input.auto_start,
-                    schedules=input.schedules,
-                    additional_data=input.additional_data,
-                    limit=input.limit,
-                )
-                wrapper = CreateWorkflowBody.model_validate(
-                    agentic_request.model_dump(by_alias=True, exclude_none=True)
-                )
-            elif input.schema_id:
-                # Use existing schema
-                schema_request = WorkflowWithExistingSchema(
-                    urls=input.urls,
-                    name=input.name or domain_name,
-                    description=input.description,
-                    schema_id=input.schema_id,
-                    bypass_preview=input.bypass_preview
-                    if input.bypass_preview is not None
-                    else True,
-                    tags=input.tags,
-                    interval=input.interval,
-                    monitoring=input.monitoring,
-                    location=input.location,
-                    auto_start=input.auto_start,
-                    schedules=input.schedules,
-                    additional_data=input.additional_data,
-                    limit=input.limit,
-                )
-                wrapper = CreateWorkflowBody.model_validate(
-                    schema_request.model_dump(by_alias=True, exclude_none=True)
-                )
-            else:
-                # Use entity and fields
-                workflow_request = WorkflowWithEntityAndFields(
-                    urls=input.urls,
-                    name=input.name or domain_name,
-                    description=input.description,
-                    entity=input.entity,
-                    fields=input.fields,
-                    bypass_preview=input.bypass_preview
-                    if input.bypass_preview is not None
-                    else True,
-                    tags=input.tags,
-                    interval=input.interval,
-                    monitoring=input.monitoring,
-                    location=input.location,
-                    auto_start=input.auto_start,
-                    schedules=input.schedules,
-                    additional_data=input.additional_data,
-                    limit=input.limit,
-                )
-                wrapper = CreateWorkflowBody.model_validate(
-                    workflow_request.model_dump(by_alias=True, exclude_none=True)
-                )
+            schema_fields = []
+            for field in input.fields or []:
+                if isinstance(field, CreateSchemaBodyFieldsInner):
+                    schema_fields.append(field)
+                elif isinstance(field, (DataField, ClassificationField)):
+                    schema_fields.append(CreateSchemaBodyFieldsInner(actual_instance=field))
+                else:
+                    field_data = field.model_dump() if hasattr(field, "model_dump") else dict(field)
+                    field_type = field_data.get("fieldType") or field_data.get("field_type")
+                    if field_type == "CLASSIFICATION":
+                        field_model = ClassificationField(**field_data)
+                    else:
+                        example = field_data.pop("example", None)
+                        if isinstance(example, (str, list)):
+                            field_data["example"] = DataFieldExample(actual_instance=example)
+                        elif example is not None:
+                            field_data["example"] = example
+                        field_model = DataField(**field_data)
+                    schema_fields.append(CreateSchemaBodyFieldsInner(actual_instance=field_model))
 
-            response = self.workflows_api.v4_workflows_post(
-                public_workflow_create_request=wrapper
+            request_data: Dict[str, Any] = {
+                "urls": input.urls,
+                "name": input.name or domain_name,
+                "userPrompt": input.user_prompt or DEFAULT_AGENTIC_PROMPT,
+                "bypassPreview": input.bypass_preview if input.bypass_preview is not None else True,
+            }
+            optional_fields = {
+                "description": input.description,
+                "schemaId": input.schema_id,
+                "entity": input.entity,
+                "fields": schema_fields or None,
+                "tags": input.tags,
+                "interval": input.interval,
+                "monitoring": input.monitoring,
+                "location": input.location,
+                "schedules": input.schedules,
+                "additionalData": input.additional_data,
+                "limit": input.limit,
+            }
+            request_data.update(
+                {key: value for key, value in optional_fields.items() if value is not None}
             )
+            wrapper = CreateWorkflowBody.model_validate(request_data)
+
+            response = self.workflows_api.v4_workflows_post(public_workflow_create_request=wrapper)
             workflow_id = getattr(response, "workflow_id", None) or getattr(
                 response, "workflowId", None
             )
@@ -302,14 +275,20 @@ class WorkflowsCoreService:
             if filters is not None:
                 filter_dict = filters.model_dump(exclude_none=True, by_alias=True)
 
-            response = self.workflows_api.v4_workflows_get_without_preload_content(
-                **filter_dict
-            )
+            response = self.workflows_api.v4_workflows_get_without_preload_content(**filter_dict)
             try:
                 raw = response.read()
                 response_data = json.loads(raw) if raw else {}
             finally:
                 response.release_conn()
+            if response.status != 200:
+                raise KadoaHttpError(
+                    "Failed to list workflows",
+                    http_status=response.status,
+                    response_body=response_data,
+                    code=KadoaHttpError.map_status_to_code(response.status),
+                    details={"filters": filter_dict},
+                )
             workflows = response_data.get("workflows", [])
             if not workflows:
                 return []

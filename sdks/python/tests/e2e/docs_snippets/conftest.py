@@ -1,5 +1,7 @@
 """Fixtures for docs snippets tests."""
 
+import warnings
+
 import pytest
 
 from kadoa_sdk.core.http import get_workflows_api
@@ -33,12 +35,22 @@ def client():
     for wf_id in get_tracked_workflows():
         try:
             c.workflow.wait(wf_id, timeout_ms=30 * 60 * 1000)
-        except Exception:
-            pass
+        except Exception as exc:
+            # Teardown is best-effort so one wait failure does not skip deletion.
+            warnings.warn(
+                f"Failed to wait for workflow {wf_id} during cleanup: {exc}",
+                RuntimeWarning,
+                stacklevel=2,
+            )
         try:
             c.workflow.delete(wf_id)
-        except Exception:
-            pass
+        except Exception as exc:
+            # Keep cleaning later fixtures while making leaked resources visible.
+            warnings.warn(
+                f"Failed to delete workflow {wf_id} during cleanup: {exc}",
+                RuntimeWarning,
+                stacklevel=2,
+            )
     clear_tracked_workflows()
     c.dispose()
 

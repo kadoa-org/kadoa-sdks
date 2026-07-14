@@ -8,6 +8,7 @@ import { getTestEnv } from "../../utils/env";
 import { seedWorkflow } from "../../utils/seeder";
 
 describe("TS-SCHEDULING: scheduling.mdx snippets", () => {
+  const readinessTimeoutMs = 60 * 60 * 1000;
   let client: KadoaClient;
   let workflowId: string;
   const workflowIds = new Set<string>();
@@ -27,10 +28,23 @@ describe("TS-SCHEDULING: scheduling.mdx snippets", () => {
   });
 
   afterAll(async () => {
-    for (const id of workflowIds) {
-      await client.workflow.delete(id);
+    try {
+      const results = await Promise.allSettled(
+        [...workflowIds].map((id) => client.workflow.delete(id)),
+      );
+      const failures = results.filter(
+        (result): result is PromiseRejectedResult =>
+          result.status === "rejected",
+      );
+      if (failures.length > 0) {
+        throw new AggregateError(
+          failures.map((failure) => failure.reason),
+          "Failed to delete one or more workflow fixtures",
+        );
+      }
+    } finally {
+      client?.dispose?.();
     }
-    client.dispose?.();
   });
 
   test("TS-SCHEDULING-001: create a scheduled extraction", async () => {
@@ -58,58 +72,64 @@ describe("TS-SCHEDULING: scheduling.mdx snippets", () => {
     console.log("Scheduled workflow:", workflow.workflowId);
     // @docs-end TS-SCHEDULING-001
 
+    workflowIds.add(workflow.workflowId);
     expect(workflow.workflowId).toBeDefined();
     await client.workflow.delete(workflow.workflowId);
+    workflowIds.delete(workflow.workflowId);
   });
 
-  test("TS-SCHEDULING-002: run an existing workflow", async () => {
-    let deadline = Date.now() + 30 * 60 * 1000;
-    let seededWorkflow = await client.workflow.get(workflowId);
-    while (
-      ["RUNNING", "VALIDATING"].includes(seededWorkflow.displayState ?? "") &&
-      Date.now() < deadline
-    ) {
-      await new Promise((resolve) => setTimeout(resolve, 10_000));
-      seededWorkflow = await client.workflow.get(workflowId);
-    }
-    if (seededWorkflow.state !== "ACTIVE") {
-      await client.workflow.resume(workflowId);
-      deadline = Date.now() + 30 * 60 * 1000;
-    }
-    while (
-      (seededWorkflow.state !== "ACTIVE" ||
-        ["RUNNING", "VALIDATING"].includes(
-          seededWorkflow.displayState ?? "",
-        )) &&
-      Date.now() < deadline
-    ) {
-      await new Promise((resolve) => setTimeout(resolve, 10_000));
-      seededWorkflow = await client.workflow.get(workflowId);
-    }
-    expect(seededWorkflow.state).toBe("ACTIVE");
-    expect(["RUNNING", "VALIDATING"]).not.toContain(
-      seededWorkflow.displayState,
-    );
+  test(
+    "TS-SCHEDULING-002: run an existing workflow",
+    async () => {
+      let deadline = Date.now() + readinessTimeoutMs;
+      let seededWorkflow = await client.workflow.get(workflowId);
+      while (
+        ["RUNNING", "VALIDATING"].includes(seededWorkflow.displayState ?? "") &&
+        Date.now() < deadline
+      ) {
+        await new Promise((resolve) => setTimeout(resolve, 10_000));
+        seededWorkflow = await client.workflow.get(workflowId);
+      }
+      if (seededWorkflow.state !== "ACTIVE") {
+        await client.workflow.resume(workflowId);
+        deadline = Date.now() + readinessTimeoutMs;
+      }
+      while (
+        (seededWorkflow.state !== "ACTIVE" ||
+          ["RUNNING", "VALIDATING"].includes(
+            seededWorkflow.displayState ?? "",
+          )) &&
+        Date.now() < deadline
+      ) {
+        await new Promise((resolve) => setTimeout(resolve, 10_000));
+        seededWorkflow = await client.workflow.get(workflowId);
+      }
+      expect(seededWorkflow.state).toBe("ACTIVE");
+      expect(["RUNNING", "VALIDATING"]).not.toContain(
+        seededWorkflow.displayState,
+      );
 
-    // @docs-preamble TS-SCHEDULING-002
-    // import { KadoaClient } from "@kadoa/node-sdk";
-    //
-    // const client = new KadoaClient({ apiKey: "YOUR_API_KEY" });
-    // const workflowId = "YOUR_WORKFLOW_ID";
-    // @docs-preamble-end TS-SCHEDULING-002
+      // @docs-preamble TS-SCHEDULING-002
+      // import { KadoaClient } from "@kadoa/node-sdk";
+      //
+      // const client = new KadoaClient({ apiKey: "YOUR_API_KEY" });
+      // const workflowId = "YOUR_WORKFLOW_ID";
+      // @docs-preamble-end TS-SCHEDULING-002
 
-    // @docs-start TS-SCHEDULING-002
-    const workflow = await client.workflow.get(workflowId);
-    console.log(`Current workflow state: ${workflow.displayState}`);
+      // @docs-start TS-SCHEDULING-002
+      const workflow = await client.workflow.get(workflowId);
+      console.log(`Current workflow state: ${workflow.displayState}`);
 
-    const result = await client.workflow.runWorkflow(workflowId, {
-      limit: 10,
-    });
-    console.log(`Workflow scheduled with runId: ${result.jobId}`);
-    // @docs-end TS-SCHEDULING-002
+      const result = await client.workflow.runWorkflow(workflowId, {
+        limit: 10,
+      });
+      console.log(`Workflow scheduled with runId: ${result.jobId}`);
+      // @docs-end TS-SCHEDULING-002
 
-    expect(result.jobId).toBeDefined();
-  });
+      expect(result.jobId).toBeDefined();
+    },
+    readinessTimeoutMs + 2 * 60 * 1000,
+  );
 
   test("TS-SCHEDULING-003: run and fetch paginated data", async () => {
     // @docs-preamble TS-SCHEDULING-003
@@ -144,9 +164,11 @@ describe("TS-SCHEDULING: scheduling.mdx snippets", () => {
     console.log("All data:", allData);
     // @docs-end TS-SCHEDULING-003
 
+    workflowIds.add(extraction.workflowId);
     expect(page.data).toBeDefined();
     expect(allData).toBeDefined();
     await client.workflow.delete(extraction.workflowId);
+    workflowIds.delete(extraction.workflowId);
   });
 
   test("TS-SCHEDULING-004: set a manual location", async () => {
@@ -173,8 +195,10 @@ describe("TS-SCHEDULING: scheduling.mdx snippets", () => {
       .create();
     // @docs-end TS-SCHEDULING-004
 
+    workflowIds.add(workflow.workflowId);
     expect(workflow.workflowId).toBeDefined();
     await client.workflow.delete(workflow.workflowId);
+    workflowIds.delete(workflow.workflowId);
   });
 
   test("TS-SCHEDULING-005: bypass preview", async () => {
@@ -198,7 +222,9 @@ describe("TS-SCHEDULING: scheduling.mdx snippets", () => {
       .create();
     // @docs-end TS-SCHEDULING-005
 
+    workflowIds.add(workflow.workflowId);
     expect(workflow.workflowId).toBeDefined();
     await client.workflow.delete(workflow.workflowId);
+    workflowIds.delete(workflow.workflowId);
   });
 });

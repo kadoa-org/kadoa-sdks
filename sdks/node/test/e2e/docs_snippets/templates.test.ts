@@ -17,13 +17,28 @@ describe("TS-TEMPLATES: templates/overview.mdx snippets", () => {
   });
 
   afterAll(async () => {
-    for (const templateId of templateIds) {
-      await client.template.delete(templateId);
+    try {
+      const results = await Promise.allSettled([
+        ...[...templateIds].map((templateId) =>
+          client.template.delete(templateId),
+        ),
+        ...[...workflowIds].map((workflowId) =>
+          client.workflow.delete(workflowId),
+        ),
+      ]);
+      const failures = results.filter(
+        (result): result is PromiseRejectedResult =>
+          result.status === "rejected",
+      );
+      if (failures.length > 0) {
+        throw new AggregateError(
+          failures.map((failure) => failure.reason),
+          "Failed to delete one or more template fixtures",
+        );
+      }
+    } finally {
+      client?.dispose?.();
     }
-    for (const workflowId of workflowIds) {
-      await client.workflow.delete(workflowId);
-    }
-    client.dispose?.();
   });
 
   test("TS-TEMPLATES-001: create a template", async () => {
@@ -119,6 +134,7 @@ describe("TS-TEMPLATES: templates/overview.mdx snippets", () => {
     const created = await client.template.create({
       name: `docs-template-delete-${Date.now()}`,
     });
+    templateIds.add(created.id);
     const templateId = created.id;
 
     // @docs-preamble TS-TEMPLATES-005
@@ -132,7 +148,8 @@ describe("TS-TEMPLATES: templates/overview.mdx snippets", () => {
     await client.template.delete(templateId);
     // @docs-end TS-TEMPLATES-005
 
-    expect(client.template.get(templateId)).rejects.toThrow();
+    await expect(client.template.get(templateId)).rejects.toThrow();
+    templateIds.delete(templateId);
   });
 
   test("TS-TEMPLATES-006: publish a template version", async () => {

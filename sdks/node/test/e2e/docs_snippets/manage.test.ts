@@ -27,10 +27,23 @@ describe("TS-WORKFLOWS-MANAGE: manage.mdx snippets", () => {
   });
 
   afterAll(async () => {
-    for (const id of workflowIds) {
-      await client.workflow.delete(id);
+    try {
+      const results = await Promise.allSettled(
+        [...workflowIds].map((id) => client.workflow.delete(id)),
+      );
+      const failures = results.filter(
+        (result): result is PromiseRejectedResult =>
+          result.status === "rejected",
+      );
+      if (failures.length > 0) {
+        throw new AggregateError(
+          failures.map((failure) => failure.reason),
+          "Failed to delete one or more workflow fixtures",
+        );
+      }
+    } finally {
+      client?.dispose?.();
     }
-    client.dispose?.();
   });
 
   test("TS-WORKFLOWS-MANAGE-001: list workflows", async () => {
@@ -129,6 +142,7 @@ describe("TS-WORKFLOWS-MANAGE: manage.mdx snippets", () => {
     // @docs-end TS-WORKFLOWS-MANAGE-004
 
     expect((await client.workflow.get(workflowId)).state).toBe("DELETED");
+    workflowIds.delete(workflowId);
   });
 
   test("TS-WORKFLOWS-MANAGE-005: fetch all workflow data", async () => {

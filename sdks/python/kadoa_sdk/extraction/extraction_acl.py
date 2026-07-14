@@ -168,7 +168,7 @@ class GetJobResponse(JobStatusResponse):
 class WorkflowSchemaField(BaseModel):
     """Workflow schema field with forward-compatible data types."""
 
-    name: str
+    name: Optional[str] = None
     description: Optional[str] = None
     example: Any = None
     data_type: Optional[str] = Field(default=None, alias="dataType")
@@ -177,6 +177,10 @@ class WorkflowSchemaField(BaseModel):
     is_unique: Optional[bool] = Field(default=None, alias="isUnique")
 
     model_config = ConfigDict(populate_by_name=True, extra="allow")
+
+    def to_dict(self) -> Dict[str, Any]:
+        """Return the generated-client-compatible dictionary representation."""
+        return self.model_dump(by_alias=True, exclude_none=True)
 
 
 # ========================================
