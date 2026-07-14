@@ -11,12 +11,12 @@ from openapi_client.models.template_detail_response_body_data import (
     TemplateDetailResponseBodyData,
 )
 from openapi_client.models.template_response import TemplateResponse
-from openapi_client.models.template_updated_response_data import TemplateUpdatedResponseData
 from openapi_client.models.template_schemas_response_data_inner import (
     TemplateSchemasResponseDataInner,
 )
-from openapi_client.models.template_version_created_response_data import (
-    TemplateVersionCreatedResponseData,
+from openapi_client.models.template_updated_response_data import TemplateUpdatedResponseData
+from openapi_client.models.template_version_mutation_response_data import (
+    TemplateVersionMutationResponseData,
 )
 from openapi_client.models.update_template_body import UpdateTemplateBody
 
@@ -96,7 +96,7 @@ class TemplatesService:
         self,
         template_id: str,
         body: Union[CreateTemplateVersionBody, dict],
-    ) -> TemplateVersionCreatedResponseData:
+    ) -> TemplateVersionMutationResponseData:
         """Publish a new version of a template."""
         payload = (
             body
