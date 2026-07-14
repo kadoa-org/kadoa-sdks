@@ -4,8 +4,10 @@ import {
   type BaseAPI,
   Configuration,
   DataValidationApi,
+  MeApi,
   NotificationsApi,
   SchemasApi,
+  ScrapeApi,
   TemplatesApi,
   VariablesApi,
   WorkflowsApi,
@@ -46,6 +48,14 @@ export class ApiRegistry {
 
   get schemas(): SchemasApi {
     return this.get(SchemasApi);
+  }
+
+  get me(): MeApi {
+    return this.get(MeApi);
+  }
+
+  get scrape(): ScrapeApi {
+    return this.get(ScrapeApi);
   }
 
   get validation(): DataValidationApi {

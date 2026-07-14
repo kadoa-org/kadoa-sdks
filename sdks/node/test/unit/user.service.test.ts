@@ -35,7 +35,7 @@ async function captureRequest(
   return captured;
 }
 
-describe("UserService.getCurrentUser auth headers", () => {
+describe("UserService", () => {
   test("bearer-only mode emits Authorization and no x-api-key", async () => {
     const client = new KadoaClient({ bearerToken: "jwt-test" });
     const req = await captureRequest(client, () =>
@@ -52,5 +52,38 @@ describe("UserService.getCurrentUser auth headers", () => {
     );
     expect(req.headers["x-api-key"]).toBe("tk-test");
     expect(req.headers["Authorization"]).toBeUndefined();
+  });
+
+  test("getFeatures requests team capabilities with bearer auth", async () => {
+    const client = new KadoaClient({ bearerToken: "jwt-test" });
+    const req = await captureRequest(client, () => client.user.getFeatures(), {
+      features: { scrape: true },
+    });
+
+    expect(req.method).toBe("get");
+    expect(req.url).toBe("https://api.kadoa.com/v4/me/features");
+    expect(req.headers["Authorization"]).toBe("Bearer jwt-test");
+    expect(req.headers["x-api-key"]).toBeUndefined();
+  });
+
+  test("getFeatures returns the typed capability response", async () => {
+    const client = new KadoaClient({ apiKey: "tk-test" });
+    let result: unknown;
+    await captureRequest(
+      client,
+      async () => {
+        result = await client.user.getFeatures();
+      },
+      { features: { scrape: false } },
+    );
+
+    expect(result).toEqual({ features: { scrape: false } });
+  });
+
+  test("getFeatures rejects malformed capability responses", async () => {
+    const client = new KadoaClient({ apiKey: "tk-test" });
+    expect(
+      captureRequest(client, () => client.user.getFeatures(), { features: {} }),
+    ).rejects.toThrow("Invalid capabilities data received");
   });
 });

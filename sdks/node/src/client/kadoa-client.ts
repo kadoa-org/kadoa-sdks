@@ -9,6 +9,7 @@ import type {
 } from "../domains/extraction/services/extraction-builder.service";
 import { Realtime, type RealtimeConfig } from "../domains/realtime";
 import type { SchemasService } from "../domains/schemas/schemas.service";
+import type { ScrapeService } from "../domains/scrape/scrape.service";
 import type { TemplatesService } from "../domains/templates/templates.service";
 import type { UserService } from "../domains/user/user.service";
 import type { ValidationDomain } from "../domains/validation/validation.facade";
@@ -65,6 +66,7 @@ export class KadoaClient {
   public readonly workflow: WorkflowsCoreService;
   public readonly notification: NotificationDomain;
   public readonly schema: SchemasService;
+  public readonly scrape: ScrapeService;
   public readonly user: UserService;
   public readonly template: TemplatesService;
   public readonly validation: ValidationDomain;
@@ -123,6 +125,7 @@ export class KadoaClient {
     this.extraction = domains.extraction;
     this.workflow = domains.workflow;
     this.schema = domains.schema;
+    this.scrape = domains.scrape;
     this.notification = domains.notification;
     this.template = domains.template;
     this.validation = domains.validation;

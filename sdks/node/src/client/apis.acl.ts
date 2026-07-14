@@ -1,8 +1,10 @@
 export {
   Configuration,
   DataValidationApi,
+  MeApi,
   NotificationsApi,
   SchemasApi,
+  ScrapeApi,
   TemplatesApi,
   VariablesApi,
   WorkflowsApi,
