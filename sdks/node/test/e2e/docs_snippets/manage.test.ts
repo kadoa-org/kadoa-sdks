@@ -67,14 +67,33 @@ describe("TS-WORKFLOWS-MANAGE: manage.mdx snippets", () => {
   });
 
   test("TS-WORKFLOWS-MANAGE-003: pause and resume", async () => {
-    await client.workflow.wait(workflowId, { timeoutMs: 30 * 60 * 1000 });
-    if ((await client.workflow.get(workflowId)).state !== "ACTIVE") {
-      await client.workflow.resume(workflowId);
-      await client.workflow.wait(workflowId, {
-        targetState: "ACTIVE",
-        timeoutMs: 30 * 60 * 1000,
-      });
+    let deadline = Date.now() + 30 * 60 * 1000;
+    let seededWorkflow = await client.workflow.get(workflowId);
+    while (
+      ["RUNNING", "VALIDATING"].includes(seededWorkflow.displayState ?? "") &&
+      Date.now() < deadline
+    ) {
+      await new Promise((resolve) => setTimeout(resolve, 10_000));
+      seededWorkflow = await client.workflow.get(workflowId);
     }
+    if (seededWorkflow.state !== "ACTIVE") {
+      await client.workflow.resume(workflowId);
+      deadline = Date.now() + 30 * 60 * 1000;
+    }
+    while (
+      (seededWorkflow.state !== "ACTIVE" ||
+        ["RUNNING", "VALIDATING"].includes(
+          seededWorkflow.displayState ?? "",
+        )) &&
+      Date.now() < deadline
+    ) {
+      await new Promise((resolve) => setTimeout(resolve, 10_000));
+      seededWorkflow = await client.workflow.get(workflowId);
+    }
+    expect(seededWorkflow.state).toBe("ACTIVE");
+    expect(["RUNNING", "VALIDATING"]).not.toContain(
+      seededWorkflow.displayState,
+    );
 
     // @docs-preamble TS-WORKFLOWS-MANAGE-003
     // import { KadoaClient } from "@kadoa/node-sdk";

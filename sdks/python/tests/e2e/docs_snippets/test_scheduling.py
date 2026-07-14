@@ -1,5 +1,7 @@
 """PY-SCHEDULING: scheduling.mdx snippets."""
 
+import time
+
 import pytest
 
 from kadoa_sdk import ExtractOptions, FieldOptions, RunWorkflowOptions
@@ -45,14 +47,25 @@ class TestSchedulingSnippets:
 
     @pytest.mark.e2e
     def test_scheduling_002_run_existing_workflow(self, client, workflow_id: str) -> None:
-        client.workflow.wait(workflow_id, timeout_ms=30 * 60 * 1000)
-        if client.workflow.get(workflow_id).state != "ACTIVE":
+        deadline = time.monotonic() + 30 * 60
+        seeded_workflow = client.workflow.get(workflow_id)
+        while (
+            seeded_workflow.display_state in {"RUNNING", "VALIDATING"}
+            and time.monotonic() < deadline
+        ):
+            time.sleep(10)
+            seeded_workflow = client.workflow.get(workflow_id)
+        if seeded_workflow.state != "ACTIVE":
             client.workflow.resume(workflow_id)
-            client.workflow.wait(
-                workflow_id,
-                target_state="ACTIVE",
-                timeout_ms=30 * 60 * 1000,
-            )
+            deadline = time.monotonic() + 30 * 60
+        while (
+            seeded_workflow.state != "ACTIVE"
+            or seeded_workflow.display_state in {"RUNNING", "VALIDATING"}
+        ) and time.monotonic() < deadline:
+            time.sleep(10)
+            seeded_workflow = client.workflow.get(workflow_id)
+        assert seeded_workflow.state == "ACTIVE"
+        assert seeded_workflow.display_state not in {"RUNNING", "VALIDATING"}
 
         # @docs-preamble PY-SCHEDULING-002
         # from kadoa_sdk import KadoaClient, KadoaClientConfig, RunWorkflowOptions

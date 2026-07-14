@@ -63,14 +63,33 @@ describe("TS-SCHEDULING: scheduling.mdx snippets", () => {
   });
 
   test("TS-SCHEDULING-002: run an existing workflow", async () => {
-    await client.workflow.wait(workflowId, { timeoutMs: 30 * 60 * 1000 });
-    if ((await client.workflow.get(workflowId)).state !== "ACTIVE") {
-      await client.workflow.resume(workflowId);
-      await client.workflow.wait(workflowId, {
-        targetState: "ACTIVE",
-        timeoutMs: 30 * 60 * 1000,
-      });
+    let deadline = Date.now() + 30 * 60 * 1000;
+    let seededWorkflow = await client.workflow.get(workflowId);
+    while (
+      ["RUNNING", "VALIDATING"].includes(seededWorkflow.displayState ?? "") &&
+      Date.now() < deadline
+    ) {
+      await new Promise((resolve) => setTimeout(resolve, 10_000));
+      seededWorkflow = await client.workflow.get(workflowId);
     }
+    if (seededWorkflow.state !== "ACTIVE") {
+      await client.workflow.resume(workflowId);
+      deadline = Date.now() + 30 * 60 * 1000;
+    }
+    while (
+      (seededWorkflow.state !== "ACTIVE" ||
+        ["RUNNING", "VALIDATING"].includes(
+          seededWorkflow.displayState ?? "",
+        )) &&
+      Date.now() < deadline
+    ) {
+      await new Promise((resolve) => setTimeout(resolve, 10_000));
+      seededWorkflow = await client.workflow.get(workflowId);
+    }
+    expect(seededWorkflow.state).toBe("ACTIVE");
+    expect(["RUNNING", "VALIDATING"]).not.toContain(
+      seededWorkflow.displayState,
+    );
 
     // @docs-preamble TS-SCHEDULING-002
     // import { KadoaClient } from "@kadoa/node-sdk";
