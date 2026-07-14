@@ -21,7 +21,7 @@ import {
   type TemplateWorkflowsResponseDataInner as GeneratedTemplateLinkedWorkflow,
   type TemplateResponse as GeneratedTemplateListItem,
   type TemplateSchemasResponseDataInner as GeneratedTemplateSchema,
-  type TemplateVersionCreatedResponseData as GeneratedTemplateVersion,
+  type TemplateVersionMutationResponseData as GeneratedTemplateVersion,
   type UnlinkWorkflowsBody as GeneratedUnlinkWorkflowsBody,
   type UnlinkWorkflowsResponse as GeneratedUnlinkWorkflowsResult,
   type UpdateTemplateBody as GeneratedUpdateTemplateBody,

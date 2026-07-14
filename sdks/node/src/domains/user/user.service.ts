@@ -1,5 +1,6 @@
 import type { KadoaClient } from "../../kadoa-client";
 import { KadoaSdkException } from "../../runtime/exceptions";
+import type { KadoaFeatures } from "./user.acl";
 
 export interface KadoaUser {
   userId: string;
@@ -10,10 +11,19 @@ export interface KadoaUser {
 export class UserService {
   constructor(private readonly client: KadoaClient) {}
 
-  /**
-   * Get current user details
-   * @returns User details
-   */
+  /** Get customer-facing capabilities enabled for the active team. */
+  async getFeatures(): Promise<KadoaFeatures> {
+    const response = await this.client.apis.me.v4MeFeaturesGet();
+    const features = response.data?.features;
+
+    if (!features || typeof features.scrape !== "boolean") {
+      throw new KadoaSdkException("Invalid capabilities data received");
+    }
+
+    return response.data;
+  }
+
+  /** Get current user details. */
   async getCurrentUser(): Promise<KadoaUser> {
     const response = await this.client.axiosInstance.get("/v5/user", {
       baseURL: this.client.baseUrl,

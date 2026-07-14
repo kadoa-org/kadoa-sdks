@@ -13,6 +13,7 @@ export * from "./domains/extraction";
 export * from "./domains/notifications";
 export * from "./domains/realtime";
 export * from "./domains/schemas";
+export * from "./domains/scrape";
 export * from "./domains/templates";
 export * from "./domains/user";
 export * from "./domains/validation";
