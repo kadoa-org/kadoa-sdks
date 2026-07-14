@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.35.0](https://github.com/kadoa-org/kadoa-sdks/compare/node-sdk-v0.34.0...node-sdk-v0.35.0) (2026-07-14)
+
+
+### Features
+
+* **node-sdk:** expose scrape api and team capabilities ([#336](https://github.com/kadoa-org/kadoa-sdks/issues/336)) ([b6be91a](https://github.com/kadoa-org/kadoa-sdks/commit/b6be91a0d72439ba37a2f1f037fa56f3ae408164))
+
 ## [0.34.0](https://github.com/kadoa-org/kadoa-sdks/compare/node-sdk-v0.33.0...node-sdk-v0.34.0) (2026-06-08)
 
 
