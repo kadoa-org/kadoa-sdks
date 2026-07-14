@@ -13,10 +13,13 @@ from .extraction import (
     ExtractionModule,
     ExtractionOptions,
     ExtractionResult,
+    ExtractOptions,
     FetchDataOptions,
     FetchDataResult,
+    RunWorkflowOptions,
     run_extraction,
 )
+from .schemas import FieldOptions
 from .version import __version__
 
 
@@ -41,11 +44,14 @@ __all__ = [
     "ExportDataFormat",
     "ExportDataOptions",
     "ExportDataResult",
+    "ExtractOptions",
     "ExtractionModule",
     "ExtractionOptions",
     "ExtractionResult",
     "FetchDataOptions",
     "FetchDataResult",
+    "FieldOptions",
+    "RunWorkflowOptions",
     "run_extraction",
     "__version__",
 ]
