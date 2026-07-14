@@ -31,6 +31,25 @@ console.log(`Extracted ${result.data?.length} items`);
 // Output: Extracted 25 items
 ```
 
+## One-off page scraping
+
+Workspaces with the Scrape API capability can fetch a single page as compact markdown or raw HTML without creating a workflow:
+
+```typescript
+const { features } = await client.user.getFeatures();
+
+if (features.scrape) {
+  const page = await client.scrape.fetch({
+    url: 'https://example.com',
+    format: 'markdown',
+  });
+
+  console.log(page.content);
+}
+```
+
+Smart fetch and proxy routing are used by default. If a failed response explicitly recommends the anti-bot tier, retry with `proxy: 'stealth'`. Use `format: 'html'` when raw source is required. For structured extraction, recurring runs, or monitoring, use a workflow instead.
+
 ## Extraction Methods
 
 ### Default Extraction

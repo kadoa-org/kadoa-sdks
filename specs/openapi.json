@@ -16788,6 +16788,1058 @@
           }
         ]
       }
+    },
+    "/v4/scrape": {
+      "post": {
+        "description": "Fetch a URL through Kadoa. Defaults to smart routing (auto fetch mode and proxy), can return page content as markdown for LLM consumption, and offers a stealth proxy tier for sites that block bots.",
+        "summary": "Scrape a URL",
+        "tags": [
+          "Scrape"
+        ],
+        "parameters": [],
+        "requestBody": {
+          "description": "Body",
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "url": {
+                    "type": "string",
+                    "format": "uri"
+                  },
+                  "method": {
+                    "default": "GET",
+                    "type": "string",
+                    "enum": [
+                      "GET",
+                      "POST",
+                      "PUT",
+                      "DELETE",
+                      "PATCH"
+                    ],
+                    "description": "HTTP method. Default: GET"
+                  },
+                  "headers": {
+                    "type": "array",
+                    "items": {
+                      "type": "object",
+                      "properties": {
+                        "key": {
+                          "type": "string",
+                          "description": "Header name"
+                        },
+                        "value": {
+                          "type": "string",
+                          "description": "Header value"
+                        }
+                      },
+                      "required": [
+                        "key",
+                        "value"
+                      ],
+                      "description": "Custom HTTP header"
+                    },
+                    "description": "Custom HTTP headers to send with the request"
+                  },
+                  "body": {
+                    "oneOf": [
+                      {
+                        "type": "object",
+                        "additionalProperties": {
+                          "nullable": true
+                        }
+                      },
+                      {
+                        "type": "string"
+                      }
+                    ],
+                    "description": "Request body as JSON object, or a legacy worker-specific string. Prefer rawBody when the upstream endpoint needs an exact text payload."
+                  },
+                  "rawBody": {
+                    "type": "string",
+                    "description": "Exact request body text to forward to the upstream URL. Use for endpoints that reject wrapper objects or require a specific JSON/form payload string."
+                  },
+                  "location": {
+                    "type": "object",
+                    "properties": {
+                      "country": {
+                        "type": "string",
+                        "minLength": 2,
+                        "maxLength": 2,
+                        "description": "ISO 3166-1 alpha-2 country code (e.g., 'US', 'GB', 'DE')"
+                      }
+                    },
+                    "description": "Geo-targeting for proxy selection"
+                  },
+                  "timeout": {
+                    "type": "integer",
+                    "minimum": 1,
+                    "maximum": 60000,
+                    "description": "Per-attempt timeout in milliseconds"
+                  },
+                  "context": {
+                    "type": "object",
+                    "properties": {
+                      "id": {
+                        "type": "string",
+                        "description": "Context ID for session persistence. Use workflow ID for convenience. Created automatically if it does not exist."
+                      },
+                      "persist": {
+                        "type": "boolean",
+                        "description": "Save browser state (cookies, localStorage) after scrape. Default: false"
+                      }
+                    },
+                    "description": "Session context for cookie persistence"
+                  },
+                  "captureResponses": {
+                    "type": "array",
+                    "items": {
+                      "type": "string",
+                      "minLength": 1
+                    },
+                    "maxItems": 20,
+                    "description": "Substrings matched against network response URLs (browser workers only). The worker hooks every response the page makes and returns the body of each whose URL contains any of these substrings, in `capturedResponses`. Use this to read data that arrives via XHR/fetch and is NOT in the DOM — SPA dashboards (Tableau VizQL, Power BI) where values come back in a JSON/command response. Triggers a browser worker; pair with `browserActions` (clicks/waits) to drive the requests you want captured."
+                  },
+                  "waitUntil": {
+                    "type": "string",
+                    "enum": [
+                      "load",
+                      "domcontentloaded",
+                      "networkidle",
+                      "commit"
+                    ],
+                    "description": "Browser-worker navigation gate. Default (omitted) is `domcontentloaded` + a bounded best-effort networkidle settle, which returns content even on heavy pages that never go fully idle (ASP.NET, SignalR, ad/telemetry-heavy). Set `networkidle` to block the whole navigation on full idle (old behavior — only when the page reliably goes idle and you need every lazy request). No-op for non-browser workers."
+                  },
+                  "settleMs": {
+                    "type": "integer",
+                    "minimum": 1,
+                    "description": "Browser-worker cap (ms) for the best-effort networkidle settle after `domcontentloaded`. Default 15000. Raise for slow client-rendered pages that need more time for lazy content; lower to return faster. Ignored when `waitUntil: networkidle` and for non-browser workers."
+                  },
+                  "device": {
+                    "type": "string",
+                    "description": "Device to emulate, by descriptor name (e.g. 'iPad', 'iPhone 13'). Honored by workers that support device emulation; ignored by the rest. Some sites only serve content for a given device profile."
+                  },
+                  "fetchMode": {
+                    "default": "auto",
+                    "type": "string",
+                    "enum": [
+                      "http",
+                      "browser",
+                      "auto"
+                    ],
+                    "description": "Fetch mode: http for fast requests, browser for JavaScript rendering and browser actions, or auto for smart routing that starts cheap and escalates when blocked. Default: auto"
+                  },
+                  "proxy": {
+                    "default": "auto",
+                    "type": "string",
+                    "enum": [
+                      "auto",
+                      "dc",
+                      "isp",
+                      "residential",
+                      "stealth"
+                    ],
+                    "description": "Proxy tier: auto (smart selection), dc (datacenter), isp, residential, or stealth to route through the anti-bot providers for sites that block bots. Stealth providers use their own egress and pricing. Default: auto"
+                  },
+                  "format": {
+                    "default": "html",
+                    "type": "string",
+                    "enum": [
+                      "html",
+                      "markdown"
+                    ],
+                    "description": "Content format for HTML pages. markdown converts the page to markdown with navigation, header, and footer stripped — the compact shape to feed an LLM. Non-HTML responses (JSON, binary) and HTML pages over 2 MB are returned unchanged; check the response contentType to see which format was applied. Default: html"
+                  },
+                  "browserActions": {
+                    "type": "array",
+                    "items": {
+                      "discriminator": {
+                        "propertyName": "type"
+                      },
+                      "oneOf": [
+                        {
+                          "type": "object",
+                          "properties": {
+                            "type": {
+                              "type": "string",
+                              "enum": [
+                                "click"
+                              ],
+                              "description": "Action type"
+                            },
+                            "selector": {
+                              "type": "object",
+                              "properties": {
+                                "type": {
+                                  "type": "string",
+                                  "enum": [
+                                    "xpath",
+                                    "css",
+                                    "text"
+                                  ],
+                                  "description": "Selector type"
+                                },
+                                "value": {
+                                  "type": "string",
+                                  "description": "Selector value (e.g., '#submit-btn' for CSS, '//button[@type=\"submit\"]' for XPath)"
+                                }
+                              },
+                              "required": [
+                                "type",
+                                "value"
+                              ],
+                              "description": "Element to click"
+                            }
+                          },
+                          "required": [
+                            "type",
+                            "selector"
+                          ],
+                          "title": "click",
+                          "description": "Click an element on the page"
+                        },
+                        {
+                          "type": "object",
+                          "properties": {
+                            "type": {
+                              "type": "string",
+                              "enum": [
+                                "input"
+                              ],
+                              "description": "Action type"
+                            },
+                            "selector": {
+                              "type": "object",
+                              "properties": {
+                                "type": {
+                                  "type": "string",
+                                  "enum": [
+                                    "xpath",
+                                    "css",
+                                    "text"
+                                  ],
+                                  "description": "Selector type"
+                                },
+                                "value": {
+                                  "type": "string",
+                                  "description": "Selector value (e.g., '#submit-btn' for CSS, '//button[@type=\"submit\"]' for XPath)"
+                                }
+                              },
+                              "required": [
+                                "type",
+                                "value"
+                              ],
+                              "description": "Input element to type into"
+                            },
+                            "value": {
+                              "type": "string",
+                              "description": "Text to type into the element"
+                            }
+                          },
+                          "required": [
+                            "type",
+                            "selector",
+                            "value"
+                          ],
+                          "title": "input",
+                          "description": "Type text into an input element"
+                        },
+                        {
+                          "type": "object",
+                          "properties": {
+                            "type": {
+                              "type": "string",
+                              "enum": [
+                                "scroll"
+                              ],
+                              "description": "Action type"
+                            },
+                            "x": {
+                              "type": "number",
+                              "description": "Horizontal scroll amount in pixels"
+                            },
+                            "y": {
+                              "type": "number",
+                              "description": "Vertical scroll amount in pixels"
+                            }
+                          },
+                          "required": [
+                            "type",
+                            "y"
+                          ],
+                          "title": "scroll",
+                          "description": "Scroll by a specific number of pixels"
+                        },
+                        {
+                          "type": "object",
+                          "properties": {
+                            "type": {
+                              "type": "string",
+                              "enum": [
+                                "scroll_to_bottom"
+                              ],
+                              "description": "Action type"
+                            },
+                            "timeout_s": {
+                              "type": "number",
+                              "description": "Maximum time to scroll in seconds (default: 30)"
+                            }
+                          },
+                          "required": [
+                            "type"
+                          ],
+                          "title": "scroll_to_bottom",
+                          "description": "Scroll to the bottom of the page (useful for infinite scroll)"
+                        },
+                        {
+                          "type": "object",
+                          "properties": {
+                            "type": {
+                              "type": "string",
+                              "enum": [
+                                "wait"
+                              ],
+                              "description": "Action type"
+                            },
+                            "wait_time_s": {
+                              "type": "number",
+                              "description": "Duration to wait in seconds"
+                            }
+                          },
+                          "required": [
+                            "type",
+                            "wait_time_s"
+                          ],
+                          "title": "wait",
+                          "description": "Wait for a specified duration"
+                        },
+                        {
+                          "type": "object",
+                          "properties": {
+                            "type": {
+                              "type": "string",
+                              "enum": [
+                                "screenshot"
+                              ],
+                              "description": "Action type"
+                            },
+                            "full_page": {
+                              "type": "boolean",
+                              "description": "Capture the full page (true) or just the viewport (false)"
+                            },
+                            "format": {
+                              "default": "jpg",
+                              "type": "string",
+                              "enum": [
+                                "jpg",
+                                "png",
+                                "webp"
+                              ],
+                              "description": "Output image format. Default: jpg"
+                            },
+                            "quality": {
+                              "default": 20,
+                              "type": "integer",
+                              "minimum": 1,
+                              "maximum": 100,
+                              "description": "Compression quality (1-100). Only applies to jpg and webp. Ignored for png. Default: 20"
+                            },
+                            "width": {
+                              "type": "integer",
+                              "minimum": 1,
+                              "description": "Resize to this width in pixels (height scales proportionally). No upscaling."
+                            }
+                          },
+                          "required": [
+                            "type"
+                          ],
+                          "title": "screenshot",
+                          "description": "Capture a screenshot of the page"
+                        },
+                        {
+                          "type": "object",
+                          "properties": {
+                            "type": {
+                              "type": "string",
+                              "enum": [
+                                "evaluate_js"
+                              ],
+                              "description": "Action type"
+                            },
+                            "script": {
+                              "type": "string",
+                              "description": "JavaScript code to execute in the page context"
+                            }
+                          },
+                          "required": [
+                            "type",
+                            "script"
+                          ],
+                          "title": "evaluate_js",
+                          "description": "Execute JavaScript in the browser context"
+                        },
+                        {
+                          "type": "object",
+                          "properties": {
+                            "type": {
+                              "type": "string",
+                              "enum": [
+                                "wait_for_element"
+                              ],
+                              "description": "Action type"
+                            },
+                            "selector": {
+                              "type": "object",
+                              "properties": {
+                                "type": {
+                                  "type": "string",
+                                  "enum": [
+                                    "xpath",
+                                    "css",
+                                    "text"
+                                  ],
+                                  "description": "Selector type"
+                                },
+                                "value": {
+                                  "type": "string",
+                                  "description": "Selector value (e.g., '#submit-btn' for CSS, '//button[@type=\"submit\"]' for XPath)"
+                                }
+                              },
+                              "required": [
+                                "type",
+                                "value"
+                              ],
+                              "description": "Element to wait for"
+                            },
+                            "timeout_s": {
+                              "type": "number",
+                              "description": "Maximum time to wait in seconds (default: 10)"
+                            }
+                          },
+                          "required": [
+                            "type",
+                            "selector"
+                          ],
+                          "title": "wait_for_element",
+                          "description": "Wait for an element to appear on the page"
+                        }
+                      ],
+                      "description": "Browser action to perform on the page"
+                    },
+                    "maxItems": 50
+                  }
+                },
+                "required": [
+                  "url"
+                ],
+                "additionalProperties": false
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Scrape response with content and execution metadata",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "success": {
+                      "type": "boolean",
+                      "description": "Whether the scrape succeeded"
+                    },
+                    "contentType": {
+                      "type": "string",
+                      "description": "MIME type of the response (e.g., text/html, application/json, image/png)"
+                    },
+                    "content": {
+                      "type": "string",
+                      "description": "Response content (raw text for html/json, base64 for binary)"
+                    },
+                    "isBase64": {
+                      "default": false,
+                      "type": "boolean",
+                      "description": "Whether content is base64-encoded (true for binary content types like PDFs, images)"
+                    },
+                    "screenshots": {
+                      "type": "array",
+                      "items": {
+                        "type": "string"
+                      },
+                      "description": "URLs of captured screenshots"
+                    },
+                    "jsResults": {
+                      "type": "array",
+                      "items": {
+                        "nullable": true
+                      },
+                      "description": "Results of evaluate_js actions, in order of execution. Each entry is the JSON-serializable return value, or {error: string} if the script threw."
+                    },
+                    "capturedResponses": {
+                      "type": "array",
+                      "items": {
+                        "type": "object",
+                        "properties": {
+                          "url": {
+                            "type": "string",
+                            "description": "Full URL of the captured response"
+                          },
+                          "status": {
+                            "type": "number",
+                            "description": "HTTP status code of the captured response"
+                          },
+                          "body": {
+                            "type": "string",
+                            "description": "Response body as text"
+                          }
+                        },
+                        "required": [
+                          "url",
+                          "status",
+                          "body"
+                        ]
+                      },
+                      "description": "Bodies of network responses whose URL matched a `captureResponses` substring, in arrival order. Present only when `captureResponses` was set and at least one response matched."
+                    },
+                    "statusCode": {
+                      "type": "number",
+                      "description": "HTTP status code from the response"
+                    },
+                    "headers": {
+                      "type": "object",
+                      "additionalProperties": {
+                        "type": "string"
+                      },
+                      "description": "Response headers as key-value pairs"
+                    },
+                    "cookies": {
+                      "type": "array",
+                      "items": {
+                        "type": "object",
+                        "properties": {
+                          "name": {
+                            "type": "string",
+                            "description": "Cookie name"
+                          },
+                          "value": {
+                            "type": "string",
+                            "description": "Cookie value"
+                          },
+                          "domain": {
+                            "type": "string",
+                            "description": "Cookie domain"
+                          },
+                          "path": {
+                            "type": "string",
+                            "description": "Cookie path"
+                          },
+                          "expires": {
+                            "type": "number",
+                            "description": "Expiration timestamp (Unix epoch)"
+                          },
+                          "httpOnly": {
+                            "type": "boolean",
+                            "description": "HttpOnly flag"
+                          },
+                          "secure": {
+                            "type": "boolean",
+                            "description": "Secure flag"
+                          },
+                          "sameSite": {
+                            "type": "string",
+                            "enum": [
+                              "Strict",
+                              "Lax",
+                              "None"
+                            ],
+                            "description": "SameSite attribute"
+                          }
+                        },
+                        "required": [
+                          "name",
+                          "value"
+                        ],
+                        "description": "HTTP cookie from the response"
+                      },
+                      "description": "Cookies set by the response"
+                    },
+                    "finalUrl": {
+                      "type": "string",
+                      "description": "Final URL after any redirects"
+                    },
+                    "execution": {
+                      "type": "object",
+                      "properties": {
+                        "requestId": {
+                          "type": "string",
+                          "format": "uuid",
+                          "description": "Opaque request identifier for correlating scraper API and worker lifecycle diagnostics"
+                        },
+                        "totalDurationMs": {
+                          "type": "number",
+                          "description": "Total time including all retries in milliseconds"
+                        },
+                        "contextId": {
+                          "type": "string",
+                          "nullable": true,
+                          "description": "Context ID used or created, if context feature was used"
+                        },
+                        "contextPersisted": {
+                          "type": "boolean",
+                          "description": "Whether browser state was saved back to context"
+                        },
+                        "attempts": {
+                          "type": "array",
+                          "items": {
+                            "type": "object",
+                            "properties": {
+                              "worker": {
+                                "type": "string",
+                                "enum": [
+                                  "http",
+                                  "browser",
+                                  "stealth-http",
+                                  "stealth-browser"
+                                ],
+                                "description": "Worker capability used for this attempt"
+                              },
+                              "proxy": {
+                                "type": "string",
+                                "enum": [
+                                  "dc",
+                                  "isp",
+                                  "residential"
+                                ],
+                                "description": "Proxy type: datacenter, ISP, or residential",
+                                "nullable": true
+                              },
+                              "location": {
+                                "type": "object",
+                                "properties": {
+                                  "country": {
+                                    "type": "string",
+                                    "minLength": 2,
+                                    "maxLength": 2,
+                                    "description": "ISO 3166-1 alpha-2 country code (e.g., 'US', 'GB', 'DE')"
+                                  }
+                                },
+                                "description": "Location used for geo-targeting, or null",
+                                "nullable": true
+                              },
+                              "startedAt": {
+                                "type": "string",
+                                "format": "date-time",
+                                "description": "ISO 8601 timestamp when attempt started"
+                              },
+                              "endedAt": {
+                                "type": "string",
+                                "format": "date-time",
+                                "description": "ISO 8601 timestamp when attempt ended"
+                              },
+                              "durationMs": {
+                                "type": "number",
+                                "description": "Attempt duration in milliseconds"
+                              },
+                              "success": {
+                                "type": "boolean",
+                                "description": "Whether this attempt succeeded"
+                              },
+                              "error": {
+                                "type": "object",
+                                "properties": {
+                                  "code": {
+                                    "type": "string",
+                                    "enum": [
+                                      "BOT_DETECTED",
+                                      "TIMEOUT",
+                                      "JS_REQUIRED",
+                                      "KYC_BLOCKED",
+                                      "MAX_RETRIES_EXCEEDED",
+                                      "NETWORK_ERROR"
+                                    ],
+                                    "description": "Error code"
+                                  },
+                                  "message": {
+                                    "type": "string",
+                                    "description": "Human-readable error message"
+                                  }
+                                },
+                                "required": [
+                                  "code",
+                                  "message"
+                                ],
+                                "description": "Error details if attempt failed"
+                              }
+                            },
+                            "required": [
+                              "worker",
+                              "proxy",
+                              "location",
+                              "startedAt",
+                              "endedAt",
+                              "durationMs",
+                              "success"
+                            ],
+                            "description": "Details of a single scrape attempt"
+                          }
+                        }
+                      },
+                      "required": [
+                        "totalDurationMs",
+                        "attempts"
+                      ],
+                      "description": "Execution metadata including timing and retry information"
+                    },
+                    "error": {
+                      "type": "object",
+                      "properties": {
+                        "code": {
+                          "type": "string",
+                          "enum": [
+                            "BOT_DETECTED",
+                            "TIMEOUT",
+                            "JS_REQUIRED",
+                            "KYC_BLOCKED",
+                            "MAX_RETRIES_EXCEEDED",
+                            "NETWORK_ERROR"
+                          ],
+                          "description": "Error code"
+                        },
+                        "message": {
+                          "type": "string",
+                          "description": "Human-readable error message"
+                        }
+                      },
+                      "required": [
+                        "code",
+                        "message"
+                      ],
+                      "description": "Error details when success is false"
+                    }
+                  },
+                  "required": [
+                    "success",
+                    "execution"
+                  ],
+                  "description": "Scrape response with content and execution metadata"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "400",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "error": {
+                      "type": "boolean",
+                      "enum": [
+                        true
+                      ]
+                    },
+                    "message": {
+                      "type": "string"
+                    },
+                    "details": {
+                      "type": "object",
+                      "additionalProperties": {
+                        "nullable": true
+                      }
+                    }
+                  },
+                  "required": [
+                    "error",
+                    "message"
+                  ]
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "401",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "error": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "error"
+                  ]
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "403",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "error": {
+                      "type": "boolean",
+                      "enum": [
+                        true
+                      ]
+                    },
+                    "message": {
+                      "type": "string"
+                    },
+                    "details": {
+                      "type": "object",
+                      "additionalProperties": {
+                        "nullable": true
+                      }
+                    }
+                  },
+                  "required": [
+                    "error",
+                    "message"
+                  ]
+                }
+              }
+            }
+          },
+          "429": {
+            "description": "429",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "error": {
+                      "type": "boolean",
+                      "enum": [
+                        true
+                      ]
+                    },
+                    "message": {
+                      "type": "string"
+                    },
+                    "details": {
+                      "type": "object",
+                      "additionalProperties": {
+                        "nullable": true
+                      }
+                    }
+                  },
+                  "required": [
+                    "error",
+                    "message"
+                  ]
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "500",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "error": {
+                      "type": "boolean",
+                      "enum": [
+                        true
+                      ]
+                    },
+                    "message": {
+                      "type": "string"
+                    },
+                    "details": {
+                      "type": "object",
+                      "additionalProperties": {
+                        "nullable": true
+                      }
+                    }
+                  },
+                  "required": [
+                    "error",
+                    "message"
+                  ]
+                }
+              }
+            }
+          },
+          "502": {
+            "description": "502",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "error": {
+                      "type": "boolean",
+                      "enum": [
+                        true
+                      ]
+                    },
+                    "message": {
+                      "type": "string"
+                    },
+                    "details": {
+                      "type": "object",
+                      "additionalProperties": {
+                        "nullable": true
+                      }
+                    }
+                  },
+                  "required": [
+                    "error",
+                    "message"
+                  ]
+                }
+              }
+            }
+          },
+          "504": {
+            "description": "504",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "error": {
+                      "type": "boolean",
+                      "enum": [
+                        true
+                      ]
+                    },
+                    "message": {
+                      "type": "string"
+                    },
+                    "details": {
+                      "type": "object",
+                      "additionalProperties": {
+                        "nullable": true
+                      }
+                    }
+                  },
+                  "required": [
+                    "error",
+                    "message"
+                  ]
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "ApiKeyAuth": []
+          }
+        ]
+      }
+    },
+    "/v4/me/features": {
+      "get": {
+        "description": "Return the capabilities enabled for the authenticated team. Clients (such as the Kadoa MCP) use this to decide which tools to expose.",
+        "summary": "Get enabled capabilities",
+        "tags": [
+          "Me"
+        ],
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "200",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "features": {
+                      "type": "object",
+                      "properties": {
+                        "scrape": {
+                          "type": "boolean",
+                          "description": "Whether this team may call POST /v4/scrape (the Scrape API)."
+                        }
+                      },
+                      "required": [
+                        "scrape"
+                      ],
+                      "description": "Capabilities enabled for the authenticated team."
+                    }
+                  },
+                  "required": [
+                    "features"
+                  ]
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "401",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "error": {
+                      "type": "boolean",
+                      "description": "Indicates an error occurred"
+                    },
+                    "message": {
+                      "type": "string",
+                      "description": "Error message"
+                    },
+                    "details": {
+                      "nullable": true,
+                      "description": "Additional error details (e.g., validation errors)"
+                    }
+                  },
+                  "required": [
+                    "error",
+                    "message"
+                  ]
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "500",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "error": {
+                      "type": "boolean",
+                      "description": "Indicates an error occurred"
+                    },
+                    "message": {
+                      "type": "string",
+                      "description": "Error message"
+                    },
+                    "details": {
+                      "nullable": true,
+                      "description": "Additional error details (e.g., validation errors)"
+                    }
+                  },
+                  "required": [
+                    "error",
+                    "message"
+                  ]
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "ApiKeyAuth": []
+          }
+        ]
+      }
     }
   },
   "components": {
