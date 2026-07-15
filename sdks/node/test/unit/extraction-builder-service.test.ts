@@ -196,6 +196,7 @@ describe("ExtractionBuilderService", () => {
     expect(waitForJobCompletion).toHaveBeenCalledWith(
       "wf-reuse",
       "job-existing",
+      { timeoutMs: 30 * 60 * 1000 },
     );
   });
 

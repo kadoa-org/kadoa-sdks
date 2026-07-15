@@ -41,7 +41,9 @@ def test_builder_defaults_to_agentic_navigation_with_default_prompt():
 
         assert result is not None
         assert result.workflow_id == "test-workflow-id"
-        request = mock_api.v4_workflows_post.call_args.kwargs["create_workflow_body"]
+        request = mock_api.v4_workflows_post.call_args.kwargs[
+            "public_workflow_create_request"
+        ]
         inner = request
         assert (
             inner.user_prompt
@@ -49,6 +51,25 @@ def test_builder_defaults_to_agentic_navigation_with_default_prompt():
         )
     finally:
         builder_module.get_workflows_api = original_get_api
+
+
+@pytest.mark.unit
+def test_builder_run_waits_up_to_thirty_minutes(monkeypatch):
+    builder = builder_module.ExtractionBuilderService(Mock())
+    builder._get_workflow_status = Mock(return_value=SimpleNamespace(run_state="FINISHED"))
+    captured_options = None
+
+    def capture_polling_options(_poll_fn, _is_complete, options):
+        nonlocal captured_options
+        captured_options = options
+        return SimpleNamespace(result="FINISHED")
+
+    monkeypatch.setattr(builder_module, "poll_until", capture_polling_options)
+
+    builder._wait_for_job_completion("workflow-id", "job-id")
+
+    assert captured_options is not None
+    assert captured_options.timeout_ms == 30 * 60 * 1000
 
 
 @pytest.mark.unit
@@ -71,7 +92,9 @@ def test_builder_uses_generic_prompt_without_schema():
         builder = builder_module.ExtractionBuilderService(mock_client)
         builder.extract(ExtractOptions(urls=["https://example.com"], name="Test")).create()
 
-        request = mock_api.v4_workflows_post.call_args.kwargs["create_workflow_body"]
+        request = mock_api.v4_workflows_post.call_args.kwargs[
+            "public_workflow_create_request"
+        ]
         inner = request
         assert inner.user_prompt == "extract all the data for the main entity of this page"
     finally:
@@ -107,7 +130,9 @@ def test_builder_preserves_explicit_user_prompt():
             )
         ).create()
 
-        request = mock_api.v4_workflows_post.call_args.kwargs["create_workflow_body"]
+        request = mock_api.v4_workflows_post.call_args.kwargs[
+            "public_workflow_create_request"
+        ]
         inner = request
         assert inner.user_prompt == "extract featured products only"
     finally:
@@ -140,7 +165,9 @@ def test_builder_keeps_raw_fields_on_agentic_navigation():
             )
         ).create()
 
-        request = mock_api.v4_workflows_post.call_args.kwargs["create_workflow_body"]
+        request = mock_api.v4_workflows_post.call_args.kwargs[
+            "public_workflow_create_request"
+        ]
         inner = request
         assert inner.user_prompt == "extract all records from this page and return these fields: rawMarkdown"
     finally:
@@ -173,7 +200,9 @@ def test_builder_synthesizes_raw_helper_fields_as_structured_fields():
             )
         ).create()
 
-        request = mock_api.v4_workflows_post.call_args.kwargs["create_workflow_body"]
+        request = mock_api.v4_workflows_post.call_args.kwargs[
+            "public_workflow_create_request"
+        ]
         inner = request
         assert inner.fields[0].actual_instance.data_type == "STRING"
         assert inner.fields[1].actual_instance.data_type == "LINK"

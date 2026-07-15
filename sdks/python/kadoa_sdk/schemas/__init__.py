@@ -16,7 +16,9 @@ from .schema_builder import (
 # ACL types (owned by schemas_acl.py)
 from .schemas_acl import (
     Category,
+    ClassificationField,
     CreateSchemaRequest,
+    DataField,
     DataFieldFor,
     FieldExample,
     SchemaField,
@@ -37,7 +39,9 @@ __all__ = [
     "SchemaBuilder",
     # ACL types
     "Category",
+    "ClassificationField",
     "CreateSchemaRequest",
+    "DataField",
     "DataFieldFor",
     "FieldExample",
     "SchemaField",

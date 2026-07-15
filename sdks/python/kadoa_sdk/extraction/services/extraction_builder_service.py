@@ -9,7 +9,7 @@ from ..extraction_acl import (
     CreateWorkflowBody,
     DataField,
     DataFieldExample,
-    V4WorkflowsWorkflowIdGet200Response,
+    GetWorkflowResponse,
 )
 from openapi_client.models.create_schema_body_fields_inner import CreateSchemaBodyFieldsInner
 from openapi_client.models.prompt_workflow import PromptWorkflow as AgenticWorkflow
@@ -240,7 +240,7 @@ class CreatedExtraction:
 
     def wait_for_ready(
         self, options: Optional[WaitForReadyOptions] = None
-    ) -> V4WorkflowsWorkflowIdGet200Response:
+    ) -> GetWorkflowResponse:
         """Wait for workflow to be ready"""
         return self._builder._wait_for_ready(self._workflow_id, options)
 
@@ -330,12 +330,10 @@ class ExtractionBuilderService:
         self._monitoring_options: Optional[WorkflowMonitoringConfig] = None
         self._user_prompt: Optional[str] = None
 
-    def _get_workflow_status(self, workflow_id: str) -> V4WorkflowsWorkflowIdGet200Response:
+    def _get_workflow_status(self, workflow_id: str) -> GetWorkflowResponse:
         """Get workflow status"""
-        api = get_workflows_api(self.client)
         try:
-            resp = api.v4_workflows_workflow_id_get(workflow_id=workflow_id)
-            return resp.data if hasattr(resp, "data") else resp
+            return self.client.workflow.get(workflow_id)
         except Exception as error:
             raise KadoaHttpError.wrap(
                 error,
@@ -570,7 +568,7 @@ class ExtractionBuilderService:
 
         try:
             wrapper = CreateWorkflowBody.model_validate(inner.model_dump(by_alias=True, exclude_none=True))
-            resp = api.v4_workflows_post(create_workflow_body=wrapper)
+            resp = api.v4_workflows_post(public_workflow_create_request=wrapper)
             workflow_id = getattr(resp, "workflow_id", None) or getattr(resp, "workflowId", None)
             if not workflow_id:
                 raise KadoaSdkError(
@@ -592,16 +590,16 @@ class ExtractionBuilderService:
         self,
         workflow_id: str,
         options: Optional[WaitForReadyOptions] = None,
-    ) -> V4WorkflowsWorkflowIdGet200Response:
+    ) -> GetWorkflowResponse:
         """Wait for workflow to be ready"""
         target_state = (options.target_state if options else None) or "PREVIEW"
         poll_interval_ms = (options.poll_interval_ms if options else None) or 5000
         timeout_ms = (options.timeout_ms if options else None) or 300000
 
-        def poll_fn() -> V4WorkflowsWorkflowIdGet200Response:
+        def poll_fn() -> GetWorkflowResponse:
             return self._get_workflow_status(workflow_id)
 
-        def is_complete(workflow: V4WorkflowsWorkflowIdGet200Response) -> bool:
+        def is_complete(workflow: GetWorkflowResponse) -> bool:
             return workflow.state == target_state or (
                 target_state == "PREVIEW" and workflow.state == "ACTIVE"
             )
@@ -756,7 +754,7 @@ class ExtractionBuilderService:
 
     def _wait_for_job_completion(self, workflow_id: str, job_id: str) -> None:
         """Wait for job to complete using polling utility"""
-        max_wait_time_ms = 300000  # 5 minutes default
+        max_wait_time_ms = 30 * 60 * 1000
         poll_interval_ms = 5000  # 5 seconds
 
         def poll_fn() -> Optional[str]:
