@@ -31,7 +31,43 @@ def test_run_defaults_to_agentic_navigation_without_entity_detection():
     assert kwargs["entity"] is None
     assert kwargs["fields"] == []
     assert kwargs["config"].user_prompt == "extract all the data for the main entity of this page"
+    module.workflow_manager.wait_for_workflow_completion.assert_called_once_with(
+        "wf-123",
+        5.0,
+        1800.0,
+    )
     assert result.workflow_id == "wf-123"
+
+
+@pytest.mark.unit
+def test_run_preserves_explicit_max_wait_time():
+    client = Mock()
+    module = ExtractionModule(client)
+    module.workflow_manager = Mock()
+    module.data_fetcher = Mock()
+
+    module.workflow_manager.create_workflow.return_value = "wf-123"
+    module.workflow_manager.wait_for_workflow_completion.return_value = GetWorkflowResponse(
+        run_state="FINISHED",
+        state="ACTIVE",
+    )
+    module.data_fetcher.fetch_data.return_value = Mock(
+        data=[{"title": "Example"}],
+        pagination={"page": 1, "total_pages": 1, "total_count": 1, "limit": 100},
+    )
+
+    module.run(
+        ExtractionOptions(
+            urls=["https://example.com"],
+            max_wait_time=60.0,
+        )
+    )
+
+    module.workflow_manager.wait_for_workflow_completion.assert_called_once_with(
+        "wf-123",
+        5.0,
+        60.0,
+    )
 
 
 @pytest.mark.unit

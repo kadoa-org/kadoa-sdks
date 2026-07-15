@@ -20,6 +20,7 @@ Example:
     ```
 """
 
+import time
 from dataclasses import dataclass
 from typing import TYPE_CHECKING, Optional
 
@@ -210,7 +211,7 @@ def get_docs_workflow_fixture(client: "KadoaClient") -> str:
         client.extract(
             ExtractOptions(
                 urls=["https://sandbox.kadoa.com/ecommerce"],
-                name=FIXTURE_NAMES["DOCS_WORKFLOW"],
+                name=f'{FIXTURE_NAMES["DOCS_WORKFLOW"]}-{time.time_ns()}',
                 extraction=lambda builder: builder.entity("Product")
                 .field("title", "Product name", "STRING", FieldOptions(example="Test Product"))
                 .field("price", "Product price", "MONEY"),
