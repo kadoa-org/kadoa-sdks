@@ -1,5 +1,17 @@
 # Changelog
 
+## [0.36.0](https://github.com/kadoa-org/kadoa-sdks/compare/node-sdk-v0.35.0...node-sdk-v0.36.0) (2026-07-24)
+
+
+### Features
+
+* **node-sdk:** add listWorkflowRuns to workflows service ([#343](https://github.com/kadoa-org/kadoa-sdks/issues/343)) ([df7a01f](https://github.com/kadoa-org/kadoa-sdks/commit/df7a01f7fa955d227079803c82fecfb0a83eb4bd))
+
+
+### Bug Fixes
+
+* align SDK contracts and documentation snippets ([#335](https://github.com/kadoa-org/kadoa-sdks/issues/335)) ([79c1ccc](https://github.com/kadoa-org/kadoa-sdks/commit/79c1ccc195fe42626de02be0125e9e887503b7f6))
+
 ## [0.35.0](https://github.com/kadoa-org/kadoa-sdks/compare/node-sdk-v0.34.0...node-sdk-v0.35.0) (2026-07-14)
 
 
