@@ -3124,6 +3124,40 @@
               "type": "string"
             },
             "description": "The unique identifier of the workflow whose runs history is to be retrieved"
+          },
+          {
+            "in": "query",
+            "name": "page",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "default": 1
+            },
+            "description": "Page number, 1-based (default 1)"
+          },
+          {
+            "in": "query",
+            "name": "limit",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "default": 25
+            },
+            "description": "Maximum number of runs per page (default 25, max 1000)"
+          },
+          {
+            "in": "query",
+            "name": "status",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "enum": [
+                "success",
+                "failed",
+                "in_progress"
+              ]
+            },
+            "description": "Filter runs by outcome. success maps to FINISHED, failed maps to FAILED, in_progress maps to RUNNING."
           }
         ],
         "responses": {
@@ -3235,6 +3269,31 @@
                             "type": "number",
                             "description": "Number of credits used for this workflow run"
                           }
+                        }
+                      }
+                    },
+                    "totalCount": {
+                      "type": "integer",
+                      "description": "Total number of workflow runs matching the query (across all pages)"
+                    },
+                    "pagination": {
+                      "type": "object",
+                      "properties": {
+                        "page": {
+                          "type": "integer",
+                          "description": "Current page number"
+                        },
+                        "limit": {
+                          "type": "integer",
+                          "description": "Maximum number of items per page"
+                        },
+                        "totalPages": {
+                          "type": "integer",
+                          "description": "Total number of pages"
+                        },
+                        "totalCount": {
+                          "type": "integer",
+                          "description": "Total number of workflow runs matching the query"
                         }
                       }
                     }
