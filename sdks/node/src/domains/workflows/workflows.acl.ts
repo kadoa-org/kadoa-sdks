@@ -21,6 +21,8 @@ import type {
   V4WorkflowsWorkflowIdAuditlogGet200ResponseLogEntriesInner,
   V4WorkflowsWorkflowIdAuditlogGet200ResponsePagination,
   V4WorkflowsWorkflowIdGet200Response,
+  V4WorkflowsWorkflowIdHistoryGet200Response,
+  V4WorkflowsWorkflowIdHistoryGet200ResponseWorkflowRunsInner,
   V4WorkflowsWorkflowIdMetadataPut200Response,
   V4WorkflowsWorkflowIdMetadataPutRequest,
   V4WorkflowsWorkflowIdRunPut200Response,
@@ -32,7 +34,10 @@ import type {
   WorkflowWithExistingSchema,
 } from "../../generated";
 
-import { V4WorkflowsWorkflowIdAuditlogGet200ResponseLogEntriesInnerOperationTypeEnum } from "../../generated";
+import {
+  V4WorkflowsWorkflowIdAuditlogGet200ResponseLogEntriesInnerOperationTypeEnum,
+  V4WorkflowsWorkflowIdHistoryGetStatusEnum,
+} from "../../generated";
 
 // ========================================
 // API Client
@@ -293,3 +298,38 @@ export const WorkflowAuditOperation =
 
 export type WorkflowAuditOperation =
   (typeof WorkflowAuditOperation)[keyof typeof WorkflowAuditOperation];
+
+// ========================================
+// Run History
+// ========================================
+
+/**
+ * Response from `GET /v4/workflows/{workflowId}/history`.
+ * Paginated run history for a workflow.
+ */
+export type WorkflowRunsResponse = V4WorkflowsWorkflowIdHistoryGet200Response;
+
+/**
+ * Single run entry within a workflow's run history.
+ */
+export type WorkflowRun =
+  V4WorkflowsWorkflowIdHistoryGet200ResponseWorkflowRunsInner;
+
+export type WorkflowRunState = NonNullable<WorkflowRun["state"]>;
+
+/**
+ * Semantic status filter accepted by `listWorkflowRuns`.
+ */
+export const WorkflowRunStatusFilter = V4WorkflowsWorkflowIdHistoryGetStatusEnum;
+
+export type WorkflowRunStatusFilter =
+  (typeof WorkflowRunStatusFilter)[keyof typeof WorkflowRunStatusFilter];
+
+/**
+ * Pagination and status filter options accepted by `listWorkflowRuns`.
+ */
+export interface WorkflowRunsOptions {
+  page?: number;
+  limit?: number;
+  status?: WorkflowRunStatusFilter;
+}

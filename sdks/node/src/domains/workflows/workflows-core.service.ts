@@ -19,6 +19,8 @@ import {
   type WorkflowAuditLogResponse,
   type WorkflowFromTemplate,
   type WorkflowResponse,
+  type WorkflowRunsOptions,
+  type WorkflowRunsResponse,
   type WorkflowStateEnum,
   type WorkflowsApiInterface,
 } from "./workflows.acl";
@@ -246,6 +248,20 @@ export class WorkflowsCoreService {
       workflowId: id,
       page: options?.page,
       limit: options?.limit,
+    });
+    return response.data;
+  }
+
+  /**
+   * Get the run history for a workflow, optionally filtered by outcome
+   * (success | failed | in_progress) and paginated.
+   */
+  async listWorkflowRuns(id: WorkflowId, options?: WorkflowRunsOptions): Promise<WorkflowRunsResponse> {
+    const response = await this.workflowsApi.v4WorkflowsWorkflowIdHistoryGet({
+      workflowId: id,
+      page: options?.page,
+      limit: options?.limit,
+      status: options?.status,
     });
     return response.data;
   }
