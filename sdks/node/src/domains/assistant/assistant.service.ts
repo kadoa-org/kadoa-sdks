@@ -1,10 +1,12 @@
 import { KadoaSdkException } from "../../runtime/exceptions";
 import type {
   AgentApiInterface,
+  AssistantControlResult,
   AssistantExtractionStrategy,
   AssistantPauseState,
   AssistantQuestionAnswerInput,
   AssistantQuestionAnswerResult,
+  AssistantResumeAccepted,
   WorkflowAssistantUpdateAccepted,
   WorkflowAssistantUpdateInput,
 } from "./assistant.acl";
@@ -62,5 +64,20 @@ export class AssistantService {
   ): Promise<AssistantExtractionStrategy | null> {
     const response = await this.agentApi.v5AgentStrategy({ sessionId });
     return response.data.data.strategy;
+  }
+
+  async interrupt(sessionId: string): Promise<AssistantControlResult> {
+    const response = await this.agentApi.v5AgentInterrupt({ sessionId });
+    return response.data.data;
+  }
+
+  async resume(sessionId: string): Promise<AssistantResumeAccepted> {
+    const response = await this.agentApi.v5AgentResume({ sessionId });
+    return response.data.data;
+  }
+
+  async stop(sessionId: string): Promise<AssistantControlResult> {
+    const response = await this.agentApi.v5AgentStop({ sessionId });
+    return response.data.data;
   }
 }

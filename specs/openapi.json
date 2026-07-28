@@ -18222,6 +18222,121 @@
           }
         }
       }
+    },
+    "/v5/agent/{sessionId}/interrupt": {
+      "post": {
+        "operationId": "v5AgentInterrupt",
+        "summary": "Safely interrupt an active Assistant session",
+        "tags": [
+          "Agent"
+        ],
+        "parameters": [
+          {
+            "name": "sessionId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Interrupt accepted or the session was already paused",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AssistantControlResponse"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Session not found for the authenticated team"
+          },
+          "409": {
+            "description": "Session cannot be interrupted from its current state"
+          }
+        }
+      }
+    },
+    "/v5/agent/{sessionId}/resume": {
+      "post": {
+        "operationId": "v5AgentResume",
+        "summary": "Resume an inactive or interrupted Assistant session",
+        "description": "Resumes with the persona persisted on the session, preserving Lighthouse versus Julie behavior.",
+        "tags": [
+          "Agent"
+        ],
+        "parameters": [
+          {
+            "name": "sessionId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "202": {
+            "description": "Resume accepted",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AssistantResumeResponse"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Session not found for the authenticated team"
+          },
+          "409": {
+            "description": "Session is already active or cannot be resumed"
+          }
+        }
+      }
+    },
+    "/v5/agent/{sessionId}/stop": {
+      "post": {
+        "operationId": "v5AgentStop",
+        "summary": "Stop an active Assistant session",
+        "tags": [
+          "Agent"
+        ],
+        "parameters": [
+          {
+            "name": "sessionId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Stop accepted",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AssistantControlResponse"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Session not found for the authenticated team"
+          },
+          "409": {
+            "description": "Session is not active"
+          }
+        }
+      }
     }
   },
   "components": {
@@ -26594,6 +26709,74 @@
             "enum": [
               "success"
             ]
+          }
+        }
+      },
+      "AssistantControlResponse": {
+        "type": "object",
+        "required": [
+          "data",
+          "status"
+        ],
+        "properties": {
+          "data": {
+            "type": "object",
+            "required": [
+              "success"
+            ],
+            "properties": {
+              "success": {
+                "type": "boolean"
+              },
+              "delivery": {
+                "type": "string",
+                "enum": [
+                  "durable",
+                  "already_paused"
+                ]
+              }
+            }
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "success"
+            ]
+          }
+        }
+      },
+      "AssistantResumeResponse": {
+        "type": "object",
+        "required": [
+          "data",
+          "status",
+          "message"
+        ],
+        "properties": {
+          "data": {
+            "type": "object",
+            "required": [
+              "jobId",
+              "sessionId"
+            ],
+            "properties": {
+              "jobId": {
+                "type": "string"
+              },
+              "sessionId": {
+                "type": "string",
+                "format": "uuid"
+              }
+            }
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "success"
+            ]
+          },
+          "message": {
+            "type": "string"
           }
         }
       }
