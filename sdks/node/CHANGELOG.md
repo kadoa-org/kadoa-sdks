@@ -1,5 +1,14 @@
 # Changelog
 
+## [0.37.0](https://github.com/kadoa-org/kadoa-sdks/compare/node-sdk-v0.36.0...node-sdk-v0.37.0) (2026-07-28)
+
+
+### Features
+
+* **node-sdk:** add assistant session controls ([#347](https://github.com/kadoa-org/kadoa-sdks/issues/347)) ([7a21c4e](https://github.com/kadoa-org/kadoa-sdks/commit/7a21c4e955530044004b6ddefacb3743217e4a85))
+* **node-sdk:** add workflow assistant lifecycle service ([#345](https://github.com/kadoa-org/kadoa-sdks/issues/345)) ([a5aa029](https://github.com/kadoa-org/kadoa-sdks/commit/a5aa02954e285138a8aafdefb1e3b0742d37b6ab))
+* **node-sdk:** type workflow management parity fields ([#346](https://github.com/kadoa-org/kadoa-sdks/issues/346)) ([214ee85](https://github.com/kadoa-org/kadoa-sdks/commit/214ee8566db67b5117e288514a758489d12fdafd))
+
 ## [0.36.0](https://github.com/kadoa-org/kadoa-sdks/compare/node-sdk-v0.35.0...node-sdk-v0.36.0) (2026-07-24)
 
 
