@@ -1,4 +1,5 @@
 export {
+  AgentApi,
   Configuration,
   DataValidationApi,
   MeApi,

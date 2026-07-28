@@ -1,4 +1,5 @@
 import type { AxiosInstance } from "axios";
+import type { AssistantService } from "../domains/assistant";
 import type { ChangesService } from "../domains/changes/changes.service";
 import type { CrawlerDomain } from "../domains/crawler";
 import type { ExtractionService } from "../domains/extraction/services/extraction.service";
@@ -61,6 +62,7 @@ export class KadoaClient {
   private readonly _extractionBuilderService: ExtractionBuilderService;
 
   public readonly apis: ApiRegistry;
+  public readonly assistant: AssistantService;
   public readonly changes: ChangesService;
   public readonly extraction: ExtractionService;
   public readonly workflow: WorkflowsCoreService;
@@ -120,6 +122,7 @@ export class KadoaClient {
 
     const domains = createClientDomains({ client: this });
 
+    this.assistant = domains.assistant;
     this.changes = domains.changes;
     this.user = domains.user;
     this.extraction = domains.extraction;
