@@ -2338,15 +2338,6 @@
                         "timed_out"
                       ],
                       "description": "Status of the linked assistant session. Useful for deciding whether the Assistant can accept new input (failed/errored/aborted/timed_out are closed)."
-                    },
-                    "extractionStrategySummary": {
-                      "allOf": [
-                        {
-                          "$ref": "#/components/schemas/ExtractionStrategySummary"
-                        }
-                      ],
-                      "nullable": true,
-                      "description": "Customer-safe extraction strategy for custom SCRIPT workflows without an Assistant build. Omitted for Assistant-owned workflows, whose current strategy is available from the Agent strategy endpoint."
                     }
                   }
                 }
