@@ -1864,12 +1864,23 @@
                       "type": "boolean",
                       "description": "Whether this workflow should be displayed as realtime"
                     },
+                    "lastDataChangedAt": {
+                      "type": "string",
+                      "format": "date-time",
+                      "nullable": true,
+                      "description": "Most recent persisted customer-visible data change for a real-time workflow"
+                    },
                     "schedules": {
                       "type": "array",
                       "items": {
                         "type": "string"
                       },
                       "description": "Cron schedules for updates"
+                    },
+                    "scheduleTimezone": {
+                      "type": "string",
+                      "example": "America/New_York",
+                      "description": "IANA timezone used to evaluate cron schedules"
                     },
                     "nextInvocation": {
                       "type": "string",
@@ -1892,13 +1903,7 @@
                         },
                         "isoCode": {
                           "type": "string",
-                          "enum": [
-                            "DE",
-                            "US",
-                            "GB",
-                            "NL",
-                            "CA"
-                          ]
+                          "description": "Supported country ISO code when type is manual"
                         }
                       },
                       "description": "Scraping location configuration"
@@ -1918,9 +1923,63 @@
                       "type": "string",
                       "description": "ID of the schema used"
                     },
+                    "templateName": {
+                      "type": "string",
+                      "nullable": true,
+                      "description": "Name of the linked workflow template"
+                    },
+                    "templateId": {
+                      "type": "string",
+                      "nullable": true,
+                      "description": "ID of the linked workflow template"
+                    },
+                    "templateVersion": {
+                      "type": "integer",
+                      "nullable": true,
+                      "description": "Applied template version"
+                    },
+                    "templateHasPrompt": {
+                      "type": "boolean",
+                      "description": "Whether the template controls the workflow prompt"
+                    },
+                    "templateHasSchema": {
+                      "type": "boolean",
+                      "description": "Whether the template controls the extraction schema"
+                    },
+                    "templateHasSchemaValidationRules": {
+                      "type": "boolean",
+                      "description": "Whether the template controls schema validation rules"
+                    },
+                    "templateHasNotifications": {
+                      "type": "boolean",
+                      "description": "Whether the template controls notification settings"
+                    },
+                    "templateHasFrequency": {
+                      "type": "boolean",
+                      "description": "Whether the template controls schedule/frequency"
+                    },
+                    "hasSchemaValidationRules": {
+                      "type": "boolean",
+                      "description": "Whether this workflow has schema validation rules"
+                    },
+                    "channelCounts": {
+                      "type": "object",
+                      "additionalProperties": {
+                        "type": "integer"
+                      },
+                      "description": "Notification channel counts grouped by channel type"
+                    },
                     "jobId": {
                       "type": "string",
                       "description": "ID of the last job"
+                    },
+                    "isFirstRun": {
+                      "type": "boolean",
+                      "description": "Whether the workflow has not completed a regular run yet"
+                    },
+                    "dataQualityIssues": {
+                      "type": "integer",
+                      "description": "Number of data-quality issues in the latest finished run"
                     },
                     "finishedAt": {
                       "type": "string",
@@ -2029,28 +2088,17 @@
                         }
                       }
                     },
-                    "navigationMode": {
-                      "type": "string",
-                      "enum": [
-                        "single-page",
-                        "paginated-page",
-                        "page-and-detail",
-                        "agentic-navigation",
-                        "all-pages"
-                      ],
-                      "description": "Navigation mode for scraping. Determines how the scraper navigates through pages"
-                    },
                     "maxDepth": {
                       "type": "integer",
                       "minimum": 1,
                       "maximum": 200,
-                      "description": "Maximum crawl depth (default: 50, max: 200). Only used when navigationMode is 'all-pages'"
+                      "description": "Maximum crawl depth (default: 50, max: 200)."
                     },
                     "maxPages": {
                       "type": "integer",
                       "minimum": 1,
                       "maximum": 100000,
-                      "description": "Maximum pages to crawl (default: 10,000, max: 100,000). Only used when navigationMode is 'all-pages'"
+                      "description": "Maximum pages to crawl (default: 10,000, max: 100,000)."
                     },
                     "schema": {
                       "type": "array",
@@ -2096,8 +2144,17 @@
                       "description": "Extraction schema fields"
                     },
                     "entity": {
+                      "type": "string",
+                      "description": "Canonical extracted entity name"
+                    },
+                    "extractionSpec": {
                       "type": "object",
-                      "description": "Entity information"
+                      "additionalProperties": true,
+                      "description": "Canonical extraction intent for Assistant-built workflows"
+                    },
+                    "dataStale": {
+                      "type": "boolean",
+                      "description": "Whether batch workflow data predates the current canonical configuration/build"
                     },
                     "isSchemaEditable": {
                       "type": "boolean",
@@ -2155,14 +2212,16 @@
                     },
                     "notificationConfig": {
                       "type": "object",
+                      "nullable": true,
                       "properties": {
-                        "enabled": {
-                          "type": "boolean"
-                        },
-                        "fields": {
+                        "monitoredFields": {
                           "type": "array",
                           "items": {
                             "type": "object",
+                            "required": [
+                              "fieldName",
+                              "operator"
+                            ],
                             "properties": {
                               "fieldName": {
                                 "type": "string"
@@ -2174,12 +2233,20 @@
                                   "added",
                                   "removed"
                                 ]
+                              },
+                              "isKeyField": {
+                                "type": "boolean"
                               }
                             }
                           }
+                        },
+                        "conditions": {
+                          "type": "object",
+                          "additionalProperties": true,
+                          "description": "Persisted AND/OR monitoring condition group"
                         }
                       },
-                      "description": "Monitoring configuration"
+                      "description": "Current monitoring configuration. Use these values as the basis for replacement updates."
                     },
                     "openSupportRequests": {
                       "type": "array",
@@ -2232,6 +2299,15 @@
                         }
                       }
                     },
+                    "extractionStrategySummary": {
+                      "allOf": [
+                        {
+                          "$ref": "#/components/schemas/ExtractionStrategySummary"
+                        }
+                      ],
+                      "nullable": true,
+                      "description": "Customer-safe extraction strategy for custom SCRIPT workflows without an Assistant build. Omitted for Assistant-owned workflows, whose current strategy is available from the Agent strategy endpoint."
+                    },
                     "assistantSessionId": {
                       "type": "string",
                       "nullable": true,
@@ -2244,7 +2320,7 @@
                     },
                     "assistantEligible": {
                       "type": "boolean",
-                      "description": "True when this workflow has no assistant session yet and is eligible to start one (SHELLY_SCRIPT and SHELLY_REAL_TIME_SCRIPT workflows)."
+                      "description": "True when this workflow's lane supports the assistant (SHELLY_SCRIPT or SHELLY_REAL_TIME_SCRIPT). Independent of assistantSessionId; combine with !assistantSessionId for start-vs-continue."
                     },
                     "sessionStatus": {
                       "type": "string",
@@ -4262,17 +4338,31 @@
                   },
                   "limit": {
                     "type": "integer",
-                    "description": "The new limit for the workflow"
+                    "minimum": 1,
+                    "nullable": true,
+                    "description": "Maximum records per run. Pass null to clear the limit and extract all rows."
                   },
                   "updateInterval": {
                     "type": "string",
                     "description": "The new update interval for the workflow",
                     "enum": [
                       "ONLY_ONCE",
+                      "EVERY_10_MINUTES",
+                      "HALF_HOURLY",
                       "HOURLY",
+                      "THREE_HOURLY",
+                      "SIX_HOURLY",
+                      "TWELVE_HOURLY",
+                      "EIGHTEEN_HOURLY",
                       "DAILY",
+                      "TWO_DAY",
+                      "THREE_DAY",
                       "WEEKLY",
+                      "BIWEEKLY",
+                      "TRIWEEKLY",
+                      "FOUR_WEEKS",
                       "MONTHLY",
+                      "REAL_TIME",
                       "CUSTOM"
                     ]
                   },
@@ -4282,6 +4372,11 @@
                       "type": "string"
                     },
                     "description": "Array of cron expressions for the workflow schedule"
+                  },
+                  "timezone": {
+                    "type": "string",
+                    "example": "America/New_York",
+                    "description": "IANA timezone for cron schedules. A timezone-only update preserves existing cron expressions."
                   },
                   "name": {
                     "type": "string",
@@ -4322,15 +4417,24 @@
                   },
                   "monitoring": {
                     "type": "object",
+                    "required": [
+                      "fields"
+                    ],
                     "description": "The monitoring config for the workflow",
                     "properties": {
                       "fields": {
                         "type": "array",
+                        "minItems": 1,
                         "items": {
                           "type": "object",
+                          "required": [
+                            "fieldName",
+                            "operator"
+                          ],
                           "properties": {
                             "fieldName": {
                               "type": "string",
+                              "minLength": 1,
                               "description": "The name of the field to monitor"
                             },
                             "operator": {
@@ -4341,12 +4445,20 @@
                                 "removed"
                               ],
                               "description": "The operator to use for monitoring"
+                            },
+                            "isKeyField": {
+                              "type": "boolean",
+                              "description": "Optional explicit schema-key update for this field"
                             }
                           }
                         }
                       },
                       "conditions": {
                         "type": "object",
+                        "required": [
+                          "logicalOperator",
+                          "conditions"
+                        ],
                         "description": "The conditions for monitoring",
                         "properties": {
                           "logicalOperator": {
@@ -4359,8 +4471,13 @@
                           },
                           "conditions": {
                             "type": "array",
+                            "minItems": 1,
                             "items": {
                               "type": "object",
+                              "required": [
+                                "type",
+                                "operator"
+                              ],
                               "properties": {
                                 "type": {
                                   "type": "string",
@@ -4376,11 +4493,43 @@
                                 },
                                 "operator": {
                                   "type": "string",
+                                  "enum": [
+                                    "MATCHES_REGEX",
+                                    "EQUALS",
+                                    "NOT_EQUALS",
+                                    "CONTAINS",
+                                    "NOT_CONTAINS",
+                                    "STARTS_WITH",
+                                    "ENDS_WITH",
+                                    "GREATER_THAN",
+                                    "LESS_THAN",
+                                    "GREATER_THAN_OR_EQUAL",
+                                    "LESS_THAN_OR_EQUAL",
+                                    "IN",
+                                    "NOT_IN",
+                                    "BEFORE",
+                                    "AFTER",
+                                    "WITHIN_LAST_DAYS",
+                                    "IS_NULL",
+                                    "IS_NOT_NULL",
+                                    "IS_EMPTY",
+                                    "IS_NOT_EMPTY"
+                                  ],
                                   "description": "Condition operator"
                                 },
                                 "value": {
-                                  "type": "string",
-                                  "description": "Value to compare against"
+                                  "oneOf": [
+                                    {
+                                      "type": "string"
+                                    },
+                                    {
+                                      "type": "number"
+                                    },
+                                    {
+                                      "type": "boolean"
+                                    }
+                                  ],
+                                  "description": "Required except for null/empty operators"
                                 }
                               }
                             }
@@ -4464,10 +4613,6 @@
                     },
                     "message": {
                       "type": "string"
-                    },
-                    "deprecationNotice": {
-                      "type": "string",
-                      "description": "Optional deprecation notice for legacy navigation modes"
                     }
                   }
                 }
