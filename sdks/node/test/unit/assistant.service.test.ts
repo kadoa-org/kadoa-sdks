@@ -11,14 +11,21 @@ const mockUpdate = mock();
 const mockPauseState = mock();
 const mockAnswer = mock();
 const mockStrategy = mock();
+const mockInterrupt = mock();
+const mockResume = mock();
+const mockStop = mock();
 
 function createTestClient(): KadoaClient {
   const client = new KadoaClient({ apiKey: "tk-test" });
-  const agent = (client.apis as any).agent;
-  agent.v5AgentWorkflowAssistantMessage = mockUpdate;
-  agent.v5AgentPauseState = mockPauseState;
-  agent.v5AgentAnswer = mockAnswer;
-  agent.v5AgentStrategy = mockStrategy;
+  Object.assign(client.apis.agent, {
+    v5AgentWorkflowAssistantMessage: mockUpdate,
+    v5AgentPauseState: mockPauseState,
+    v5AgentAnswer: mockAnswer,
+    v5AgentStrategy: mockStrategy,
+    v5AgentInterrupt: mockInterrupt,
+    v5AgentResume: mockResume,
+    v5AgentStop: mockStop,
+  });
   return client;
 }
 
@@ -74,6 +81,9 @@ describe("AssistantService", () => {
     mockPauseState.mockReset();
     mockAnswer.mockReset();
     mockStrategy.mockReset();
+    mockInterrupt.mockReset();
+    mockResume.mockReset();
+    mockStop.mockReset();
   });
 
   test("requests an identity-preserving workflow update", async () => {
@@ -204,6 +214,56 @@ describe("AssistantService", () => {
     expect(
       await createTestClient().assistant.getStrategy(updateData.sessionId),
     ).toBeNull();
+  });
+
+  test("interrupts an Assistant session and preserves delivery state", async () => {
+    mockInterrupt.mockResolvedValueOnce({
+      data: { data: { success: true, delivery: "durable" }, status: "success" },
+    });
+
+    const result = await createTestClient().assistant.interrupt(
+      updateData.sessionId,
+    );
+
+    expect(mockInterrupt).toHaveBeenCalledWith({
+      sessionId: updateData.sessionId,
+    });
+    expect(result).toEqual({ success: true, delivery: "durable" });
+  });
+
+  test("resumes an Assistant session and returns the new execution", async () => {
+    mockResume.mockResolvedValueOnce({
+      data: {
+        data: { sessionId: updateData.sessionId, jobId: "resume-job-1" },
+        status: "success",
+        message: "Session resume started",
+      },
+    });
+
+    const result = await createTestClient().assistant.resume(
+      updateData.sessionId,
+    );
+
+    expect(mockResume).toHaveBeenCalledWith({
+      sessionId: updateData.sessionId,
+    });
+    expect(result).toEqual({
+      sessionId: updateData.sessionId,
+      jobId: "resume-job-1",
+    });
+  });
+
+  test("stops an Assistant session", async () => {
+    mockStop.mockResolvedValueOnce({
+      data: { data: { success: true }, status: "success" },
+    });
+
+    const result = await createTestClient().assistant.stop(
+      updateData.sessionId,
+    );
+
+    expect(mockStop).toHaveBeenCalledWith({ sessionId: updateData.sessionId });
+    expect(result).toEqual({ success: true });
   });
 
   test("propagates generated API errors", async () => {

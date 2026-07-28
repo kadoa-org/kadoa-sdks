@@ -1,10 +1,12 @@
 import type {
   AgentApiInterface,
   AssistantAnswerResponseData,
+  AssistantControlResponseData,
   AssistantPauseStateResponseData,
   AssistantPauseStateResponseDataPause,
   AssistantPauseStateResponseDataPendingQuestion,
   AssistantQuestion,
+  AssistantResumeResponseData,
   ExtractionStrategySummary,
   WorkflowAssistantMessageResponseData,
 } from "../../generated";
@@ -36,3 +38,5 @@ export interface AssistantQuestionAnswerInput {
 
 export type AssistantQuestionAnswerResult = AssistantAnswerResponseData;
 export type AssistantExtractionStrategy = ExtractionStrategySummary;
+export type AssistantControlResult = AssistantControlResponseData;
+export type AssistantResumeAccepted = AssistantResumeResponseData;
