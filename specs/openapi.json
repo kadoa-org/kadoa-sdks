@@ -2262,6 +2262,15 @@
                         "timed_out"
                       ],
                       "description": "Status of the linked assistant session. Useful for deciding whether the Assistant can accept new input (failed/errored/aborted/timed_out are closed)."
+                    },
+                    "extractionStrategySummary": {
+                      "allOf": [
+                        {
+                          "$ref": "#/components/schemas/ExtractionStrategySummary"
+                        }
+                      ],
+                      "nullable": true,
+                      "description": "Customer-safe extraction strategy for custom SCRIPT workflows without an Assistant build. Omitted for Assistant-owned workflows, whose current strategy is available from the Agent strategy endpoint."
                     }
                   }
                 }
@@ -17899,6 +17908,175 @@
           }
         ]
       }
+    },
+    "/v5/agent/workflows/{workflowId}/assistant/messages": {
+      "post": {
+        "operationId": "v5AgentWorkflowAssistantMessage",
+        "summary": "Request an Assistant update to an existing workflow",
+        "description": "Bootstraps or reuses the workflow's customer Assistant session and enqueues update instructions without changing the workflow ID.",
+        "tags": [
+          "Agent"
+        ],
+        "parameters": [
+          {
+            "name": "workflowId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/WorkflowAssistantMessageRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "202": {
+            "description": "Workflow Assistant update accepted",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/WorkflowAssistantMessageResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid workflow ID or request body"
+          },
+          "404": {
+            "description": "Workflow or Assistant session not found"
+          },
+          "409": {
+            "description": "Assistant session or thread conflict"
+          }
+        }
+      }
+    },
+    "/v5/agent/{sessionId}/pause-state": {
+      "get": {
+        "operationId": "v5AgentPauseState",
+        "summary": "Get durable Assistant pause and question state",
+        "tags": [
+          "Agent"
+        ],
+        "parameters": [
+          {
+            "name": "sessionId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Assistant pause state",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AssistantPauseStateResponse"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Session not found"
+          },
+          "409": {
+            "description": "Invalid session pause state"
+          },
+          "503": {
+            "description": "Assistant manager temporarily unavailable"
+          }
+        }
+      }
+    },
+    "/v5/agent/answer": {
+      "post": {
+        "operationId": "v5AgentAnswer",
+        "summary": "Answer a durable Assistant question",
+        "tags": [
+          "Agent"
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/AssistantAnswerRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Answer accepted and session resume requested",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AssistantAnswerResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid request body"
+          },
+          "404": {
+            "description": "Session or question not found"
+          },
+          "409": {
+            "description": "Question has already resumed or cannot accept an answer"
+          }
+        }
+      }
+    },
+    "/v5/agent/data/{sessionId}/strategy": {
+      "get": {
+        "operationId": "v5AgentStrategy",
+        "summary": "Get the latest customer-safe Assistant extraction strategy",
+        "description": "Returns strategy null when the session exists but no build strategy is available yet.",
+        "tags": [
+          "Agent"
+        ],
+        "parameters": [
+          {
+            "name": "sessionId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Latest extraction strategy, or null while unavailable",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AssistantStrategyResponse"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Session not found"
+          }
+        }
+      }
     }
   },
   "components": {
@@ -25912,6 +26090,367 @@
         ],
         "title": "WorkflowCreateRequest",
         "description": "Create a workflow using natural-language instructions. Navigation is handled automatically for new integrations."
+      },
+      "ExtractionStrategySummary": {
+        "type": "object",
+        "required": [
+          "approach",
+          "summary",
+          "dataSource"
+        ],
+        "properties": {
+          "approach": {
+            "type": "string"
+          },
+          "summary": {
+            "type": "string"
+          },
+          "dataSource": {
+            "type": "object",
+            "required": [
+              "type",
+              "endpoints",
+              "interactionStyle",
+              "selectors"
+            ],
+            "properties": {
+              "type": {
+                "type": "string"
+              },
+              "endpoints": {
+                "type": "array",
+                "items": {
+                  "type": "string"
+                }
+              },
+              "interactionStyle": {
+                "type": "string"
+              },
+              "selectors": {
+                "type": "array",
+                "items": {
+                  "type": "string"
+                }
+              }
+            }
+          },
+          "intervalSeconds": {
+            "type": "number",
+            "nullable": true,
+            "description": "Realtime polling interval in seconds, when applicable."
+          }
+        }
+      },
+      "AssistantQuestion": {
+        "type": "object",
+        "additionalProperties": true,
+        "required": [
+          "question",
+          "header",
+          "options",
+          "answerType"
+        ],
+        "properties": {
+          "question": {
+            "type": "string"
+          },
+          "header": {
+            "type": "string"
+          },
+          "options": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "required": [
+                "label",
+                "description"
+              ],
+              "properties": {
+                "label": {
+                  "type": "string"
+                },
+                "description": {
+                  "type": "string"
+                }
+              }
+            }
+          },
+          "answerType": {
+            "type": "string",
+            "enum": [
+              "single",
+              "multi",
+              "freeform"
+            ]
+          },
+          "metadata": {
+            "type": "object",
+            "additionalProperties": true
+          }
+        }
+      },
+      "WorkflowAssistantMessageRequest": {
+        "type": "object",
+        "required": [
+          "prompt"
+        ],
+        "properties": {
+          "prompt": {
+            "type": "string",
+            "minLength": 1,
+            "description": "Natural-language instructions for updating the existing workflow."
+          },
+          "threadId": {
+            "type": "string",
+            "format": "uuid",
+            "nullable": true,
+            "description": "Assistant thread to continue. Omit to use the workflow's latest Assistant thread."
+          }
+        }
+      },
+      "WorkflowAssistantMessageResponse": {
+        "type": "object",
+        "required": [
+          "data",
+          "status",
+          "message"
+        ],
+        "properties": {
+          "data": {
+            "type": "object",
+            "required": [
+              "jobId",
+              "sessionId",
+              "threadId",
+              "workflowId"
+            ],
+            "properties": {
+              "jobId": {
+                "type": "string",
+                "nullable": true
+              },
+              "inputEventId": {
+                "type": "string"
+              },
+              "sessionId": {
+                "type": "string",
+                "format": "uuid"
+              },
+              "threadId": {
+                "type": "string",
+                "format": "uuid"
+              },
+              "workflowId": {
+                "type": "string",
+                "format": "uuid"
+              },
+              "existed": {
+                "type": "boolean"
+              },
+              "alreadyBootstrapped": {
+                "type": "boolean"
+              }
+            }
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "success"
+            ]
+          },
+          "message": {
+            "type": "string"
+          }
+        }
+      },
+      "AssistantPauseStateResponse": {
+        "type": "object",
+        "required": [
+          "data",
+          "status"
+        ],
+        "properties": {
+          "data": {
+            "type": "object",
+            "required": [
+              "paused",
+              "pause",
+              "pendingQuestion"
+            ],
+            "properties": {
+              "paused": {
+                "type": "boolean"
+              },
+              "pause": {
+                "type": "object",
+                "nullable": true,
+                "required": [
+                  "id",
+                  "reason",
+                  "status",
+                  "pausedAt"
+                ],
+                "properties": {
+                  "id": {
+                    "type": "string"
+                  },
+                  "reason": {
+                    "type": "string",
+                    "enum": [
+                      "question",
+                      "interrupt"
+                    ]
+                  },
+                  "status": {
+                    "type": "string",
+                    "enum": [
+                      "active",
+                      "resuming"
+                    ]
+                  },
+                  "threadId": {
+                    "type": "string",
+                    "format": "uuid"
+                  },
+                  "pausedAt": {
+                    "type": "string",
+                    "format": "date-time"
+                  },
+                  "resumeRequestedAt": {
+                    "type": "string",
+                    "format": "date-time"
+                  }
+                }
+              },
+              "pendingQuestion": {
+                "type": "object",
+                "nullable": true,
+                "required": [
+                  "questionId",
+                  "questions",
+                  "askedAt"
+                ],
+                "properties": {
+                  "questionId": {
+                    "type": "string"
+                  },
+                  "threadId": {
+                    "type": "string",
+                    "format": "uuid"
+                  },
+                  "questions": {
+                    "type": "array",
+                    "items": {
+                      "$ref": "#/components/schemas/AssistantQuestion"
+                    }
+                  },
+                  "askedAt": {
+                    "type": "string",
+                    "format": "date-time"
+                  }
+                }
+              }
+            }
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "success"
+            ]
+          }
+        }
+      },
+      "AssistantAnswerRequest": {
+        "type": "object",
+        "required": [
+          "sessionId",
+          "questionId",
+          "answers"
+        ],
+        "properties": {
+          "sessionId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "questionId": {
+            "type": "string"
+          },
+          "threadId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "answers": {
+            "type": "object",
+            "additionalProperties": {
+              "type": "string"
+            },
+            "description": "Question-index-to-answer map. Freeform answers use the `_freeform` key."
+          }
+        }
+      },
+      "AssistantAnswerResponse": {
+        "type": "object",
+        "required": [
+          "data",
+          "status",
+          "message"
+        ],
+        "properties": {
+          "data": {
+            "type": "object",
+            "required": [
+              "success"
+            ],
+            "properties": {
+              "success": {
+                "type": "boolean",
+                "enum": [
+                  true
+                ]
+              }
+            }
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "success"
+            ]
+          },
+          "message": {
+            "type": "string"
+          }
+        }
+      },
+      "AssistantStrategyResponse": {
+        "type": "object",
+        "required": [
+          "data",
+          "status"
+        ],
+        "properties": {
+          "data": {
+            "type": "object",
+            "required": [
+              "strategy"
+            ],
+            "properties": {
+              "strategy": {
+                "allOf": [
+                  {
+                    "$ref": "#/components/schemas/ExtractionStrategySummary"
+                  }
+                ],
+                "nullable": true
+              }
+            }
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "success"
+            ]
+          }
+        }
       }
     },
     "securitySchemes": {

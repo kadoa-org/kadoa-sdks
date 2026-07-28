@@ -1,6 +1,7 @@
 import type { AxiosInstance } from "axios";
 import { CrawlerApi } from "../domains/crawler/crawler.acl";
 import {
+  AgentApi,
   type BaseAPI,
   Configuration,
   DataValidationApi,
@@ -44,6 +45,10 @@ export class ApiRegistry {
       );
     }
     return this.cache.get(ApiClass) as T;
+  }
+
+  get agent(): AgentApi {
+    return this.get(AgentApi);
   }
 
   get schemas(): SchemasApi {
