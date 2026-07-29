@@ -7,12 +7,48 @@ import type {
   AssistantQuestionAnswerInput,
   AssistantQuestionAnswerResult,
   AssistantResumeAccepted,
+  CreateRealtimeWorkflowInput,
+  RealtimeWorkflowCreationAccepted,
   WorkflowAssistantUpdateAccepted,
   WorkflowAssistantUpdateInput,
 } from "./assistant.acl";
 
 export class AssistantService {
   constructor(private readonly agentApi: AgentApiInterface) {}
+
+  async createRealtimeWorkflow(
+    input: CreateRealtimeWorkflowInput,
+  ): Promise<RealtimeWorkflowCreationAccepted> {
+    const response = await this.agentApi.v5AgentPrompt({
+      agentPromptRequest: {
+        prompt: input.instructions,
+        productType: "realtime",
+        notificationChannelIds:
+          input.notificationChannelIds as unknown as Set<string>,
+        ...(input.tags != null && { tags: input.tags }),
+        ...(input.newSessionId != null && { newSessionId: input.newSessionId }),
+      },
+    });
+    const data = response.data?.data;
+
+    if (
+      !data?.workflowId ||
+      !data.sessionId ||
+      !data.threadId ||
+      !Object.keys(data ?? {}).includes("jobId") ||
+      data.jobId === undefined
+    ) {
+      throw new KadoaSdkException(
+        "Realtime Assistant creation response is missing required identifiers",
+        {
+          code: "INTERNAL_ERROR",
+          details: { response: response.data },
+        },
+      );
+    }
+
+    return data;
+  }
 
   async requestWorkflowUpdate(
     workflowId: string,

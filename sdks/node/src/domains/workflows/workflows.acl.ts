@@ -29,7 +29,6 @@ import type {
   V4WorkflowsWorkflowIdRunPutRequest,
   WorkflowFromTemplate,
   WorkflowsApiInterface,
-  WorkflowsApiV4WorkflowsGetRequest,
   WorkflowWithEntityAndFields,
   WorkflowWithExistingSchema,
 } from "../../generated";
@@ -90,6 +89,7 @@ export const UpdateInterval = {
   Daily: "DAILY",
   Weekly: "WEEKLY",
   Monthly: "MONTHLY",
+  RealTime: "REAL_TIME",
 } as const satisfies Record<
   keyof typeof V4WorkflowsGetUpdateIntervalEnum,
   V4WorkflowsGetUpdateIntervalEnum
@@ -190,7 +190,7 @@ export type JobStateEnum = (typeof JobStateEnum)[keyof typeof JobStateEnum];
 // Request Types
 // ========================================
 
-export class ListWorkflowsRequest implements WorkflowsApiV4WorkflowsGetRequest {
+export class ListWorkflowsRequest {
   search?: string;
   skip?: number;
   limit?: number;
@@ -198,7 +198,7 @@ export class ListWorkflowsRequest implements WorkflowsApiV4WorkflowsGetRequest {
   tags?: Array<string>;
   monitoring?: MonitoringStatus;
   updateInterval?: UpdateInterval;
-  templateId?: string;
+  templateId?: string | string[];
   includeDeleted?: IncludeDeleted;
   format?: ResponseFormat;
 }
@@ -320,7 +320,8 @@ export type WorkflowRunState = NonNullable<WorkflowRun["state"]>;
 /**
  * Semantic status filter accepted by `listWorkflowRuns`.
  */
-export const WorkflowRunStatusFilter = V4WorkflowsWorkflowIdHistoryGetStatusEnum;
+export const WorkflowRunStatusFilter =
+  V4WorkflowsWorkflowIdHistoryGetStatusEnum;
 
 export type WorkflowRunStatusFilter =
   (typeof WorkflowRunStatusFilter)[keyof typeof WorkflowRunStatusFilter];
