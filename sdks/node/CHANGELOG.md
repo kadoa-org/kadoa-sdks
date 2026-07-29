@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.37.1](https://github.com/kadoa-org/kadoa-sdks/compare/node-sdk-v0.37.0...node-sdk-v0.37.1) (2026-07-29)
+
+
+### Bug Fixes
+
+* **node-sdk:** guard release OpenAPI source ([#350](https://github.com/kadoa-org/kadoa-sdks/issues/350)) ([e8b3267](https://github.com/kadoa-org/kadoa-sdks/commit/e8b32674e8d00fdc0dd780fe2d71b021b698ed62))
+
 ## [0.37.0](https://github.com/kadoa-org/kadoa-sdks/compare/node-sdk-v0.36.0...node-sdk-v0.37.0) (2026-07-28)
 
 
