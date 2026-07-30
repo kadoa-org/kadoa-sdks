@@ -8,7 +8,9 @@ export {
   type AssistantQuestionAnswerInput,
   type AssistantQuestionAnswerResult,
   type AssistantQuestionAnswers,
+  type CreateRealtimeWorkflowInput,
   FREEFORM_ASSISTANT_ANSWER_KEY,
+  type RealtimeWorkflowCreationAccepted,
   type WorkflowAssistantUpdateAccepted,
   type WorkflowAssistantUpdateInput,
 } from "./assistant.acl";
