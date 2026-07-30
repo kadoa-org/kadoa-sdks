@@ -1,8 +1,16 @@
 import { KadoaSdkException } from "../../runtime/exceptions";
 import { ERROR_MESSAGES } from "../../runtime/exceptions/base.exception";
 import { logger } from "../../runtime/logger";
-import { type PollingOptions, pollUntil, validateAdditionalData } from "../../runtime/utils";
-import type { LocationConfig, SchemaField, WorkflowInterval } from "../extraction/extraction.acl";
+import {
+  type PollingOptions,
+  pollUntil,
+  validateAdditionalData,
+} from "../../runtime/utils";
+import type {
+  LocationConfig,
+  SchemaField,
+  WorkflowInterval,
+} from "../extraction/extraction.acl";
 import type { TemplatesService } from "../templates/templates.service";
 import {
   type GetJobResponse,
@@ -127,10 +135,13 @@ export class WorkflowsCoreService {
         );
       }
     } else if (!input.userPrompt) {
-      throw new KadoaSdkException("userPrompt is required to create a workflow", {
-        code: "VALIDATION_ERROR",
-        details: { urls: input.urls },
-      });
+      throw new KadoaSdkException(
+        "userPrompt is required to create a workflow",
+        {
+          code: "VALIDATION_ERROR",
+          details: { urls: input.urls },
+        },
+      );
     }
 
     const domainName = new URL(input.urls[0]).hostname;
@@ -138,7 +149,8 @@ export class WorkflowsCoreService {
     let request: PromptWorkflow | WorkflowFromTemplate;
     if (isFromTemplate) {
       const templateId = input.templateId as string;
-      const templateVersion = input.templateVersion ?? (await this.resolveLatestVersion(templateId));
+      const templateVersion =
+        input.templateVersion ?? (await this.resolveLatestVersion(templateId));
 
       request = {
         urls: input.urls,
@@ -205,7 +217,8 @@ export class WorkflowsCoreService {
       );
     }
     const template = await this.templatesService.get(templateId);
-    const latest = (template as { latestVersion?: number | null }).latestVersion;
+    const latest = (template as { latestVersion?: number | null })
+      .latestVersion;
     if (latest == null) {
       throw new KadoaSdkException(
         `Template ${templateId} has no published versions; supply templateVersion explicitly or publish a version first.`,
@@ -226,7 +239,18 @@ export class WorkflowsCoreService {
   }
 
   async list(filters?: ListWorkflowsRequest): Promise<WorkflowResponse[]> {
-    const response = await this.workflowsApi.v4WorkflowsGet(filters);
+    if (filters == null) {
+      const response = await this.workflowsApi.v4WorkflowsGet();
+      return (response.data?.workflows ?? []) as WorkflowResponse[];
+    }
+
+    const { templateId, ...rest } = filters;
+    const response = await this.workflowsApi.v4WorkflowsGet({
+      ...rest,
+      ...(templateId != null && {
+        templateId: Array.isArray(templateId) ? templateId : [templateId],
+      }),
+    });
     return (response.data?.workflows ?? []) as WorkflowResponse[];
   }
 
@@ -243,7 +267,10 @@ export class WorkflowsCoreService {
    * (UI/API/SDK/MCP/CLI/SYSTEM), and full before/after snapshots for UPDATE
    * operations. CREATE entries have null `previousValue`/`newValue`.
    */
-  async getAuditLog(id: WorkflowId, options?: WorkflowAuditLogOptions): Promise<WorkflowAuditLogResponse> {
+  async getAuditLog(
+    id: WorkflowId,
+    options?: WorkflowAuditLogOptions,
+  ): Promise<WorkflowAuditLogResponse> {
     const response = await this.workflowsApi.v5WorkflowsWorkflowIdAuditlogGet({
       workflowId: id,
       page: options?.page,
@@ -256,7 +283,10 @@ export class WorkflowsCoreService {
    * Get the run history for a workflow, optionally filtered by outcome
    * (success | failed | in_progress) and paginated.
    */
-  async listWorkflowRuns(id: WorkflowId, options?: WorkflowRunsOptions): Promise<WorkflowRunsResponse> {
+  async listWorkflowRuns(
+    id: WorkflowId,
+    options?: WorkflowRunsOptions,
+  ): Promise<WorkflowRunsResponse> {
     const response = await this.workflowsApi.v4WorkflowsWorkflowIdHistoryGet({
       workflowId: id,
       page: options?.page,
@@ -272,7 +302,10 @@ export class WorkflowsCoreService {
     });
   }
 
-  async update(id: WorkflowId, input: UpdateWorkflowRequest): Promise<UpdateWorkflowResponse> {
+  async update(
+    id: WorkflowId,
+    input: UpdateWorkflowRequest,
+  ): Promise<UpdateWorkflowResponse> {
     validateAdditionalData(input.additionalData);
 
     const response = await this.workflowsApi.v4WorkflowsWorkflowIdMetadataPut({
@@ -297,7 +330,10 @@ export class WorkflowsCoreService {
   /**
    * Wait for a workflow to reach the target state or a terminal state if no target state is provided
    */
-  async wait(id: WorkflowId, options?: WaitOptions): Promise<GetWorkflowResponse> {
+  async wait(
+    id: WorkflowId,
+    options?: WaitOptions,
+  ): Promise<GetWorkflowResponse> {
     const result = await pollUntil(
       async () => {
         const current = await this.get(id);
@@ -313,7 +349,11 @@ export class WorkflowsCoreService {
         }
 
         // Check for terminal states
-        if (current.runState && TERMINAL_RUN_STATES.has(current.runState.toUpperCase()) && current.state !== "QUEUED") {
+        if (
+          current.runState &&
+          TERMINAL_RUN_STATES.has(current.runState.toUpperCase()) &&
+          current.state !== "QUEUED"
+        ) {
           return true;
         }
 
@@ -328,7 +368,10 @@ export class WorkflowsCoreService {
   /**
    * Run a workflow with variables and optional limit
    */
-  async runWorkflow(workflowId: WorkflowId, input: RunWorkflowRequest): Promise<RunWorkflowResponse> {
+  async runWorkflow(
+    workflowId: WorkflowId,
+    input: RunWorkflowRequest,
+  ): Promise<RunWorkflowResponse> {
     const response = await this.workflowsApi.v4WorkflowsWorkflowIdRunPut({
       workflowId,
       v4WorkflowsWorkflowIdRunPutRequest: {
@@ -357,7 +400,10 @@ export class WorkflowsCoreService {
   /**
    * Get job status directly without polling workflow details
    */
-  async getJobStatus(workflowId: WorkflowId, jobId: JobId): Promise<GetJobResponse> {
+  async getJobStatus(
+    workflowId: WorkflowId,
+    jobId: JobId,
+  ): Promise<GetJobResponse> {
     const response = await this.workflowsApi.v4WorkflowsWorkflowIdJobsJobIdGet({
       workflowId,
       jobId,
@@ -368,7 +414,11 @@ export class WorkflowsCoreService {
   /**
    * Wait for a job to reach the target state or a terminal state
    */
-  async waitForJobCompletion(workflowId: WorkflowId, jobId: JobId, options?: JobWaitOptions): Promise<GetJobResponse> {
+  async waitForJobCompletion(
+    workflowId: WorkflowId,
+    jobId: JobId,
+    options?: JobWaitOptions,
+  ): Promise<GetJobResponse> {
     const result = await pollUntil(
       async () => {
         const current = await this.getJobStatus(workflowId, jobId);

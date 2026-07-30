@@ -24,7 +24,7 @@ export interface Change {
   /** ID of the workflow this change belongs to */
   workflowId?: string;
   /** Current state of the data after the change */
-  data?: Array<object>;
+  data?: Array<object> | null;
   /** Structured representation of changes with object-based diffing */
   differences?: ChangeDifference[];
   /** URL where the change was detected */

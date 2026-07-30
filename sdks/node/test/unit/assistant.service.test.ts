@@ -7,6 +7,7 @@ mock.module("../../src/runtime/utils/version-check", () => ({
 import { KadoaClient } from "../../src/client/kadoa-client";
 import { KadoaSdkException } from "../../src/runtime/exceptions";
 
+const mockPrompt = mock();
 const mockUpdate = mock();
 const mockPauseState = mock();
 const mockAnswer = mock();
@@ -18,6 +19,7 @@ const mockStop = mock();
 function createTestClient(): KadoaClient {
   const client = new KadoaClient({ apiKey: "tk-test" });
   Object.assign(client.apis.agent, {
+    v5AgentPrompt: mockPrompt,
     v5AgentWorkflowAssistantMessage: mockUpdate,
     v5AgentPauseState: mockPauseState,
     v5AgentAnswer: mockAnswer,
@@ -28,6 +30,15 @@ function createTestClient(): KadoaClient {
   });
   return client;
 }
+
+const createData = {
+  workflowId: "11111111-1111-4111-8111-111111111111",
+  sessionId: "22222222-2222-4222-8222-222222222222",
+  threadId: "33333333-3333-4333-8333-333333333333",
+  jobId: "job-1",
+  inputEventId: "event-1",
+  existed: false,
+};
 
 const updateData = {
   workflowId: "11111111-1111-4111-8111-111111111111",
@@ -77,6 +88,7 @@ const strategy = {
 
 describe("AssistantService", () => {
   beforeEach(() => {
+    mockPrompt.mockReset();
     mockUpdate.mockReset();
     mockPauseState.mockReset();
     mockAnswer.mockReset();
@@ -84,6 +96,94 @@ describe("AssistantService", () => {
     mockInterrupt.mockReset();
     mockResume.mockReset();
     mockStop.mockReset();
+  });
+
+  test("creates a realtime workflow through the agent prompt API", async () => {
+    mockPrompt.mockResolvedValueOnce({
+      data: {
+        data: createData,
+        status: "success",
+        message: "Agent prompt accepted",
+      },
+    });
+    const client = createTestClient();
+
+    const result = await client.assistant.createRealtimeWorkflow({
+      instructions: "Monitor https://example.com for price changes",
+      notificationChannelIds: ["11111111-1111-4111-8111-111111111111"],
+      tags: ["mcp"],
+      newSessionId: "22222222-2222-4222-8222-222222222222",
+    });
+
+    expect(mockPrompt).toHaveBeenCalledWith({
+      agentPromptRequest: {
+        prompt: "Monitor https://example.com for price changes",
+        productType: "realtime",
+        notificationChannelIds: ["11111111-1111-4111-8111-111111111111"],
+        tags: ["mcp"],
+        newSessionId: "22222222-2222-4222-8222-222222222222",
+      },
+    });
+    expect(result).toEqual(createData);
+  });
+
+  test("preserves a nullable realtime creation job id", async () => {
+    mockPrompt.mockResolvedValueOnce({
+      data: {
+        data: { ...createData, jobId: null },
+        status: "success",
+        message: "Agent prompt accepted",
+      },
+    });
+
+    const result = await createTestClient().assistant.createRealtimeWorkflow({
+      instructions: "Monitor https://example.com for price changes",
+      notificationChannelIds: ["11111111-1111-4111-8111-111111111111"],
+    });
+
+    expect(result.jobId).toBeNull();
+  });
+
+  test.each([
+    ["workflowId", { ...createData, workflowId: "" }],
+    ["sessionId", { ...createData, sessionId: "" }],
+    ["threadId", { ...createData, threadId: "" }],
+    [
+      "jobId",
+      (() => {
+        const data = { ...createData };
+        delete (data as { jobId?: string | null }).jobId;
+        return data;
+      })(),
+    ],
+  ])("rejects malformed realtime creation responses missing %s", async (_field, data) => {
+    mockPrompt.mockResolvedValueOnce({
+      data: {
+        data,
+        status: "success",
+        message: "Agent prompt accepted",
+      },
+    });
+
+    await expect(
+      createTestClient().assistant.createRealtimeWorkflow({
+        instructions: "Monitor https://example.com for price changes",
+        notificationChannelIds: ["11111111-1111-4111-8111-111111111111"],
+      }),
+    ).rejects.toBeInstanceOf(KadoaSdkException);
+  });
+
+  test("rejects malformed realtime creation success envelopes", async () => {
+    mockPrompt.mockResolvedValueOnce({
+      data: { status: "success", message: "Agent prompt accepted" },
+    });
+
+    await expect(
+      createTestClient().assistant.createRealtimeWorkflow({
+        instructions: "Monitor https://example.com for price changes",
+        notificationChannelIds: ["11111111-1111-4111-8111-111111111111"],
+      }),
+    ).rejects.toBeInstanceOf(KadoaSdkException);
   });
 
   test("requests an identity-preserving workflow update", async () => {
