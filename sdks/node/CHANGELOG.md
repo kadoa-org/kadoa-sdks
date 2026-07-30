@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.38.0](https://github.com/kadoa-org/kadoa-sdks/compare/node-sdk-v0.37.1...node-sdk-v0.38.0) (2026-07-30)
+
+
+### Features
+
+* **node-sdk:** add julie realtime workflow creation ([#352](https://github.com/kadoa-org/kadoa-sdks/issues/352)) ([d68be34](https://github.com/kadoa-org/kadoa-sdks/commit/d68be342cc1119461ee34b98a54fa59e57f36550))
+
 ## [0.37.1](https://github.com/kadoa-org/kadoa-sdks/compare/node-sdk-v0.37.0...node-sdk-v0.37.1) (2026-07-29)
 
 
