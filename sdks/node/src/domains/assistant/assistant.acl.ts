@@ -3,6 +3,8 @@ import type {
   AgentPromptResponseData,
   AssistantAnswerResponseData,
   AssistantControlResponseData,
+  AssistantHistoryItem,
+  AssistantHistoryResponseData,
   AssistantPauseStateResponseData,
   AssistantPauseStateResponseDataPause,
   AssistantPauseStateResponseDataPendingQuestion,
@@ -28,9 +30,16 @@ export interface WorkflowAssistantUpdateInput {
   threadId?: string;
 }
 
+export interface WorkflowAssistantTimelineInput {
+  cursor?: string;
+  limit?: number;
+}
+
 export type RealtimeWorkflowCreationAccepted = AgentPromptResponseData;
 export type WorkflowAssistantUpdateAccepted =
   WorkflowAssistantMessageResponseData;
+export type WorkflowAssistantTimeline = AssistantHistoryResponseData;
+export type WorkflowAssistantTimelineItem = AssistantHistoryItem;
 export type AssistantPauseState = AssistantPauseStateResponseData;
 export type AssistantPause = AssistantPauseStateResponseDataPause;
 export type AssistantPendingQuestion =

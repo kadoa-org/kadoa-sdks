@@ -9,6 +9,8 @@ import type {
   AssistantResumeAccepted,
   CreateRealtimeWorkflowInput,
   RealtimeWorkflowCreationAccepted,
+  WorkflowAssistantTimeline,
+  WorkflowAssistantTimelineInput,
   WorkflowAssistantUpdateAccepted,
   WorkflowAssistantUpdateInput,
 } from "./assistant.acl";
@@ -74,6 +76,18 @@ export class AssistantService {
     }
 
     return data;
+  }
+
+  async getTimeline(
+    workflowId: string,
+    input: WorkflowAssistantTimelineInput = {},
+  ): Promise<WorkflowAssistantTimeline> {
+    const response = await this.agentApi.v5AgentWorkflowAssistantTimeline({
+      workflowId,
+      ...(input.cursor != null && { cursor: input.cursor }),
+      ...(input.limit != null && { limit: input.limit }),
+    });
+    return response.data.data;
   }
 
   async getPauseState(sessionId: string): Promise<AssistantPauseState> {
