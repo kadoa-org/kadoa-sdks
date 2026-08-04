@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.39.0](https://github.com/kadoa-org/kadoa-sdks/compare/node-sdk-v0.38.0...node-sdk-v0.39.0) (2026-08-04)
+
+
+### Features
+
+* **node:** expose workflow Assistant timeline ([#357](https://github.com/kadoa-org/kadoa-sdks/issues/357)) ([1d70520](https://github.com/kadoa-org/kadoa-sdks/commit/1d70520615acd2cd8afc50c3e59e6a63b7320d43))
+
 ## [0.38.0](https://github.com/kadoa-org/kadoa-sdks/compare/node-sdk-v0.37.1...node-sdk-v0.38.0) (2026-07-30)
 
 

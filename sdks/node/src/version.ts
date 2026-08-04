@@ -1,5 +1,5 @@
 // x-release-please-start-version
-export const SDK_VERSION = "0.38.0";
+export const SDK_VERSION = "0.39.0";
 // x-release-please-end
 
 export const SDK_NAME = "kadoa-node-sdk";
