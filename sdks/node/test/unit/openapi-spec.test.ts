@@ -10,4 +10,12 @@ describe("published OpenAPI source", () => {
     expect(() => JSON.parse(source)).not.toThrow();
     expect(source.match(/"extractionStrategySummary"\s*:/g)).toHaveLength(1);
   });
+
+  test("includes workflow Assistant message history", () => {
+    const spec = JSON.parse(readFileSync(specPath, "utf8"));
+
+    expect(
+      spec.paths["/v5/agent/workflows/{workflowId}/timeline"].get.operationId,
+    ).toBe("v5AgentWorkflowAssistantTimeline");
+  });
 });

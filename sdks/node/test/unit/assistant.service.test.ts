@@ -9,6 +9,7 @@ import { KadoaSdkException } from "../../src/runtime/exceptions";
 
 const mockPrompt = mock();
 const mockUpdate = mock();
+const mockTimeline = mock();
 const mockPauseState = mock();
 const mockAnswer = mock();
 const mockStrategy = mock();
@@ -21,6 +22,7 @@ function createTestClient(): KadoaClient {
   Object.assign(client.apis.agent, {
     v5AgentPrompt: mockPrompt,
     v5AgentWorkflowAssistantMessage: mockUpdate,
+    v5AgentWorkflowAssistantTimeline: mockTimeline,
     v5AgentPauseState: mockPauseState,
     v5AgentAnswer: mockAnswer,
     v5AgentStrategy: mockStrategy,
@@ -90,6 +92,7 @@ describe("AssistantService", () => {
   beforeEach(() => {
     mockPrompt.mockReset();
     mockUpdate.mockReset();
+    mockTimeline.mockReset();
     mockPauseState.mockReset();
     mockAnswer.mockReset();
     mockStrategy.mockReset();
@@ -243,6 +246,61 @@ describe("AssistantService", () => {
         { instructions: "Add pagination" },
       ),
     ).rejects.toBeInstanceOf(KadoaSdkException);
+  });
+
+  test("returns paginated workflow Assistant history", async () => {
+    const timeline = {
+      workflowId: updateData.workflowId,
+      sessionId: updateData.sessionId,
+      items: [
+        {
+          id: "1785847252062-0",
+          time: "2026-08-04T12:40:52.062Z",
+          kind: "user_message" as const,
+          role: "user" as const,
+          text: "Repair the source",
+        },
+      ],
+      pagination: {
+        nextCursor: "opaque-cursor",
+        hasMore: true,
+      },
+    };
+    mockTimeline.mockResolvedValueOnce({
+      data: { data: timeline, status: "success" },
+    });
+
+    const result = await createTestClient().assistant.getTimeline(
+      updateData.workflowId,
+      { cursor: "newer-cursor", limit: 25 },
+    );
+
+    expect(mockTimeline).toHaveBeenCalledWith({
+      workflowId: updateData.workflowId,
+      cursor: "newer-cursor",
+      limit: 25,
+    });
+    expect(result).toEqual(timeline);
+  });
+
+  test("omits absent workflow Assistant history pagination options", async () => {
+    mockTimeline.mockResolvedValueOnce({
+      data: {
+        data: {
+          workflowId: updateData.workflowId,
+          sessionId: updateData.sessionId,
+          items: [],
+          pagination: { nextCursor: null, hasMore: false },
+        },
+        status: "success",
+      },
+    });
+
+    await createTestClient().assistant.getTimeline(updateData.workflowId);
+
+    expect(mockTimeline).toHaveBeenCalledWith({
+      workflowId: updateData.workflowId,
+    });
   });
 
   test("returns durable pause state without dropping question metadata", async () => {
