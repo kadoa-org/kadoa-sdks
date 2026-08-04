@@ -11,6 +11,9 @@ export {
   type CreateRealtimeWorkflowInput,
   FREEFORM_ASSISTANT_ANSWER_KEY,
   type RealtimeWorkflowCreationAccepted,
+  type WorkflowAssistantTimeline,
+  type WorkflowAssistantTimelineInput,
+  type WorkflowAssistantTimelineItem,
   type WorkflowAssistantUpdateAccepted,
   type WorkflowAssistantUpdateInput,
 } from "./assistant.acl";

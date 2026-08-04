@@ -1632,6 +1632,7 @@
                               "SDK",
                               "MCP",
                               "CLI",
+                              "ASSISTANT",
                               "SYSTEM"
                             ],
                             "description": "Channel that originated the change"
@@ -6138,6 +6139,72 @@
         }
       }
     },
+    "/v5/agent/workflows/{workflowId}/timeline": {
+      "get": {
+        "operationId": "v5AgentWorkflowAssistantTimeline",
+        "summary": "Read customer-visible Assistant message history",
+        "description": "Returns user messages, Assistant messages, and clarification questions from the latest Lighthouse/Shelly or Julie customer thread. Internal and operations lanes are never selectable.",
+        "tags": [
+          "Agent"
+        ],
+        "parameters": [
+          {
+            "name": "workflowId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
+          {
+            "name": "cursor",
+            "in": "query",
+            "schema": {
+              "type": "string"
+            },
+            "description": "Opaque nextCursor from a previous response, used to read older messages."
+          },
+          {
+            "name": "limit",
+            "in": "query",
+            "schema": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 100,
+              "default": 50
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Customer-visible Assistant message history",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AssistantHistoryResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid workflow ID, limit, or cursor"
+          },
+          "403": {
+            "description": "Authenticated principal cannot read workflows"
+          },
+          "404": {
+            "description": "Workflow not found for the authenticated team"
+          },
+          "409": {
+            "description": "Workflow has no Assistant session or customer-facing thread"
+          },
+          "502": {
+            "description": "Assistant history storage is unavailable"
+          }
+        }
+      }
+    },
     "/v5/agent/workflows/{workflowId}/assistant/messages": {
       "post": {
         "operationId": "v5AgentWorkflowAssistantMessage",
@@ -8585,6 +8652,7 @@
                               "SDK",
                               "MCP",
                               "CLI",
+                              "ASSISTANT",
                               "SYSTEM"
                             ],
                             "description": "Channel that originated the change"
@@ -18348,6 +18416,1161 @@
         ]
       }
     },
+    "/v4/variables/connections": {
+      "get": {
+        "summary": "List secret provider connections",
+        "tags": [
+          "Variables"
+        ],
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "200",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "connections": {
+                      "type": "array",
+                      "items": {
+                        "type": "object",
+                        "properties": {
+                          "id": {
+                            "type": "string",
+                            "format": "uuid"
+                          },
+                          "displayName": {
+                            "type": "string"
+                          },
+                          "provider": {
+                            "type": "string",
+                            "enum": [
+                              "GOOGLE_SECRET_MANAGER"
+                            ]
+                          },
+                          "authMode": {
+                            "type": "string",
+                            "enum": [
+                              "CUSTOMER_GRANT",
+                              "SERVICE_ACCOUNT"
+                            ]
+                          },
+                          "status": {
+                            "type": "string",
+                            "enum": [
+                              "CONNECTED",
+                              "NEEDS_ATTENTION"
+                            ]
+                          },
+                          "projectId": {
+                            "type": "string"
+                          },
+                          "brokerPrincipal": {
+                            "type": "string"
+                          },
+                          "serviceAccountEmail": {
+                            "type": "string",
+                            "format": "email"
+                          },
+                          "verifiedAt": {
+                            "type": "string"
+                          },
+                          "createdAt": {
+                            "type": "string"
+                          },
+                          "updatedAt": {
+                            "type": "string"
+                          }
+                        },
+                        "required": [
+                          "id",
+                          "displayName",
+                          "provider",
+                          "authMode",
+                          "status",
+                          "projectId",
+                          "createdAt",
+                          "updatedAt"
+                        ]
+                      }
+                    },
+                    "error": {
+                      "type": "string",
+                      "nullable": true
+                    }
+                  },
+                  "required": [
+                    "connections",
+                    "error"
+                  ]
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "401",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "error": {
+                      "type": "boolean",
+                      "description": "Indicates an error occurred"
+                    },
+                    "message": {
+                      "type": "string",
+                      "description": "Error message"
+                    },
+                    "details": {
+                      "nullable": true,
+                      "description": "Additional error details (e.g., validation errors)"
+                    }
+                  },
+                  "required": [
+                    "error",
+                    "message"
+                  ]
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "403",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "error": {
+                      "type": "boolean",
+                      "description": "Indicates an error occurred"
+                    },
+                    "message": {
+                      "type": "string",
+                      "description": "Error message"
+                    },
+                    "details": {
+                      "nullable": true,
+                      "description": "Additional error details (e.g., validation errors)"
+                    }
+                  },
+                  "required": [
+                    "error",
+                    "message"
+                  ]
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "500",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "error": {
+                      "type": "boolean",
+                      "description": "Indicates an error occurred"
+                    },
+                    "message": {
+                      "type": "string",
+                      "description": "Error message"
+                    },
+                    "details": {
+                      "nullable": true,
+                      "description": "Additional error details (e.g., validation errors)"
+                    }
+                  },
+                  "required": [
+                    "error",
+                    "message"
+                  ]
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "503",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "error": {
+                      "type": "boolean",
+                      "description": "Indicates an error occurred"
+                    },
+                    "message": {
+                      "type": "string",
+                      "description": "Error message"
+                    },
+                    "details": {
+                      "nullable": true,
+                      "description": "Additional error details (e.g., validation errors)"
+                    }
+                  },
+                  "required": [
+                    "error",
+                    "message"
+                  ]
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "ApiKeyAuth": []
+          }
+        ]
+      },
+      "post": {
+        "summary": "Create and verify a Google Secret Manager connection",
+        "tags": [
+          "Variables"
+        ],
+        "parameters": [],
+        "requestBody": {
+          "description": "Body",
+          "content": {
+            "application/json": {
+              "schema": {
+                "discriminator": {
+                  "propertyName": "authMode"
+                },
+                "oneOf": [
+                  {
+                    "type": "object",
+                    "properties": {
+                      "displayName": {
+                        "type": "string",
+                        "minLength": 1
+                      },
+                      "projectId": {
+                        "type": "string",
+                        "minLength": 1
+                      },
+                      "authMode": {
+                        "type": "string",
+                        "enum": [
+                          "CUSTOMER_GRANT"
+                        ]
+                      }
+                    },
+                    "required": [
+                      "displayName",
+                      "projectId",
+                      "authMode"
+                    ]
+                  },
+                  {
+                    "type": "object",
+                    "properties": {
+                      "displayName": {
+                        "type": "string",
+                        "minLength": 1
+                      },
+                      "authMode": {
+                        "type": "string",
+                        "enum": [
+                          "SERVICE_ACCOUNT"
+                        ]
+                      },
+                      "serviceAccountJson": {
+                        "type": "string",
+                        "minLength": 1,
+                        "description": "Write-only service-account JSON"
+                      }
+                    },
+                    "required": [
+                      "displayName",
+                      "authMode",
+                      "serviceAccountJson"
+                    ]
+                  }
+                ]
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "200",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "connection": {
+                      "type": "object",
+                      "properties": {
+                        "id": {
+                          "type": "string",
+                          "format": "uuid"
+                        },
+                        "displayName": {
+                          "type": "string"
+                        },
+                        "provider": {
+                          "type": "string",
+                          "enum": [
+                            "GOOGLE_SECRET_MANAGER"
+                          ]
+                        },
+                        "authMode": {
+                          "type": "string",
+                          "enum": [
+                            "CUSTOMER_GRANT",
+                            "SERVICE_ACCOUNT"
+                          ]
+                        },
+                        "status": {
+                          "type": "string",
+                          "enum": [
+                            "CONNECTED",
+                            "NEEDS_ATTENTION"
+                          ]
+                        },
+                        "projectId": {
+                          "type": "string"
+                        },
+                        "brokerPrincipal": {
+                          "type": "string"
+                        },
+                        "serviceAccountEmail": {
+                          "type": "string",
+                          "format": "email"
+                        },
+                        "verifiedAt": {
+                          "type": "string"
+                        },
+                        "createdAt": {
+                          "type": "string"
+                        },
+                        "updatedAt": {
+                          "type": "string"
+                        }
+                      },
+                      "required": [
+                        "id",
+                        "displayName",
+                        "provider",
+                        "authMode",
+                        "status",
+                        "projectId",
+                        "createdAt",
+                        "updatedAt"
+                      ],
+                      "nullable": true
+                    },
+                    "error": {
+                      "type": "string",
+                      "nullable": true
+                    }
+                  },
+                  "required": [
+                    "connection",
+                    "error"
+                  ]
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "400",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "error": {
+                      "type": "boolean",
+                      "description": "Indicates an error occurred"
+                    },
+                    "message": {
+                      "type": "string",
+                      "description": "Error message"
+                    },
+                    "details": {
+                      "nullable": true,
+                      "description": "Additional error details (e.g., validation errors)"
+                    }
+                  },
+                  "required": [
+                    "error",
+                    "message"
+                  ]
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "401",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "error": {
+                      "type": "boolean",
+                      "description": "Indicates an error occurred"
+                    },
+                    "message": {
+                      "type": "string",
+                      "description": "Error message"
+                    },
+                    "details": {
+                      "nullable": true,
+                      "description": "Additional error details (e.g., validation errors)"
+                    }
+                  },
+                  "required": [
+                    "error",
+                    "message"
+                  ]
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "403",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "error": {
+                      "type": "boolean",
+                      "description": "Indicates an error occurred"
+                    },
+                    "message": {
+                      "type": "string",
+                      "description": "Error message"
+                    },
+                    "details": {
+                      "nullable": true,
+                      "description": "Additional error details (e.g., validation errors)"
+                    }
+                  },
+                  "required": [
+                    "error",
+                    "message"
+                  ]
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "500",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "error": {
+                      "type": "boolean",
+                      "description": "Indicates an error occurred"
+                    },
+                    "message": {
+                      "type": "string",
+                      "description": "Error message"
+                    },
+                    "details": {
+                      "nullable": true,
+                      "description": "Additional error details (e.g., validation errors)"
+                    }
+                  },
+                  "required": [
+                    "error",
+                    "message"
+                  ]
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "503",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "error": {
+                      "type": "boolean",
+                      "description": "Indicates an error occurred"
+                    },
+                    "message": {
+                      "type": "string",
+                      "description": "Error message"
+                    },
+                    "details": {
+                      "nullable": true,
+                      "description": "Additional error details (e.g., validation errors)"
+                    }
+                  },
+                  "required": [
+                    "error",
+                    "message"
+                  ]
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "ApiKeyAuth": []
+          }
+        ]
+      }
+    },
+    "/v4/variables/connections/{connectionId}": {
+      "patch": {
+        "summary": "Reconnect a Google Secret Manager connection",
+        "tags": [
+          "Variables"
+        ],
+        "parameters": [
+          {
+            "name": "connectionId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "requestBody": {
+          "description": "Body",
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "displayName": {
+                    "type": "string",
+                    "minLength": 1
+                  },
+                  "projectId": {
+                    "type": "string",
+                    "minLength": 1
+                  },
+                  "serviceAccountJson": {
+                    "type": "string",
+                    "minLength": 1,
+                    "description": "Replacement write-only credential"
+                  }
+                },
+                "required": [
+                  "displayName"
+                ]
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "200",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "connection": {
+                      "type": "object",
+                      "properties": {
+                        "id": {
+                          "type": "string",
+                          "format": "uuid"
+                        },
+                        "displayName": {
+                          "type": "string"
+                        },
+                        "provider": {
+                          "type": "string",
+                          "enum": [
+                            "GOOGLE_SECRET_MANAGER"
+                          ]
+                        },
+                        "authMode": {
+                          "type": "string",
+                          "enum": [
+                            "CUSTOMER_GRANT",
+                            "SERVICE_ACCOUNT"
+                          ]
+                        },
+                        "status": {
+                          "type": "string",
+                          "enum": [
+                            "CONNECTED",
+                            "NEEDS_ATTENTION"
+                          ]
+                        },
+                        "projectId": {
+                          "type": "string"
+                        },
+                        "brokerPrincipal": {
+                          "type": "string"
+                        },
+                        "serviceAccountEmail": {
+                          "type": "string",
+                          "format": "email"
+                        },
+                        "verifiedAt": {
+                          "type": "string"
+                        },
+                        "createdAt": {
+                          "type": "string"
+                        },
+                        "updatedAt": {
+                          "type": "string"
+                        }
+                      },
+                      "required": [
+                        "id",
+                        "displayName",
+                        "provider",
+                        "authMode",
+                        "status",
+                        "projectId",
+                        "createdAt",
+                        "updatedAt"
+                      ],
+                      "nullable": true
+                    },
+                    "error": {
+                      "type": "string",
+                      "nullable": true
+                    }
+                  },
+                  "required": [
+                    "connection",
+                    "error"
+                  ]
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "400",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "error": {
+                      "type": "boolean",
+                      "description": "Indicates an error occurred"
+                    },
+                    "message": {
+                      "type": "string",
+                      "description": "Error message"
+                    },
+                    "details": {
+                      "nullable": true,
+                      "description": "Additional error details (e.g., validation errors)"
+                    }
+                  },
+                  "required": [
+                    "error",
+                    "message"
+                  ]
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "401",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "error": {
+                      "type": "boolean",
+                      "description": "Indicates an error occurred"
+                    },
+                    "message": {
+                      "type": "string",
+                      "description": "Error message"
+                    },
+                    "details": {
+                      "nullable": true,
+                      "description": "Additional error details (e.g., validation errors)"
+                    }
+                  },
+                  "required": [
+                    "error",
+                    "message"
+                  ]
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "403",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "error": {
+                      "type": "boolean",
+                      "description": "Indicates an error occurred"
+                    },
+                    "message": {
+                      "type": "string",
+                      "description": "Error message"
+                    },
+                    "details": {
+                      "nullable": true,
+                      "description": "Additional error details (e.g., validation errors)"
+                    }
+                  },
+                  "required": [
+                    "error",
+                    "message"
+                  ]
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "500",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "error": {
+                      "type": "boolean",
+                      "description": "Indicates an error occurred"
+                    },
+                    "message": {
+                      "type": "string",
+                      "description": "Error message"
+                    },
+                    "details": {
+                      "nullable": true,
+                      "description": "Additional error details (e.g., validation errors)"
+                    }
+                  },
+                  "required": [
+                    "error",
+                    "message"
+                  ]
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "503",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "error": {
+                      "type": "boolean",
+                      "description": "Indicates an error occurred"
+                    },
+                    "message": {
+                      "type": "string",
+                      "description": "Error message"
+                    },
+                    "details": {
+                      "nullable": true,
+                      "description": "Additional error details (e.g., validation errors)"
+                    }
+                  },
+                  "required": [
+                    "error",
+                    "message"
+                  ]
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "ApiKeyAuth": []
+          }
+        ]
+      },
+      "delete": {
+        "summary": "Delete an unused secret provider connection",
+        "tags": [
+          "Variables"
+        ],
+        "parameters": [
+          {
+            "name": "connectionId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "200",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "error": {
+                      "type": "string",
+                      "nullable": true
+                    }
+                  },
+                  "required": [
+                    "error"
+                  ]
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "400",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "error": {
+                      "type": "boolean",
+                      "description": "Indicates an error occurred"
+                    },
+                    "message": {
+                      "type": "string",
+                      "description": "Error message"
+                    },
+                    "details": {
+                      "nullable": true,
+                      "description": "Additional error details (e.g., validation errors)"
+                    }
+                  },
+                  "required": [
+                    "error",
+                    "message"
+                  ]
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "401",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "error": {
+                      "type": "boolean",
+                      "description": "Indicates an error occurred"
+                    },
+                    "message": {
+                      "type": "string",
+                      "description": "Error message"
+                    },
+                    "details": {
+                      "nullable": true,
+                      "description": "Additional error details (e.g., validation errors)"
+                    }
+                  },
+                  "required": [
+                    "error",
+                    "message"
+                  ]
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "403",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "error": {
+                      "type": "boolean",
+                      "description": "Indicates an error occurred"
+                    },
+                    "message": {
+                      "type": "string",
+                      "description": "Error message"
+                    },
+                    "details": {
+                      "nullable": true,
+                      "description": "Additional error details (e.g., validation errors)"
+                    }
+                  },
+                  "required": [
+                    "error",
+                    "message"
+                  ]
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "500",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "error": {
+                      "type": "boolean",
+                      "description": "Indicates an error occurred"
+                    },
+                    "message": {
+                      "type": "string",
+                      "description": "Error message"
+                    },
+                    "details": {
+                      "nullable": true,
+                      "description": "Additional error details (e.g., validation errors)"
+                    }
+                  },
+                  "required": [
+                    "error",
+                    "message"
+                  ]
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "503",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "error": {
+                      "type": "boolean",
+                      "description": "Indicates an error occurred"
+                    },
+                    "message": {
+                      "type": "string",
+                      "description": "Error message"
+                    },
+                    "details": {
+                      "nullable": true,
+                      "description": "Additional error details (e.g., validation errors)"
+                    }
+                  },
+                  "required": [
+                    "error",
+                    "message"
+                  ]
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "ApiKeyAuth": []
+          }
+        ]
+      }
+    },
+    "/v4/variables/connections/{connectionId}/verify": {
+      "post": {
+        "summary": "Retry secret provider connection verification",
+        "tags": [
+          "Variables"
+        ],
+        "parameters": [
+          {
+            "name": "connectionId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "200",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "error": {
+                      "type": "string",
+                      "nullable": true
+                    }
+                  },
+                  "required": [
+                    "error"
+                  ]
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "400",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "error": {
+                      "type": "boolean",
+                      "description": "Indicates an error occurred"
+                    },
+                    "message": {
+                      "type": "string",
+                      "description": "Error message"
+                    },
+                    "details": {
+                      "nullable": true,
+                      "description": "Additional error details (e.g., validation errors)"
+                    }
+                  },
+                  "required": [
+                    "error",
+                    "message"
+                  ]
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "401",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "error": {
+                      "type": "boolean",
+                      "description": "Indicates an error occurred"
+                    },
+                    "message": {
+                      "type": "string",
+                      "description": "Error message"
+                    },
+                    "details": {
+                      "nullable": true,
+                      "description": "Additional error details (e.g., validation errors)"
+                    }
+                  },
+                  "required": [
+                    "error",
+                    "message"
+                  ]
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "403",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "error": {
+                      "type": "boolean",
+                      "description": "Indicates an error occurred"
+                    },
+                    "message": {
+                      "type": "string",
+                      "description": "Error message"
+                    },
+                    "details": {
+                      "nullable": true,
+                      "description": "Additional error details (e.g., validation errors)"
+                    }
+                  },
+                  "required": [
+                    "error",
+                    "message"
+                  ]
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "500",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "error": {
+                      "type": "boolean",
+                      "description": "Indicates an error occurred"
+                    },
+                    "message": {
+                      "type": "string",
+                      "description": "Error message"
+                    },
+                    "details": {
+                      "nullable": true,
+                      "description": "Additional error details (e.g., validation errors)"
+                    }
+                  },
+                  "required": [
+                    "error",
+                    "message"
+                  ]
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "503",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "error": {
+                      "type": "boolean",
+                      "description": "Indicates an error occurred"
+                    },
+                    "message": {
+                      "type": "string",
+                      "description": "Error message"
+                    },
+                    "details": {
+                      "nullable": true,
+                      "description": "Additional error details (e.g., validation errors)"
+                    }
+                  },
+                  "required": [
+                    "error",
+                    "message"
+                  ]
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "ApiKeyAuth": []
+          }
+        ]
+      }
+    },
     "/v4/variables/": {
       "post": {
         "description": "Create a new key-value variable. Keys must be unique within the team/user scope. Variables can be referenced in workflow prompts using @variableKey syntax.",
@@ -18491,6 +19714,34 @@
           },
           "500": {
             "description": "500",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "error": {
+                      "type": "boolean",
+                      "description": "Indicates an error occurred"
+                    },
+                    "message": {
+                      "type": "string",
+                      "description": "Error message"
+                    },
+                    "details": {
+                      "nullable": true,
+                      "description": "Additional error details (e.g., validation errors)"
+                    }
+                  },
+                  "required": [
+                    "error",
+                    "message"
+                  ]
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "503",
             "content": {
               "application/json": {
                 "schema": {
@@ -18987,6 +20238,34 @@
                 }
               }
             }
+          },
+          "503": {
+            "description": "503",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "error": {
+                      "type": "boolean",
+                      "description": "Indicates an error occurred"
+                    },
+                    "message": {
+                      "type": "string",
+                      "description": "Error message"
+                    },
+                    "details": {
+                      "nullable": true,
+                      "description": "Additional error details (e.g., validation errors)"
+                    }
+                  },
+                  "required": [
+                    "error",
+                    "message"
+                  ]
+                }
+              }
+            }
           }
         },
         "security": [
@@ -19109,6 +20388,34 @@
           },
           "500": {
             "description": "500",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "error": {
+                      "type": "boolean",
+                      "description": "Indicates an error occurred"
+                    },
+                    "message": {
+                      "type": "string",
+                      "description": "Error message"
+                    },
+                    "details": {
+                      "nullable": true,
+                      "description": "Additional error details (e.g., validation errors)"
+                    }
+                  },
+                  "required": [
+                    "error",
+                    "message"
+                  ]
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "503",
             "content": {
               "application/json": {
                 "schema": {
@@ -20245,6 +21552,216 @@
           },
           "message": {
             "type": "string"
+          }
+        }
+      },
+      "AssistantHistoryUserMessage": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "id",
+          "time",
+          "kind",
+          "role",
+          "text"
+        ],
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "time": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "kind": {
+            "type": "string",
+            "enum": [
+              "user_message"
+            ]
+          },
+          "role": {
+            "type": "string",
+            "enum": [
+              "user"
+            ]
+          },
+          "text": {
+            "type": "string"
+          },
+          "authorId": {
+            "type": "string"
+          }
+        }
+      },
+      "AssistantHistoryMessage": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "id",
+          "time",
+          "kind",
+          "role",
+          "text"
+        ],
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "time": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "kind": {
+            "type": "string",
+            "enum": [
+              "assistant_message"
+            ]
+          },
+          "role": {
+            "type": "string",
+            "enum": [
+              "assistant"
+            ]
+          },
+          "text": {
+            "type": "string"
+          },
+          "links": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "additionalProperties": false,
+              "required": [
+                "url"
+              ],
+              "properties": {
+                "url": {
+                  "type": "string",
+                  "format": "uri"
+                }
+              }
+            }
+          }
+        }
+      },
+      "AssistantHistoryQuestion": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "id",
+          "time",
+          "kind",
+          "questionId",
+          "questions",
+          "answers",
+          "status"
+        ],
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "time": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "kind": {
+            "type": "string",
+            "enum": [
+              "question"
+            ]
+          },
+          "questionId": {
+            "type": "string"
+          },
+          "questions": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/AssistantQuestion"
+            }
+          },
+          "answers": {
+            "type": "object",
+            "nullable": true,
+            "additionalProperties": true
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "answered",
+              "unanswered"
+            ]
+          }
+        }
+      },
+      "AssistantHistoryItem": {
+        "oneOf": [
+          {
+            "$ref": "#/components/schemas/AssistantHistoryUserMessage"
+          },
+          {
+            "$ref": "#/components/schemas/AssistantHistoryMessage"
+          },
+          {
+            "$ref": "#/components/schemas/AssistantHistoryQuestion"
+          }
+        ],
+        "discriminator": {
+          "propertyName": "kind"
+        }
+      },
+      "AssistantHistoryResponse": {
+        "type": "object",
+        "required": [
+          "data",
+          "status"
+        ],
+        "properties": {
+          "data": {
+            "type": "object",
+            "required": [
+              "workflowId",
+              "sessionId",
+              "items",
+              "pagination"
+            ],
+            "properties": {
+              "workflowId": {
+                "type": "string",
+                "format": "uuid"
+              },
+              "sessionId": {
+                "type": "string",
+                "format": "uuid"
+              },
+              "items": {
+                "type": "array",
+                "items": {
+                  "$ref": "#/components/schemas/AssistantHistoryItem"
+                }
+              },
+              "pagination": {
+                "type": "object",
+                "required": [
+                  "nextCursor",
+                  "hasMore"
+                ],
+                "properties": {
+                  "nextCursor": {
+                    "type": "string",
+                    "nullable": true
+                  },
+                  "hasMore": {
+                    "type": "boolean"
+                  }
+                }
+              }
+            }
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "success"
+            ]
           }
         }
       },
@@ -27485,77 +29002,222 @@
         "title": "ActivityListResponse",
         "description": "Successful response containing activity events and pagination"
       },
-      "VariableDataType": {
-        "default": "STRING",
-        "type": "string",
-        "enum": [
-          "STRING",
-          "SECRET",
-          "OBJECT",
-          "ARRAY",
-          "NUMBER"
-        ],
-        "title": "VariableDataType",
-        "description": "The data type of the variable value"
-      },
       "CreateVariableBody": {
-        "type": "object",
-        "properties": {
-          "key": {
-            "type": "string",
-            "minLength": 1,
-            "description": "Variable key (must be unique within scope)"
+        "oneOf": [
+          {
+            "type": "object",
+            "properties": {
+              "key": {
+                "type": "string",
+                "minLength": 1,
+                "description": "Variable key (must be unique within scope)"
+              },
+              "value": {
+                "type": "string",
+                "description": "Variable value"
+              },
+              "dataType": {
+                "type": "string",
+                "enum": [
+                  "STRING",
+                  "OBJECT",
+                  "ARRAY",
+                  "NUMBER"
+                ]
+              }
+            },
+            "required": [
+              "key",
+              "value"
+            ]
           },
-          "value": {
-            "type": "string",
-            "description": "Variable value"
+          {
+            "type": "object",
+            "properties": {
+              "key": {
+                "type": "string",
+                "minLength": 1,
+                "description": "Secret key (must be unique within team scope)"
+              },
+              "value": {
+                "type": "string",
+                "minLength": 1,
+                "description": "Write-only secret value"
+              },
+              "dataType": {
+                "type": "string",
+                "enum": [
+                  "SECRET"
+                ]
+              },
+              "managementMode": {
+                "type": "string",
+                "enum": [
+                  "KADOA_MANAGED"
+                ]
+              }
+            },
+            "required": [
+              "key",
+              "value",
+              "dataType"
+            ]
           },
-          "dataType": {
-            "$ref": "#/components/schemas/VariableDataType"
+          {
+            "type": "object",
+            "properties": {
+              "key": {
+                "type": "string",
+                "minLength": 1,
+                "description": "Secret key (must be unique within team scope)"
+              },
+              "dataType": {
+                "type": "string",
+                "enum": [
+                  "SECRET"
+                ]
+              },
+              "managementMode": {
+                "type": "string",
+                "enum": [
+                  "CUSTOMER_MANAGED"
+                ]
+              },
+              "providerConnectionId": {
+                "type": "string",
+                "format": "uuid"
+              },
+              "resourceReference": {
+                "type": "string",
+                "minLength": 1
+              }
+            },
+            "required": [
+              "key",
+              "dataType",
+              "managementMode",
+              "providerConnectionId",
+              "resourceReference"
+            ]
           }
-        },
-        "required": [
-          "key",
-          "value"
         ],
         "title": "CreateVariableBody",
-        "description": "Request body for creating a variable"
+        "description": "Request body for creating a variable or write-only secret"
       },
       "Variable": {
-        "type": "object",
-        "properties": {
-          "id": {
-            "type": "string",
-            "description": "Unique variable identifier"
+        "oneOf": [
+          {
+            "type": "object",
+            "properties": {
+              "id": {
+                "type": "string",
+                "description": "Unique variable identifier"
+              },
+              "key": {
+                "type": "string",
+                "description": "Variable key (unique per team/user scope)"
+              },
+              "value": {
+                "type": "string",
+                "description": "Variable value"
+              },
+              "dataType": {
+                "type": "string",
+                "enum": [
+                  "STRING",
+                  "OBJECT",
+                  "ARRAY",
+                  "NUMBER"
+                ]
+              },
+              "createdAt": {
+                "type": "string",
+                "description": "ISO 8601 creation timestamp"
+              },
+              "updatedAt": {
+                "type": "string",
+                "description": "ISO 8601 last update timestamp"
+              }
+            },
+            "required": [
+              "id",
+              "key",
+              "value",
+              "createdAt"
+            ]
           },
-          "key": {
-            "type": "string",
-            "description": "Variable key (unique per team/user scope)"
-          },
-          "value": {
-            "type": "string",
-            "description": "Variable value"
-          },
-          "dataType": {
-            "$ref": "#/components/schemas/VariableDataType"
-          },
-          "createdAt": {
-            "type": "string",
-            "description": "ISO 8601 creation timestamp"
-          },
-          "updatedAt": {
-            "type": "string",
-            "description": "ISO 8601 last update timestamp"
+          {
+            "type": "object",
+            "properties": {
+              "id": {
+                "type": "string",
+                "description": "Unique variable identifier"
+              },
+              "key": {
+                "type": "string",
+                "description": "Variable key (unique per team scope)"
+              },
+              "dataType": {
+                "type": "string",
+                "enum": [
+                  "SECRET"
+                ]
+              },
+              "provider": {
+                "type": "string",
+                "enum": [
+                  "GOOGLE_SECRET_MANAGER"
+                ]
+              },
+              "managementMode": {
+                "type": "string",
+                "enum": [
+                  "KADOA_MANAGED",
+                  "CUSTOMER_MANAGED"
+                ]
+              },
+              "status": {
+                "type": "string",
+                "enum": [
+                  "ACTIVE",
+                  "NEEDS_ATTENTION",
+                  "DELETING"
+                ]
+              },
+              "currentVersion": {
+                "type": "string"
+              },
+              "lastResolvedVersion": {
+                "type": "string"
+              },
+              "createdAt": {
+                "type": "string",
+                "description": "ISO 8601 creation timestamp"
+              },
+              "updatedAt": {
+                "type": "string",
+                "description": "ISO 8601 last update timestamp"
+              },
+              "lastRotatedAt": {
+                "type": "string"
+              },
+              "lastResolvedAt": {
+                "type": "string"
+              }
+            },
+            "required": [
+              "id",
+              "key",
+              "dataType",
+              "provider",
+              "managementMode",
+              "status",
+              "createdAt"
+            ]
           }
-        },
-        "required": [
-          "id",
-          "key",
-          "value",
-          "createdAt"
         ],
         "title": "Variable",
-        "description": "A key-value variable scoped to a team or user"
+        "description": "A variable. Secret responses contain metadata only and never expose the value."
       },
       "VariableResponse": {
         "type": "object",
@@ -27601,24 +29263,37 @@
         "title": "VariablesListResponse",
         "description": "Response containing a list of variables"
       },
+      "VariableDataType": {
+        "default": "STRING",
+        "type": "string",
+        "enum": [
+          "STRING",
+          "SECRET",
+          "OBJECT",
+          "ARRAY",
+          "NUMBER"
+        ],
+        "title": "VariableDataType",
+        "description": "The data type of the variable value"
+      },
       "UpdateVariableBody": {
         "type": "object",
         "properties": {
           "key": {
             "type": "string",
             "minLength": 1,
-            "description": "New variable key"
+            "description": "Variable key (must be unique within scope)"
           },
           "value": {
             "type": "string",
-            "description": "New variable value"
+            "description": "New variable value or write-only secret value"
           },
           "dataType": {
             "$ref": "#/components/schemas/VariableDataType"
           }
         },
         "title": "UpdateVariableBody",
-        "description": "Request body for updating a variable (at least one field required)"
+        "description": "Request body for updating a variable. Variable type cannot be changed."
       },
       "PublicWorkflowCreateRequest": {
         "type": "object",
