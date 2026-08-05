@@ -72,4 +72,19 @@ describe("ScrapeService", () => {
     expect(config.headers["x-api-key"]).toBe("tk-test");
     expect(config.headers["Authorization"]).toBeUndefined();
   });
+
+  test("passes bounded response discovery to the public scrape API", async () => {
+    const client = new KadoaClient({ apiKey: "tk-test" });
+    const { config } = await captureScrape(client, {
+      url: "https://example.com/dashboard",
+      discoverResponses: true,
+      browserActions: [{ type: "wait", wait_time_s: 1 }],
+    });
+
+    expect(JSON.parse(config.data)).toEqual({
+      url: "https://example.com/dashboard",
+      discoverResponses: true,
+      browserActions: [{ type: "wait", wait_time_s: 1 }],
+    });
+  });
 });

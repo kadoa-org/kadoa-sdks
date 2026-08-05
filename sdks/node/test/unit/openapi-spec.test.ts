@@ -18,4 +18,19 @@ describe("published OpenAPI source", () => {
       spec.paths["/v5/agent/workflows/{workflowId}/timeline"].get.operationId,
     ).toBe("v5AgentWorkflowAssistantTimeline");
   });
+
+  test("includes bounded public scrape response discovery", () => {
+    const spec = JSON.parse(readFileSync(specPath, "utf8"));
+    const request = spec.paths["/v4/scrape"].post.requestBody.content["application/json"].schema;
+    const response = spec.paths["/v4/scrape"].post.responses["200"].content["application/json"].schema;
+
+    expect(request.properties.discoverResponses.type).toBe("boolean");
+    expect(response.properties.capturedResponses.items.properties).toMatchObject({
+      method: { type: "string" },
+      resourceType: { type: "string" },
+      contentType: { type: "string" },
+      sizeBytes: { type: "integer" },
+      bodyTruncated: { type: "boolean" },
+    });
+  });
 });

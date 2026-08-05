@@ -8778,7 +8778,7 @@
                     },
                     "scheduledWorkflows": {
                       "type": "integer",
-                      "description": "ACTIVE workflows with an active schedule (auto-run, roll over to next cycle)"
+                      "description": "ACTIVE workflows with an active schedule OR on a live real-time monitor lane (REAL_TIME, SHELLY_REAL_TIME_SCRIPT) — both auto-run and roll over to the next cycle"
                     },
                     "workflows": {
                       "type": "array",
@@ -8799,7 +8799,7 @@
                           },
                           "scheduled": {
                             "type": "boolean",
-                            "description": "ACTIVE and on an active schedule (recurring); else completed/one-off"
+                            "description": "ACTIVE and either on an active schedule or a live real-time monitor (recurring); else completed/one-off"
                           },
                           "firstRunAt": {
                             "type": "string",
@@ -14619,6 +14619,10 @@
                     "maxItems": 20,
                     "description": "Substrings matched against network response URLs (browser workers only). The worker hooks every response the page makes and returns the body of each whose URL contains any of these substrings, in `capturedResponses`. Use this to read data that arrives via XHR/fetch and is NOT in the DOM — SPA dashboards (Tableau VizQL, Power BI) where values come back in a JSON/command response. Triggers a browser worker; pair with `browserActions` (clicks/waits) to drive the requests you want captured."
                   },
+                  "discoverResponses": {
+                    "type": "boolean",
+                    "description": "Discover a bounded set of useful document, XHR, and fetch responses without supplying URL patterns. Browser workers return response metadata and small text bodies in `capturedResponses`. Intended for ad hoc exploration; server-owned count and byte limits always apply."
+                  },
                   "waitUntil": {
                     "type": "string",
                     "enum": [
@@ -14653,12 +14657,13 @@
                     "type": "string",
                     "enum": [
                       "auto",
+                      "direct",
                       "dc",
                       "isp",
                       "residential",
                       "stealth"
                     ],
-                    "description": "Proxy tier: auto (smart selection), dc (datacenter), isp, residential, or stealth to route through the anti-bot providers for sites that block bots. Stealth providers use their own egress and pricing. Default: auto"
+                    "description": "Proxy tier: auto (smart selection), direct (Squid server egress without location guarantees), dc (datacenter), isp, residential, or stealth to route through the anti-bot providers for sites that block bots. Stealth providers use their own egress and pricing. Default: auto"
                   },
                   "format": {
                     "default": "html",
@@ -15014,18 +15019,38 @@
                             "type": "number",
                             "description": "HTTP status code of the captured response"
                           },
+                          "method": {
+                            "type": "string",
+                            "description": "HTTP method of the originating browser request"
+                          },
+                          "resourceType": {
+                            "type": "string",
+                            "description": "Browser resource type, such as document, xhr, or fetch"
+                          },
+                          "contentType": {
+                            "type": "string",
+                            "description": "Response Content-Type header when available"
+                          },
+                          "sizeBytes": {
+                            "type": "integer",
+                            "minimum": 0,
+                            "description": "Observed response body size in bytes"
+                          },
                           "body": {
                             "type": "string",
-                            "description": "Response body as text"
+                            "description": "Response body as text when it is safe and within capture limits"
+                          },
+                          "bodyTruncated": {
+                            "type": "boolean",
+                            "description": "Whether the returned body was truncated by server limits"
                           }
                         },
                         "required": [
                           "url",
-                          "status",
-                          "body"
+                          "status"
                         ]
                       },
-                      "description": "Bodies of network responses whose URL matched a `captureResponses` substring, in arrival order. Present only when `captureResponses` was set and at least one response matched."
+                      "description": "Bounded network response metadata and optional text bodies, in arrival order. Present when `captureResponses` or `discoverResponses` was requested and at least one response matched."
                     },
                     "statusCode": {
                       "type": "number",
@@ -15132,11 +15157,12 @@
                               "proxy": {
                                 "type": "string",
                                 "enum": [
+                                  "direct",
                                   "dc",
                                   "isp",
                                   "residential"
                                 ],
-                                "description": "Proxy type: datacenter, ISP, or residential",
+                                "description": "Proxy type: direct Squid egress, datacenter, ISP, or residential",
                                 "nullable": true
                               },
                               "location": {
@@ -23351,6 +23377,7 @@
                 "type": "string",
                 "enum": [
                   "auto",
+                  "direct",
                   "dc",
                   "resi",
                   "isp"
@@ -23711,6 +23738,7 @@
                 "type": "string",
                 "enum": [
                   "auto",
+                  "direct",
                   "dc",
                   "resi",
                   "isp"
@@ -24088,6 +24116,7 @@
                 "type": "string",
                 "enum": [
                   "auto",
+                  "direct",
                   "dc",
                   "resi",
                   "isp"
@@ -24498,6 +24527,7 @@
                 "type": "string",
                 "enum": [
                   "auto",
+                  "direct",
                   "dc",
                   "resi",
                   "isp"
