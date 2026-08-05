@@ -2,6 +2,7 @@ export {
   AgentApi,
   Configuration,
   DataValidationApi,
+  InboxApi,
   MeApi,
   NotificationsApi,
   SchemasApi,
