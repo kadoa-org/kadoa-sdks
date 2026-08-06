@@ -1,6 +1,6 @@
 {
-  "fetchedAt": "2026-08-06T17:00:06Z",
+  "fetchedAt": "2026-08-06T17:37:23Z",
   "apiVersion": "3.0.0",
-  "checksum": "0bd3c7fa3cb876ac0b9418ec90aeaee0a85a165957dd07067fa87251f52881ca",
+  "checksum": "3b57388d2ae72eca2d5403235742c3db4c90d256859fd7ed0a64cc88ba4f9c0b",
   "endpoint": "local:kadoa-backend/services/public/api/openapi.json"
 }
