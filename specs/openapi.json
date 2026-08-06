@@ -7074,6 +7074,16 @@
               }
             }
           },
+          "400": {
+            "description": "The active team or Inbox query is invalid",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/InboxErrorResponse"
+                }
+              }
+            }
+          },
           "401": {
             "description": "Authentication failed or no active team is selected",
             "content": {
@@ -7099,7 +7109,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/InboxDependencyUnavailableResponse"
+                  "$ref": "#/components/schemas/InboxSimpleErrorResponse"
                 }
               }
             }
@@ -7188,7 +7198,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "$ref": "#/components/schemas/InboxDependencyUnavailableResponse"
+                  "$ref": "#/components/schemas/InboxSimpleErrorResponse"
                 }
               }
             }
@@ -22057,7 +22067,7 @@
           }
         }
       },
-      "InboxErrorResponse": {
+      "InboxStructuredErrorResponse": {
         "type": "object",
         "required": [
           "data",
@@ -22079,7 +22089,7 @@
           }
         }
       },
-      "InboxDependencyUnavailableResponse": {
+      "InboxSimpleErrorResponse": {
         "type": "object",
         "required": [
           "error"
@@ -22089,6 +22099,16 @@
             "type": "string"
           }
         }
+      },
+      "InboxErrorResponse": {
+        "oneOf": [
+          {
+            "$ref": "#/components/schemas/InboxStructuredErrorResponse"
+          },
+          {
+            "$ref": "#/components/schemas/InboxSimpleErrorResponse"
+          }
+        ]
       },
       "EmailChannelConfig": {
         "type": "object",
