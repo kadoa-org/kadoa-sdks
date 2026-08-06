@@ -294,3 +294,45 @@ def test_workflow_get_preserves_http_errors(monkeypatch):
     assert exc_info.value.http_status == 404
     assert exc_info.value.response_body == {"error": "Workflow not found"}
     assert raw_response.released is True
+
+
+@pytest.mark.unit
+def test_python_workflow_creation_forwards_template_user_prompt(monkeypatch):
+    api = Mock()
+    api.v4_workflows_post.return_value = Mock(workflow_id="workflow-id")
+    service = WorkflowsCoreService(Mock())
+    monkeypatch.setattr(WorkflowsCoreService, "workflows_api", property(lambda _self: api))
+
+    service.create(
+        CreateWorkflowInput(
+            urls=["https://example.de/jobs"],
+            template_id="11111111-1111-4111-8111-111111111111",
+            template_version=2,
+            user_prompt="Only include German-language listings",
+        )
+    )
+
+    request = api.v4_workflows_post.call_args.kwargs["public_workflow_create_request"]
+    payload = request.to_dict()
+    assert str(payload["templateId"]) == "11111111-1111-4111-8111-111111111111"
+    assert payload["templateVersion"] == 2
+    assert payload["userPrompt"] == "Only include German-language listings"
+
+
+@pytest.mark.unit
+def test_python_template_only_creation_omits_user_prompt(monkeypatch):
+    api = Mock()
+    api.v4_workflows_post.return_value = Mock(workflow_id="workflow-id")
+    service = WorkflowsCoreService(Mock())
+    monkeypatch.setattr(WorkflowsCoreService, "workflows_api", property(lambda _self: api))
+
+    service.create(
+        CreateWorkflowInput(
+            urls=["https://example.de/jobs"],
+            template_id="11111111-1111-4111-8111-111111111111",
+        )
+    )
+
+    payload = api.v4_workflows_post.call_args.kwargs["public_workflow_create_request"].to_dict()
+    assert str(payload["templateId"]) == "11111111-1111-4111-8111-111111111111"
+    assert "userPrompt" not in payload

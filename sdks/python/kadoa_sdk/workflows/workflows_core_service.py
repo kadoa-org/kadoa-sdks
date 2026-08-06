@@ -23,6 +23,7 @@ from openapi_client.models.monitoring_config import MonitoringConfig
 from openapi_client.models.v4_workflows_workflow_id_run_put_request import (
     V4WorkflowsWorkflowIdRunPutRequest,
 )
+from openapi_client.models.workflow_from_template import WorkflowFromTemplate
 
 from ..extraction.extraction_acl import (
     ClassificationField,
@@ -58,6 +59,8 @@ class CreateWorkflowInput(BaseModel):
     schedules: Optional[List[str]] = None
     additional_data: Optional[Dict[str, Any]] = Field(default=None, alias="additionalData")
     user_prompt: Optional[str] = Field(default=None, alias="userPrompt")
+    template_id: Optional[str] = Field(default=None, alias="templateId")
+    template_version: Optional[int] = Field(default=None, alias="templateVersion", ge=1)
     limit: Optional[int] = None
 
     model_config = ConfigDict(populate_by_name=True)
@@ -154,6 +157,7 @@ class WorkflowsCoreService:
                 else:
                     field_data = field.model_dump() if hasattr(field, "model_dump") else dict(field)
                     field_type = field_data.get("fieldType") or field_data.get("field_type")
+                    field_model: DataField | ClassificationField
                     if field_type == "CLASSIFICATION":
                         field_model = ClassificationField(**field_data)
                     else:
@@ -165,12 +169,6 @@ class WorkflowsCoreService:
                         field_model = DataField(**field_data)
                     schema_fields.append(CreateSchemaBodyFieldsInner(actual_instance=field_model))
 
-            request_data: Dict[str, Any] = {
-                "urls": input.urls,
-                "name": input.name or domain_name,
-                "userPrompt": input.user_prompt or DEFAULT_AGENTIC_PROMPT,
-                "bypassPreview": input.bypass_preview if input.bypass_preview is not None else True,
-            }
             optional_fields = {
                 "description": input.description,
                 "schemaId": input.schema_id,
@@ -184,10 +182,77 @@ class WorkflowsCoreService:
                 "additionalData": input.additional_data,
                 "limit": input.limit,
             }
-            request_data.update(
-                {key: value for key, value in optional_fields.items() if value is not None}
-            )
-            wrapper = CreateWorkflowBody.model_validate(request_data)
+
+            wrapper: Any
+
+            if input.template_id is not None:
+                conflicting = [
+                    name
+                    for name, value in {
+                        "schemaId": input.schema_id,
+                        "entity": input.entity,
+                        "fields": input.fields,
+                        "monitoring": input.monitoring,
+                    }.items()
+                    if value is not None
+                ]
+                if conflicting:
+                    raise KadoaSdkError(
+                        "Fields are defined by the template and cannot be supplied "
+                        f"when creating from a template: {', '.join(conflicting)}",
+                        code=KadoaErrorCode.VALIDATION_ERROR,
+                        details={"conflicting": conflicting},
+                    )
+
+                request_data: Dict[str, Any] = {
+                    "urls": input.urls,
+                    "templateId": input.template_id,
+                    **(
+                        {"templateVersion": input.template_version}
+                        if input.template_version is not None
+                        else {}
+                    ),
+                    **(
+                        {"userPrompt": input.user_prompt}
+                        if input.user_prompt is not None
+                        else {}
+                    ),
+                    **({"name": input.name} if input.name is not None else {}),
+                    **(
+                        {"description": input.description}
+                        if input.description is not None
+                        else {}
+                    ),
+                    **({"tags": input.tags} if input.tags is not None else {}),
+                    **({"interval": input.interval} if input.interval is not None else {}),
+                    **({"location": input.location} if input.location is not None else {}),
+                    **({"schedules": input.schedules} if input.schedules is not None else {}),
+                    **(
+                        {"additionalData": input.additional_data}
+                        if input.additional_data is not None
+                        else {}
+                    ),
+                    **({"limit": input.limit} if input.limit is not None else {}),
+                    **(
+                        {"bypassPreview": input.bypass_preview}
+                        if input.bypass_preview is not None
+                        else {}
+                    ),
+                }
+                wrapper = WorkflowFromTemplate.model_validate(request_data)
+            else:
+                request_data = {
+                    "urls": input.urls,
+                    "name": input.name or domain_name,
+                    "userPrompt": input.user_prompt or DEFAULT_AGENTIC_PROMPT,
+                    "bypassPreview": (
+                        input.bypass_preview if input.bypass_preview is not None else True
+                    ),
+                }
+                request_data.update(
+                    {key: value for key, value in optional_fields.items() if value is not None}
+                )
+                wrapper = CreateWorkflowBody.model_validate(request_data)
 
             response = self.workflows_api.v4_workflows_post(public_workflow_create_request=wrapper)
             workflow_id = getattr(response, "workflow_id", None) or getattr(
