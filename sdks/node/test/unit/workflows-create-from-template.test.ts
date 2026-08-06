@@ -38,7 +38,7 @@ describe("WorkflowsCoreService.create — templateId support", () => {
 
     expect(result.id).toBe("wf-1");
     expect(mockTemplateGet).not.toHaveBeenCalled();
-    const body = mockPost.mock.calls[0]?.[0]?.publicWorkflowCreateRequest;
+    const body = mockPost.mock.calls[0]?.[0]?.createWorkflowBody;
     expect(body.urls).toEqual(["https://example.com"]);
     expect(body.templateId).toBe(TEMPLATE_ID);
     expect(body.templateVersion).toBe(3);
@@ -65,7 +65,7 @@ describe("WorkflowsCoreService.create — templateId support", () => {
 
     expect(result.id).toBe("wf-2");
     expect(mockTemplateGet).not.toHaveBeenCalled();
-    const body = mockPost.mock.calls[0]?.[0]?.publicWorkflowCreateRequest;
+    const body = mockPost.mock.calls[0]?.[0]?.createWorkflowBody;
     expect(body.templateId).toBe(TEMPLATE_ID);
     expect(body.templateVersion).toBeUndefined();
   });
@@ -81,7 +81,7 @@ describe("WorkflowsCoreService.create — templateId support", () => {
       userPrompt: "Only include German-language listings",
     });
 
-    expect(mockPost.mock.calls[0]?.[0]?.publicWorkflowCreateRequest).toEqual(
+    expect(mockPost.mock.calls[0]?.[0]?.createWorkflowBody).toEqual(
       expect.objectContaining({
         templateId: TEMPLATE_ID,
         templateVersion: 1,
@@ -101,7 +101,7 @@ describe("WorkflowsCoreService.create — templateId support", () => {
     });
 
     expect(
-      mockPost.mock.calls[0]?.[0]?.publicWorkflowCreateRequest.userPrompt,
+      mockPost.mock.calls[0]?.[0]?.createWorkflowBody.userPrompt,
     ).toBeUndefined();
   });
 

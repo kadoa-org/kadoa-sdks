@@ -12,6 +12,7 @@ import type {
   WorkflowInterval,
 } from "../extraction/extraction.acl";
 import {
+  type GeneratedCreateWorkflowBody,
   type GetJobResponse,
   type GetWorkflowResponse,
   JobStateEnum,
@@ -183,7 +184,10 @@ export class WorkflowsCoreService {
     }
 
     const response = await this.workflowsApi.v4WorkflowsPost({
-      publicWorkflowCreateRequest: request as PromptWorkflow,
+      // OpenAPI Generator currently flattens the CreateWorkflowBody anyOf into
+      // an impossible interface in the TS client, so we keep a narrow SDK-side
+      // request union and adapt it only at the generated boundary.
+      createWorkflowBody: request as unknown as GeneratedCreateWorkflowBody,
     });
     const workflowId = response.data?.workflowId;
 
