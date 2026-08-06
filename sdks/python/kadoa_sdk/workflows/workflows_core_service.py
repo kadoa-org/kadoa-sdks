@@ -5,6 +5,7 @@ from __future__ import annotations
 import json
 from typing import TYPE_CHECKING, Any, Dict, List, Optional
 from urllib.parse import urlparse
+from uuid import UUID
 
 from pydantic import BaseModel, ConfigDict, Field
 
@@ -20,6 +21,7 @@ from kadoa_sdk.extraction.types import RunWorkflowOptions
 from openapi_client.models.create_schema_body_fields_inner import CreateSchemaBodyFieldsInner
 from openapi_client.models.location import Location
 from openapi_client.models.monitoring_config import MonitoringConfig
+from openapi_client.models.prompt_workflow import PromptWorkflow
 from openapi_client.models.v4_workflows_workflow_id_run_put_request import (
     V4WorkflowsWorkflowIdRunPutRequest,
 )
@@ -59,7 +61,7 @@ class CreateWorkflowInput(BaseModel):
     schedules: Optional[List[str]] = None
     additional_data: Optional[Dict[str, Any]] = Field(default=None, alias="additionalData")
     user_prompt: Optional[str] = Field(default=None, alias="userPrompt")
-    template_id: Optional[str] = Field(default=None, alias="templateId")
+    template_id: Optional[UUID] = Field(default=None, alias="templateId")
     template_version: Optional[int] = Field(default=None, alias="templateVersion", ge=1)
     limit: Optional[int] = None
 
@@ -183,7 +185,7 @@ class WorkflowsCoreService:
                 "limit": input.limit,
             }
 
-            wrapper: Any
+            wrapper: CreateWorkflowBody
 
             if input.template_id is not None:
                 conflicting = [
@@ -239,7 +241,9 @@ class WorkflowsCoreService:
                         else {}
                     ),
                 }
-                wrapper = WorkflowFromTemplate.model_validate(request_data)
+                wrapper = CreateWorkflowBody(
+                    actual_instance=WorkflowFromTemplate.model_validate(request_data)
+                )
             else:
                 request_data = {
                     "urls": input.urls,
@@ -252,9 +256,11 @@ class WorkflowsCoreService:
                 request_data.update(
                     {key: value for key, value in optional_fields.items() if value is not None}
                 )
-                wrapper = CreateWorkflowBody.model_validate(request_data)
+                wrapper = CreateWorkflowBody(
+                    actual_instance=PromptWorkflow.model_validate(request_data)
+                )
 
-            response = self.workflows_api.v4_workflows_post(public_workflow_create_request=wrapper)
+            response = self.workflows_api.v4_workflows_post(create_workflow_body=wrapper)
             workflow_id = getattr(response, "workflow_id", None) or getattr(
                 response, "workflowId", None
             )
@@ -372,7 +378,7 @@ class WorkflowsCoreService:
         workflow_id: str,
         page: Optional[int] = None,
         limit: Optional[int] = None,
-    ):
+    ) -> Any:
         """Get the configuration revision history (audit log) for a workflow.
 
         Each entry captures who changed the workflow, when, from which channel

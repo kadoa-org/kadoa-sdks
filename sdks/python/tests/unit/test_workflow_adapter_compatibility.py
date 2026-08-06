@@ -2,6 +2,7 @@ import json
 from unittest.mock import Mock
 
 import pytest
+from pydantic import ValidationError
 
 import kadoa_sdk.extraction.services.extraction_builder_service as builder_module
 import kadoa_sdk.extraction.services.workflow_manager_service as manager_module
@@ -40,8 +41,8 @@ def test_high_level_workflow_creation_uses_current_generated_request(monkeypatch
     )
 
     assert workflow_id == "workflow-id"
-    request = api.v4_workflows_post.call_args.kwargs["public_workflow_create_request"]
-    assert request.urls == ["https://example.com"]
+    request = api.v4_workflows_post.call_args.kwargs["create_workflow_body"]
+    assert request.actual_instance.urls == ["https://example.com"]
 
 
 @pytest.mark.unit
@@ -63,10 +64,11 @@ def test_core_workflow_creation_uses_current_generated_request(monkeypatch):
     )
 
     assert result.id == "workflow-id"
-    request = api.v4_workflows_post.call_args.kwargs["public_workflow_create_request"]
-    assert request.urls == ["https://example.com"]
-    assert "limit" not in request.to_dict()
-    assert "additionalData" not in request.to_dict()
+    request = api.v4_workflows_post.call_args.kwargs["create_workflow_body"]
+    payload = request.to_dict()
+    assert request.actual_instance.urls == ["https://example.com"]
+    assert "limit" not in payload
+    assert "additionalData" not in payload
 
 
 @pytest.mark.unit
@@ -111,10 +113,11 @@ def test_core_workflow_creation_preserves_schema_guidance(monkeypatch, input, ex
     result = service.create(input)
 
     assert result.id == "workflow-id"
-    request = api.v4_workflows_post.call_args.kwargs["public_workflow_create_request"]
-    assert request.user_prompt
+    request = api.v4_workflows_post.call_args.kwargs["create_workflow_body"]
+    actual = request.actual_instance
+    assert actual.user_prompt
     for field, value in expected.items():
-        assert getattr(request, field) == value
+        assert getattr(actual, field) == value
     if input.fields:
         assert request.to_dict()["fields"][0]["name"] == "title"
 
@@ -312,7 +315,7 @@ def test_python_workflow_creation_forwards_template_user_prompt(monkeypatch):
         )
     )
 
-    request = api.v4_workflows_post.call_args.kwargs["public_workflow_create_request"]
+    request = api.v4_workflows_post.call_args.kwargs["create_workflow_body"]
     payload = request.to_dict()
     assert str(payload["templateId"]) == "11111111-1111-4111-8111-111111111111"
     assert payload["templateVersion"] == 2
@@ -333,6 +336,15 @@ def test_python_template_only_creation_omits_user_prompt(monkeypatch):
         )
     )
 
-    payload = api.v4_workflows_post.call_args.kwargs["public_workflow_create_request"].to_dict()
+    payload = api.v4_workflows_post.call_args.kwargs["create_workflow_body"].to_dict()
     assert str(payload["templateId"]) == "11111111-1111-4111-8111-111111111111"
     assert "userPrompt" not in payload
+
+
+@pytest.mark.unit
+def test_python_template_id_must_be_a_uuid():
+    with pytest.raises(ValidationError):
+        CreateWorkflowInput(
+            urls=["https://example.de/jobs"],
+            template_id="not-a-uuid",
+        )
