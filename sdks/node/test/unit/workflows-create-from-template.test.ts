@@ -51,13 +51,11 @@ describe("WorkflowsCoreService.create — templateId support", () => {
     expect(body.monitoring).toBeUndefined();
   });
 
-  test("resolves latest version when only templateId is supplied", async () => {
+  test("template creation without templateVersion lets the backend resolve latest", async () => {
     const mockPost = mock(() =>
       Promise.resolve({ data: { workflowId: "wf-2" } }),
     );
-    const mockTemplateGet = mock(() =>
-      Promise.resolve({ id: TEMPLATE_ID, latestVersion: 7, versions: [] }),
-    );
+    const mockTemplateGet = mock();
     const client = createTestClient(mockPost, mockTemplateGet);
 
     const result = await client.workflow.create({
@@ -66,41 +64,45 @@ describe("WorkflowsCoreService.create — templateId support", () => {
     });
 
     expect(result.id).toBe("wf-2");
-    expect(mockTemplateGet).toHaveBeenCalledWith(TEMPLATE_ID);
+    expect(mockTemplateGet).not.toHaveBeenCalled();
     const body = mockPost.mock.calls[0]?.[0]?.publicWorkflowCreateRequest;
     expect(body.templateId).toBe(TEMPLATE_ID);
-    expect(body.templateVersion).toBe(7);
+    expect(body.templateVersion).toBeUndefined();
   });
 
-  test("throws when template has no published versions", async () => {
-    const mockPost = mock();
-    const mockTemplateGet = mock(() =>
-      Promise.resolve({ id: TEMPLATE_ID, latestVersion: null, versions: [] }),
-    );
-    const client = createTestClient(mockPost, mockTemplateGet);
-
-    await expect(
-      client.workflow.create({
-        urls: ["https://example.com"],
-        templateId: TEMPLATE_ID,
-      }),
-    ).rejects.toBeInstanceOf(KadoaSdkException);
-    expect(mockPost).not.toHaveBeenCalled();
-  });
-
-  test("rejects userPrompt when creating from a template", async () => {
-    const mockPost = mock();
+  test("forwards userPrompt as workflow-specific template instructions", async () => {
+    const mockPost = mock(() => Promise.resolve({ data: { workflowId: "wf-3" } }));
     const client = createTestClient(mockPost);
 
-    await expect(
-      client.workflow.create({
-        urls: ["https://example.com"],
+    await client.workflow.create({
+      urls: ["https://example.de/jobs"],
+      templateId: TEMPLATE_ID,
+      templateVersion: 1,
+      userPrompt: "Only include German-language listings",
+    });
+
+    expect(mockPost.mock.calls[0]?.[0]?.publicWorkflowCreateRequest).toEqual(
+      expect.objectContaining({
         templateId: TEMPLATE_ID,
         templateVersion: 1,
-        userPrompt: "should not be allowed",
+        userPrompt: "Only include German-language listings",
       }),
-    ).rejects.toBeInstanceOf(KadoaSdkException);
-    expect(mockPost).not.toHaveBeenCalled();
+    );
+  });
+
+  test("template-only creation still omits userPrompt", async () => {
+    const mockPost = mock(() => Promise.resolve({ data: { workflowId: "wf-4" } }));
+    const client = createTestClient(mockPost);
+
+    await client.workflow.create({
+      urls: ["https://example.de/jobs"],
+      templateId: TEMPLATE_ID,
+      templateVersion: 1,
+    });
+
+    expect(
+      mockPost.mock.calls[0]?.[0]?.publicWorkflowCreateRequest.userPrompt,
+    ).toBeUndefined();
   });
 
   test("still requires userPrompt when no templateId is supplied", async () => {
