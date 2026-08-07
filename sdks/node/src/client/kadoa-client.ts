@@ -8,6 +8,7 @@ import type {
   ExtractOptions,
   PreparedExtraction,
 } from "../domains/extraction/services/extraction-builder.service";
+import type { InboxService } from "../domains/inbox";
 import { Realtime, type RealtimeConfig } from "../domains/realtime";
 import type { SchemasService } from "../domains/schemas/schemas.service";
 import type { ScrapeService } from "../domains/scrape/scrape.service";
@@ -67,6 +68,7 @@ export class KadoaClient {
   public readonly extraction: ExtractionService;
   public readonly workflow: WorkflowsCoreService;
   public readonly notification: NotificationDomain;
+  public readonly inbox: InboxService;
   public readonly schema: SchemasService;
   public readonly scrape: ScrapeService;
   public readonly user: UserService;
@@ -130,6 +132,7 @@ export class KadoaClient {
     this.schema = domains.schema;
     this.scrape = domains.scrape;
     this.notification = domains.notification;
+    this.inbox = domains.inbox;
     this.template = domains.template;
     this.validation = domains.validation;
     this.variable = domains.variable;

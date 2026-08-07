@@ -5,6 +5,7 @@ import {
   type BaseAPI,
   Configuration,
   DataValidationApi,
+  InboxApi,
   MeApi,
   NotificationsApi,
   SchemasApi,
@@ -77,6 +78,10 @@ export class ApiRegistry {
 
   get notifications(): NotificationsApi {
     return this.get(NotificationsApi);
+  }
+
+  get inbox(): InboxApi {
+    return this.get(InboxApi);
   }
 
   get templates(): TemplatesApi {
