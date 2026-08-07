@@ -1,5 +1,13 @@
 # Changelog
 
+## [0.40.0](https://github.com/kadoa-org/kadoa-sdks/compare/node-sdk-v0.39.0...node-sdk-v0.40.0) (2026-08-07)
+
+
+### Features
+
+* **node-sdk:** expose personal Inbox ([937df35](https://github.com/kadoa-org/kadoa-sdks/commit/937df3559e31343a4026757cfb71e9dbdcd91dbf))
+* support template-specific workflow instructions in SDKs ([3848360](https://github.com/kadoa-org/kadoa-sdks/commit/38483600d59438130c140a86d7315c4ab875eb9f))
+
 ## [0.39.0](https://github.com/kadoa-org/kadoa-sdks/compare/node-sdk-v0.38.0...node-sdk-v0.39.0) (2026-08-04)
 
 
