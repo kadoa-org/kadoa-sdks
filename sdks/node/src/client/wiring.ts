@@ -7,6 +7,7 @@ import { type CrawlerDomain, createCrawlerDomain } from "../domains/crawler";
 import { DataFetcherService } from "../domains/extraction/services/data-fetcher.service";
 import { ExtractionService } from "../domains/extraction/services/extraction.service";
 import { ExtractionBuilderService } from "../domains/extraction/services/extraction-builder.service";
+import { InboxService } from "../domains/inbox";
 import type {
   NotificationOptions,
   NotificationSettingsEventType,
@@ -84,6 +85,7 @@ export function createClientDomains(params: { client: KadoaClient }): {
   extraction: ExtractionService;
   workflow: WorkflowsCoreService;
   notification: NotificationDomain;
+  inbox: InboxService;
   schema: SchemasService;
   scrape: ScrapeService;
   user: UserService;
@@ -96,6 +98,7 @@ export function createClientDomains(params: { client: KadoaClient }): {
 
   const assistantService = new AssistantService(client.apis.agent);
   const changesService = new ChangesService(client);
+  const inboxService = new InboxService(client.apis.inbox);
   const userService = new UserService(client);
   const dataFetcherService = new DataFetcherService(client.apis.workflows);
   const channelsService = new NotificationChannelsService(
@@ -151,6 +154,7 @@ export function createClientDomains(params: { client: KadoaClient }): {
     extraction: extractionService,
     workflow: workflowsCoreService,
     notification,
+    inbox: inboxService,
     schema: schemasService,
     scrape: scrapeService,
     user: userService,

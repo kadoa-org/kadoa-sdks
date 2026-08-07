@@ -7050,6 +7050,162 @@
         }
       }
     },
+    "/v5/inbox": {
+      "get": {
+        "operationId": "v5InboxList",
+        "summary": "List personal Inbox items",
+        "description": "Returns all Inbox items visible to the authenticated user in the active team, with unread items first.",
+        "tags": [
+          "Inbox"
+        ],
+        "security": [
+          {
+            "ApiKeyAuth": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Inbox items returned successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/InboxListResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "The active team or Inbox query is invalid",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/InboxErrorResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Authentication failed or no active team is selected",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/InboxErrorResponse"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Inbox items could not be listed",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/InboxErrorResponse"
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "Inbox storage is temporarily unavailable",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/InboxSimpleErrorResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/v5/inbox/{itemId}/mark-read": {
+      "post": {
+        "operationId": "v5InboxMarkRead",
+        "summary": "Mark one personal Inbox item as read",
+        "description": "Acknowledges one Inbox item for the authenticated user in the active team without performing the item's underlying workflow action.",
+        "tags": [
+          "Inbox"
+        ],
+        "security": [
+          {
+            "ApiKeyAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "itemId",
+            "in": "path",
+            "required": true,
+            "description": "Inbox item ID",
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Inbox item acknowledgment completed",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/InboxReadMutationResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid Inbox item ID",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/InboxErrorResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Authentication failed or no active team is selected",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/InboxErrorResponse"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "The active role cannot mutate Inbox read state",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/InboxErrorResponse"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Inbox item could not be marked as read",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/InboxErrorResponse"
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "Inbox storage is temporarily unavailable",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/InboxSimpleErrorResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/v5/notifications/channels": {
       "get": {
         "summary": "Retrieve all notification channels",
@@ -8778,7 +8934,7 @@
                     },
                     "scheduledWorkflows": {
                       "type": "integer",
-                      "description": "ACTIVE workflows with an active schedule (auto-run, roll over to next cycle)"
+                      "description": "ACTIVE workflows with an active schedule OR on a live real-time monitor lane (REAL_TIME, SHELLY_REAL_TIME_SCRIPT) — both auto-run and roll over to the next cycle"
                     },
                     "workflows": {
                       "type": "array",
@@ -8799,7 +8955,7 @@
                           },
                           "scheduled": {
                             "type": "boolean",
-                            "description": "ACTIVE and on an active schedule (recurring); else completed/one-off"
+                            "description": "ACTIVE and either on an active schedule or a live real-time monitor (recurring); else completed/one-off"
                           },
                           "firstRunAt": {
                             "type": "string",
@@ -14653,12 +14809,13 @@
                     "type": "string",
                     "enum": [
                       "auto",
+                      "direct",
                       "dc",
                       "isp",
                       "residential",
                       "stealth"
                     ],
-                    "description": "Proxy tier: auto (smart selection), dc (datacenter), isp, residential, or stealth to route through the anti-bot providers for sites that block bots. Stealth providers use their own egress and pricing. Default: auto"
+                    "description": "Proxy tier: auto (smart selection), direct (Squid server egress without location guarantees), dc (datacenter), isp, residential, or stealth to route through the anti-bot providers for sites that block bots. Stealth providers use their own egress and pricing. Default: auto"
                   },
                   "format": {
                     "default": "html",
@@ -15132,11 +15289,12 @@
                               "proxy": {
                                 "type": "string",
                                 "enum": [
+                                  "direct",
                                   "dc",
                                   "isp",
                                   "residential"
                                 ],
-                                "description": "Proxy type: datacenter, ISP, or residential",
+                                "description": "Proxy type: direct Squid egress, datacenter, ISP, or residential",
                                 "nullable": true
                               },
                               "location": {
@@ -21765,6 +21923,193 @@
           }
         }
       },
+      "InboxItem": {
+        "type": "object",
+        "required": [
+          "id",
+          "teamId",
+          "userId",
+          "type",
+          "subjectId",
+          "workflowId",
+          "title",
+          "payload",
+          "isRead",
+          "readAt",
+          "deletedAt",
+          "createdAt",
+          "updatedAt"
+        ],
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "teamId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "userId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "type": {
+            "type": "string",
+            "enum": [
+              "shelly_question",
+              "data_quality_issues",
+              "sample_data_ready"
+            ]
+          },
+          "subjectId": {
+            "type": "string"
+          },
+          "workflowId": {
+            "type": "string",
+            "format": "uuid",
+            "nullable": true
+          },
+          "title": {
+            "type": "string"
+          },
+          "payload": {
+            "type": "object",
+            "additionalProperties": true
+          },
+          "isRead": {
+            "type": "boolean"
+          },
+          "readAt": {
+            "type": "string",
+            "format": "date-time",
+            "nullable": true
+          },
+          "deletedAt": {
+            "type": "string",
+            "format": "date-time",
+            "nullable": true
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "updatedAt": {
+            "type": "string",
+            "format": "date-time"
+          }
+        }
+      },
+      "InboxListData": {
+        "type": "object",
+        "required": [
+          "unreadCount",
+          "items"
+        ],
+        "properties": {
+          "unreadCount": {
+            "type": "integer",
+            "minimum": 0
+          },
+          "items": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/InboxItem"
+            }
+          }
+        }
+      },
+      "InboxListResponse": {
+        "type": "object",
+        "required": [
+          "data",
+          "status"
+        ],
+        "properties": {
+          "data": {
+            "$ref": "#/components/schemas/InboxListData"
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "success"
+            ]
+          }
+        }
+      },
+      "InboxReadMutationData": {
+        "type": "object",
+        "required": [
+          "readCount"
+        ],
+        "properties": {
+          "readCount": {
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 1
+          }
+        }
+      },
+      "InboxReadMutationResponse": {
+        "type": "object",
+        "required": [
+          "data",
+          "status"
+        ],
+        "properties": {
+          "data": {
+            "$ref": "#/components/schemas/InboxReadMutationData"
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "success"
+            ]
+          }
+        }
+      },
+      "InboxStructuredErrorResponse": {
+        "type": "object",
+        "required": [
+          "data",
+          "status",
+          "message"
+        ],
+        "properties": {
+          "data": {
+            "nullable": true
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "error"
+            ]
+          },
+          "message": {
+            "type": "string"
+          }
+        }
+      },
+      "InboxSimpleErrorResponse": {
+        "type": "object",
+        "required": [
+          "error"
+        ],
+        "properties": {
+          "error": {
+            "type": "string"
+          }
+        }
+      },
+      "InboxErrorResponse": {
+        "oneOf": [
+          {
+            "$ref": "#/components/schemas/InboxStructuredErrorResponse"
+          },
+          {
+            "$ref": "#/components/schemas/InboxSimpleErrorResponse"
+          }
+        ]
+      },
       "EmailChannelConfig": {
         "type": "object",
         "required": [
@@ -23351,6 +23696,7 @@
                 "type": "string",
                 "enum": [
                   "auto",
+                  "direct",
                   "dc",
                   "resi",
                   "isp"
@@ -23711,6 +24057,7 @@
                 "type": "string",
                 "enum": [
                   "auto",
+                  "direct",
                   "dc",
                   "resi",
                   "isp"
@@ -24088,6 +24435,7 @@
                 "type": "string",
                 "enum": [
                   "auto",
+                  "direct",
                   "dc",
                   "resi",
                   "isp"
@@ -24498,6 +24846,7 @@
                 "type": "string",
                 "enum": [
                   "auto",
+                  "direct",
                   "dc",
                   "resi",
                   "isp"

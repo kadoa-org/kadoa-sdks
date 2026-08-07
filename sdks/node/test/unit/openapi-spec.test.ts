@@ -18,4 +18,13 @@ describe("published OpenAPI source", () => {
       spec.paths["/v5/agent/workflows/{workflowId}/timeline"].get.operationId,
     ).toBe("v5AgentWorkflowAssistantTimeline");
   });
+
+  test("includes the personal Inbox operations", () => {
+    const spec = JSON.parse(readFileSync(specPath, "utf8"));
+
+    expect(spec.paths["/v5/inbox"].get.operationId).toBe("v5InboxList");
+    expect(spec.paths["/v5/inbox/{itemId}/mark-read"].post.operationId).toBe(
+      "v5InboxMarkRead",
+    );
+  });
 });
