@@ -2,8 +2,8 @@ from __future__ import annotations
 
 import json
 import time
-from urllib.parse import urlparse
 from typing import TYPE_CHECKING, Any, Dict, List, Optional
+from urllib.parse import urlparse
 
 from kadoa_sdk.core.logger import workflow as logger
 from openapi_client.models.create_schema_body_fields_inner import CreateSchemaBodyFieldsInner
@@ -123,8 +123,8 @@ class WorkflowManagerService:
             user_prompt=user_prompt,
         )
         try:
-            wrapper = CreateWorkflowBody.model_validate(inner.model_dump(by_alias=True, exclude_none=True))
-            resp = api.v4_workflows_post(public_workflow_create_request=wrapper)
+            wrapper = CreateWorkflowBody(actual_instance=inner)
+            resp = api.v4_workflows_post(create_workflow_body=wrapper)
 
             workflow_id = getattr(resp, "workflow_id", None) or getattr(resp, "workflowId", None)
             if not workflow_id:

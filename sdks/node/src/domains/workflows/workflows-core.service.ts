@@ -11,8 +11,8 @@ import type {
   SchemaField,
   WorkflowInterval,
 } from "../extraction/extraction.acl";
-import type { TemplatesService } from "../templates/templates.service";
 import {
+  type GeneratedCreateWorkflowBody,
   type GetJobResponse,
   type GetWorkflowResponse,
   JobStateEnum,
@@ -48,9 +48,9 @@ export interface CreateWorkflowInput {
   urls: string[];
   /**
    * Natural-language instructions for the workflow (10–5000 chars).
-   * Required unless creating from a published template version
-   * (i.e. when both `templateId` and `templateVersion` are supplied) —
-   * in that case the prompt is inherited from the template version.
+   * Required for standalone workflow creation. Optional with `templateId`,
+   * where it becomes workflow-specific instructions layered onto the
+   * selected template prompt.
    */
   userPrompt?: string;
   name?: string;
@@ -68,18 +68,16 @@ export interface CreateWorkflowInput {
   limit?: number;
   /**
    * Instantiate a workflow from a published template. When set, only `urls`
-   * is required — `userPrompt`, `entity`, `fields`, `schemaId`,
-   * `monitoring` must NOT be supplied; they are
-   * inherited from the resolved template version.
-   *
-   * If `templateVersion` is omitted, the SDK resolves the template's
-   * latest published version automatically.
+   * is required — `entity`, `fields`, `schemaId`, and `monitoring` must NOT
+   * be supplied; they are inherited from the resolved template version.
+   * `userPrompt` is optional and becomes workflow-specific template
+   * instructions.
    */
   templateId?: string;
   /**
    * Optional: Specific published version (integer) of the template to
-   * instantiate. Defaults to the template's latest published version when
-   * `templateId` is set and this field is omitted.
+   * instantiate. If omitted, the backend resolves the latest published
+   * version when `templateId` is set.
    */
   templateVersion?: number;
   /**
@@ -108,10 +106,7 @@ export const TERMINAL_RUN_STATES: Set<string> = new Set([
 const debug = logger.workflow;
 
 export class WorkflowsCoreService {
-  constructor(
-    private readonly workflowsApi: WorkflowsApiInterface,
-    private readonly templatesService?: TemplatesService,
-  ) {}
+  constructor(private readonly workflowsApi: WorkflowsApiInterface) {}
 
   async create(input: CreateWorkflowInput): Promise<{ id: WorkflowId }> {
     validateAdditionalData(input.additionalData);
@@ -120,7 +115,6 @@ export class WorkflowsCoreService {
 
     if (isFromTemplate) {
       const conflicting: string[] = [];
-      if (input.userPrompt != null) conflicting.push("userPrompt");
       if (input.entity != null) conflicting.push("entity");
       if (input.fields != null) conflicting.push("fields");
       if (input.schemaId != null) conflicting.push("schemaId");
@@ -148,14 +142,13 @@ export class WorkflowsCoreService {
 
     let request: PromptWorkflow | WorkflowFromTemplate;
     if (isFromTemplate) {
-      const templateId = input.templateId as string;
-      const templateVersion =
-        input.templateVersion ?? (await this.resolveLatestVersion(templateId));
-
       request = {
         urls: input.urls,
-        templateId,
-        templateVersion,
+        templateId: input.templateId as string,
+        ...(input.templateVersion != null && {
+          templateVersion: input.templateVersion,
+        }),
+        ...(input.userPrompt != null && { userPrompt: input.userPrompt }),
         ...(input.name != null && { name: input.name }),
         ...(input.description != null && { description: input.description }),
         ...(input.tags != null && { tags: input.tags }),
@@ -191,7 +184,10 @@ export class WorkflowsCoreService {
     }
 
     const response = await this.workflowsApi.v4WorkflowsPost({
-      publicWorkflowCreateRequest: request as PromptWorkflow,
+      // OpenAPI Generator currently flattens the CreateWorkflowBody anyOf into
+      // an impossible interface in the TS client, so we keep a narrow SDK-side
+      // request union and adapt it only at the generated boundary.
+      createWorkflowBody: request as unknown as GeneratedCreateWorkflowBody,
     });
     const workflowId = response.data?.workflowId;
 
@@ -204,31 +200,6 @@ export class WorkflowsCoreService {
       });
     }
     return { id: workflowId };
-  }
-
-  private async resolveLatestVersion(templateId: string): Promise<number> {
-    if (!this.templatesService) {
-      throw new KadoaSdkException(
-        "TemplatesService is required to resolve a template's latest version. Pass `templateVersion` explicitly or construct WorkflowsCoreService with a TemplatesService.",
-        {
-          code: "INTERNAL_ERROR",
-          details: { templateId },
-        },
-      );
-    }
-    const template = await this.templatesService.get(templateId);
-    const latest = (template as { latestVersion?: number | null })
-      .latestVersion;
-    if (latest == null) {
-      throw new KadoaSdkException(
-        `Template ${templateId} has no published versions; supply templateVersion explicitly or publish a version first.`,
-        {
-          code: "VALIDATION_ERROR",
-          details: { templateId },
-        },
-      );
-    }
-    return latest;
   }
 
   async get(id: WorkflowId): Promise<GetWorkflowResponse> {

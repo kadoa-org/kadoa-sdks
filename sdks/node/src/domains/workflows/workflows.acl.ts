@@ -5,10 +5,12 @@
  */
 
 import type {
+  CreateWorkflowBody as GeneratedCreateWorkflowBody,
   JobStatusResponse,
   JobStatusResponseStateEnum,
   MonitoringConfig,
   PromptWorkflow,
+  RawDataWorkflow,
   V4WorkflowsGet200ResponseWorkflowsInner,
   V4WorkflowsGet200ResponseWorkflowsInnerDisplayStateEnum,
   V4WorkflowsGet200ResponseWorkflowsInnerStateEnum,
@@ -203,11 +205,21 @@ export class ListWorkflowsRequest {
   format?: ResponseFormat;
 }
 
-export type CreateWorkflowRequest = WorkflowWithExistingSchema;
+export type CreateWorkflowRequest =
+  | PromptWorkflow
+  | RawDataWorkflow
+  | WorkflowFromTemplate
+  | WorkflowWithExistingSchema
+  | WorkflowWithEntityAndFields;
 
 export type CreateWorkflowWithCustomSchemaRequest = WorkflowWithEntityAndFields;
 
-export type { PromptWorkflow, WorkflowFromTemplate };
+export type {
+  GeneratedCreateWorkflowBody,
+  PromptWorkflow,
+  RawDataWorkflow,
+  WorkflowFromTemplate,
+};
 
 /**
  * @deprecated Renamed to `PromptWorkflow` upstream. Kept for backwards

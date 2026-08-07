@@ -111,10 +111,7 @@ export function createClientDomains(params: { client: KadoaClient }): {
   const schemasService = new SchemasService(client);
   const scrapeService = new ScrapeService(client);
   const templatesService = new TemplatesService(client);
-  const workflowsCoreService = new WorkflowsCoreService(
-    client.apis.workflows,
-    templatesService,
-  );
+  const workflowsCoreService = new WorkflowsCoreService(client.apis.workflows);
   const variablesService = new VariablesService(client);
   const channelSetupService = new NotificationSetupService(
     channelsService,
