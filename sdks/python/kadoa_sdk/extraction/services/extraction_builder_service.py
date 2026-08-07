@@ -1,8 +1,11 @@
 from __future__ import annotations
 
-from collections.abc import AsyncGenerator
 import time
+from collections.abc import AsyncGenerator
 from typing import TYPE_CHECKING, Any, Dict, List, Optional, TypedDict, Union
+
+from openapi_client.models.create_schema_body_fields_inner import CreateSchemaBodyFieldsInner
+from openapi_client.models.prompt_workflow import PromptWorkflow as AgenticWorkflow
 
 from ..extraction_acl import (
     ClassificationField,
@@ -11,8 +14,6 @@ from ..extraction_acl import (
     DataFieldExample,
     GetWorkflowResponse,
 )
-from openapi_client.models.create_schema_body_fields_inner import CreateSchemaBodyFieldsInner
-from openapi_client.models.prompt_workflow import PromptWorkflow as AgenticWorkflow
 
 if TYPE_CHECKING:  # pragma: no cover
     from ...client import KadoaClient
@@ -567,8 +568,8 @@ class ExtractionBuilderService:
             inner.schedules = schedules
 
         try:
-            wrapper = CreateWorkflowBody.model_validate(inner.model_dump(by_alias=True, exclude_none=True))
-            resp = api.v4_workflows_post(public_workflow_create_request=wrapper)
+            wrapper = CreateWorkflowBody(actual_instance=inner)
+            resp = api.v4_workflows_post(create_workflow_body=wrapper)
             workflow_id = getattr(resp, "workflow_id", None) or getattr(resp, "workflowId", None)
             if not workflow_id:
                 raise KadoaSdkError(

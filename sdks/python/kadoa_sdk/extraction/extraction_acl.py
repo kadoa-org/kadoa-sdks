@@ -6,7 +6,7 @@ Downstream code must import from this module instead of `openapi_client/**`.
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, Literal, List, Optional, Dict, Any, Union
+from typing import TYPE_CHECKING, Any, Dict, List, Literal, Optional, Union
 
 from pydantic import BaseModel, ConfigDict, Field
 
@@ -16,14 +16,13 @@ except ImportError:  # pragma: no cover
     from openapi_client.api.crawl_api import CrawlApi  # type: ignore[attr-defined]
 
 from openapi_client.api.workflows_api import WorkflowsApi
-from openapi_client.models.public_workflow_create_request import (
-    PublicWorkflowCreateRequest as CreateWorkflowBody,
+from openapi_client.models.create_workflow_body import CreateWorkflowBody
+from openapi_client.models.job_status_response import JobStatusResponse
+from openapi_client.models.v4_workflows_get200_response_workflows_inner import (
+    V4WorkflowsGet200ResponseWorkflowsInner,
 )
 from openapi_client.models.v4_workflows_workflow_id_data_get200_response import (
     V4WorkflowsWorkflowIdDataGet200Response,
-)
-from openapi_client.models.v4_workflows_get200_response_workflows_inner import (
-    V4WorkflowsGet200ResponseWorkflowsInner,
 )
 from openapi_client.models.v4_workflows_workflow_id_get200_response import (
     V4WorkflowsWorkflowIdGet200Response,
@@ -37,7 +36,6 @@ from openapi_client.models.v4_workflows_workflow_id_metadata_put_request import 
 from openapi_client.models.v4_workflows_workflow_id_run_put200_response import (
     V4WorkflowsWorkflowIdRunPut200Response,
 )
-from openapi_client.models.job_status_response import JobStatusResponse
 from openapi_client.models.workflow_with_entity_and_fields import WorkflowWithEntityAndFields
 
 if TYPE_CHECKING:
@@ -102,7 +100,7 @@ JobStateEnum = Literal[
 
 class WorkflowResponse(V4WorkflowsGet200ResponseWorkflowsInner):
     """Workflow response with SDK-curated enum types.
-    
+
     Remaps generated enum fields to prevent type leakage.
     """
 
@@ -127,7 +125,7 @@ class WorkflowResponse(V4WorkflowsGet200ResponseWorkflowsInner):
 
 class GetWorkflowResponse(V4WorkflowsWorkflowIdGet200Response):
     """Get workflow response with SDK-curated enum types.
-    
+
     Remaps generated enum fields to prevent type leakage.
     """
 
