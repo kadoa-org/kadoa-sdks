@@ -2016,6 +2016,10 @@
                       "type": "boolean",
                       "description": "Whether the template controls schedule/frequency"
                     },
+                    "templateHasRecordLimit": {
+                      "type": "boolean",
+                      "description": "Whether the template controls the output record limit"
+                    },
                     "hasSchemaValidationRules": {
                       "type": "boolean",
                       "description": "Whether this workflow has schema validation rules"
@@ -2029,7 +2033,11 @@
                     },
                     "jobId": {
                       "type": "string",
-                      "description": "ID of the last job"
+                      "description": "ID of the latest operational run attempt"
+                    },
+                    "publishedJobId": {
+                      "type": "string",
+                      "description": "ID of the latest finished run that supplies customer-visible data"
                     },
                     "isFirstRun": {
                       "type": "boolean",
@@ -2321,14 +2329,26 @@
                             "type": "string",
                             "format": "date-time",
                             "description": "When the support request was created"
+                          },
+                          "status": {
+                            "type": "string",
+                            "description": "Customer-visible ticket status synced from Linear (e.g., In Progress). Absent until the first sync."
+                          },
+                          "statusType": {
+                            "type": "string",
+                            "description": "Status category backing `status` (e.g., unstarted, started, completed)"
                           }
                         }
                       }
                     },
+                    "inSupport": {
+                      "type": "boolean",
+                      "description": "True when Kadoa support has an open ticket on this workflow. Same predicate as the inSupport query filter. Independent of state/displayState: this answers who is handling the workflow, while displayState answers whether it is delivering data. Prefer this over recomputing from openSupportRequests."
+                    },
                     "observerHealth": {
                       "type": "object",
                       "nullable": true,
-                      "description": "Health status for REAL_TIME observer workflows. Only present when health monitoring is active and detects issues.",
+                      "description": "Health status for monitored workflows. Only present when health monitoring is active and detects issues.",
                       "properties": {
                         "healthTier": {
                           "type": "string",
@@ -3951,7 +3971,7 @@
           {
             "name": "updateInterval",
             "in": "query",
-            "description": "Filter workflows by update interval. REAL_TIME matches workflows that run in real time (independent of notifications).",
+            "description": "Filter workflows by update interval. REAL_TIME matches workflows that run in real time, independent of notification configuration.",
             "required": false,
             "schema": {
               "type": "string",
@@ -4097,9 +4117,21 @@
                                   "type": "string",
                                   "format": "date-time",
                                   "description": "When the support request was created"
+                                },
+                                "status": {
+                                  "type": "string",
+                                  "description": "Customer-visible ticket status synced from Linear (e.g., In Progress). Absent until the first sync."
+                                },
+                                "statusType": {
+                                  "type": "string",
+                                  "description": "Status category backing `status` (e.g., unstarted, started, completed)"
                                 }
                               }
                             }
+                          },
+                          "inSupport": {
+                            "type": "boolean",
+                            "description": "True when Kadoa support has an open ticket on this workflow. Same predicate as the inSupport query filter. Independent of state/displayState: this answers who is handling the workflow, while displayState answers whether it is delivering data. Prefer this over recomputing from openSupportRequests."
                           },
                           "userId": {
                             "type": "string",
@@ -4123,6 +4155,41 @@
                             "format": "date-time",
                             "nullable": true,
                             "description": "Most recent persisted customer-visible data change for a real-time workflow"
+                          },
+                          "dataStale": {
+                            "type": "boolean",
+                            "description": "Whether published batch Assistant data is stale versus current config or build. Always false for unsupported workflow modes and when no confirmed snapshot exists."
+                          },
+                          "assistantEligible": {
+                            "type": "boolean",
+                            "description": "Whether this workflow mode supports the workflow Assistant."
+                          },
+                          "assistantSessionId": {
+                            "type": "string",
+                            "nullable": true,
+                            "description": "Most recent customer-facing Assistant session linked to this workflow."
+                          },
+                          "assistantThreadId": {
+                            "type": "string",
+                            "nullable": true,
+                            "description": "Most recent customer-facing Assistant thread within assistantSessionId."
+                          },
+                          "sessionStatus": {
+                            "type": "string",
+                            "nullable": true,
+                            "enum": [
+                              "pending",
+                              "created",
+                              "active",
+                              "idle",
+                              "inactive",
+                              "failed",
+                              "interrupted",
+                              "errored",
+                              "aborted",
+                              "timed_out"
+                            ],
+                            "description": "Current status of the listed customer-facing Assistant session."
                           },
                           "tags": {
                             "type": "array",
@@ -4153,7 +4220,11 @@
                           },
                           "jobId": {
                             "type": "string",
-                            "description": "ID of the last job"
+                            "description": "ID of the latest operational run attempt"
+                          },
+                          "publishedJobId": {
+                            "type": "string",
+                            "description": "ID of the latest finished run that supplies customer-visible data"
                           },
                           "dataKey": {
                             "type": "string",
@@ -4193,7 +4264,26 @@
                               "FINISHED",
                               "FAILED"
                             ],
-                            "description": "Latest job execution state. RUNNING = job in progress, FINISHED = job completed successfully, FAILED = job failed. This is the raw job state before computing displayState."
+                            "description": "Latest job execution state. RUNNING = job in progress, FINISHED = job completed successfully, FAILED = last run failed. This is the raw job state before computing displayState."
+                          },
+                          "templateId": {
+                            "type": "string",
+                            "nullable": true,
+                            "description": "Linked workflow template identifier."
+                          },
+                          "templateVersion": {
+                            "type": "integer",
+                            "nullable": true,
+                            "description": "Version pinned to the workflow's template linkage."
+                          },
+                          "templateLatestVersion": {
+                            "type": "integer",
+                            "nullable": true,
+                            "description": "Most recent published version of the linked template."
+                          },
+                          "templateIsOutdated": {
+                            "type": "boolean",
+                            "description": "Whether a newer template version exists than the workflow's pinned version."
                           },
                           "totalRecords": {
                             "type": "integer",
@@ -4431,7 +4521,7 @@
                           "observerHealth": {
                             "type": "object",
                             "nullable": true,
-                            "description": "Health status for REAL_TIME observer workflows. Only present when health monitoring is active and detects issues.",
+                            "description": "Health status for monitored workflows. Only present when health monitoring is active and detects issues.",
                             "properties": {
                               "healthTier": {
                                 "type": "string",
@@ -4541,6 +4631,7 @@
                   "limit": {
                     "type": "integer",
                     "minimum": 1,
+                    "maximum": 2147483647,
                     "nullable": true,
                     "description": "Maximum records per run. Pass null to clear the limit and extract all rows."
                   },
@@ -4564,7 +4655,6 @@
                       "TRIWEEKLY",
                       "FOUR_WEEKS",
                       "MONTHLY",
-                      "REAL_TIME",
                       "CUSTOM"
                     ]
                   },
@@ -4902,7 +4992,7 @@
             "name": "jobId",
             "in": "query",
             "required": false,
-            "description": "ID of a specific run. Omit to use the latest run.",
+            "description": "ID of a specific published run. Omit to use the latest published run.",
             "schema": {
               "type": "string"
             }
@@ -5706,7 +5796,7 @@
     "/v4/workflows/{workflowId}/triggers": {
       "get": {
         "summary": "List workflow triggers",
-        "description": "Get all triggers where the specified workflow is the source",
+        "description": "Get the triggers where the specified workflow is the source (`triggers`)\nand the triggers where it is the target (`incoming`). Outgoing rows are\nalways returned; each carries `targetWorkflowName` when the caller can\naccess the target. Incoming rows are returned only when the caller can\naccess the source workflow, and each carries `sourceWorkflowName`.\n`count` is the outgoing trigger count.\n",
         "tags": [
           "Workflow Triggers"
         ],
@@ -5765,7 +5855,7 @@
       },
       "post": {
         "summary": "Create a workflow trigger",
-        "description": "Create a trigger that fires when the source workflow emits an event",
+        "description": "Create a trigger that fires when the source workflow emits an event.\nThe target must share the source ownership scope (same team for team\nworkflows, or the same user for personal workflows) and must not be a\nrealtime workflow. Superadmins are subject to the same scope check on\nthe public endpoint.\n",
         "tags": [
           "Workflow Triggers"
         ],
@@ -5816,11 +5906,13 @@
                     "enum": [
                       "workflow_started",
                       "workflow_finished",
-                      "workflow_failed",
-                      "workflow_data_change",
-                      "workflow_sample_finished",
                       "workflow_export_completed",
-                      "workflow_validation_anomaly_change"
+                      "workflow_failed",
+                      "workflow_recovered",
+                      "workflow_sample_finished",
+                      "workflow_data_change",
+                      "workflow_validation_anomaly_change",
+                      "workflow_health_degraded"
                     ],
                     "description": "Event type that triggers the target workflow"
                   },
@@ -5847,19 +5939,22 @@
             "description": "Trigger created successfully"
           },
           "400": {
-            "description": "Invalid input"
+            "description": "Invalid input, target is a realtime workflow, or the workflow would trigger itself"
           },
           "401": {
             "description": "Unauthorized"
           },
           "403": {
-            "description": "No access to target workflow"
+            "description": "No access to target workflow, or target is outside the source ownership scope"
           },
           "404": {
             "description": "Workflow not found"
           },
           "409": {
-            "description": "Duplicate trigger"
+            "description": "Duplicate trigger, or source/target ownership is moving teams"
+          },
+          "422": {
+            "description": "Source workflow already has the maximum number of triggers (5)"
           },
           "500": {
             "description": "Internal server error"
@@ -5985,11 +6080,13 @@
                     "enum": [
                       "workflow_started",
                       "workflow_finished",
-                      "workflow_failed",
-                      "workflow_data_change",
-                      "workflow_sample_finished",
                       "workflow_export_completed",
-                      "workflow_validation_anomaly_change"
+                      "workflow_failed",
+                      "workflow_recovered",
+                      "workflow_sample_finished",
+                      "workflow_data_change",
+                      "workflow_validation_anomaly_change",
+                      "workflow_health_degraded"
                     ]
                   },
                   "enabled": {
@@ -6485,6 +6582,100 @@
           },
           "404": {
             "description": "Session not found"
+          }
+        }
+      }
+    },
+    "/v5/agent/{sessionId}": {
+      "delete": {
+        "operationId": "v5AgentDeleteSession",
+        "summary": "Delete an inactive Assistant session",
+        "description": "Deletes the session and its related data. Only inactive sessions with a customer-facing thread can be deleted. Re-sending after a successful delete returns 404, which callers should treat as already done.",
+        "tags": [
+          "Agent"
+        ],
+        "parameters": [
+          {
+            "name": "sessionId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "204": {
+            "description": "Session deleted"
+          },
+          "400": {
+            "description": "sessionId is not a UUID",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AgentErrorEnvelope"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Session not found for the authenticated team"
+          },
+          "409": {
+            "description": "Session is active, or has no customer-facing thread"
+          }
+        }
+      }
+    },
+    "/v5/agent/workflows/{workflowId}/assistant-session": {
+      "post": {
+        "operationId": "v5AgentWorkflowAssistantSession",
+        "summary": "Start (or return) the workflow's Assistant session",
+        "description": "Bootstraps the customer-facing Assistant lane for a workflow. Concurrent bootstraps converge on the same session; 201 marks a fresh start, 200 an already-existing lane.",
+        "tags": [
+          "Agent"
+        ],
+        "parameters": [
+          {
+            "name": "workflowId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Assistant already started"
+          },
+          "201": {
+            "description": "Assistant started"
+          },
+          "400": {
+            "description": "Workflow is not eligible for the Assistant",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AgentErrorEnvelope"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Workflow not found for the authenticated team"
+          },
+          "502": {
+            "description": "Bootstrap outcome unknown (ASSISTANT_BOOTSTRAP_OUTCOME_UNKNOWN) — re-send safely",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AgentErrorEnvelope"
+                }
+              }
+            }
           }
         }
       }
@@ -7206,6 +7397,66 @@
         }
       }
     },
+    "/v5/notifications/workflows/{workflowId}/changes/{changeId}/csv": {
+      "get": {
+        "summary": "Download the changed-records CSV for a data change",
+        "description": "Accepts either normal team authentication or a signed link minted for a notification. Pass `latest` as changeId to get the workflow's most recent change, which the settings editor uses as a sample download.\n",
+        "tags": [
+          "Notifications"
+        ],
+        "parameters": [
+          {
+            "in": "path",
+            "name": "workflowId",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "changeId",
+            "required": true,
+            "schema": {
+              "type": "string"
+            },
+            "description": "Change id, or `latest` for the most recent change."
+          },
+          {
+            "in": "query",
+            "name": "expires",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "sig",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "CSV file",
+            "content": {
+              "text/csv": {
+                "schema": {
+                  "type": "string"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Change not found"
+          },
+          "409": {
+            "description": "The change set is no longer retrievable"
+          }
+        }
+      }
+    },
     "/v5/notifications/channels": {
       "get": {
         "summary": "Retrieve all notification channels",
@@ -7871,6 +8122,65 @@
           },
           "500": {
             "description": "Internal server error"
+          }
+        }
+      }
+    },
+    "/v5/notifications/workflows/{workflowId}/jobs/{jobId}/csv": {
+      "get": {
+        "summary": "Download the extracted records of a workflow run as CSV",
+        "description": "Accepts either normal team authentication or a signed link minted for a workflow-finished notification.\n",
+        "tags": [
+          "Notifications"
+        ],
+        "parameters": [
+          {
+            "in": "path",
+            "name": "workflowId",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "jobId",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "expires",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "sig",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "CSV file",
+            "content": {
+              "text/csv": {
+                "schema": {
+                  "type": "string"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Run not found"
+          },
+          "409": {
+            "description": "The run holds no readable data"
           }
         }
       }
@@ -8934,7 +9244,69 @@
                     },
                     "scheduledWorkflows": {
                       "type": "integer",
-                      "description": "ACTIVE workflows with an active schedule OR on a live real-time monitor lane (REAL_TIME, SHELLY_REAL_TIME_SCRIPT) — both auto-run and roll over to the next cycle"
+                      "description": "ACTIVE workflows with an active schedule OR on the Julie real-time lane — both auto-run and roll over to the next cycle"
+                    },
+                    "activeCount": {
+                      "type": "integer",
+                      "description": "Number of workflows in the Active billing model right now"
+                    },
+                    "activeSlotUsage": {
+                      "type": "number",
+                      "format": "float",
+                      "description": "Weighted slot usage for activeWorkflows"
+                    },
+                    "slotUsage": {
+                      "type": "number",
+                      "format": "float",
+                      "description": "Weighted slot usage for workflows in the current billing period"
+                    },
+                    "activeWorkflows": {
+                      "type": "array",
+                      "description": "Workflow detail behind activeCount, from the same fixed-period calculation",
+                      "items": {
+                        "type": "object",
+                        "properties": {
+                          "workflowId": {
+                            "type": "string",
+                            "format": "uuid"
+                          },
+                          "name": {
+                            "type": "string",
+                            "nullable": true
+                          },
+                          "state": {
+                            "type": "string"
+                          },
+                          "scheduled": {
+                            "type": "boolean",
+                            "description": "Enabled scheduled or real-time workflow"
+                          },
+                          "firstRunAt": {
+                            "type": "string",
+                            "format": "date-time",
+                            "nullable": true,
+                            "description": "Start of the current run window; for enabled recurring workflows outside a fixed period, the first run in the trailing 30 days"
+                          },
+                          "activeUntil": {
+                            "type": "string",
+                            "format": "date-time",
+                            "nullable": true,
+                            "description": "End of the fixed Active period; null while an enabled scheduled or real-time workflow remains Active"
+                          },
+                          "billingMultiplier": {
+                            "type": "number",
+                            "format": "float",
+                            "description": "Slot usage assigned by Kadoa (0.1 Simple, 1 Standard, 2-10 Complex)"
+                          },
+                          "runsInPeriod": {
+                            "type": "integer",
+                            "description": "Successful runs in the current fixed Active period, or trailing 30 days for an enabled recurring workflow outside one"
+                          },
+                          "totalRows": {
+                            "type": "integer"
+                          }
+                        }
+                      }
                     },
                     "workflows": {
                       "type": "array",
@@ -8960,6 +9332,11 @@
                           "firstRunAt": {
                             "type": "string",
                             "format": "date-time"
+                          },
+                          "billingMultiplier": {
+                            "type": "number",
+                            "format": "float",
+                            "description": "Slot usage assigned by Kadoa (0.1 Simple, 1 Standard, 2-10 Complex)"
                           },
                           "runsInPeriod": {
                             "type": "integer"
@@ -9132,7 +9509,7 @@
     "/v5/workspaces/{workspaceId}/monthly-active": {
       "get": {
         "summary": "Daily history for the Active and Active-35 workflow models (teams and organizations)",
-        "description": "For each of the last N days, two values. active35 = distinct workflows that ran successfully (FINISHED, non-preview) in the trailing 35 days ending that day, plus live real-time monitors; fully backfilled from run facts. active = the scheduled count: the exact team_ledger daily snapshot where present (forward), else the run-based 35-day backfill (currently-ACTIVE workflows that ran in the trailing 35 days, plus live real-time monitors) for days predating the snapshot.\n",
+        "description": "For each of the last N days, active is the physical workflow count in fixed 30-day Active periods, activeSlots is its weighted slot usage, and active35 is the deprecated rolling comparison.\n",
         "tags": [
           "Workspaces"
         ],
@@ -9200,7 +9577,12 @@
                           },
                           "active": {
                             "type": "integer",
-                            "description": "Scheduled count — team_ledger snapshot where present, else the run-based 35-day backfill"
+                            "description": "Number of workflows in a fixed Active period"
+                          },
+                          "activeSlots": {
+                            "type": "number",
+                            "format": "float",
+                            "description": "Weighted slot usage for active"
                           },
                           "active35": {
                             "type": "integer",
@@ -9307,7 +9689,7 @@
     "/v5/workspaces/{workspaceId}/period-series": {
       "get": {
         "summary": "Daily per-billing-period cumulative series for Approved workflows and extracted rows (teams and organizations)",
-        "description": "For each of the last N days, the Approved-workflow count and extracted-row sum accumulated since the start of the billing period that day falls in, resetting at each renewal anniversary (a sawtooth across renewals). approved = distinct workflows with at least one FINISHED non-preview run in [periodStart(day), day]; rows = sum of total_records over those runs. Both are run-fact-based, so they are drift-free and fully backfilled. At today, approved equals currentContractActiveWorkflows and rows equals currentPeriodExtractedRows from the quotas endpoint.\n",
+        "description": "For each of the last N days, the Approved-workflow count, weighted slot usage, and extracted-row sum accumulated since the start of the billing period that day falls in, resetting at each renewal anniversary (a sawtooth across renewals). approved = distinct workflows with at least one FINISHED non-preview run in [periodStart(day), day]; approvedSlots sums their multipliers; rows sums total_records. The series is run-fact-based, so it are drift-free and fully backfilled. At today, approved equals currentContractActiveWorkflows and rows equals currentPeriodExtractedRows from the quotas endpoint.\n",
         "tags": [
           "Workspaces"
         ],
@@ -9376,6 +9758,11 @@
                           "approved": {
                             "type": "integer",
                             "description": "Distinct workflows that ran (FINISHED, non-preview) since the start of that day's billing period"
+                          },
+                          "approvedSlots": {
+                            "type": "number",
+                            "format": "float",
+                            "description": "Weighted slot usage for approved"
                           },
                           "rows": {
                             "type": "integer",
@@ -9477,14 +9864,12 @@
                         },
                         "billingType": {
                           "type": "string",
-                          "enum": [
-                            "enterprise_approved",
-                            "enterprise_active",
-                            "enterprise_active_35",
-                            "flex"
-                          ],
                           "nullable": true,
-                          "description": "The org-level billing model (drives the default usage model on the dashboard), or null until set."
+                          "enum": [
+                            "enterprise_active",
+                            "enterprise_approved"
+                          ],
+                          "description": "The org-level billing model. Active is the default; null for standalone teams."
                         },
                         "availableQuotas": {
                           "type": "object",
@@ -9506,6 +9891,15 @@
                               "type": "integer",
                               "description": "Current number of workflows in ACTIVE state (legacy count)"
                             },
+                            "currentBillingActiveWorkflows": {
+                              "type": "integer",
+                              "description": "Active billing count. Workflows inside a fixed 30-day activation period, plus scheduled and real-time workflows that are currently enabled."
+                            },
+                            "currentBillingActiveSlots": {
+                              "type": "number",
+                              "format": "float",
+                              "description": "Weighted slot usage for currentBillingActiveWorkflows."
+                            },
                             "currentApprovedWorkflows": {
                               "type": "integer",
                               "description": "Workflows that have at least one successful non-preview run AND are alive (or were deleted within the current billing period). Billing Type 3 (per-contract). KAD-6720."
@@ -9523,10 +9917,22 @@
                               "nullable": true,
                               "description": "Contract active. Distinct workflows that ran successfully (non-preview) at least once during the current contract period. The cumulative \"used this term\" billing model. Same definition as the billable-workflows list count. Null when there's no billing period (trial / no renewal_date)."
                             },
+                            "currentContractActiveSlots": {
+                              "type": "number",
+                              "format": "float",
+                              "nullable": true,
+                              "description": "Weighted slot usage for currentContractActiveWorkflows."
+                            },
                             "previousContractActiveWorkflows": {
                               "type": "integer",
                               "nullable": true,
                               "description": "Contract active for the PREVIOUS billing period (one cycle back). Same definition as currentContractActiveWorkflows; used for renewal sizing comparisons. Null when there's no billing period."
+                            },
+                            "previousContractActiveSlots": {
+                              "type": "number",
+                              "format": "float",
+                              "nullable": true,
+                              "description": "Weighted slot usage for previousContractActiveWorkflows."
                             },
                             "currentExtractedRows": {
                               "type": "integer",
@@ -22083,6 +22489,52 @@
           }
         }
       },
+      "AgentErrorEnvelope": {
+        "type": "object",
+        "description": "Error envelope shared by every v5 agent endpoint. `code` is always present and stable. Conflict codes SESSION_NOT_ACTIVE, SESSION_ALREADY_ACTIVE and PAUSE_ANSWER_CONFLICT are terminal successes — the desired state already holds, do not retry-loop. `outcome: \"unknown\"` (with an *_OUTCOME_UNKNOWN code) marks an indeterminate dispatch: the work may already have started; re-send only when `retrySafe` is true, or with your original idempotencyKey. `retryAfterMs` accompanies retryable 503 responses.",
+        "required": [
+          "data",
+          "status",
+          "code",
+          "message"
+        ],
+        "properties": {
+          "data": {
+            "nullable": true
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "error"
+            ]
+          },
+          "code": {
+            "type": "string"
+          },
+          "message": {
+            "type": "string"
+          },
+          "outcome": {
+            "type": "string",
+            "enum": [
+              "unknown"
+            ]
+          },
+          "retrySafe": {
+            "type": "boolean"
+          },
+          "retryAfterMs": {
+            "type": "number"
+          },
+          "residue": {
+            "type": "object",
+            "description": "Identifiers of state left behind when compensation failed; keep them for support.",
+            "additionalProperties": {
+              "type": "string"
+            }
+          }
+        }
+      },
       "InboxItem": {
         "type": "object",
         "required": [
@@ -26325,9 +26777,12 @@
             "enum": [
               "ONLY_ONCE",
               "EVERY_10_MINUTES",
+              "EVERY_20_MINUTES",
               "HALF_HOURLY",
               "HOURLY",
+              "TWO_HOURLY",
               "THREE_HOURLY",
+              "FOUR_HOURLY",
               "SIX_HOURLY",
               "TWELVE_HOURLY",
               "EIGHTEEN_HOURLY",
@@ -26339,7 +26794,6 @@
               "TRIWEEKLY",
               "FOUR_WEEKS",
               "MONTHLY",
-              "REAL_TIME",
               "CUSTOM"
             ],
             "description": "Frequency interval enum of the latest version. null when the version does not control frequency.",
@@ -26533,6 +26987,31 @@
                       "description": "Custom display name (null = default 'v.N')",
                       "nullable": true
                     },
+                    "publisher": {
+                      "type": "object",
+                      "properties": {
+                        "kind": {
+                          "type": "string",
+                          "enum": [
+                            "HUMAN",
+                            "SERVICE_ACCOUNT",
+                            "AGENT",
+                            "SYSTEM"
+                          ],
+                          "description": "Publisher kind; null for legacy/unproven versions",
+                          "nullable": true
+                        },
+                        "label": {
+                          "type": "string",
+                          "description": "Current human name/email, non-human publisher label, or Unknown for legacy/unproven versions"
+                        }
+                      },
+                      "required": [
+                        "kind",
+                        "label"
+                      ],
+                      "description": "Publisher attribution"
+                    },
                     "prompt": {
                       "type": "string",
                       "description": "User prompt",
@@ -26692,9 +27171,12 @@
                           "enum": [
                             "ONLY_ONCE",
                             "EVERY_10_MINUTES",
+                            "EVERY_20_MINUTES",
                             "HALF_HOURLY",
                             "HOURLY",
+                            "TWO_HOURLY",
                             "THREE_HOURLY",
+                            "FOUR_HOURLY",
                             "SIX_HOURLY",
                             "TWELVE_HOURLY",
                             "EIGHTEEN_HOURLY",
@@ -26706,10 +27188,9 @@
                             "TRIWEEKLY",
                             "FOUR_WEEKS",
                             "MONTHLY",
-                            "REAL_TIME",
                             "CUSTOM"
                           ],
-                          "description": "Update interval enum (HOURLY/DAILY/REAL_TIME/CUSTOM/...). When CUSTOM, schedules must be provided."
+                          "description": "Update interval enum (HOURLY/DAILY/CUSTOM/...). When CUSTOM, schedules must be provided."
                         },
                         "schedules": {
                           "type": "array",
@@ -26750,6 +27231,18 @@
                       "description": "Frequency configuration for this version",
                       "nullable": true
                     },
+                    "recordLimit": {
+                      "type": "integer",
+                      "minimum": 0,
+                      "exclusiveMinimum": 0,
+                      "maximum": 2147483647,
+                      "nullable": true,
+                      "description": "Immutable output record limit; null when managed unlimited or unmanaged"
+                    },
+                    "recordLimitManaged": {
+                      "type": "boolean",
+                      "description": "Whether this version owns the workflow output record limit"
+                    },
                     "createdAt": {
                       "type": "string",
                       "description": "Creation timestamp"
@@ -26770,6 +27263,7 @@
                     "templateId",
                     "version",
                     "name",
+                    "publisher",
                     "prompt",
                     "schemaId",
                     "frequency",
@@ -27076,12 +27570,14 @@
         "properties": {
           "prompt": {
             "type": "string",
-            "description": "User prompt to copy into workflow config"
+            "nullable": true,
+            "description": "Prompt; omit to inherit, null to clear"
           },
           "schemaId": {
             "type": "string",
             "format": "uuid",
-            "description": "data_schemas ID to reference (mutually exclusive with schemaFields)"
+            "nullable": true,
+            "description": "Schema ID; omit to inherit, null to clear (mutually exclusive with schemaFields)"
           },
           "schemaFields": {
             "type": "array",
@@ -27150,11 +27646,12 @@
                 "nullable": true
               }
             },
-            "description": "Schema fields to create a new schema inline"
+            "nullable": true,
+            "description": "Inline schema fields; omit to inherit, null to clear"
           },
           "schemaEntity": {
             "type": "string",
-            "description": "Entity name for the inline schema"
+            "description": "Entity name for supplied inline schema fields"
           },
           "schemaValidationRules": {
             "type": "object",
@@ -27164,7 +27661,8 @@
                 "nullable": true
               }
             },
-            "description": "Schema validation rules to include in this version"
+            "description": "Rules; omit to inherit rules for fields retained by a replacement schema, null to clear, {} to manage an empty ruleset",
+            "nullable": true
           },
           "notifications": {
             "type": "array",
@@ -27210,7 +27708,8 @@
                 "eventType"
               ]
             },
-            "description": "Notification configuration for this version"
+            "nullable": true,
+            "description": "Notifications; omit to inherit, null or [] to clear"
           },
           "frequency": {
             "type": "object",
@@ -27220,9 +27719,12 @@
                 "enum": [
                   "ONLY_ONCE",
                   "EVERY_10_MINUTES",
+                  "EVERY_20_MINUTES",
                   "HALF_HOURLY",
                   "HOURLY",
+                  "TWO_HOURLY",
                   "THREE_HOURLY",
+                  "FOUR_HOURLY",
                   "SIX_HOURLY",
                   "TWELVE_HOURLY",
                   "EIGHTEEN_HOURLY",
@@ -27234,10 +27736,9 @@
                   "TRIWEEKLY",
                   "FOUR_WEEKS",
                   "MONTHLY",
-                  "REAL_TIME",
                   "CUSTOM"
                 ],
-                "description": "Update interval enum (HOURLY/DAILY/REAL_TIME/CUSTOM/...). When CUSTOM, schedules must be provided."
+                "description": "Update interval enum (HOURLY/DAILY/CUSTOM/...). When CUSTOM, schedules must be provided."
               },
               "schedules": {
                 "type": "array",
@@ -27274,11 +27775,28 @@
                 },
                 "description": "Cron/repeat schedule specs. Required when interval=CUSTOM."
               }
-            }
+            },
+            "nullable": true,
+            "description": "Frequency; omit to inherit, null to clear"
+          },
+          "recordLimit": {
+            "type": "integer",
+            "minimum": 0,
+            "exclusiveMinimum": 0,
+            "maximum": 2147483647,
+            "nullable": true,
+            "description": "Output record limit; omit to inherit, null for template-managed unlimited"
+          },
+          "recordLimitManaged": {
+            "type": "boolean",
+            "enum": [
+              false
+            ],
+            "description": "False clears template ownership of the output record limit"
           }
         },
         "title": "CreateTemplateVersionBody",
-        "description": "Request body for publishing a new template version"
+        "description": "Publish a complete immutable template snapshot. Omitted components inherit from the preceding version; null explicitly clears a component."
       },
       "TemplateVersionMutationResponse": {
         "type": "object",
@@ -27318,6 +27836,31 @@
                 "type": "string",
                 "description": "Custom display name (null = default 'v.N')",
                 "nullable": true
+              },
+              "publisher": {
+                "type": "object",
+                "properties": {
+                  "kind": {
+                    "type": "string",
+                    "enum": [
+                      "HUMAN",
+                      "SERVICE_ACCOUNT",
+                      "AGENT",
+                      "SYSTEM"
+                    ],
+                    "description": "Publisher kind; null for legacy/unproven versions",
+                    "nullable": true
+                  },
+                  "label": {
+                    "type": "string",
+                    "description": "Current human name/email, non-human publisher label, or Unknown for legacy/unproven versions"
+                  }
+                },
+                "required": [
+                  "kind",
+                  "label"
+                ],
+                "description": "Publisher attribution"
               },
               "prompt": {
                 "type": "string",
@@ -27478,9 +28021,12 @@
                     "enum": [
                       "ONLY_ONCE",
                       "EVERY_10_MINUTES",
+                      "EVERY_20_MINUTES",
                       "HALF_HOURLY",
                       "HOURLY",
+                      "TWO_HOURLY",
                       "THREE_HOURLY",
+                      "FOUR_HOURLY",
                       "SIX_HOURLY",
                       "TWELVE_HOURLY",
                       "EIGHTEEN_HOURLY",
@@ -27492,10 +28038,9 @@
                       "TRIWEEKLY",
                       "FOUR_WEEKS",
                       "MONTHLY",
-                      "REAL_TIME",
                       "CUSTOM"
                     ],
-                    "description": "Update interval enum (HOURLY/DAILY/REAL_TIME/CUSTOM/...). When CUSTOM, schedules must be provided."
+                    "description": "Update interval enum (HOURLY/DAILY/CUSTOM/...). When CUSTOM, schedules must be provided."
                   },
                   "schedules": {
                     "type": "array",
@@ -27536,6 +28081,18 @@
                 "description": "Frequency configuration for this version",
                 "nullable": true
               },
+              "recordLimit": {
+                "type": "integer",
+                "minimum": 0,
+                "exclusiveMinimum": 0,
+                "maximum": 2147483647,
+                "nullable": true,
+                "description": "Immutable output record limit; null when managed unlimited or unmanaged"
+              },
+              "recordLimitManaged": {
+                "type": "boolean",
+                "description": "Whether this version owns the workflow output record limit"
+              },
               "createdAt": {
                 "type": "string",
                 "description": "Creation timestamp"
@@ -27546,6 +28103,7 @@
               "templateId",
               "version",
               "name",
+              "publisher",
               "prompt",
               "schemaId",
               "frequency",
@@ -27664,10 +28222,6 @@
                 "state": {
                   "type": "string",
                   "description": "Current workflow state"
-                },
-                "isRealTime": {
-                  "type": "boolean",
-                  "description": "Whether this is a real-time monitor workflow"
                 }
               },
               "required": [
@@ -27675,8 +28229,7 @@
                 "workflowName",
                 "templateVersion",
                 "isOutdated",
-                "state",
-                "isRealTime"
+                "state"
               ]
             },
             "description": "Workflows linked to this template"
@@ -27884,6 +28437,10 @@
                         "none"
                       ],
                       "description": "Where the after value came from: observed, simulated by the model, or none"
+                    },
+                    "truncated": {
+                      "type": "boolean",
+                      "description": "Whether a value for this field was truncated to fit the preview budget; absent means not truncated"
                     },
                     "status": {
                       "type": "string",
@@ -28102,7 +28659,8 @@
                 "schema",
                 "schemaValidationRules",
                 "notifications",
-                "frequency"
+                "frequency",
+                "recordLimit"
               ]
             },
             "minItems": 1,
@@ -28447,9 +29005,12 @@
             "enum": [
               "ONLY_ONCE",
               "EVERY_10_MINUTES",
+              "EVERY_20_MINUTES",
               "HALF_HOURLY",
               "HOURLY",
+              "TWO_HOURLY",
               "THREE_HOURLY",
+              "FOUR_HOURLY",
               "SIX_HOURLY",
               "TWELVE_HOURLY",
               "EIGHTEEN_HOURLY",
@@ -28461,7 +29022,6 @@
               "TRIWEEKLY",
               "FOUR_WEEKS",
               "MONTHLY",
-              "REAL_TIME",
               "CUSTOM"
             ],
             "description": "How frequently this workflow should run (ONLY_ONCE, HOURLY, DAILY, WEEKLY, etc.)"
@@ -28503,6 +29063,7 @@
           "limit": {
             "type": "integer",
             "minimum": 1,
+            "maximum": 2147483647,
             "nullable": true,
             "description": "Maximum number of items to scrape. Useful for limiting scope during development or cost control. Pass null to clear an existing limit (unlimited)."
           },
@@ -28621,6 +29182,7 @@
           "limit": {
             "type": "integer",
             "minimum": 1,
+            "maximum": 2147483647,
             "nullable": true,
             "description": "Maximum number of items to scrape. Useful for limiting scope during development or cost control. Pass null to clear an existing limit (unlimited)."
           },
@@ -28635,9 +29197,12 @@
             "enum": [
               "ONLY_ONCE",
               "EVERY_10_MINUTES",
+              "EVERY_20_MINUTES",
               "HALF_HOURLY",
               "HOURLY",
+              "TWO_HOURLY",
               "THREE_HOURLY",
+              "FOUR_HOURLY",
               "SIX_HOURLY",
               "TWELVE_HOURLY",
               "EIGHTEEN_HOURLY",
@@ -28649,7 +29214,6 @@
               "TRIWEEKLY",
               "FOUR_WEEKS",
               "MONTHLY",
-              "REAL_TIME",
               "CUSTOM"
             ],
             "description": "How frequently this workflow should run (ONLY_ONCE, HOURLY, DAILY, WEEKLY, etc.)"
@@ -28796,9 +29360,12 @@
             "enum": [
               "ONLY_ONCE",
               "EVERY_10_MINUTES",
+              "EVERY_20_MINUTES",
               "HALF_HOURLY",
               "HOURLY",
+              "TWO_HOURLY",
               "THREE_HOURLY",
+              "FOUR_HOURLY",
               "SIX_HOURLY",
               "TWELVE_HOURLY",
               "EIGHTEEN_HOURLY",
@@ -28810,7 +29377,6 @@
               "TRIWEEKLY",
               "FOUR_WEEKS",
               "MONTHLY",
-              "REAL_TIME",
               "CUSTOM"
             ],
             "description": "Update frequency for the workflow"
@@ -28876,6 +29442,7 @@
           "limit": {
             "type": "integer",
             "minimum": 1,
+            "maximum": 2147483647,
             "nullable": true,
             "description": "Maximum number of items to scrape. Useful for limiting scope during development or cost control. Pass null to clear an existing limit (unlimited)."
           },
@@ -28890,9 +29457,12 @@
             "enum": [
               "ONLY_ONCE",
               "EVERY_10_MINUTES",
+              "EVERY_20_MINUTES",
               "HALF_HOURLY",
               "HOURLY",
+              "TWO_HOURLY",
               "THREE_HOURLY",
+              "FOUR_HOURLY",
               "SIX_HOURLY",
               "TWELVE_HOURLY",
               "EIGHTEEN_HOURLY",
@@ -28904,7 +29474,6 @@
               "TRIWEEKLY",
               "FOUR_WEEKS",
               "MONTHLY",
-              "REAL_TIME",
               "CUSTOM"
             ],
             "description": "How frequently this workflow should run (ONLY_ONCE, HOURLY, DAILY, WEEKLY, etc.)"
@@ -28994,6 +29563,7 @@
           "limit": {
             "type": "integer",
             "minimum": 1,
+            "maximum": 2147483647,
             "nullable": true,
             "description": "Maximum number of items to scrape. Useful for limiting scope during development or cost control. Pass null to clear an existing limit (unlimited)."
           },
@@ -29008,9 +29578,12 @@
             "enum": [
               "ONLY_ONCE",
               "EVERY_10_MINUTES",
+              "EVERY_20_MINUTES",
               "HALF_HOURLY",
               "HOURLY",
+              "TWO_HOURLY",
               "THREE_HOURLY",
+              "FOUR_HOURLY",
               "SIX_HOURLY",
               "TWELVE_HOURLY",
               "EIGHTEEN_HOURLY",
@@ -29022,7 +29595,6 @@
               "TRIWEEKLY",
               "FOUR_WEEKS",
               "MONTHLY",
-              "REAL_TIME",
               "CUSTOM"
             ],
             "description": "How frequently this workflow should run (ONLY_ONCE, HOURLY, DAILY, WEEKLY, etc.)"
