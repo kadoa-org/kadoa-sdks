@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.41.0](https://github.com/kadoa-org/kadoa-sdks/compare/node-sdk-v0.40.0...node-sdk-v0.41.0) (2026-08-21)
+
+
+### Features
+
+* **node-sdk:** expose workflow list summaries ([#364](https://github.com/kadoa-org/kadoa-sdks/issues/364)) ([c01c264](https://github.com/kadoa-org/kadoa-sdks/commit/c01c264bce2bd6a686b6d4187177e871bc018a6c))
+
 ## [0.40.0](https://github.com/kadoa-org/kadoa-sdks/compare/node-sdk-v0.39.0...node-sdk-v0.40.0) (2026-08-07)
 
 
