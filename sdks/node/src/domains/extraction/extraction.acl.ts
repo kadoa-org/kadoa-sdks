@@ -105,8 +105,19 @@ export type DataType = Exclude<
   | "ADDITIONAL_DATA"
 >;
 
-export type WorkflowInterval =
+type GeneratedWorkflowInterval =
   (typeof WorkflowWithExistingSchemaIntervalEnum)[keyof typeof WorkflowWithExistingSchemaIntervalEnum];
+
+/**
+ * @deprecated REAL_TIME is a workflow mode, not a generic schedule interval.
+ * Generic create and update requests reject it. Kept so existing SDK callers
+ * can compile while they move to the realtime workflow APIs.
+ */
+export type LegacyRealTimeWorkflowInterval = "REAL_TIME";
+
+export type WorkflowInterval =
+  | GeneratedWorkflowInterval
+  | LegacyRealTimeWorkflowInterval;
 
 export type MonitoringOperator =
   (typeof V4WorkflowsWorkflowIdMetadataPutRequestMonitoringFieldsInnerOperatorEnum)[keyof typeof V4WorkflowsWorkflowIdMetadataPutRequestMonitoringFieldsInnerOperatorEnum];

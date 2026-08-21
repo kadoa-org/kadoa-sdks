@@ -8,14 +8,17 @@ import { KadoaClient } from "../../src/client/kadoa-client";
 import type {
   GetWorkflowResponse,
   UpdateWorkflowRequest,
+  WorkflowResponse,
 } from "../../src/domains/workflows/workflows.acl";
 
 const mockUpdate = mock();
 const mockGet = mock();
+const mockList = mock();
 
 function createTestClient(): KadoaClient {
   const client = new KadoaClient({ apiKey: "tk-test" });
   Object.assign(client.apis.workflows, {
+    v4WorkflowsGet: mockList,
     v4WorkflowsWorkflowIdMetadataPut: mockUpdate,
     v4WorkflowsWorkflowIdGet: mockGet,
   });
@@ -26,6 +29,7 @@ describe("workflow management parity", () => {
   beforeEach(() => {
     mockUpdate.mockReset();
     mockGet.mockReset();
+    mockList.mockReset();
   });
 
   test("forwards deterministic settings without dropping nullable unlimited rows", async () => {
@@ -58,6 +62,42 @@ describe("workflow management parity", () => {
     expect(mockUpdate).toHaveBeenCalledWith({
       workflowId: "wf-1",
       v4WorkflowsWorkflowIdMetadataPutRequest: input,
+    });
+  });
+
+  test("types and returns workflow list summaries without dropping fields", async () => {
+    const response = {
+      id: "wf-1",
+      state: "ACTIVE",
+      displayState: "RUNNING",
+      runState: "RUNNING",
+      isRealTime: true,
+      lastDataChangedAt: "2026-08-20T12:00:00.000Z",
+      observerHealth: {
+        healthTier: "WARNING",
+        reason: "No data change detected",
+        lastCheckedAt: "2026-08-20T12:05:00.000Z",
+      },
+      dataStale: true,
+      assistantEligible: true,
+      assistantSessionId: "session-1",
+      assistantThreadId: "thread-1",
+      sessionStatus: "idle",
+      templateId: "template-1",
+      templateVersion: 3,
+      templateLatestVersion: 4,
+      templateIsOutdated: true,
+    } satisfies WorkflowResponse;
+    mockList.mockResolvedValueOnce({ data: { workflows: [response] } });
+
+    const client = createTestClient();
+    const workflows = await client.workflow.list();
+
+    expect(workflows).toEqual([response]);
+    expect(workflows[0]).toMatchObject({
+      assistantSessionId: "session-1",
+      templateLatestVersion: 4,
+      observerHealth: { healthTier: "WARNING" },
     });
   });
 
