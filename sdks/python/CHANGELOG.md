@@ -1,5 +1,18 @@
 # Changelog
 
+## [0.21.0](https://github.com/kadoa-org/kadoa-sdks/compare/python-sdk-v0.20.0...python-sdk-v0.21.0) (2026-08-21)
+
+
+### Features
+
+* **python-sdk:** backfill parity vs node-sdk (KAD-7030) ([#301](https://github.com/kadoa-org/kadoa-sdks/issues/301)) ([a876109](https://github.com/kadoa-org/kadoa-sdks/commit/a876109a0a607c1104562cb3367f213818eaff5a))
+* support template-specific workflow instructions in SDKs ([3848360](https://github.com/kadoa-org/kadoa-sdks/commit/38483600d59438130c140a86d7315c4ab875eb9f))
+
+
+### Bug Fixes
+
+* align SDK contracts and documentation snippets ([#335](https://github.com/kadoa-org/kadoa-sdks/issues/335)) ([79c1ccc](https://github.com/kadoa-org/kadoa-sdks/commit/79c1ccc195fe42626de02be0125e9e887503b7f6))
+
 ## [0.20.0](https://github.com/kadoa-org/kadoa-sdks/compare/python-sdk-v0.19.0...python-sdk-v0.20.0) (2026-04-28)
 
 
