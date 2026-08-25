@@ -32,11 +32,11 @@
     "prepublishOnly": "bun run build"
   },
   "dependencies": {
-    "axios": "1.18.1",
+    "axios": "1.19.0",
     "debug": "4.4.3",
-    "es-toolkit": "1.48.1",
-    "uuid": "14.0.1",
-    "ws": "8.21.0"
+    "es-toolkit": "1.51.0",
+    "uuid": "14.0.2",
+    "ws": "8.21.3"
   },
   "devDependencies": {
     "@types/debug": "^4.1.12",
