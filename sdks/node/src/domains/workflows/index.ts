@@ -23,14 +23,17 @@ export type {
   WorkflowDisplayStateEnum,
   WorkflowResponse,
   WorkflowRun,
-  WorkflowRunsOptions,
-  WorkflowRunsResponse,
   WorkflowRunState,
   WorkflowRunStatusFilter,
+  WorkflowRunsOptions,
+  WorkflowRunsResponse,
   WorkflowState,
   WorkflowStateEnum,
   WorkflowsApiInterface,
 } from "./workflows.acl";
+// Value export: WorkflowStatusFilter is both a const object and a type, so it
+// must be exported without `export type` to preserve the runtime value.
+export { WorkflowStatusFilter } from "./workflows.acl";
 // Service types (owned by workflows-core.service.ts)
 export type {
   CreateWorkflowInput,

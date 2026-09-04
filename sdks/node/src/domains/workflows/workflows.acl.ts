@@ -194,12 +194,34 @@ export type JobStateEnum = (typeof JobStateEnum)[keyof typeof JobStateEnum];
 // Request Types
 // ========================================
 
+/**
+ * Dashboard category filters accepted by `GET /v4/workflows?statusFilters=`.
+ * `Attention` returns the workflows the dashboard shows under
+ * "Needs your attention": the requesting user must answer the Assistant or
+ * approve preview data. Classification is computed by the API; do not
+ * re-derive it from displayState or sessionStatus.
+ */
+export const WorkflowStatusFilter = {
+  Attention: "group:attention",
+  Working: "group:working",
+  Support: "group:support",
+  Failed: "group:failed",
+  Active: "group:active",
+  Complete: "group:complete",
+  Paused: "group:paused",
+} as const;
+
+export type WorkflowStatusFilter =
+  (typeof WorkflowStatusFilter)[keyof typeof WorkflowStatusFilter];
+
 export class ListWorkflowsRequest {
   search?: string;
   skip?: number;
   limit?: number;
   state?: WorkflowState;
   tags?: Array<string>;
+  /** Dashboard category filters. See {@link WorkflowStatusFilter}. */
+  statusFilters?: Array<WorkflowStatusFilter | string>;
   monitoring?: MonitoringStatus;
   updateInterval?: UpdateInterval;
   templateId?: string | string[];
