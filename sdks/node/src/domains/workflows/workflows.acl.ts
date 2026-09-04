@@ -164,6 +164,8 @@ export const WorkflowDisplayStateEnum = {
   Validating: "VALIDATING",
   Deleted: "DELETED",
   PendingStart: "PENDING_START",
+  Degraded: "DEGRADED",
+  Stopped: "STOPPED",
 } as const satisfies Record<
   keyof typeof V4WorkflowsGet200ResponseWorkflowsInnerDisplayStateEnum,
   V4WorkflowsGet200ResponseWorkflowsInnerDisplayStateEnum
