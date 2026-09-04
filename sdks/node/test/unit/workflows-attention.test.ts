@@ -30,7 +30,15 @@ describe("workflow.list attention filter", () => {
 
   test("exports the dashboard group filter constants", () => {
     expect(WorkflowStatusFilter.Attention).toBe("group:attention");
-    expect(Object.values(WorkflowStatusFilter)).toHaveLength(7);
+    expect(Object.values(WorkflowStatusFilter)).toEqual([
+      "group:attention",
+      "group:working",
+      "group:support",
+      "group:failed",
+      "group:active",
+      "group:complete",
+      "group:paused",
+    ]);
   });
 
   test("forwards statusFilters to the generated API untouched", async () => {
@@ -48,6 +56,7 @@ describe("workflow.list attention filter", () => {
     });
   });
 
+  // Guards the invariant that list() applies no client-side mapping that could strip server-computed attention fields.
   test("preserves awaitingUserInput on returned rows", async () => {
     mockList.mockResolvedValueOnce({ data: { workflows: [attentionRow] } });
     const client = createTestClient();

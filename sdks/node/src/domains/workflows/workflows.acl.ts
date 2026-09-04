@@ -220,8 +220,8 @@ export class ListWorkflowsRequest {
   limit?: number;
   state?: WorkflowState;
   tags?: Array<string>;
-  /** Dashboard category filters. See {@link WorkflowStatusFilter}. */
-  statusFilters?: Array<WorkflowStatusFilter | string>;
+  /** Dashboard category filters. See {@link WorkflowStatusFilter}. Unknown strings are accepted so new server-side groups work before an SDK release; the known values still autocomplete. */
+  statusFilters?: Array<WorkflowStatusFilter | (string & {})>;
   monitoring?: MonitoringStatus;
   updateInterval?: UpdateInterval;
   templateId?: string | string[];
