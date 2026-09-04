@@ -1,5 +1,16 @@
 # Changelog
 
+## [0.42.0](https://github.com/kadoa-org/kadoa-sdks/compare/node-sdk-v0.41.0...node-sdk-v0.42.0) (2026-09-04)
+
+
+### ⚠ BREAKING CHANGES
+
+* client.inbox, InboxService, InboxItem, InboxItemType, InboxListResult and InboxMarkReadResult are removed. The backend retired /v5/inbox in kadoa-backend#11278. Use client.workflow.list({ statusFilters: ["group:attention"] }) to find workflows that need the user's input.
+
+### KAD-21974
+
+* drop client.inbox, add statusFilters to workflow.list ([#369](https://github.com/kadoa-org/kadoa-sdks/issues/369)) ([d4d8611](https://github.com/kadoa-org/kadoa-sdks/commit/d4d86119fc29ccf7bbdc067e2610102f122ab67d))
+
 ## [0.41.0](https://github.com/kadoa-org/kadoa-sdks/compare/node-sdk-v0.40.0...node-sdk-v0.41.0) (2026-08-21)
 
 
