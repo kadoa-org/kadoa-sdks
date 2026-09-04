@@ -11,7 +11,6 @@ export * from "./domains/assistant";
 export * from "./domains/changes";
 export * from "./domains/crawler";
 export * from "./domains/extraction";
-export * from "./domains/inbox";
 export * from "./domains/notifications";
 export * from "./domains/realtime";
 export * from "./domains/schemas";
