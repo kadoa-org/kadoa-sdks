@@ -242,7 +242,7 @@
             "name": "endDate",
             "in": "query",
             "required": false,
-            "description": "End date to filter changes (ISO format)",
+            "description": "End date to filter changes (ISO format, inclusive). A date-only value such as `2024-03-01` covers that whole day.",
             "schema": {
               "type": "string",
               "format": "date-time"
@@ -1881,7 +1881,7 @@
                         "SETUP",
                         "DELETED"
                       ],
-                      "description": "Persisted workflow lifecycle state. DRAFT = workflow exists but setup is incomplete, ACTIVE = workflow is enabled, PAUSED = user paused it, DELETED = soft deleted."
+                      "description": "Persisted state of the long-lived workflow. It may describe setup or a control state such as ACTIVE or PAUSED. Use displayState for operational status UI."
                     },
                     "displayState": {
                       "type": "string",
@@ -1901,13 +1901,41 @@
                         "DEGRADED",
                         "COMPLIANCE_REVIEW",
                         "COMPLIANCE_REJECTED",
-                        "DELETED"
+                        "DELETED",
+                        "STOPPED"
                       ],
-                      "description": "Computed status shown to users. Combines state + runState. DRAFT = workflow exists but setup is incomplete, ACTIVE = complete/scheduled, RUNNING = job in progress, VALIDATING = run is held for QA review before data delivery, FAILED = last run failed, DEGRADED = monitor experiencing issues (15-60 min stale)."
+                      "description": "Computed operational summary based on workflow state, the latest run, and monitor health. It does not indicate pending user input or support ownership; use awaitingUserInput and inSupport for those. ACTIVE may be presented as Complete, Scheduled, or Running depending on workflow type and schedule."
+                    },
+                    "reviewReason": {
+                      "type": "string",
+                      "enum": [
+                        "COMPLIANCE_REVIEW",
+                        "HARD_FAIL",
+                        "BLOCKED",
+                        "TRANSFORMATION_REPAIR_REQUIRED",
+                        "MINIMUM_HUMAN_APPROVALS",
+                        "DATA_QUALITY_SCHEMA_ADHERENCE",
+                        "DATA_QUALITY_SCHEMA_VALIDATION",
+                        "DATA_QUALITY_COMPLETENESS",
+                        "DATA_QUALITY_SEMANTIC_PLAUSIBILITY",
+                        "ROW_COUNT_CHANGED",
+                        "WORKFLOW_REVISION_DRIFT",
+                        "ZERO_RESULTS"
+                      ],
+                      "description": "Why the latest run is being verified. Only present while displayState is VALIDATING."
                     },
                     "userId": {
                       "type": "string",
                       "description": "ID of the user who owns the workflow"
+                    },
+                    "userName": {
+                      "type": "string",
+                      "description": "Display name of the workflow owner"
+                    },
+                    "userEmail": {
+                      "type": "string",
+                      "format": "email",
+                      "description": "Email of the workflow owner"
                     },
                     "createdAt": {
                       "type": "string",
@@ -2106,9 +2134,10 @@
                       "enum": [
                         "RUNNING",
                         "FINISHED",
-                        "FAILED"
+                        "FAILED",
+                        "STOPPED"
                       ],
-                      "description": "Latest job execution state. RUNNING = job in progress, FINISHED = completed successfully, FAILED = job failed."
+                      "description": "State of the latest execution attempt. Use this for run diagnostics or workflow history, not as the workflow lifecycle or status label."
                     },
                     "totalRecords": {
                       "type": "integer",
@@ -2405,7 +2434,6 @@
                       "nullable": true,
                       "enum": [
                         "pending",
-                        "created",
                         "active",
                         "idle",
                         "inactive",
@@ -2415,7 +2443,26 @@
                         "aborted",
                         "timed_out"
                       ],
-                      "description": "Status of the linked assistant session. Useful for deciding whether the Assistant can accept new input (failed/errored/aborted/timed_out are closed)."
+                      "description": "Low-level status of the latest Assistant conversation. Use it only to decide whether that conversation can accept input. Do not infer workflow progress or whether a reply is needed; use displayState and awaitingUserInput instead."
+                    },
+                    "awaitingUserInput": {
+                      "type": "object",
+                      "nullable": true,
+                      "description": "Present when the workflow cannot progress without the requesting user's next input. Scoped to that user; do not infer this from sessionStatus.",
+                      "required": [
+                        "since"
+                      ],
+                      "properties": {
+                        "since": {
+                          "type": "string",
+                          "format": "date-time",
+                          "description": "When the workflow began waiting for user input"
+                        },
+                        "prompt": {
+                          "type": "string",
+                          "description": "The assistant's explicit question, when it paused on one"
+                        }
+                      }
                     }
                   }
                 }
@@ -2539,7 +2586,7 @@
                     "newState": {
                       "type": "string",
                       "enum": [
-                        "ACTIVE"
+                        "QUEUED"
                       ]
                     },
                     "actionBy": {
@@ -2962,6 +3009,35 @@
           "404": {
             "description": "Workflow or job not found"
           },
+          "409": {
+            "description": "No run is published for a download, or the producing run schema is unavailable",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": [
+                    "code",
+                    "error"
+                  ],
+                  "properties": {
+                    "code": {
+                      "type": "string",
+                      "enum": [
+                        "DATA_NOT_PUBLISHED",
+                        "PRODUCING_SCHEMA_UNAVAILABLE"
+                      ]
+                    },
+                    "error": {
+                      "type": "string"
+                    },
+                    "runId": {
+                      "type": "string"
+                    }
+                  }
+                }
+              }
+            }
+          },
           "500": {
             "description": "Internal server error"
           }
@@ -3123,6 +3199,35 @@
           },
           "404": {
             "description": "Workflow or run not found"
+          },
+          "409": {
+            "description": "No workflow run is published, or the producing run schema is unavailable",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": [
+                    "code",
+                    "error"
+                  ],
+                  "properties": {
+                    "code": {
+                      "type": "string",
+                      "enum": [
+                        "DATA_NOT_PUBLISHED",
+                        "PRODUCING_SCHEMA_UNAVAILABLE"
+                      ]
+                    },
+                    "error": {
+                      "type": "string"
+                    },
+                    "runId": {
+                      "type": "string"
+                    }
+                  }
+                }
+              }
+            }
           }
         }
       }
@@ -3415,7 +3520,7 @@
               "type": "integer",
               "default": 25
             },
-            "description": "Maximum number of runs per page (default 25, max 1000)"
+            "description": "Maximum number of runs per page (default 25, min 1, max 1000)"
           },
           {
             "in": "query",
@@ -3840,7 +3945,7 @@
           {
             "name": "state",
             "in": "query",
-            "description": "Filter workflows by persisted workflow state. DRAFT workflows are excluded from default results unless explicitly requested. Use inSupport param to filter by support status.",
+            "description": "Filter by the persisted state of the long-lived workflow. Use displayState for its computed operational status, statusFilters for dashboard categories, and inSupport for support ownership. DRAFT workflows are excluded by default unless explicitly requested.",
             "required": false,
             "schema": {
               "type": "string",
@@ -3862,21 +3967,22 @@
           {
             "name": "runState",
             "in": "query",
-            "description": "Filter workflows by latest job run state (e.g., FAILED)",
+            "description": "Filter by the latest execution attempt. Use this for run diagnostics, not workflow status UI.",
             "required": false,
             "schema": {
               "type": "string",
               "enum": [
                 "FAILED",
                 "FINISHED",
-                "RUNNING"
+                "RUNNING",
+                "STOPPED"
               ]
             }
           },
           {
             "name": "displayState",
             "in": "query",
-            "description": "Filter workflows by computed display state (comma-separated for multiple)",
+            "description": "Filter by the workflow's computed operational state. This does not include pending user input or support ownership; use statusFilters for those dashboard categories. Accepts comma-separated values.",
             "required": false,
             "schema": {
               "type": "string",
@@ -3922,13 +4028,22 @@
           {
             "name": "statusFilters",
             "in": "query",
-            "description": "Dashboard status filters. Accepts repeated params, comma-separated values, or a JSON array.",
+            "description": "Filter by dashboard category. Categories are group:attention, group:working, group:support, group:failed, group:active, group:complete, and group:paused. Accepts repeated params, comma-separated values, or a JSON array.",
             "required": false,
             "schema": {
               "type": "array",
               "items": {
                 "type": "string"
               }
+            }
+          },
+          {
+            "name": "groupWindows",
+            "in": "query",
+            "description": "Dashboard-only grouped list mode. JSON object mapping expanded dashboard groups to an offset and batch limit. Omitted groups return counts but no workflow rows. The response includes groupPagination.",
+            "required": false,
+            "schema": {
+              "type": "string"
             }
           },
           {
@@ -4079,7 +4194,7 @@
                               "SETUP",
                               "DELETED"
                             ],
-                            "description": "Persisted workflow lifecycle state. DRAFT = workflow exists but setup is incomplete, ACTIVE = workflow is enabled, PAUSED = user paused it, DELETED = soft deleted. Use inSupport param to filter by support status."
+                            "description": "Persisted state of the long-lived workflow. It may describe setup or a control state such as ACTIVE or PAUSED. Use displayState for operational status UI."
                           },
                           "displayState": {
                             "type": "string",
@@ -4096,11 +4211,31 @@
                               "RUNNING",
                               "VALIDATING",
                               "FAILED",
+                              "DEGRADED",
                               "COMPLIANCE_REVIEW",
                               "COMPLIANCE_REJECTED",
-                              "DELETED"
+                              "DELETED",
+                              "STOPPED"
                             ],
-                            "description": "Computed status shown to users. Combines state + runState. DRAFT = workflow exists but setup is incomplete, ACTIVE = complete/scheduled, RUNNING = job in progress, VALIDATING = run is held for QA review before data delivery, FAILED = last run failed. Use this for dashboard filtering."
+                            "description": "Computed operational summary based on workflow state, the latest run, and monitor health. It does not indicate pending user input or support ownership; use awaitingUserInput and inSupport for those. ACTIVE may be presented as Complete, Scheduled, or Running depending on workflow type and schedule."
+                          },
+                          "reviewReason": {
+                            "type": "string",
+                            "enum": [
+                              "COMPLIANCE_REVIEW",
+                              "HARD_FAIL",
+                              "BLOCKED",
+                              "TRANSFORMATION_REPAIR_REQUIRED",
+                              "MINIMUM_HUMAN_APPROVALS",
+                              "DATA_QUALITY_SCHEMA_ADHERENCE",
+                              "DATA_QUALITY_SCHEMA_VALIDATION",
+                              "DATA_QUALITY_COMPLETENESS",
+                              "DATA_QUALITY_SEMANTIC_PLAUSIBILITY",
+                              "ROW_COUNT_CHANGED",
+                              "WORKFLOW_REVISION_DRIFT",
+                              "ZERO_RESULTS"
+                            ],
+                            "description": "Why the latest run is being verified. Only present while displayState is VALIDATING."
                           },
                           "openSupportRequests": {
                             "type": "array",
@@ -4133,9 +4268,37 @@
                             "type": "boolean",
                             "description": "True when Kadoa support has an open ticket on this workflow. Same predicate as the inSupport query filter. Independent of state/displayState: this answers who is handling the workflow, while displayState answers whether it is delivering data. Prefer this over recomputing from openSupportRequests."
                           },
+                          "awaitingUserInput": {
+                            "type": "object",
+                            "nullable": true,
+                            "description": "Present when the workflow cannot progress without the requesting user's next input. Scoped to that user; do not infer this from sessionStatus.",
+                            "required": [
+                              "since"
+                            ],
+                            "properties": {
+                              "since": {
+                                "type": "string",
+                                "format": "date-time",
+                                "description": "When the workflow began waiting for user input"
+                              },
+                              "prompt": {
+                                "type": "string",
+                                "description": "The assistant's explicit question, when it paused on one"
+                              }
+                            }
+                          },
                           "userId": {
                             "type": "string",
                             "description": "ID of the user who owns the workflow"
+                          },
+                          "userName": {
+                            "type": "string",
+                            "description": "Display name of the workflow owner"
+                          },
+                          "userEmail": {
+                            "type": "string",
+                            "format": "email",
+                            "description": "Email of the workflow owner"
                           },
                           "createdAt": {
                             "type": "string",
@@ -4262,9 +4425,10 @@
                             "enum": [
                               "RUNNING",
                               "FINISHED",
-                              "FAILED"
+                              "FAILED",
+                              "STOPPED"
                             ],
-                            "description": "Latest job execution state. RUNNING = job in progress, FINISHED = job completed successfully, FAILED = last run failed. This is the raw job state before computing displayState."
+                            "description": "State of the latest execution attempt. Use this for run diagnostics or workflow history, not as the workflow lifecycle or status label."
                           },
                           "templateId": {
                             "type": "string",
@@ -4572,6 +4736,30 @@
                         "limit": {
                           "type": "integer",
                           "description": "Number of items per page"
+                        }
+                      }
+                    },
+                    "groupPagination": {
+                      "type": "object",
+                      "description": "Per-group counts and window metadata. Present only when groupWindows is requested.",
+                      "additionalProperties": {
+                        "type": "object",
+                        "properties": {
+                          "totalCount": {
+                            "type": "integer"
+                          },
+                          "offset": {
+                            "type": "integer"
+                          },
+                          "returnedCount": {
+                            "type": "integer"
+                          },
+                          "nextOffset": {
+                            "type": "integer"
+                          },
+                          "hasMore": {
+                            "type": "boolean"
+                          }
                         }
                       }
                     }
@@ -7241,162 +7429,6 @@
         }
       }
     },
-    "/v5/inbox": {
-      "get": {
-        "operationId": "v5InboxList",
-        "summary": "List personal Inbox items",
-        "description": "Returns all Inbox items visible to the authenticated user in the active team, with unread items first.",
-        "tags": [
-          "Inbox"
-        ],
-        "security": [
-          {
-            "ApiKeyAuth": []
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "Inbox items returned successfully",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/InboxListResponse"
-                }
-              }
-            }
-          },
-          "400": {
-            "description": "The active team or Inbox query is invalid",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/InboxErrorResponse"
-                }
-              }
-            }
-          },
-          "401": {
-            "description": "Authentication failed or no active team is selected",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/InboxErrorResponse"
-                }
-              }
-            }
-          },
-          "500": {
-            "description": "Inbox items could not be listed",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/InboxErrorResponse"
-                }
-              }
-            }
-          },
-          "503": {
-            "description": "Inbox storage is temporarily unavailable",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/InboxSimpleErrorResponse"
-                }
-              }
-            }
-          }
-        }
-      }
-    },
-    "/v5/inbox/{itemId}/mark-read": {
-      "post": {
-        "operationId": "v5InboxMarkRead",
-        "summary": "Mark one personal Inbox item as read",
-        "description": "Acknowledges one Inbox item for the authenticated user in the active team without performing the item's underlying workflow action.",
-        "tags": [
-          "Inbox"
-        ],
-        "security": [
-          {
-            "ApiKeyAuth": []
-          }
-        ],
-        "parameters": [
-          {
-            "name": "itemId",
-            "in": "path",
-            "required": true,
-            "description": "Inbox item ID",
-            "schema": {
-              "type": "string",
-              "format": "uuid"
-            }
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "Inbox item acknowledgment completed",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/InboxReadMutationResponse"
-                }
-              }
-            }
-          },
-          "400": {
-            "description": "Invalid Inbox item ID",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/InboxErrorResponse"
-                }
-              }
-            }
-          },
-          "401": {
-            "description": "Authentication failed or no active team is selected",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/InboxErrorResponse"
-                }
-              }
-            }
-          },
-          "403": {
-            "description": "The active role cannot mutate Inbox read state",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/InboxErrorResponse"
-                }
-              }
-            }
-          },
-          "500": {
-            "description": "Inbox item could not be marked as read",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/InboxErrorResponse"
-                }
-              }
-            }
-          },
-          "503": {
-            "description": "Inbox storage is temporarily unavailable",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/InboxSimpleErrorResponse"
-                }
-              }
-            }
-          }
-        }
-      }
-    },
     "/v5/notifications/workflows/{workflowId}/changes/{changeId}/csv": {
       "get": {
         "summary": "Download the changed-records CSV for a data change",
@@ -8180,7 +8212,7 @@
             "description": "Run not found"
           },
           "409": {
-            "description": "The run holds no readable data"
+            "description": "The run holds no readable data, or its producing schema is unavailable"
           }
         }
       }
@@ -9172,6 +9204,145 @@
         }
       }
     },
+    "/v5/workspaces/{workspaceId}/activity-usage": {
+      "get": {
+        "summary": "Get daily workflow totals, approvals, and extracted rows",
+        "description": "Returns informational usage across all execution modes. This data does not determine the workspace billing model.",
+        "tags": [
+          "Workspaces"
+        ],
+        "parameters": [
+          {
+            "name": "workspaceId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
+          {
+            "name": "days",
+            "in": "query",
+            "required": false,
+            "description": "Number of trailing UTC days to return (1-366, default 30)",
+            "schema": {
+              "type": "integer",
+              "default": 30
+            }
+          },
+          {
+            "name": "x-api-key",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "Authorization",
+            "in": "header",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "security": [
+          {
+            "ApiKeyAuth": []
+          },
+          {
+            "BearerAuth": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Activity usage retrieved successfully",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": [
+                    "start",
+                    "end",
+                    "totals",
+                    "days"
+                  ],
+                  "properties": {
+                    "start": {
+                      "type": "string",
+                      "format": "date-time"
+                    },
+                    "end": {
+                      "type": "string",
+                      "format": "date-time"
+                    },
+                    "totals": {
+                      "type": "object",
+                      "required": [
+                        "approvedWorkflows",
+                        "extractedRows"
+                      ],
+                      "properties": {
+                        "approvedWorkflows": {
+                          "type": "integer"
+                        },
+                        "extractedRows": {
+                          "type": "integer"
+                        }
+                      }
+                    },
+                    "days": {
+                      "type": "array",
+                      "items": {
+                        "type": "object",
+                        "required": [
+                          "date",
+                          "totalWorkflows",
+                          "approvedWorkflows",
+                          "extractedRows"
+                        ],
+                        "properties": {
+                          "date": {
+                            "type": "string",
+                            "format": "date"
+                          },
+                          "totalWorkflows": {
+                            "type": "integer"
+                          },
+                          "approvedWorkflows": {
+                            "type": "integer"
+                          },
+                          "extractedRows": {
+                            "type": "integer"
+                          }
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid range"
+          },
+          "401": {
+            "description": "Unauthorized"
+          },
+          "403": {
+            "description": "Forbidden"
+          },
+          "404": {
+            "description": "Workspace not found"
+          },
+          "500": {
+            "description": "Internal server error"
+          }
+        }
+      }
+    },
     "/v5/workspaces/{workspaceId}/billable-workflows": {
       "get": {
         "summary": "List the billable workflows behind the current billing period (teams and organizations)",
@@ -9244,7 +9415,7 @@
                     },
                     "scheduledWorkflows": {
                       "type": "integer",
-                      "description": "ACTIVE workflows with an active schedule OR on the Julie real-time lane — both auto-run and roll over to the next cycle"
+                      "description": "ACTIVE workflows with an enabled schedule or a real-time runtime"
                     },
                     "activeCount": {
                       "type": "integer",
@@ -9262,7 +9433,7 @@
                     },
                     "activeWorkflows": {
                       "type": "array",
-                      "description": "Workflow detail behind activeCount, from the same fixed-period calculation",
+                      "description": "Workflow detail behind activeCount, using the enabled scheduled-or-realtime rule",
                       "items": {
                         "type": "object",
                         "properties": {
@@ -9285,13 +9456,13 @@
                             "type": "string",
                             "format": "date-time",
                             "nullable": true,
-                            "description": "Start of the current run window; for enabled recurring workflows outside a fixed period, the first run in the trailing 30 days"
+                            "description": "First successful non-preview run in the trailing 30-day detail window"
                           },
                           "activeUntil": {
                             "type": "string",
                             "format": "date-time",
                             "nullable": true,
-                            "description": "End of the fixed Active period; null while an enabled scheduled or real-time workflow remains Active"
+                            "description": "Retained for compatibility; always null because Active membership no longer expires from run history"
                           },
                           "billingMultiplier": {
                             "type": "number",
@@ -9300,7 +9471,7 @@
                           },
                           "runsInPeriod": {
                             "type": "integer",
-                            "description": "Successful runs in the current fixed Active period, or trailing 30 days for an enabled recurring workflow outside one"
+                            "description": "Successful non-preview runs in the trailing 30-day detail window"
                           },
                           "totalRows": {
                             "type": "integer"
@@ -9479,6 +9650,32 @@
                               }
                             }
                           }
+                        },
+                        "usageTeams": {
+                          "type": "array",
+                          "description": "Active teams with workflows included in the commercial Usage scope. Internal Ops teams are excluded.",
+                          "items": {
+                            "type": "object",
+                            "properties": {
+                              "id": {
+                                "type": "string",
+                                "format": "uuid"
+                              },
+                              "name": {
+                                "type": "string"
+                              },
+                              "totalWorkflows": {
+                                "type": "integer"
+                              },
+                              "activeSlots": {
+                                "type": "number"
+                              }
+                            }
+                          }
+                        },
+                        "memberCount": {
+                          "type": "integer",
+                          "description": "Unique human members across usageTeams, or the selected team for a team workspace."
                         }
                       }
                     },
@@ -9508,8 +9705,8 @@
     },
     "/v5/workspaces/{workspaceId}/monthly-active": {
       "get": {
-        "summary": "Daily history for the Active and Active-35 workflow models (teams and organizations)",
-        "description": "For each of the last N days, active is the physical workflow count in fixed 30-day Active periods, activeSlots is its weighted slot usage, and active35 is the deprecated rolling comparison.\n",
+        "summary": "Compatibility activity history for teams and organizations",
+        "description": "Today's active value uses the current enabled-schedule or realtime billing rule. Older points retain the previous run-activity approximation. active35 is the deprecated rolling comparison.\n",
         "tags": [
           "Workspaces"
         ],
@@ -9577,7 +9774,7 @@
                           },
                           "active": {
                             "type": "integer",
-                            "description": "Number of workflows in a fixed Active period"
+                            "description": "Compatibility activity count; only today's point matches current Active billing"
                           },
                           "activeSlots": {
                             "type": "number",
@@ -9887,13 +10084,17 @@
                         "usedQuotas": {
                           "type": "object",
                           "properties": {
+                            "currentTotalWorkflows": {
+                              "type": "integer",
+                              "description": "Current non-deleted workflows in the workspace's commercial scope."
+                            },
                             "currentActiveWorkflows": {
                               "type": "integer",
                               "description": "Current number of workflows in ACTIVE state (legacy count)"
                             },
                             "currentBillingActiveWorkflows": {
                               "type": "integer",
-                              "description": "Active billing count. Workflows inside a fixed 30-day activation period, plus scheduled and real-time workflows that are currently enabled."
+                              "description": "Active billing count. ACTIVE workflows attached to an enabled schedule, plus ACTIVE realtime workflows."
                             },
                             "currentBillingActiveSlots": {
                               "type": "number",
@@ -9906,7 +10107,7 @@
                             },
                             "currentScheduledWorkflows": {
                               "type": "integer",
-                              "description": "Active (scheduled). Distinct ACTIVE workflows with a next run scheduled on our scheduler (an active schedule with next_run_at set) OR a live real-time monitor. The live headline for the \"Active\" billing model; daily history comes from the team_ledger snapshot (forward) or a run-based 35-day backfill. KAD-7956."
+                              "description": "Compatibility alias for currentBillingActiveWorkflows."
                             },
                             "currentActive35Workflows": {
                               "type": "integer",
@@ -15152,11 +15353,11 @@
                     "description": "Per-attempt timeout in milliseconds"
                   },
                   "overallTimeout": {
-                    "default": 300000,
+                    "default": 240000,
                     "type": "integer",
                     "minimum": 1,
-                    "maximum": 300000,
-                    "description": "Wall-clock deadline for the complete scrape in milliseconds. Default and maximum: 300000"
+                    "maximum": 240000,
+                    "description": "Wall-clock deadline for the complete scrape in milliseconds. Default and maximum: 240000"
                   },
                   "context": {
                     "type": "object",
@@ -20999,7 +21200,7 @@
         ]
       },
       "delete": {
-        "description": "Permanently delete a variable by its ID.",
+        "description": "Permanently delete a variable by its ID. A secret bound to a connector returns 409 Conflict.",
         "summary": "Delete a variable",
         "tags": [
           "Variables"
@@ -21084,6 +21285,34 @@
           },
           "404": {
             "description": "404",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "error": {
+                      "type": "boolean",
+                      "description": "Indicates an error occurred"
+                    },
+                    "message": {
+                      "type": "string",
+                      "description": "Error message"
+                    },
+                    "details": {
+                      "nullable": true,
+                      "description": "Additional error details (e.g., validation errors)"
+                    }
+                  },
+                  "required": [
+                    "error",
+                    "message"
+                  ]
+                }
+              }
+            }
+          },
+          "409": {
+            "description": "409",
             "content": {
               "application/json": {
                 "schema": {
@@ -21803,16 +22032,8 @@
             "format": "uuid",
             "nullable": true
           },
-          "backgroundMode": {
+          "questionsDisabled": {
             "type": "boolean"
-          },
-          "model": {
-            "type": "string",
-            "enum": [
-              "fast",
-              "balanced",
-              "smart"
-            ]
           },
           "templateId": {
             "type": "string",
@@ -22534,193 +22755,6 @@
             }
           }
         }
-      },
-      "InboxItem": {
-        "type": "object",
-        "required": [
-          "id",
-          "teamId",
-          "userId",
-          "type",
-          "subjectId",
-          "workflowId",
-          "title",
-          "payload",
-          "isRead",
-          "readAt",
-          "deletedAt",
-          "createdAt",
-          "updatedAt"
-        ],
-        "properties": {
-          "id": {
-            "type": "string",
-            "format": "uuid"
-          },
-          "teamId": {
-            "type": "string",
-            "format": "uuid"
-          },
-          "userId": {
-            "type": "string",
-            "format": "uuid"
-          },
-          "type": {
-            "type": "string",
-            "enum": [
-              "shelly_question",
-              "data_quality_issues",
-              "sample_data_ready"
-            ]
-          },
-          "subjectId": {
-            "type": "string"
-          },
-          "workflowId": {
-            "type": "string",
-            "format": "uuid",
-            "nullable": true
-          },
-          "title": {
-            "type": "string"
-          },
-          "payload": {
-            "type": "object",
-            "additionalProperties": true
-          },
-          "isRead": {
-            "type": "boolean"
-          },
-          "readAt": {
-            "type": "string",
-            "format": "date-time",
-            "nullable": true
-          },
-          "deletedAt": {
-            "type": "string",
-            "format": "date-time",
-            "nullable": true
-          },
-          "createdAt": {
-            "type": "string",
-            "format": "date-time"
-          },
-          "updatedAt": {
-            "type": "string",
-            "format": "date-time"
-          }
-        }
-      },
-      "InboxListData": {
-        "type": "object",
-        "required": [
-          "unreadCount",
-          "items"
-        ],
-        "properties": {
-          "unreadCount": {
-            "type": "integer",
-            "minimum": 0
-          },
-          "items": {
-            "type": "array",
-            "items": {
-              "$ref": "#/components/schemas/InboxItem"
-            }
-          }
-        }
-      },
-      "InboxListResponse": {
-        "type": "object",
-        "required": [
-          "data",
-          "status"
-        ],
-        "properties": {
-          "data": {
-            "$ref": "#/components/schemas/InboxListData"
-          },
-          "status": {
-            "type": "string",
-            "enum": [
-              "success"
-            ]
-          }
-        }
-      },
-      "InboxReadMutationData": {
-        "type": "object",
-        "required": [
-          "readCount"
-        ],
-        "properties": {
-          "readCount": {
-            "type": "integer",
-            "minimum": 0,
-            "maximum": 1
-          }
-        }
-      },
-      "InboxReadMutationResponse": {
-        "type": "object",
-        "required": [
-          "data",
-          "status"
-        ],
-        "properties": {
-          "data": {
-            "$ref": "#/components/schemas/InboxReadMutationData"
-          },
-          "status": {
-            "type": "string",
-            "enum": [
-              "success"
-            ]
-          }
-        }
-      },
-      "InboxStructuredErrorResponse": {
-        "type": "object",
-        "required": [
-          "data",
-          "status",
-          "message"
-        ],
-        "properties": {
-          "data": {
-            "nullable": true
-          },
-          "status": {
-            "type": "string",
-            "enum": [
-              "error"
-            ]
-          },
-          "message": {
-            "type": "string"
-          }
-        }
-      },
-      "InboxSimpleErrorResponse": {
-        "type": "object",
-        "required": [
-          "error"
-        ],
-        "properties": {
-          "error": {
-            "type": "string"
-          }
-        }
-      },
-      "InboxErrorResponse": {
-        "oneOf": [
-          {
-            "$ref": "#/components/schemas/InboxStructuredErrorResponse"
-          },
-          {
-            "$ref": "#/components/schemas/InboxSimpleErrorResponse"
-          }
-        ]
       },
       "EmailChannelConfig": {
         "type": "object",
@@ -24302,7 +24336,7 @@
                   "cloakbrowser",
                   "brightdata"
                 ],
-                "description": "Explicit Scrape V2 worker override. BrightData is blocked in crawler runtime. camoufox is retired and remapped to patchright (accepted for backwards compatibility with stored configs)."
+                "description": "Explicit Scrape V2 worker override. BrightData is blocked in crawler runtime. camoufox and cloakbrowser are retired and remapped to kadmium (accepted for backwards compatibility with stored configs)."
               },
               "proxy": {
                 "type": "string",
@@ -24663,7 +24697,7 @@
                   "cloakbrowser",
                   "brightdata"
                 ],
-                "description": "Explicit Scrape V2 worker override. BrightData is blocked in crawler runtime. camoufox is retired and remapped to patchright (accepted for backwards compatibility with stored configs)."
+                "description": "Explicit Scrape V2 worker override. BrightData is blocked in crawler runtime. camoufox and cloakbrowser are retired and remapped to kadmium (accepted for backwards compatibility with stored configs)."
               },
               "proxy": {
                 "type": "string",
@@ -25041,7 +25075,7 @@
                   "cloakbrowser",
                   "brightdata"
                 ],
-                "description": "Explicit Scrape V2 worker override. BrightData is blocked in crawler runtime. camoufox is retired and remapped to patchright (accepted for backwards compatibility with stored configs)."
+                "description": "Explicit Scrape V2 worker override. BrightData is blocked in crawler runtime. camoufox and cloakbrowser are retired and remapped to kadmium (accepted for backwards compatibility with stored configs)."
               },
               "proxy": {
                 "type": "string",
@@ -25452,7 +25486,7 @@
                   "cloakbrowser",
                   "brightdata"
                 ],
-                "description": "Explicit Scrape V2 worker override. BrightData is blocked in crawler runtime. camoufox is retired and remapped to patchright (accepted for backwards compatibility with stored configs)."
+                "description": "Explicit Scrape V2 worker override. BrightData is blocked in crawler runtime. camoufox and cloakbrowser are retired and remapped to kadmium (accepted for backwards compatibility with stored configs)."
               },
               "proxy": {
                 "type": "string",
@@ -26168,9 +26202,9 @@
         "type": "object",
         "properties": {
           "name": {
+            "description": "Field name (e.g., productName, 3dListings, listing-count)",
             "type": "string",
-            "pattern": "^[a-zA-Z][a-zA-Z0-9_]*$",
-            "description": "Field name (e.g., productName, review_count)"
+            "pattern": "^[^.]*$"
           },
           "description": {
             "type": "string",
@@ -26243,9 +26277,9 @@
         "type": "object",
         "properties": {
           "name": {
+            "description": "Field name (e.g., category, product-type)",
             "type": "string",
-            "pattern": "^[a-zA-Z][a-zA-Z0-9_]*$",
-            "description": "Field name (e.g., category, product_type)"
+            "pattern": "^[^.]*$"
           },
           "description": {
             "type": "string",
@@ -26289,55 +26323,6 @@
         "title": "ClassificationField",
         "description": "Categorize extracted data into predefined labels. Use this when you want the system to classify content into specific categories you define."
       },
-      "TransformOutputField": {
-        "type": "object",
-        "properties": {
-          "name": {
-            "type": "string",
-            "pattern": "^[a-zA-Z][a-zA-Z0-9_]*$",
-            "description": "Field name produced by a transformation step"
-          },
-          "description": {
-            "type": "string",
-            "minLength": 1,
-            "description": "Optional field description"
-          },
-          "fieldType": {
-            "type": "string",
-            "enum": [
-              "TRANSFORM_OUTPUT"
-            ]
-          },
-          "dataType": {
-            "type": "string",
-            "description": "Data type produced by the transformation step"
-          },
-          "example": {
-            "oneOf": [
-              {
-                "type": "string"
-              },
-              {
-                "type": "array",
-                "items": {
-                  "type": "string"
-                }
-              }
-            ]
-          },
-          "isKey": {
-            "type": "boolean"
-          }
-        },
-        "required": [
-          "name",
-          "fieldType",
-          "dataType"
-        ],
-        "additionalProperties": true,
-        "title": "TransformOutputField",
-        "description": "Field appended to workflow.config.schema by a transformation step. Excluded from customer-input and schema-drift hashes."
-      },
       "SchemaResponse": {
         "type": "object",
         "properties": {
@@ -26366,9 +26351,6 @@
                 },
                 {
                   "$ref": "#/components/schemas/ClassificationField"
-                },
-                {
-                  "$ref": "#/components/schemas/TransformOutputField"
                 }
               ]
             },
@@ -26467,9 +26449,6 @@
                     },
                     {
                       "$ref": "#/components/schemas/ClassificationField"
-                    },
-                    {
-                      "$ref": "#/components/schemas/TransformOutputField"
                     }
                   ]
                 },
@@ -26676,9 +26655,6 @@
                     },
                     {
                       "$ref": "#/components/schemas/ClassificationField"
-                    },
-                    {
-                      "$ref": "#/components/schemas/TransformOutputField"
                     }
                   ]
                 },
@@ -27233,8 +27209,7 @@
                     },
                     "recordLimit": {
                       "type": "integer",
-                      "minimum": 0,
-                      "exclusiveMinimum": 0,
+                      "minimum": 1,
                       "maximum": 2147483647,
                       "nullable": true,
                       "description": "Immutable output record limit; null when managed unlimited or unmanaged"
@@ -27781,8 +27756,7 @@
           },
           "recordLimit": {
             "type": "integer",
-            "minimum": 0,
-            "exclusiveMinimum": 0,
+            "minimum": 1,
             "maximum": 2147483647,
             "nullable": true,
             "description": "Output record limit; omit to inherit, null for template-managed unlimited"
@@ -28083,8 +28057,7 @@
               },
               "recordLimit": {
                 "type": "integer",
-                "minimum": 0,
-                "exclusiveMinimum": 0,
+                "minimum": 1,
                 "maximum": 2147483647,
                 "nullable": true,
                 "description": "Immutable output record limit; null when managed unlimited or unmanaged"
