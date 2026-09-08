@@ -47,4 +47,59 @@ describe("published OpenAPI source", () => {
   test.todo(
     "statusFilters enum in the spec equals Object.values(WorkflowStatusFilter) once the backend publishes the enum (kadoa-backend#11821)",
   );
+
+  test("documents the team activity log used by client.activity.list", () => {
+    const spec = JSON.parse(readFileSync(specPath, "utf8"));
+
+    const params = spec.paths["/v4/activity/"].get.parameters as Array<{
+      name: string;
+    }>;
+    const names = params.map((p) => p.name).sort();
+    expect(names).toEqual([
+      "endDate",
+      "eventTypes",
+      "interfaces",
+      "limit",
+      "offset",
+      "relativeTime",
+      "resourceTypes",
+      "startDate",
+      "userId",
+      "workflowId",
+    ]);
+  });
+
+  test("documents the six workspace usage endpoints the Usage page reads", () => {
+    const spec = JSON.parse(readFileSync(specPath, "utf8"));
+    for (const suffix of [
+      "details",
+      "quotas",
+      "billable-workflows",
+      "monthly-active",
+      "period-series",
+      "activity-usage",
+    ]) {
+      expect(
+        spec.paths[`/v5/workspaces/{workspaceId}/${suffix}`]?.get,
+      ).toBeDefined();
+    }
+    const used =
+      spec.paths["/v5/workspaces/{workspaceId}/quotas"].get.responses["200"]
+        .content["application/json"].schema.properties.workspace.properties
+        .usedQuotas.properties;
+    expect(used.currentContractActiveWorkflows).toBeDefined();
+    expect(used.currentPeriodExtractedRows).toBeDefined();
+  });
+
+  test("documents the workspace observability endpoint with a 1-365 day range", () => {
+    const spec = JSON.parse(readFileSync(specPath, "utf8"));
+    const operation =
+      spec.paths["/v5/workspaces/{workspaceId}/observability"]?.get;
+
+    expect(operation).toBeDefined();
+    const days = operation.parameters.find(
+      (p: { name: string }) => p.name === "days",
+    );
+    expect(days.description).toContain("1-365");
+  });
 });

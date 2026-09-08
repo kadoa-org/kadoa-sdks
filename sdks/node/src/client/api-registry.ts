@@ -1,6 +1,7 @@
 import type { AxiosInstance } from "axios";
 import { CrawlerApi } from "../domains/crawler/crawler.acl";
 import {
+  ActivityApi,
   AgentApi,
   type BaseAPI,
   Configuration,
@@ -12,6 +13,7 @@ import {
   TemplatesApi,
   VariablesApi,
   WorkflowsApi,
+  WorkspacesApi,
 } from "./apis.acl";
 
 type ApiConstructor<T extends BaseAPI> = new (
@@ -45,6 +47,10 @@ export class ApiRegistry {
       );
     }
     return this.cache.get(ApiClass) as T;
+  }
+
+  get activity(): ActivityApi {
+    return this.get(ActivityApi);
   }
 
   get agent(): AgentApi {
@@ -85,5 +91,9 @@ export class ApiRegistry {
 
   get variables(): VariablesApi {
     return this.get(VariablesApi);
+  }
+
+  get workspaces(): WorkspacesApi {
+    return this.get(WorkspacesApi);
   }
 }

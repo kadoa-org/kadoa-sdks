@@ -7,15 +7,18 @@
 // ============================================================================
 // Domain Services & Types
 // ============================================================================
+export * from "./domains/activity";
 export * from "./domains/assistant";
 export * from "./domains/changes";
 export * from "./domains/crawler";
 export * from "./domains/extraction";
 export * from "./domains/notifications";
+export * from "./domains/observability";
 export * from "./domains/realtime";
 export * from "./domains/schemas";
 export * from "./domains/scrape";
 export * from "./domains/templates";
+export * from "./domains/usage";
 export * from "./domains/user";
 export * from "./domains/validation";
 export * from "./domains/variables";

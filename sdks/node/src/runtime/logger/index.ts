@@ -4,6 +4,7 @@ export const createLogger = (namespace: string) =>
   createDebug(`kadoa:${namespace}`);
 
 export const logger = {
+  activity: createLogger("activity"),
   changes: createLogger("changes"),
   client: createLogger("client"),
   wss: createLogger("wss"),
@@ -16,4 +17,6 @@ export const logger = {
   validation: createLogger("validation"),
   templates: createLogger("templates"),
   variables: createLogger("variables"),
+  usage: createLogger("usage"),
+  observability: createLogger("observability"),
 };
