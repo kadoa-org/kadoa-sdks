@@ -1,4 +1,5 @@
 export {
+  ActivityApi,
   AgentApi,
   Configuration,
   DataValidationApi,
@@ -9,5 +10,6 @@ export {
   TemplatesApi,
   VariablesApi,
   WorkflowsApi,
+  WorkspacesApi,
 } from "../generated";
 export type { BaseAPI } from "../generated/base";

@@ -1,4 +1,5 @@
 import type { AxiosInstance } from "axios";
+import type { ActivityService } from "../domains/activity/activity.service";
 import type { AssistantService } from "../domains/assistant";
 import type { ChangesService } from "../domains/changes/changes.service";
 import type { CrawlerDomain } from "../domains/crawler";
@@ -8,10 +9,12 @@ import type {
   ExtractOptions,
   PreparedExtraction,
 } from "../domains/extraction/services/extraction-builder.service";
+import type { ObservabilityService } from "../domains/observability/observability.service";
 import { Realtime, type RealtimeConfig } from "../domains/realtime";
 import type { SchemasService } from "../domains/schemas/schemas.service";
 import type { ScrapeService } from "../domains/scrape/scrape.service";
 import type { TemplatesService } from "../domains/templates/templates.service";
+import type { UsageService } from "../domains/usage/usage.service";
 import type { UserService } from "../domains/user/user.service";
 import type { ValidationDomain } from "../domains/validation/validation.facade";
 import type { VariablesService } from "../domains/variables/variables.service";
@@ -62,6 +65,7 @@ export class KadoaClient {
   private readonly _extractionBuilderService: ExtractionBuilderService;
 
   public readonly apis: ApiRegistry;
+  public readonly activity: ActivityService;
   public readonly assistant: AssistantService;
   public readonly changes: ChangesService;
   public readonly extraction: ExtractionService;
@@ -74,6 +78,8 @@ export class KadoaClient {
   public readonly validation: ValidationDomain;
   public readonly variable: VariablesService;
   public readonly crawler: CrawlerDomain;
+  public readonly usage: UsageService;
+  public readonly observability: ObservabilityService;
 
   constructor(config: KadoaClientConfig) {
     if (!config.apiKey && !config.bearerToken) {
@@ -122,6 +128,7 @@ export class KadoaClient {
 
     const domains = createClientDomains({ client: this });
 
+    this.activity = domains.activity;
     this.assistant = domains.assistant;
     this.changes = domains.changes;
     this.user = domains.user;
@@ -134,6 +141,8 @@ export class KadoaClient {
     this.validation = domains.validation;
     this.variable = domains.variable;
     this.crawler = domains.crawler;
+    this.usage = domains.usage;
+    this.observability = domains.observability;
     this._extractionBuilderService = domains.extractionBuilderService;
 
     // Check for updates in the background (non-blocking)
