@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.43.0](https://github.com/kadoa-org/kadoa-sdks/compare/node-sdk-v0.42.0...node-sdk-v0.43.0) (2026-09-08)
+
+
+### Features
+
+* **node-sdk:** add activity, usage, and observability domains ([#372](https://github.com/kadoa-org/kadoa-sdks/issues/372)) ([3352a7c](https://github.com/kadoa-org/kadoa-sdks/commit/3352a7c08e6f4b9081a0c5bada490e9d19da336b))
+
 ## [0.42.0](https://github.com/kadoa-org/kadoa-sdks/compare/node-sdk-v0.41.0...node-sdk-v0.42.0) (2026-09-04)
 
 
