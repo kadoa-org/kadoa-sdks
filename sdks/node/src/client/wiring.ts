@@ -1,6 +1,7 @@
 import type { AxiosInstance } from "axios";
 import axios, { AxiosError } from "axios";
 import { v4 } from "uuid";
+import { ActivityService } from "../domains/activity/activity.service";
 import { AssistantService } from "../domains/assistant";
 import { ChangesService } from "../domains/changes/changes.service";
 import { type CrawlerDomain, createCrawlerDomain } from "../domains/crawler";
@@ -16,9 +17,11 @@ import type {
 import { NotificationSetupService } from "../domains/notifications";
 import { NotificationChannelsService } from "../domains/notifications/notification-channels.service";
 import { NotificationSettingsService } from "../domains/notifications/notification-settings.service";
+import { ObservabilityService } from "../domains/observability/observability.service";
 import { SchemasService } from "../domains/schemas/schemas.service";
 import { ScrapeService } from "../domains/scrape/scrape.service";
 import { TemplatesService } from "../domains/templates/templates.service";
+import { UsageService } from "../domains/usage/usage.service";
 import { UserService } from "../domains/user/user.service";
 import {
   createValidationDomain,
@@ -78,6 +81,7 @@ export function createAxiosInstance(params: {
 }
 
 export function createClientDomains(params: { client: KadoaClient }): {
+  activity: ActivityService;
   assistant: AssistantService;
   changes: ChangesService;
   extractionBuilderService: ExtractionBuilderService;
@@ -91,9 +95,12 @@ export function createClientDomains(params: { client: KadoaClient }): {
   validation: ValidationDomain;
   variable: VariablesService;
   crawler: CrawlerDomain;
+  usage: UsageService;
+  observability: ObservabilityService;
 } {
   const { client } = params;
 
+  const activityService = new ActivityService(client);
   const assistantService = new AssistantService(client.apis.agent);
   const changesService = new ChangesService(client);
   const userService = new UserService(client);
@@ -116,6 +123,8 @@ export function createClientDomains(params: { client: KadoaClient }): {
   );
   const coreService = new ValidationCoreService(client);
   const rulesService = new ValidationRulesService(client);
+  const usageService = new UsageService(client);
+  const observabilityService = new ObservabilityService(client);
 
   const extractionService = new ExtractionService(
     workflowsCoreService,
@@ -142,6 +151,7 @@ export function createClientDomains(params: { client: KadoaClient }): {
   const crawler = createCrawlerDomain(client);
 
   return {
+    activity: activityService,
     assistant: assistantService,
     changes: changesService,
     extractionBuilderService,
@@ -155,6 +165,8 @@ export function createClientDomains(params: { client: KadoaClient }): {
     validation,
     variable: variablesService,
     crawler,
+    usage: usageService,
+    observability: observabilityService,
   };
 }
 
