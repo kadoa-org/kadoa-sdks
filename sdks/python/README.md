@@ -45,6 +45,30 @@ print(f"Extracted {len(result.data)} items")
 
 That's it! With the SDK, data is automatically extracted. For more control, specify exactly what fields you want using the builder API.
 
+## Create a Workflow from a Template
+
+Instantiate a workflow from a published template with `template_id`. `urls` is required; `template_version` optionally selects a published version. `user_prompt` adds workflow-specific instructions to the template prompt. Do not supply `entity`, `fields`, `schema_id`, or `monitoring`, because the template controls them.
+
+```python
+from kadoa_sdk.workflows.workflows_core_service import CreateWorkflowInput
+
+workflow = client.workflow.create(
+    CreateWorkflowInput(
+        urls=['https://example.com/products'],
+        template_id='11111111-1111-4111-8111-111111111111',
+        template_version=2,
+        user_prompt='Only include products currently in stock.',
+        name='In-stock products',
+    )
+)
+
+print(workflow.id)
+```
+
+## Node.js-only APIs
+
+Workflow Assistant, personal Inbox, and `listWorkflowRuns` are currently available only in the [Node.js SDK](https://www.npmjs.com/package/@kadoa/node-sdk). They are not exposed by this Python SDK. See [Create Workflows from Templates](https://docs.kadoa.com/docs/sdk/templates/overview) for template lifecycle semantics.
+
 ## Realtime WebSockets
 
 ```python
