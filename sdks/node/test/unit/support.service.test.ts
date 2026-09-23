@@ -1,0 +1,137 @@
+import { describe, expect, mock, test } from "bun:test";
+
+mock.module("../../src/runtime/utils/version-check", () => ({
+  checkForUpdates: () => Promise.resolve(),
+}));
+
+import { KadoaClient } from "../../src/client/kadoa-client";
+import { KadoaHttpException } from "../../src/runtime/exceptions";
+
+const mockPost = mock();
+
+function createTestClient(): KadoaClient {
+  const client = new KadoaClient({ apiKey: "tk-test" });
+  (client.apis.support as any).v5SupportIssuesPost = mockPost;
+  return client;
+}
+
+const options = {
+  workflowId: "44444444-4444-4444-4444-444444444444",
+  title: "Extraction returns no rows",
+  description: "The last three runs finished with zero records.",
+};
+
+function httpError(status: number, body: unknown) {
+  return new KadoaHttpException(`HTTP ${status}`, {
+    httpStatus: status,
+    responseBody: body,
+  });
+}
+
+describe("SupportService.createIssue", () => {
+  test("posts the ticket and reports it accepted", async () => {
+    mockPost.mockResolvedValueOnce({
+      data: { success: true, supportRequestId: "sr-1", status: "accepted" },
+    });
+
+    const result = await createTestClient().support.createIssue(options);
+
+    expect(mockPost).toHaveBeenCalledWith({
+      v5SupportIssuesPostRequest: options,
+    });
+    expect(result).toEqual({ status: "accepted", supportRequestId: "sr-1" });
+  });
+
+  test("forwards the session id when the caller carries one", async () => {
+    mockPost.mockResolvedValueOnce({
+      data: { success: true, supportRequestId: "sr-1" },
+    });
+
+    await createTestClient().support.createIssue({
+      ...options,
+      copilotSessionId: "sess-1",
+    });
+
+    expect(
+      mockPost.mock.calls.at(-1)?.[0].v5SupportIssuesPostRequest
+        .copilotSessionId,
+    ).toBe("sess-1");
+  });
+
+  test("never sends pauseWorkflow", async () => {
+    mockPost.mockResolvedValueOnce({
+      data: { success: true, supportRequestId: "sr-1" },
+    });
+
+    await createTestClient().support.createIssue({
+      ...options,
+      pauseWorkflow: true,
+    } as never);
+
+    expect(
+      mockPost.mock.calls.at(-1)?.[0].v5SupportIssuesPostRequest,
+    ).not.toHaveProperty("pauseWorkflow");
+  });
+
+  test("treats an already-open ticket as a reuse, not an error", async () => {
+    mockPost.mockRejectedValueOnce(
+      httpError(409, {
+        error: "Workflow already has an open support issue",
+        supportRequestId: "sr-9",
+        issueId: "KAD-1234",
+      }),
+    );
+
+    const result = await createTestClient().support.createIssue(options);
+
+    expect(result).toEqual({
+      status: "existing",
+      supportRequestId: "sr-9",
+      issueIdentifier: "KAD-1234",
+      message: "Workflow already has an open support issue",
+    });
+  });
+
+  test("still identifies the open ticket when the 409 carries no issue identifier", async () => {
+    mockPost.mockRejectedValueOnce(
+      httpError(409, { supportRequestId: "sr-9" }),
+    );
+
+    const result = await createTestClient().support.createIssue(options);
+
+    expect(result).toMatchObject({
+      status: "existing",
+      supportRequestId: "sr-9",
+    });
+    expect(result.status === "existing" && result.issueIdentifier).toBeFalsy();
+  });
+
+  test("reports a skipped ticket with its reason", async () => {
+    mockPost.mockResolvedValueOnce({
+      data: {
+        success: true,
+        skipped: true,
+        reason: "RUN_PARKED_FOR_REVIEW",
+        supportRequestId: "sr-3",
+      },
+    });
+
+    const result = await createTestClient().support.createIssue(options);
+
+    expect(result).toEqual({
+      status: "skipped",
+      supportRequestId: "sr-3",
+      reason: "RUN_PARKED_FOR_REVIEW",
+    });
+  });
+
+  test("rethrows any failure other than an already-open ticket", async () => {
+    mockPost.mockRejectedValueOnce(
+      httpError(502, { error: "Failed to queue support issue creation" }),
+    );
+
+    await expect(
+      createTestClient().support.createIssue(options),
+    ).rejects.toBeInstanceOf(KadoaHttpException);
+  });
+});

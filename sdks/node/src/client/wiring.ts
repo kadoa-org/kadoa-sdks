@@ -20,6 +20,7 @@ import { NotificationSettingsService } from "../domains/notifications/notificati
 import { ObservabilityService } from "../domains/observability/observability.service";
 import { SchemasService } from "../domains/schemas/schemas.service";
 import { ScrapeService } from "../domains/scrape/scrape.service";
+import { SupportService } from "../domains/support/support.service";
 import { TemplatesService } from "../domains/templates/templates.service";
 import { UsageService } from "../domains/usage/usage.service";
 import { UserService } from "../domains/user/user.service";
@@ -90,6 +91,7 @@ export function createClientDomains(params: { client: KadoaClient }): {
   notification: NotificationDomain;
   schema: SchemasService;
   scrape: ScrapeService;
+  support: SupportService;
   user: UserService;
   template: TemplatesService;
   validation: ValidationDomain;
@@ -101,6 +103,7 @@ export function createClientDomains(params: { client: KadoaClient }): {
   const { client } = params;
 
   const activityService = new ActivityService(client);
+  const supportService = new SupportService(client);
   const assistantService = new AssistantService(client.apis.agent);
   const changesService = new ChangesService(client);
   const userService = new UserService(client);
@@ -153,6 +156,7 @@ export function createClientDomains(params: { client: KadoaClient }): {
   return {
     activity: activityService,
     assistant: assistantService,
+    support: supportService,
     changes: changesService,
     extractionBuilderService,
     extraction: extractionService,
