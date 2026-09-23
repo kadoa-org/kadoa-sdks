@@ -5,6 +5,7 @@ export const createLogger = (namespace: string) =>
 
 export const logger = {
   activity: createLogger("activity"),
+  support: createLogger("support"),
   changes: createLogger("changes"),
   client: createLogger("client"),
   wss: createLogger("wss"),

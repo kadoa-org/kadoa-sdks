@@ -13,6 +13,7 @@ import type { ObservabilityService } from "../domains/observability/observabilit
 import { Realtime, type RealtimeConfig } from "../domains/realtime";
 import type { SchemasService } from "../domains/schemas/schemas.service";
 import type { ScrapeService } from "../domains/scrape/scrape.service";
+import type { SupportService } from "../domains/support/support.service";
 import type { TemplatesService } from "../domains/templates/templates.service";
 import type { UsageService } from "../domains/usage/usage.service";
 import type { UserService } from "../domains/user/user.service";
@@ -67,6 +68,7 @@ export class KadoaClient {
   public readonly apis: ApiRegistry;
   public readonly activity: ActivityService;
   public readonly assistant: AssistantService;
+  public readonly support: SupportService;
   public readonly changes: ChangesService;
   public readonly extraction: ExtractionService;
   public readonly workflow: WorkflowsCoreService;
@@ -130,6 +132,7 @@ export class KadoaClient {
 
     this.activity = domains.activity;
     this.assistant = domains.assistant;
+    this.support = domains.support;
     this.changes = domains.changes;
     this.user = domains.user;
     this.extraction = domains.extraction;

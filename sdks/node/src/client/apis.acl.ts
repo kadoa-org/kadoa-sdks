@@ -7,6 +7,7 @@ export {
   NotificationsApi,
   SchemasApi,
   ScrapeApi,
+  SupportApi,
   TemplatesApi,
   VariablesApi,
   WorkflowsApi,

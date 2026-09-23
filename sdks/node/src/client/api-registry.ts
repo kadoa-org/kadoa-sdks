@@ -10,6 +10,7 @@ import {
   NotificationsApi,
   SchemasApi,
   ScrapeApi,
+  SupportApi,
   TemplatesApi,
   VariablesApi,
   WorkflowsApi,
@@ -51,6 +52,10 @@ export class ApiRegistry {
 
   get activity(): ActivityApi {
     return this.get(ActivityApi);
+  }
+
+  get support(): SupportApi {
+    return this.get(SupportApi);
   }
 
   get agent(): AgentApi {
