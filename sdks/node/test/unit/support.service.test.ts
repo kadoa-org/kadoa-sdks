@@ -1,4 +1,5 @@
 import { describe, expect, mock, test } from "bun:test";
+import { AxiosError, type AxiosResponse } from "axios";
 
 mock.module("../../src/runtime/utils/version-check", () => ({
   checkForUpdates: () => Promise.resolve(),
@@ -42,7 +43,7 @@ describe("SupportService.createIssue", () => {
     expect(result).toEqual({ status: "accepted", supportRequestId: "sr-1" });
   });
 
-  test("forwards the session id when the caller carries one", async () => {
+  test("never sends a caller-supplied session id", async () => {
     mockPost.mockResolvedValueOnce({
       data: { success: true, supportRequestId: "sr-1" },
     });
@@ -50,12 +51,11 @@ describe("SupportService.createIssue", () => {
     await createTestClient().support.createIssue({
       ...options,
       copilotSessionId: "sess-1",
-    });
+    } as never);
 
     expect(
-      mockPost.mock.calls.at(-1)?.[0].v5SupportIssuesPostRequest
-        .copilotSessionId,
-    ).toBe("sess-1");
+      mockPost.mock.calls.at(-1)?.[0].v5SupportIssuesPostRequest,
+    ).not.toHaveProperty("copilotSessionId");
   });
 
   test("never sends pauseWorkflow", async () => {
@@ -133,5 +133,46 @@ describe("SupportService.createIssue", () => {
     await expect(
       createTestClient().support.createIssue(options),
     ).rejects.toBeInstanceOf(KadoaHttpException);
+  });
+});
+
+/**
+ * The tests above throw a hand-built KadoaHttpException. This one goes through the real
+ * axios adapter and interceptor, so a regression that dropped the 409 response body on the
+ * way to KadoaHttpException would surface here.
+ */
+describe("SupportService.createIssue over the real HTTP error path", () => {
+  test("maps a real 409 response to an existing ticket", async () => {
+    const client = new KadoaClient({ apiKey: "tk-test" });
+    client.axiosInstance.defaults.adapter = async (config) => {
+      const response = {
+        data: {
+          error: "Workflow already has an open support issue",
+          supportRequestId: "sr-9",
+          issueId: "KAD-1234",
+        },
+        status: 409,
+        statusText: "Conflict",
+        headers: {},
+        config,
+      } as AxiosResponse;
+      const error = new AxiosError(
+        "Request failed with status code 409",
+        AxiosError.ERR_BAD_REQUEST,
+        config,
+        undefined,
+        response,
+      );
+      throw error;
+    };
+
+    const result = await client.support.createIssue(options);
+
+    expect(result).toEqual({
+      status: "existing",
+      supportRequestId: "sr-9",
+      issueIdentifier: "KAD-1234",
+      message: "Workflow already has an open support issue",
+    });
   });
 });

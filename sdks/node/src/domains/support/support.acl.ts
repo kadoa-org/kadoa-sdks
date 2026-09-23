@@ -1,15 +1,17 @@
+import type { V5SupportIssuesPostRequest } from "../../generated";
 import { KadoaHttpException } from "../../runtime/exceptions";
 
-/** A workflow-scoped support ticket request. The backend decides creator type and never pauses. */
-export class CreateSupportIssueOptions {
+/**
+ * A workflow-scoped support ticket request. The backend decides creator type (from the verified
+ * token, never the body) and never pauses.
+ */
+export class CreateSupportIssueOptions implements V5SupportIssuesPostRequest {
   workflowId!: string;
   title!: string;
   description!: string;
   category?: string;
   subcategory?: string;
   jobId?: string;
-  /** The Assistant session the request came from; makes it an assistant ticket. */
-  copilotSessionId?: string;
 }
 
 export type CreateSupportIssueResult =
@@ -35,19 +37,15 @@ export interface CreateSupportIssueResponseData {
   reason?: string;
 }
 
-/** Only the documented fields reach the API, so a stray `pauseWorkflow` can never be sent. */
+/**
+ * Only the documented fields reach the API, so a stray `pauseWorkflow` or `copilotSessionId`
+ * can never be sent.
+ */
 export function toCreateSupportIssueRequest(
   options: CreateSupportIssueOptions,
 ) {
-  const {
-    workflowId,
-    title,
-    description,
-    category,
-    subcategory,
-    jobId,
-    copilotSessionId,
-  } = options;
+  const { workflowId, title, description, category, subcategory, jobId } =
+    options;
   return {
     workflowId,
     title,
@@ -55,7 +53,6 @@ export function toCreateSupportIssueRequest(
     ...(category !== undefined && { category }),
     ...(subcategory !== undefined && { subcategory }),
     ...(jobId !== undefined && { jobId }),
-    ...(copilotSessionId !== undefined && { copilotSessionId }),
   };
 }
 
