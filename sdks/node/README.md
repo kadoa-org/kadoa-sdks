@@ -464,6 +464,68 @@ await client.workflow.delete("workflow-id");
 > [!NOTE]
 > `client.workflow.cancel(id)` still calls the delete endpoint for backward compatibility, but it now logs a deprecation warning. Use `client.workflow.delete(id)` going forward.
 
+## Workflow Assistant (Node.js only)
+
+Use the Workflow Assistant to create a realtime workflow from instructions. It requires notification channel IDs that have already been configured for the workspace.
+
+```typescript
+const created = await client.assistant.createRealtimeWorkflow({
+  instructions: 'Monitor product prices and alert me when they change.',
+  notificationChannelIds: ['channel-id'],
+});
+
+console.log(created.workflowId);
+```
+
+For an existing workflow, use `client.assistant.requestWorkflowUpdate(workflowId, { instructions })`. Read the customer-visible conversation with `getTimeline(workflowId)`, and use `getPauseState()`, `answerQuestion()`, `interrupt()`, `resume()`, or `stop()` with the returned session ID when needed. This Assistant domain is not available in the Python SDK.
+
+## Personal Inbox (Node.js only)
+
+Read the authenticated user's Inbox and mark an item as read:
+
+```typescript
+const inbox = await client.inbox.list();
+console.log(`${inbox.unreadCount} unread items`);
+
+if (inbox.items[0]) {
+  await client.inbox.markRead(inbox.items[0].id);
+}
+```
+
+Inbox access is scoped to the authenticated user and is not available in the Python SDK.
+
+## Workflow Run History (Node.js only)
+
+Retrieve a workflow's paginated run history. Optionally filter by `success`, `failed`, or `in_progress`.
+
+```typescript
+const history = await client.workflow.listWorkflowRuns('workflow-id', {
+  page: 1,
+  limit: 20,
+  status: 'success',
+});
+
+console.log(history);
+```
+
+## Create a Workflow from a Template
+
+Create a workflow from a published template with `templateId`. `urls` is required; `templateVersion` selects a published version when needed. `userPrompt` is optional and adds workflow-specific instructions to the template prompt. Do not supply `entity`, `fields`, `schemaId`, or `monitoring`, because the template controls them.
+
+```typescript
+const workflow = await client.workflow.create({
+  urls: ['https://example.com/products'],
+  templateId: 'template-id',
+  templateVersion: 2,
+  userPrompt: 'Only include products currently in stock.',
+  name: 'In-stock products',
+});
+
+console.log(workflow.id);
+```
+
+For template lifecycle semantics, see [Create Workflows from Templates](https://docs.kadoa.com/docs/sdk/templates/overview).
+
 ## Requirements
 
 - Node.js 22+
