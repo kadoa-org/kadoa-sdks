@@ -9009,6 +9009,79 @@
         }
       }
     },
+    "/v5/support/issues": {
+      "post": {
+        "summary": "File a support ticket for a workflow",
+        "description": "Files a workflow-scoped support ticket. An open ticket for the same workflow is reused by the engine rather than duplicated, and filing never pauses the workflow.\n",
+        "tags": [
+          "Support"
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": [
+                  "workflowId",
+                  "title",
+                  "description"
+                ],
+                "properties": {
+                  "workflowId": {
+                    "type": "string",
+                    "format": "uuid"
+                  },
+                  "title": {
+                    "type": "string"
+                  },
+                  "description": {
+                    "type": "string"
+                  },
+                  "category": {
+                    "type": "string"
+                  },
+                  "subcategory": {
+                    "type": "string"
+                  },
+                  "jobId": {
+                    "type": "string",
+                    "format": "uuid"
+                  },
+                  "copilotSessionId": {
+                    "type": "string",
+                    "format": "uuid",
+                    "description": "Assistant session this request came from; makes it an assistant ticket."
+                  }
+                }
+              }
+            }
+          }
+        },
+        "security": [
+          {
+            "ApiKeyAuth": []
+          },
+          {
+            "BearerAuth": []
+          }
+        ],
+        "responses": {
+          "202": {
+            "description": "Ticket accepted for creation"
+          },
+          "400": {
+            "description": "Bad request - missing workflow, title or description"
+          },
+          "409": {
+            "description": "An open support ticket already exists for this workflow"
+          },
+          "502": {
+            "description": "Could not queue the ticket"
+          }
+        }
+      }
+    },
     "/v5/workflows/{workflowId}/auditlog": {
       "get": {
         "summary": "Get workflow audit log entries",

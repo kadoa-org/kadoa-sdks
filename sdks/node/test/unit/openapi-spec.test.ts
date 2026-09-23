@@ -102,4 +102,15 @@ describe("published OpenAPI source", () => {
     );
     expect(days.description).toContain("1-365");
   });
+
+  test("documents workflow support ticket creation used by client.support.createIssue", () => {
+    const spec = JSON.parse(readFileSync(specPath, "utf8"));
+
+    const post = spec.paths["/v5/support/issues"]?.post;
+    expect(post).toBeDefined();
+    const schema = post.requestBody.content["application/json"].schema;
+    expect(schema.required).toEqual(["workflowId", "title", "description"]);
+    expect(Object.keys(schema.properties)).not.toContain("pauseWorkflow");
+    expect(Object.keys(post.responses)).toEqual(expect.arrayContaining(["202", "409"]));
+  });
 });
