@@ -12,7 +12,7 @@ const mockPost = mock();
 
 function createTestClient(): KadoaClient {
   const client = new KadoaClient({ apiKey: "tk-test" });
-  (client.apis.support as any).v5SupportIssuesPost = mockPost;
+  (client.apis.support as any).v4SupportIssuesPost = mockPost;
   return client;
 }
 
@@ -37,25 +37,42 @@ describe("SupportService.createIssue", () => {
 
     const result = await createTestClient().support.createIssue(options);
 
+    // v4 requires a category; workflow tickets default to workflow_issue.
     expect(mockPost).toHaveBeenCalledWith({
-      v5SupportIssuesPostRequest: options,
+      v4SupportIssuesPostRequest: { ...options, category: "workflow_issue" },
     });
     expect(result).toEqual({ status: "accepted", supportRequestId: "sr-1" });
   });
 
-  test("never sends a caller-supplied session id", async () => {
+  test("keeps an explicit category", async () => {
     mockPost.mockResolvedValueOnce({
       data: { success: true, supportRequestId: "sr-1" },
     });
 
     await createTestClient().support.createIssue({
       ...options,
-      copilotSessionId: "sess-1",
-    } as never);
+      category: "integration",
+    });
 
     expect(
-      mockPost.mock.calls.at(-1)?.[0].v5SupportIssuesPostRequest,
-    ).not.toHaveProperty("copilotSessionId");
+      mockPost.mock.calls.at(-1)?.[0].v4SupportIssuesPostRequest.category,
+    ).toBe("integration");
+  });
+
+  test("forwards the Assistant session so the ticket is linked to it", async () => {
+    mockPost.mockResolvedValueOnce({
+      data: { success: true, supportRequestId: "sr-1" },
+    });
+
+    await createTestClient().support.createIssue({
+      ...options,
+      copilotSessionId: "55555555-5555-4555-8555-555555555555",
+    });
+
+    expect(
+      mockPost.mock.calls.at(-1)?.[0].v4SupportIssuesPostRequest
+        .copilotSessionId,
+    ).toBe("55555555-5555-4555-8555-555555555555");
   });
 
   test("never sends pauseWorkflow", async () => {
@@ -69,7 +86,7 @@ describe("SupportService.createIssue", () => {
     } as never);
 
     expect(
-      mockPost.mock.calls.at(-1)?.[0].v5SupportIssuesPostRequest,
+      mockPost.mock.calls.at(-1)?.[0].v4SupportIssuesPostRequest,
     ).not.toHaveProperty("pauseWorkflow");
   });
 

@@ -1,17 +1,29 @@
-import type { V5SupportIssuesPostRequest } from "../../generated";
+import type {
+  V4SupportIssuesPost202Response,
+  V4SupportIssuesPostRequest,
+  V4SupportIssuesPostRequestCategoryEnum,
+  V4SupportIssuesPostRequestSubcategoryEnum,
+} from "../../generated";
 import { KadoaHttpException } from "../../runtime/exceptions";
 
 /**
- * A workflow-scoped support ticket request. The backend decides creator type (from the verified
- * token, never the body) and never pauses.
+ * A workflow-scoped support ticket. Filed through `POST /v4/support/issues`, the single public
+ * entry point for ticket creation, so every rule that route owns applies. The backend decides
+ * creator type from `copilotSessionId` (validated against the caller's team) and this SDK never
+ * sends `pauseWorkflow`.
  */
-export class CreateSupportIssueOptions implements V5SupportIssuesPostRequest {
+export class CreateSupportIssueOptions {
+  /** Required: the engine's duplicate protection keys on the workflow. */
   workflowId!: string;
   title!: string;
   description!: string;
-  category?: string;
-  subcategory?: string;
+  /** Defaults to `workflow_issue`. */
+  category?: V4SupportIssuesPostRequestCategoryEnum;
+  subcategory?: V4SupportIssuesPostRequestSubcategoryEnum;
+  /** The workflow run the issue is about. */
   jobId?: string;
+  /** Kadoa Assistant session the ticket was raised from; links it and marks it assistant-created. */
+  copilotSessionId?: string;
 }
 
 export type CreateSupportIssueResult =
@@ -25,45 +37,39 @@ export type CreateSupportIssueResult =
   | { status: "skipped"; supportRequestId?: string; reason: string };
 
 /**
- * `POST /v5/support/issues` documents no response schema (generated client types
- * the call as `AxiosPromise<void>`), so this is a narrow local shape for the body
- * we actually read, in place of trusting the generated `void` or casting to `never`.
- */
-export interface CreateSupportIssueResponseData {
-  success?: boolean;
-  supportRequestId?: string;
-  status?: string;
-  skipped?: boolean;
-  reason?: string;
-}
-
-/**
- * Only the documented fields reach the API, so a stray `pauseWorkflow` or `copilotSessionId`
- * can never be sent.
+ * Only the documented ticket fields reach the API, so a stray `pauseWorkflow` can never be sent.
  */
 export function toCreateSupportIssueRequest(
   options: CreateSupportIssueOptions,
-) {
-  const { workflowId, title, description, category, subcategory, jobId } =
-    options;
+): V4SupportIssuesPostRequest {
+  const {
+    workflowId,
+    title,
+    description,
+    category,
+    subcategory,
+    jobId,
+    copilotSessionId,
+  } = options;
   return {
     workflowId,
     title,
     description,
-    ...(category !== undefined && { category }),
+    category: category ?? "workflow_issue",
     ...(subcategory !== undefined && { subcategory }),
     ...(jobId !== undefined && { jobId }),
+    ...(copilotSessionId !== undefined && { copilotSessionId }),
   };
 }
 
 export function mapCreateSupportIssueResponse(
-  data: CreateSupportIssueResponseData,
+  data: V4SupportIssuesPost202Response,
 ): CreateSupportIssueResult {
   if (data.skipped) {
     return {
       status: "skipped",
       supportRequestId: data.supportRequestId,
-      reason: data.reason ?? "skipped",
+      reason: data.reason ?? data.code ?? "skipped",
     };
   }
   return {
