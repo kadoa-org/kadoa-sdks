@@ -1219,10 +1219,22 @@
                       "integration_slack",
                       "integration_snowflake",
                       "integration_cloud_storage",
+                      "integration_databricks",
+                      "integration_sftp",
                       "integration_sdk",
                       "integration_other"
                     ],
                     "description": "Optional subcategory for workflow or integration issues"
+                  },
+                  "jobId": {
+                    "type": "string",
+                    "format": "uuid",
+                    "description": "Optional ID of the workflow run the issue is about."
+                  },
+                  "copilotSessionId": {
+                    "type": "string",
+                    "format": "uuid",
+                    "description": "Kadoa Assistant session the issue was raised from. Must be a session of the caller's team. Marks the ticket as assistant-created and links the session for support."
                   }
                 }
               }
@@ -1231,7 +1243,7 @@
         },
         "responses": {
           "202": {
-            "description": "Issue creation accepted",
+            "description": "Issue creation accepted, or skipped when the ticket is not eligible (skipped is true and reason explains why)",
             "content": {
               "application/json": {
                 "schema": {
@@ -1257,6 +1269,18 @@
                       "enum": [
                         "accepted"
                       ]
+                    },
+                    "skipped": {
+                      "type": "boolean",
+                      "description": "True when no ticket was filed"
+                    },
+                    "reason": {
+                      "type": "string",
+                      "description": "Why the ticket was skipped"
+                    },
+                    "code": {
+                      "type": "string",
+                      "description": "Machine-readable skip code"
                     }
                   }
                 }
@@ -9005,74 +9029,6 @@
           },
           "500": {
             "description": "Internal server error"
-          }
-        }
-      }
-    },
-    "/v5/support/issues": {
-      "post": {
-        "summary": "File a support ticket for a workflow",
-        "description": "Files a workflow-scoped support ticket. An open ticket for the same workflow is reused by the engine rather than duplicated, and filing never pauses the workflow.\n",
-        "tags": [
-          "Support"
-        ],
-        "requestBody": {
-          "required": true,
-          "content": {
-            "application/json": {
-              "schema": {
-                "type": "object",
-                "required": [
-                  "workflowId",
-                  "title",
-                  "description"
-                ],
-                "properties": {
-                  "workflowId": {
-                    "type": "string",
-                    "format": "uuid"
-                  },
-                  "title": {
-                    "type": "string"
-                  },
-                  "description": {
-                    "type": "string"
-                  },
-                  "category": {
-                    "type": "string"
-                  },
-                  "subcategory": {
-                    "type": "string"
-                  },
-                  "jobId": {
-                    "type": "string",
-                    "format": "uuid"
-                  }
-                }
-              }
-            }
-          }
-        },
-        "security": [
-          {
-            "ApiKeyAuth": []
-          },
-          {
-            "BearerAuth": []
-          }
-        ],
-        "responses": {
-          "202": {
-            "description": "Ticket accepted for creation"
-          },
-          "400": {
-            "description": "Bad request - missing or malformed workflow, job, title or description"
-          },
-          "409": {
-            "description": "An open support ticket already exists for this workflow"
-          },
-          "502": {
-            "description": "Could not queue the ticket"
           }
         }
       }

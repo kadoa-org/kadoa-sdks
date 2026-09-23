@@ -103,18 +103,25 @@ describe("published OpenAPI source", () => {
     expect(days.description).toContain("1-365");
   });
 
-  test("documents workflow support ticket creation used by client.support.createIssue", () => {
+  test("documents the v4 ticket fields used by client.support.createIssue", () => {
     const spec = JSON.parse(readFileSync(specPath, "utf8"));
 
-    const post = spec.paths["/v5/support/issues"]?.post;
-    expect(post).toBeDefined();
-    const schema = post.requestBody.content["application/json"].schema;
-    expect(schema.required).toEqual(["workflowId", "title", "description"]);
-    expect(Object.keys(schema.properties)).not.toContain("pauseWorkflow");
-    // The backend takes the Assistant session from the verified token actor, never the body.
-    expect(Object.keys(schema.properties)).not.toContain("copilotSessionId");
-    expect(Object.keys(post.responses)).toEqual(
-      expect.arrayContaining(["202", "409"]),
+    // Ticket creation goes through the single public entry point; there is no parallel v5 route.
+    expect(spec.paths["/v5/support/issues"]).toBeUndefined();
+    const post = spec.paths["/v4/support/issues"].post;
+    const props = Object.keys(
+      post.requestBody.content["application/json"].schema.properties,
     );
+    expect(props).toEqual(
+      expect.arrayContaining(["workflowId", "jobId", "copilotSessionId"]),
+    );
+    expect(props).not.toContain("pauseWorkflow");
+    const accepted = Object.keys(
+      post.responses["202"].content["application/json"].schema.properties,
+    );
+    expect(accepted).toEqual(
+      expect.arrayContaining(["supportRequestId", "skipped", "reason"]),
+    );
+    expect(post.responses["409"]).toBeDefined();
   });
 });
