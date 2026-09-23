@@ -9047,11 +9047,6 @@
                   "jobId": {
                     "type": "string",
                     "format": "uuid"
-                  },
-                  "copilotSessionId": {
-                    "type": "string",
-                    "format": "uuid",
-                    "description": "Assistant session this request came from; makes it an assistant ticket."
                   }
                 }
               }
@@ -9071,7 +9066,7 @@
             "description": "Ticket accepted for creation"
           },
           "400": {
-            "description": "Bad request - missing workflow, title or description"
+            "description": "Bad request - missing or malformed workflow, job, title or description"
           },
           "409": {
             "description": "An open support ticket already exists for this workflow"

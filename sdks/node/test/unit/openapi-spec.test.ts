@@ -111,6 +111,10 @@ describe("published OpenAPI source", () => {
     const schema = post.requestBody.content["application/json"].schema;
     expect(schema.required).toEqual(["workflowId", "title", "description"]);
     expect(Object.keys(schema.properties)).not.toContain("pauseWorkflow");
-    expect(Object.keys(post.responses)).toEqual(expect.arrayContaining(["202", "409"]));
+    // The backend takes the Assistant session from the verified token actor, never the body.
+    expect(Object.keys(schema.properties)).not.toContain("copilotSessionId");
+    expect(Object.keys(post.responses)).toEqual(
+      expect.arrayContaining(["202", "409"]),
+    );
   });
 });
