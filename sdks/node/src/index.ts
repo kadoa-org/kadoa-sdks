@@ -17,6 +17,7 @@ export * from "./domains/observability";
 export * from "./domains/realtime";
 export * from "./domains/schemas";
 export * from "./domains/scrape";
+export * from "./domains/support";
 export * from "./domains/templates";
 export * from "./domains/usage";
 export * from "./domains/user";

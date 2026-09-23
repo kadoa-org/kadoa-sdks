@@ -102,4 +102,26 @@ describe("published OpenAPI source", () => {
     );
     expect(days.description).toContain("1-365");
   });
+
+  test("documents the v4 ticket fields used by client.support.createIssue", () => {
+    const spec = JSON.parse(readFileSync(specPath, "utf8"));
+
+    // Ticket creation goes through the single public entry point; there is no parallel v5 route.
+    expect(spec.paths["/v5/support/issues"]).toBeUndefined();
+    const post = spec.paths["/v4/support/issues"].post;
+    const props = Object.keys(
+      post.requestBody.content["application/json"].schema.properties,
+    );
+    expect(props).toEqual(
+      expect.arrayContaining(["workflowId", "jobId", "copilotSessionId"]),
+    );
+    expect(props).not.toContain("pauseWorkflow");
+    const accepted = Object.keys(
+      post.responses["202"].content["application/json"].schema.properties,
+    );
+    expect(accepted).toEqual(
+      expect.arrayContaining(["supportRequestId", "skipped", "reason"]),
+    );
+    expect(post.responses["409"]).toBeDefined();
+  });
 });
