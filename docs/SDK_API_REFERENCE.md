@@ -1,19 +1,20 @@
 # SDK API Reference
 
-API parity reference for Node and Python SDKs.
+Availability reference for the Node.js and Python SDKs. Method tables identify APIs that are SDK-specific; do not assume blanket parity.
 
-> Node.js SDK is the master SDK. Python SDK maintains feature parity with Node.
+For product behavior and HTTP endpoint details, use the canonical [Kadoa documentation](https://docs.kadoa.com) and [API reference](https://docs.kadoa.com/api-reference/introduction).
 
 ## Overview
-
-Both SDKs provide the same domain structure and API surface:
 
 | Module | Node SDK | Python SDK |
 |--------|----------|------------|
 | Client | `KadoaClient` | `KadoaClient` |
 | Extraction | `ExtractionService`, `ExtractionBuilderService` | `ExtractionModule`, `ExtractionBuilderService` |
 | Schemas | `SchemasService`, `SchemaBuilder` | `SchemasService`, `SchemaBuilder` |
-| Workflows | `WorkflowsCoreService` | `WorkflowsCoreService` |
+| Workflows | `WorkflowsCoreService`; includes `listWorkflowRuns()` | `WorkflowsCoreService`; no `list_workflow_runs()` |
+| Templates | `TemplatesService` | `TemplatesService` |
+| Workflow Assistant | `AssistantService` | Not available |
+| Personal Inbox | `InboxService` | Not available |
 | Notifications | 3 services + `NotificationDomain` | 3 services + `NotificationDomain` |
 | Validation | 2 services + `ValidationDomain` | 2 services + `ValidationDomain` |
 | Realtime | `Realtime` class | `Realtime` class |
@@ -113,6 +114,7 @@ Type validation for field examples:
 | Method | Node | Python |
 |--------|------|--------|
 | Create workflow | `create()` | `create()` |
+| List run history | `listWorkflowRuns()` | Not available |
 | Get workflow | `get()` | `get()` |
 | List workflows | `list()` | `list()` |
 | Get by name | `getByName()` | `get_by_name()` |
@@ -124,7 +126,31 @@ Type validation for field examples:
 | Get job status | `getJobStatus()` | `get_job_status()` |
 | Wait for job | `waitForJobCompletion()` | `wait_for_job_completion()` |
 
-## 5. Notifications Domain
+### Template-specific workflow instructions
+
+Both SDKs can create a workflow from a published template. The template owns `entity`, fields, schema, and monitoring configuration; do not provide those inputs when using a template.
+
+| Input | Node | Python |
+|-------|------|--------|
+| Template ID | `templateId` | `template_id` |
+| Template version (optional) | `templateVersion` | `template_version` |
+| Workflow-specific template instructions (optional) | `userPrompt` | `user_prompt` |
+
+`urls` is required for template creation. If no version is supplied, the API resolves the latest published template version.
+
+### Run history (Node.js only)
+
+`client.workflow.listWorkflowRuns(workflowId, { page, limit, status })` returns paginated run history. `status` accepts `success`, `failed`, or `in_progress`. The Python SDK does not expose this helper.
+
+## 5. Workflow Assistant (Node.js only)
+
+`client.assistant` is available only in the Node.js SDK. Use `createRealtimeWorkflow({ instructions, notificationChannelIds, tags?, newSessionId? })` to create a realtime workflow. For existing workflows, use `requestWorkflowUpdate(workflowId, { instructions, threadId? })` and `getTimeline(workflowId, { cursor?, limit? })`. The service also provides `getPauseState()`, `answerQuestion()`, `getStrategy()`, `interrupt()`, `resume()`, and `stop()`.
+
+## 6. Personal Inbox (Node.js only)
+
+`client.inbox.list()` returns the authenticated user's Inbox items and unread count. `client.inbox.markRead(itemId)` marks one item as read. The Python SDK does not expose an Inbox domain.
+
+## 7. Notifications Domain
 
 ### NotificationChannelsService
 
@@ -163,7 +189,7 @@ Type validation for field examples:
 | Setup for workspace | `setupForWorkspace()` | `setup_for_workspace()` |
 | Test notification | `testNotification()` | `test_notification()` |
 
-## 6. Validation Domain
+## 8. Validation Domain
 
 ### ValidationCoreService
 
@@ -195,7 +221,7 @@ Type validation for field examples:
 | Bulk delete | `bulkDeleteRules()` | `bulk_delete_rules()` |
 | Delete all rules | `deleteAllRules()` | `delete_all_rules()` |
 
-## 7. Realtime
+## 9. Realtime
 
 | Feature | Node | Python |
 |---------|------|--------|
@@ -211,13 +237,13 @@ Type validation for field examples:
 
 **Pattern difference:** Node returns unsubscribe functions from `on*` methods. Python provides explicit `off_*` methods.
 
-## 8. User Service
+## 10. User Service
 
 | Method | Node | Python |
 |--------|------|--------|
 | Get current user | `getCurrentUser()` | `get_current_user()` |
 
-## 9. Exceptions
+## 11. Exceptions
 
 | Feature | Node | Python |
 |---------|------|--------|
@@ -232,7 +258,7 @@ Type validation for field examples:
 | HTTP status mapping | `mapStatusToCode()` | `map_status_to_code()` |
 | From HTTP error | `fromAxiosError()` | `from_api_exception()` |
 
-## 10. Utilities
+## 12. Utilities
 
 | Feature | Node | Python |
 |---------|------|--------|
