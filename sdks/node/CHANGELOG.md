@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.44.0](https://github.com/kadoa-org/kadoa-sdks/compare/node-sdk-v0.43.0...node-sdk-v0.44.0) (2026-09-23)
+
+
+### Features
+
+* **node-sdk:** add workflow support ticket creation to the support client ([#375](https://github.com/kadoa-org/kadoa-sdks/issues/375)) ([be6e9c8](https://github.com/kadoa-org/kadoa-sdks/commit/be6e9c89cabeb2b7ac7742ed7ffc8ea8149ab2bc))
+
 ## [0.43.0](https://github.com/kadoa-org/kadoa-sdks/compare/node-sdk-v0.42.0...node-sdk-v0.43.0) (2026-09-08)
 
 
