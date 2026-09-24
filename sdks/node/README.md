@@ -315,7 +315,8 @@ console.log(`Found ${anomalies.length} anomalies`);
 ```typescript
 const client = new KadoaClient({
   apiKey: 'your-api-key',
-  timeout: 30000  // optional, in ms
+  timeout: 30000,  // optional, in ms
+  checkForUpdates: false  // optional, skip the npm version check (recommended for servers)
 });
 ```
 
