@@ -9,11 +9,22 @@ interface NpmPackageInfo {
   };
 }
 
+let hasCheckedForUpdates = false;
+
 /**
  * Checks if a newer version of the SDK is available on npm
  * This is a non-blocking check that runs in the background
+ *
+ * Runs at most once per process: subsequent calls return immediately, so
+ * constructing many clients (e.g. one per request) never re-fetches the
+ * registry or repeats the warning.
  */
 export async function checkForUpdates(): Promise<void> {
+  if (hasCheckedForUpdates) {
+    return;
+  }
+  hasCheckedForUpdates = true;
+
   try {
     const response = await fetch(`${NPM_REGISTRY_URL}/${PACKAGE_NAME}`, {
       headers: {
@@ -41,6 +52,16 @@ export async function checkForUpdates(): Promise<void> {
   } catch {
     // Silently fail - version check should not break client initialization
   }
+}
+
+/**
+ * Resets the once-per-process guard so the next {@link checkForUpdates}
+ * call performs the check again.
+ *
+ * @internal Intended for tests only.
+ */
+export function resetVersionCheckForTesting(): void {
+  hasCheckedForUpdates = false;
 }
 
 /**

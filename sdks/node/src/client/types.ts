@@ -66,6 +66,16 @@ export interface KadoaClientConfig {
    */
   baseUrl?: string;
   timeout?: number;
+  /**
+   * Check npm for a newer SDK version and log a warning if one exists.
+   *
+   * The check is a background request to `registry.npmjs.org` and runs at
+   * most once per process, however many clients are constructed. Set to
+   * `false` to skip it entirely, e.g. in servers or offline environments.
+   *
+   * @default true
+   */
+  checkForUpdates?: boolean;
 }
 
 export interface TestNotificationRequest {

@@ -148,10 +148,12 @@ export class KadoaClient {
     this.observability = domains.observability;
     this._extractionBuilderService = domains.extractionBuilderService;
 
-    // Check for updates in the background (non-blocking)
-    checkForUpdates().catch(() => {
-      // Silently ignore errors - version check should not affect client initialization
-    });
+    // Check for updates in the background (non-blocking, once per process)
+    if (config.checkForUpdates !== false) {
+      checkForUpdates().catch(() => {
+        // Silently ignore errors - version check should not affect client initialization
+      });
+    }
   }
 
   /**
