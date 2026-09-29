@@ -60,7 +60,8 @@ export function createAxiosInstance(params: {
   });
 
   axiosInstance.interceptors.request.use((config) => {
-    config.headers["x-request-id"] = v4();
+    // Keep a correlation id a consumer set (e.g. the MCP server forwarding its own request id).
+    if (!config.headers["x-request-id"]) config.headers["x-request-id"] = v4();
     return config;
   });
 
