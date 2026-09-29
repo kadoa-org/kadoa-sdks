@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.45.0](https://github.com/kadoa-org/kadoa-sdks/compare/node-sdk-v0.44.0...node-sdk-v0.45.0) (2026-09-24)
+
+
+### Features
+
+* **node-sdk:** add checkforupdates option and dedupe version check per process ([#377](https://github.com/kadoa-org/kadoa-sdks/issues/377)) ([1baaf9b](https://github.com/kadoa-org/kadoa-sdks/commit/1baaf9bb10a3ef1142ba0c69958cc0bf44609698))
+
 ## [0.44.0](https://github.com/kadoa-org/kadoa-sdks/compare/node-sdk-v0.43.0...node-sdk-v0.44.0) (2026-09-23)
 
 
