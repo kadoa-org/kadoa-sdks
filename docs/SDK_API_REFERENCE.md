@@ -16,7 +16,6 @@ For product behavior and HTTP endpoint details, use the canonical [Kadoa documen
 | Workflow Assistant | `AssistantService` | Not available |
 | Personal Inbox | `InboxService` | Not available |
 | Notifications | 3 services + `NotificationDomain` | 3 services + `NotificationDomain` |
-| Validation | 2 services + `ValidationDomain` | 2 services + `ValidationDomain` |
 | Data Quality | `DataQualityService` | `DataQualityService` |
 | Realtime | `Realtime` class | `Realtime` class |
 | User | `UserService` | `UserService` |
@@ -45,7 +44,6 @@ Domain properties on `KadoaClient`:
 - `notification` — Notification setup
 - `schema` — Schema operations
 - `user` — User information
-- `validation` — Data validation
 - `dataQuality` / `data_quality` — Per-field data quality rules
 
 ## 2. Extraction Domain
@@ -191,39 +189,7 @@ Both SDKs can create a workflow from a published template. The template owns `en
 | Setup for workspace | `setupForWorkspace()` | `setup_for_workspace()` |
 | Test notification | `testNotification()` | `test_notification()` |
 
-## 8. Validation Domain
-
-### ValidationCoreService
-
-| Method | Node | Python |
-|--------|------|--------|
-| List validations | `listWorkflowValidations()` | `list_workflow_validations()` |
-| Get details | `getValidationDetails()` | `get_validation_details()` |
-| Schedule validation | `scheduleValidation()` | `schedule_validation()` |
-| Toggle enabled | `toggleValidationEnabled()` | `toggle_validation_enabled()` |
-| Get latest | `getLatestValidation()` | `get_latest_validation()` |
-| Get anomalies | `getValidationAnomalies()` | `get_validation_anomalies()` |
-| Get anomalies by rule | `getValidationAnomaliesByRule()` | `get_validation_anomalies_by_rule()` |
-| Wait until completed | `waitUntilCompleted()` | `wait_until_completed()` |
-
-### ValidationRulesService
-
-| Method | Node | Python |
-|--------|------|--------|
-| List rules | `listRules()` | `list_rules()` |
-| Get rule by ID | `getRuleById()` | `get_rule_by_id()` |
-| Get rule by name | `getRuleByName()` | `get_rule_by_name()` |
-| Create rule | `createRule()` | `create_rule()` |
-| Update rule | `updateRule()` | `update_rule()` |
-| Delete rule | `deleteRule()` | `delete_rule()` |
-| Disable rule | `disableRule()` | `disable_rule()` |
-| Generate rule | `generateRule()` | `generate_rule()` |
-| Generate rules | `generateRules()` | `generate_rules()` |
-| Bulk approve | `bulkApproveRules()` | `bulk_approve_rules()` |
-| Bulk delete | `bulkDeleteRules()` | `bulk_delete_rules()` |
-| Delete all rules | `deleteAllRules()` | `delete_all_rules()` |
-
-## 8b. Data Quality Domain
+## 8. Data Quality Domain
 
 ### DataQualityService
 

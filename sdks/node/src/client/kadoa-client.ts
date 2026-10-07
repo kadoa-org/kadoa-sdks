@@ -18,7 +18,6 @@ import type { SupportService } from "../domains/support/support.service";
 import type { TemplatesService } from "../domains/templates/templates.service";
 import type { UsageService } from "../domains/usage/usage.service";
 import type { UserService } from "../domains/user/user.service";
-import type { ValidationDomain } from "../domains/validation/validation.facade";
 import type { VariablesService } from "../domains/variables/variables.service";
 import type { WorkflowsCoreService } from "../domains/workflows/workflows-core.service";
 import { PUBLIC_API_URI } from "../runtime/config";
@@ -79,7 +78,6 @@ export class KadoaClient {
   public readonly scrape: ScrapeService;
   public readonly user: UserService;
   public readonly template: TemplatesService;
-  public readonly validation: ValidationDomain;
   public readonly variable: VariablesService;
   public readonly crawler: CrawlerDomain;
   public readonly usage: UsageService;
@@ -144,7 +142,6 @@ export class KadoaClient {
     this.scrape = domains.scrape;
     this.notification = domains.notification;
     this.template = domains.template;
-    this.validation = domains.validation;
     this.variable = domains.variable;
     this.crawler = domains.crawler;
     this.usage = domains.usage;

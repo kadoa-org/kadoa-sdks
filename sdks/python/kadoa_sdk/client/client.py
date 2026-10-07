@@ -22,13 +22,13 @@ from ..user import UserService
 from ..variables import VariablesService
 from ..workflows import WorkflowsCoreService
 from .models import KadoaClientConfig, KadoaClientStatus, RealtimeOptions
-from .wiring import create_crawler_domain, create_notification_domain, create_validation_domain
+from .wiring import create_crawler_domain, create_notification_domain
 
 
 class KadoaClient:
     """Main client for interacting with the Kadoa API.
 
-    Provides access to extraction, schemas, workflows, notifications, validation,
+    Provides access to extraction, schemas, workflows, notifications, data quality,
     and user services. Supports both synchronous and asynchronous operations.
 
     Args:
@@ -120,7 +120,6 @@ class KadoaClient:
         # domains
         self.crawler = create_crawler_domain(self)
         self.notification = create_notification_domain(self)
-        self.validation = create_validation_domain(self)
 
         # Check for updates in the background (non-blocking)
         check_for_updates()

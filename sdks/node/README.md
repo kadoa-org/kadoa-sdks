@@ -106,7 +106,7 @@ const data = await result.fetchData({});
 // }
 ```
 
-**When to use:** Production applications, consistent schema requirements, data validation needs.
+**When to use:** Production applications, consistent schema requirements, data quality checks.
 
 #### Builder Patterns
 
@@ -263,51 +263,6 @@ const extraction = await client.extract({
 const result = await extraction.run();
 ```
 
-## Data Validation
-
-Kadoa can automatically suggest validation rules and detect anomalies:
-
-```typescript
-import { KadoaClient, pollUntil } from '@kadoa/node-sdk';
-
-const client = new KadoaClient({ apiKey: 'your-api-key' });
-
-// 1. Run extraction
-const result = await client.extraction.run({
-  urls: ['https://example.com']
-});
-
-// 2. Wait for AI-suggested validation rules
-const rules = await pollUntil(
-  async () => await client.validation.listRules({
-    workflowId: result.workflowId
-  }),
-  (result) => result.data.length > 0,
-  { pollIntervalMs: 10000, timeoutMs: 30000 }
-);
-
-// 3. Approve and run validation
-await client.validation.bulkApproveRules({
-  workflowId: result.workflowId,
-  ruleIds: rules.result.data.map(r => r.id)
-});
-
-const validation = await client.validation.scheduleValidation(
-  result.workflowId,
-  result.workflow?.jobId || ''
-);
-
-// 4. Check for anomalies
-const completed = await client.validation.waitUntilCompleted(
-  validation.validationId
-);
-const anomalies = await client.validation.getValidationAnomalies(
-  validation.validationId
-);
-
-console.log(`Found ${anomalies.length} anomalies`);
-```
-
 ## Data Quality Rules
 
 Per-field rules run at the end of every workflow run. Set them for the fields you care about; other fields keep their rules:
@@ -459,7 +414,6 @@ See the [examples directory](https://github.com/kadoa-org/kadoa-sdks/tree/main/e
 - Batch processing
 - Custom error handling
 - Integration patterns
-- Advanced validation workflows
 
 ## Workflow Management
 

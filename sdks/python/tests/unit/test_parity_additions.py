@@ -1,7 +1,7 @@
 """Unit tests for parity additions from KAD-7030.
 
 Covers: extraction.export_data, templates, variables, changes,
-workflows.get_audit_log, validation.delete_rule.
+workflows.get_audit_log.
 """
 
 from datetime import datetime
@@ -16,7 +16,6 @@ import kadoa_sdk.variables.variables_service as var_mod
 from kadoa_sdk.changes import ChangesService, ListChangesOptions
 from kadoa_sdk.extraction import ExportDataOptions, ExtractionModule
 from kadoa_sdk.templates import TemplatesService
-from kadoa_sdk.validation.validation_acl import DeleteRuleRequest
 from kadoa_sdk.variables import VariablesService
 
 
@@ -182,52 +181,6 @@ def test_changes_coalesce_pairs_added_removed_same_row():
     assert result[0].fields[0].key == "name"
     assert result[0].fields[0].value == "new"
     assert result[0].fields[0].previous_value == "old"
-
-
-# ---------------------------------------------------------------------------
-# validation.delete_rule
-# ---------------------------------------------------------------------------
-
-
-@pytest.mark.unit
-def test_validation_delete_rule_sends_reason_body(monkeypatch):
-    from kadoa_sdk.validation.validation_rules_service import ValidationRulesService
-
-    client = Mock()
-    svc = ValidationRulesService(client)
-
-    mock_api = Mock()
-    monkeypatch.setattr(
-        ValidationRulesService,
-        "validation_api",
-        property(lambda self: mock_api),
-    )
-
-    svc.delete_rule(DeleteRuleRequest(rule_id="r1", workflow_id="wf-1", reason="cleanup"))
-
-    mock_api.v4_data_validation_rules_rule_id_delete.assert_called_once()
-    kwargs = mock_api.v4_data_validation_rules_rule_id_delete.call_args.kwargs
-    assert kwargs["rule_id"] == "r1"
-    assert kwargs["delete_rule_with_reason"] is not None
-
-
-@pytest.mark.unit
-def test_validation_delete_rule_no_body_when_no_workflow(monkeypatch):
-    from kadoa_sdk.validation.validation_rules_service import ValidationRulesService
-
-    client = Mock()
-    svc = ValidationRulesService(client)
-    mock_api = Mock()
-    monkeypatch.setattr(
-        ValidationRulesService,
-        "validation_api",
-        property(lambda self: mock_api),
-    )
-
-    svc.delete_rule(DeleteRuleRequest(rule_id="r1"))
-
-    kwargs = mock_api.v4_data_validation_rules_rule_id_delete.call_args.kwargs
-    assert kwargs["delete_rule_with_reason"] is None
 
 
 # ---------------------------------------------------------------------------

@@ -25,12 +25,6 @@ import { SupportService } from "../domains/support/support.service";
 import { TemplatesService } from "../domains/templates/templates.service";
 import { UsageService } from "../domains/usage/usage.service";
 import { UserService } from "../domains/user/user.service";
-import {
-  createValidationDomain,
-  type ValidationDomain,
-} from "../domains/validation/validation.facade";
-import { ValidationCoreService } from "../domains/validation/validation-core.service";
-import { ValidationRulesService } from "../domains/validation/validation-rules.service";
 import { VariablesService } from "../domains/variables/variables.service";
 import { WorkflowsCoreService } from "../domains/workflows/workflows-core.service";
 import { KadoaHttpException } from "../runtime/exceptions";
@@ -96,7 +90,6 @@ export function createClientDomains(params: { client: KadoaClient }): {
   support: SupportService;
   user: UserService;
   template: TemplatesService;
-  validation: ValidationDomain;
   variable: VariablesService;
   crawler: CrawlerDomain;
   usage: UsageService;
@@ -127,8 +120,6 @@ export function createClientDomains(params: { client: KadoaClient }): {
     channelsService,
     settingsService,
   );
-  const coreService = new ValidationCoreService(client);
-  const rulesService = new ValidationRulesService(client);
   const usageService = new UsageService(client);
   const observabilityService = new ObservabilityService(client);
 
@@ -153,7 +144,6 @@ export function createClientDomains(params: { client: KadoaClient }): {
     channelSetupService,
   });
 
-  const validation = createValidationDomain(coreService, rulesService);
   const crawler = createCrawlerDomain(client);
 
   return {
@@ -170,7 +160,6 @@ export function createClientDomains(params: { client: KadoaClient }): {
     scrape: scrapeService,
     user: userService,
     template: templatesService,
-    validation,
     variable: variablesService,
     crawler,
     usage: usageService,

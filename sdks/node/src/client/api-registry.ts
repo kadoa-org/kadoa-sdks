@@ -6,7 +6,6 @@ import {
   type BaseAPI,
   Configuration,
   DataQualityApi,
-  DataValidationApi,
   MeApi,
   NotificationsApi,
   SchemasApi,
@@ -73,10 +72,6 @@ export class ApiRegistry {
 
   get scrape(): ScrapeApi {
     return this.get(ScrapeApi);
-  }
-
-  get validation(): DataValidationApi {
-    return this.get(DataValidationApi);
   }
 
   get dataQuality(): DataQualityApi {

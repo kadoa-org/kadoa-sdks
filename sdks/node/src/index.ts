@@ -22,7 +22,6 @@ export * from "./domains/support";
 export * from "./domains/templates";
 export * from "./domains/usage";
 export * from "./domains/user";
-export * from "./domains/validation";
 export * from "./domains/variables";
 export * from "./domains/workflows";
 // ============================================================================
@@ -38,7 +37,6 @@ export {
   type TeamInfo,
   type TestNotificationRequest,
   type TestNotificationResult,
-  type ValidationDomain,
 } from "./kadoa-client";
 // ============================================================================
 // Error Handling

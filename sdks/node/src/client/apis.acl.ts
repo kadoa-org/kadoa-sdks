@@ -3,7 +3,6 @@ export {
   AgentApi,
   Configuration,
   DataQualityApi,
-  DataValidationApi,
   MeApi,
   NotificationsApi,
   SchemasApi,

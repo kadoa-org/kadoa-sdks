@@ -9,7 +9,6 @@ All example scripts are located in the `src/` directory:
 - `run_extraction.py` - Basic extraction with pagination
 - `extraction-builder-demo.py` - Demonstrates different extraction builder patterns
 - `run-extraction-with-notifications.py` - Extraction with notifications and realtime events
-- `run-extraction-with-validation.py` - Extraction with validation rules and anomaly detection
 - `create-workflow-and-run-in-parallel.py` - Create workflow and run multiple extractions in parallel
 
 ## Setup
@@ -43,9 +42,6 @@ uv run python src/extraction-builder-demo.py
 
 # With notifications
 uv run python src/run-extraction-with-notifications.py
-
-# With validation
-uv run python src/run-extraction-with-validation.py
 
 # Parallel execution
 uv run python src/create-workflow-and-run-in-parallel.py

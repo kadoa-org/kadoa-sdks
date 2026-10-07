@@ -133,7 +133,6 @@ workflow = create_logger("workflow")
 crawl = create_logger("crawl")
 notifications = create_logger("notifications")
 schemas = create_logger("schemas")
-validation = create_logger("validation")
 
 __all__ = [
     "create_logger",
@@ -145,5 +144,4 @@ __all__ = [
     "crawl",
     "notifications",
     "schemas",
-    "validation",
 ]

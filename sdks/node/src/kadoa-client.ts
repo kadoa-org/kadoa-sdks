@@ -9,4 +9,3 @@ export type {
   TestNotificationRequest,
   TestNotificationResult,
 } from "./client/types";
-export type { ValidationDomain } from "./domains/validation/validation.facade";

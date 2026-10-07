@@ -9,7 +9,6 @@ from ..notifications import (
     NotificationSetupService,
 )
 from ..user import UserService
-from ..validation import ValidationCoreService, ValidationDomain, ValidationRulesService
 from .crawler_domain import CrawlerDomain
 from .notification_domain import NotificationDomain
 
@@ -31,12 +30,6 @@ def create_notification_domain(client: "KadoaClient") -> NotificationDomain:
         settings=settings_service,
         setup=setup_service,
     )
-
-
-def create_validation_domain(client: "KadoaClient") -> ValidationDomain:
-    core_service = ValidationCoreService(client)
-    rules_service = ValidationRulesService(client)
-    return ValidationDomain(core=core_service, rules=rules_service)
 
 
 def create_crawler_domain(client: "KadoaClient") -> CrawlerDomain:
