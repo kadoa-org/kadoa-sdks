@@ -5,6 +5,7 @@ import { ActivityService } from "../domains/activity/activity.service";
 import { AssistantService } from "../domains/assistant";
 import { ChangesService } from "../domains/changes/changes.service";
 import { type CrawlerDomain, createCrawlerDomain } from "../domains/crawler";
+import { DataQualityService } from "../domains/data-quality/data-quality.service";
 import { DataFetcherService } from "../domains/extraction/services/data-fetcher.service";
 import { ExtractionService } from "../domains/extraction/services/extraction.service";
 import { ExtractionBuilderService } from "../domains/extraction/services/extraction-builder.service";
@@ -85,6 +86,7 @@ export function createClientDomains(params: { client: KadoaClient }): {
   activity: ActivityService;
   assistant: AssistantService;
   changes: ChangesService;
+  dataQuality: DataQualityService;
   extractionBuilderService: ExtractionBuilderService;
   extraction: ExtractionService;
   workflow: WorkflowsCoreService;
@@ -106,6 +108,7 @@ export function createClientDomains(params: { client: KadoaClient }): {
   const supportService = new SupportService(client);
   const assistantService = new AssistantService(client.apis.agent);
   const changesService = new ChangesService(client);
+  const dataQualityService = new DataQualityService(client);
   const userService = new UserService(client);
   const dataFetcherService = new DataFetcherService(client.apis.workflows);
   const channelsService = new NotificationChannelsService(
@@ -158,6 +161,7 @@ export function createClientDomains(params: { client: KadoaClient }): {
     assistant: assistantService,
     support: supportService,
     changes: changesService,
+    dataQuality: dataQualityService,
     extractionBuilderService,
     extraction: extractionService,
     workflow: workflowsCoreService,

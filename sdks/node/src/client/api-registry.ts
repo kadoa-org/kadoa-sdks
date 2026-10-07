@@ -5,6 +5,7 @@ import {
   AgentApi,
   type BaseAPI,
   Configuration,
+  DataQualityApi,
   DataValidationApi,
   MeApi,
   NotificationsApi,
@@ -76,6 +77,10 @@ export class ApiRegistry {
 
   get validation(): DataValidationApi {
     return this.get(DataValidationApi);
+  }
+
+  get dataQuality(): DataQualityApi {
+    return this.get(DataQualityApi);
   }
 
   get crawler(): CrawlerApi {

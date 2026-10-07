@@ -17,6 +17,7 @@ For product behavior and HTTP endpoint details, use the canonical [Kadoa documen
 | Personal Inbox | `InboxService` | Not available |
 | Notifications | 3 services + `NotificationDomain` | 3 services + `NotificationDomain` |
 | Validation | 2 services + `ValidationDomain` | 2 services + `ValidationDomain` |
+| Data Quality | `DataQualityService` | `DataQualityService` |
 | Realtime | `Realtime` class | `Realtime` class |
 | User | `UserService` | `UserService` |
 | Exceptions | `KadoaSdkException`, `KadoaHttpException` | `KadoaSdkError`, `KadoaHttpError` |
@@ -45,6 +46,7 @@ Domain properties on `KadoaClient`:
 - `schema` — Schema operations
 - `user` — User information
 - `validation` — Data validation
+- `dataQuality` / `data_quality` — Per-field data quality rules
 
 ## 2. Extraction Domain
 
@@ -220,6 +222,20 @@ Both SDKs can create a workflow from a published template. The template owns `en
 | Bulk approve | `bulkApproveRules()` | `bulk_approve_rules()` |
 | Bulk delete | `bulkDeleteRules()` | `bulk_delete_rules()` |
 | Delete all rules | `deleteAllRules()` | `delete_all_rules()` |
+
+## 8b. Data Quality Domain
+
+### DataQualityService
+
+Per-field data quality rules of a workflow (`/v4/workflows/{workflowId}/schema-validation-rules`).
+
+| Method | Node | Python |
+|--------|------|--------|
+| Get rules | `getRules()` | `get_rules()` |
+| Upsert rules | `upsertRules()` | `upsert_rules()` |
+| Delete field rules | `deleteFieldRules()` | `delete_field_rules()` |
+
+Node exports typed rule shapes starting from `DataQualityRules`. Python takes and returns plain dicts in the API's JSON shape.
 
 ## 9. Realtime
 

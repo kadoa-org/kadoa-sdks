@@ -308,6 +308,30 @@ const anomalies = await client.validation.getValidationAnomalies(
 console.log(`Found ${anomalies.length} anomalies`);
 ```
 
+## Data Quality Rules
+
+Per-field rules run at the end of every workflow run. Set them for the fields you care about; other fields keep their rules:
+
+```typescript
+const workflowId = "your-workflow-id";
+const edited = { editedBy: "user", editedAt: new Date().toISOString() } as const;
+
+await client.dataQuality.upsertRules(workflowId, {
+  title: {
+    kind: "STRING",
+    presence: { target: 100, ...edited },
+    maxLength: { value: 120, ...edited },
+  },
+  price: {
+    kind: "NUMBER",
+    minimum: { value: 0, ...edited },
+  },
+});
+
+const rules = await client.dataQuality.getRules(workflowId); // null when none
+await client.dataQuality.deleteFieldRules(workflowId, "price");
+```
+
 ## Configuration
 
 ### Basic Setup

@@ -4,7 +4,7 @@ import time
 from collections.abc import AsyncGenerator
 from typing import TYPE_CHECKING, Any, Dict, List, Optional, TypedDict, Union
 
-from openapi_client.models.create_schema_body_fields_inner import CreateSchemaBodyFieldsInner
+from openapi_client.models.schema_response_schema_inner import SchemaResponseSchemaInner
 from openapi_client.models.prompt_workflow import PromptWorkflow as AgenticWorkflow
 
 from ..extraction_acl import (
@@ -505,10 +505,10 @@ class ExtractionBuilderService:
 
         schema_fields = []
         for field in fields:
-            if isinstance(field, CreateSchemaBodyFieldsInner):
+            if isinstance(field, SchemaResponseSchemaInner):
                 schema_fields.append(field)
             elif isinstance(field, (DataField, ClassificationField)):
-                schema_fields.append(CreateSchemaBodyFieldsInner(actual_instance=field))
+                schema_fields.append(SchemaResponseSchemaInner(actual_instance=field))
             elif isinstance(field, dict):
                 field_type = field.get("fieldType") or field.get("field_type")
                 if field_type == "CLASSIFICATION":
@@ -522,7 +522,7 @@ class ExtractionBuilderService:
                         else:
                             field_dict["example"] = example_value
                     field_obj = DataField(**field_dict)
-                schema_fields.append(CreateSchemaBodyFieldsInner(actual_instance=field_obj))
+                schema_fields.append(SchemaResponseSchemaInner(actual_instance=field_obj))
             else:
                 if hasattr(field, "model_dump"):
                     field_dict = field.model_dump()
@@ -539,11 +539,11 @@ class ExtractionBuilderService:
                             else:
                                 field_dict["example"] = example_value
                         field_obj = DataField(**field_dict)
-                    schema_fields.append(CreateSchemaBodyFieldsInner(actual_instance=field_obj))
+                    schema_fields.append(SchemaResponseSchemaInner(actual_instance=field_obj))
                 else:
                     field_dict = dict(field) if hasattr(field, "__dict__") else field
                     field_obj = DataField(**field_dict)
-                    schema_fields.append(CreateSchemaBodyFieldsInner(actual_instance=field_obj))
+                    schema_fields.append(SchemaResponseSchemaInner(actual_instance=field_obj))
 
         inner = AgenticWorkflow(
             urls=urls,

@@ -3,6 +3,7 @@ import type { ActivityService } from "../domains/activity/activity.service";
 import type { AssistantService } from "../domains/assistant";
 import type { ChangesService } from "../domains/changes/changes.service";
 import type { CrawlerDomain } from "../domains/crawler";
+import type { DataQualityService } from "../domains/data-quality/data-quality.service";
 import type { ExtractionService } from "../domains/extraction/services/extraction.service";
 import type {
   ExtractionBuilderService,
@@ -70,6 +71,7 @@ export class KadoaClient {
   public readonly assistant: AssistantService;
   public readonly support: SupportService;
   public readonly changes: ChangesService;
+  public readonly dataQuality: DataQualityService;
   public readonly extraction: ExtractionService;
   public readonly workflow: WorkflowsCoreService;
   public readonly notification: NotificationDomain;
@@ -134,6 +136,7 @@ export class KadoaClient {
     this.assistant = domains.assistant;
     this.support = domains.support;
     this.changes = domains.changes;
+    this.dataQuality = domains.dataQuality;
     this.user = domains.user;
     this.extraction = domains.extraction;
     this.workflow = domains.workflow;

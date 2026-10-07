@@ -5796,6 +5796,9 @@
               "application/json": {
                 "schema": {
                   "type": "object",
+                  "required": [
+                    "rules"
+                  ],
                   "properties": {
                     "rules": {
                       "nullable": true,
@@ -5863,6 +5866,9 @@
               "application/json": {
                 "schema": {
                   "type": "object",
+                  "required": [
+                    "rules"
+                  ],
                   "properties": {
                     "rules": {
                       "$ref": "#/components/schemas/WorkflowSchemaValidationRules"
@@ -5926,6 +5932,9 @@
               "application/json": {
                 "schema": {
                   "type": "object",
+                  "required": [
+                    "rules"
+                  ],
                   "properties": {
                     "rules": {
                       "$ref": "#/components/schemas/WorkflowSchemaValidationRules"
@@ -21430,14 +21439,26 @@
   },
   "components": {
     "schemas": {
-      "Attribution": {
+      "PresenceRule": {
         "type": "object",
+        "description": "Minimum percentage of rows that must have a value for this field.",
         "required": [
+          "target",
           "editedBy",
           "editedAt"
         ],
-        "description": "Who last edited this specific rule and when.",
         "properties": {
+          "target": {
+            "type": "integer",
+            "enum": [
+              0,
+              20,
+              40,
+              60,
+              80,
+              100
+            ]
+          },
           "editedBy": {
             "type": "string",
             "enum": [
@@ -21447,7 +21468,7 @@
               "ops",
               "user"
             ],
-            "description": "Actor type that produced the last edit."
+            "description": "Actor type that produced the last edit. API clients send `user`."
           },
           "editedByLabel": {
             "type": "string",
@@ -21460,343 +21481,395 @@
           }
         }
       },
-      "PresenceRule": {
-        "description": "Minimum percentage of rows that must have a value for this field.",
-        "allOf": [
-          {
-            "$ref": "#/components/schemas/Attribution"
-          },
-          {
-            "type": "object",
-            "required": [
-              "target"
-            ],
-            "properties": {
-              "target": {
-                "type": "integer",
-                "enum": [
-                  0,
-                  20,
-                  40,
-                  60,
-                  80,
-                  100
-                ]
-              }
-            }
-          }
-        ]
-      },
       "UniquenessRule": {
+        "type": "object",
         "description": "Minimum percentage of values that must be unique in this column.",
-        "allOf": [
-          {
-            "$ref": "#/components/schemas/Attribution"
+        "required": [
+          "target",
+          "editedBy",
+          "editedAt"
+        ],
+        "properties": {
+          "target": {
+            "type": "integer",
+            "enum": [
+              0,
+              20,
+              40,
+              60,
+              80,
+              100
+            ]
           },
-          {
-            "type": "object",
-            "required": [
-              "target"
+          "editedBy": {
+            "type": "string",
+            "enum": [
+              "default",
+              "llm",
+              "agent",
+              "ops",
+              "user"
             ],
-            "properties": {
-              "target": {
-                "type": "integer",
-                "enum": [
-                  0,
-                  20,
-                  40,
-                  60,
-                  80,
-                  100
-                ]
-              }
-            }
+            "description": "Actor type that produced the last edit. API clients send `user`."
+          },
+          "editedByLabel": {
+            "type": "string",
+            "description": "Optional human-readable label for the editor (e.g. email for users, agent name for agents)."
+          },
+          "editedAt": {
+            "type": "string",
+            "format": "date-time",
+            "description": "ISO-8601 timestamp of the last edit."
           }
-        ]
+        }
       },
       "StringLengthRule": {
-        "allOf": [
-          {
-            "$ref": "#/components/schemas/Attribution"
+        "type": "object",
+        "description": "Bound on the string length in characters.",
+        "required": [
+          "value",
+          "editedBy",
+          "editedAt"
+        ],
+        "properties": {
+          "value": {
+            "type": "integer",
+            "minimum": 0
           },
-          {
-            "type": "object",
-            "required": [
-              "value"
+          "editedBy": {
+            "type": "string",
+            "enum": [
+              "default",
+              "llm",
+              "agent",
+              "ops",
+              "user"
             ],
-            "properties": {
-              "value": {
-                "type": "integer",
-                "minimum": 0
-              }
-            }
+            "description": "Actor type that produced the last edit. API clients send `user`."
+          },
+          "editedByLabel": {
+            "type": "string",
+            "description": "Optional human-readable label for the editor (e.g. email for users, agent name for agents)."
+          },
+          "editedAt": {
+            "type": "string",
+            "format": "date-time",
+            "description": "ISO-8601 timestamp of the last edit."
           }
-        ]
+        }
       },
       "StringHtmlElementCountRule": {
+        "type": "object",
         "description": "Bound on how many HTML elements the text contains. An element is an opening or\nself-closing tag (e.g. `<h1>Foo</h1> bar` counts 1, `<h1>Foo</h1> <p>bar</p>` counts 2);\nclosing tags, comments, and doctypes don't count.\n",
-        "allOf": [
-          {
-            "$ref": "#/components/schemas/Attribution"
+        "required": [
+          "value",
+          "editedBy",
+          "editedAt"
+        ],
+        "properties": {
+          "value": {
+            "type": "integer",
+            "minimum": 0
           },
-          {
-            "type": "object",
-            "required": [
-              "value"
+          "editedBy": {
+            "type": "string",
+            "enum": [
+              "default",
+              "llm",
+              "agent",
+              "ops",
+              "user"
             ],
-            "properties": {
-              "value": {
-                "type": "integer",
-                "minimum": 0
-              }
-            }
+            "description": "Actor type that produced the last edit. API clients send `user`."
+          },
+          "editedByLabel": {
+            "type": "string",
+            "description": "Optional human-readable label for the editor (e.g. email for users, agent name for agents)."
+          },
+          "editedAt": {
+            "type": "string",
+            "format": "date-time",
+            "description": "ISO-8601 timestamp of the last edit."
           }
-        ]
+        }
       },
-      "NumberBoundRule": {
-        "allOf": [
-          {
-            "$ref": "#/components/schemas/Attribution"
+      "StringCharsetPreset": {
+        "type": "object",
+        "description": "A named character-class restriction.",
+        "required": [
+          "kind",
+          "preset"
+        ],
+        "properties": {
+          "kind": {
+            "type": "string",
+            "enum": [
+              "PRESET"
+            ]
           },
-          {
-            "type": "object",
-            "required": [
-              "value"
-            ],
-            "properties": {
-              "value": {
-                "type": "number"
-              }
-            }
+          "preset": {
+            "type": "string",
+            "enum": [
+              "natural_language",
+              "alphanumeric",
+              "alpha"
+            ]
           }
-        ]
-      },
-      "NumberMaxDecimalPlacesRule": {
-        "allOf": [
-          {
-            "$ref": "#/components/schemas/Attribution"
-          },
-          {
-            "type": "object",
-            "required": [
-              "value"
-            ],
-            "properties": {
-              "value": {
-                "type": "integer",
-                "minimum": 0,
-                "maximum": 16
-              }
-            }
-          }
-        ]
+        }
       },
       "StringFormatFreeTextRule": {
+        "type": "object",
         "description": "Free-text format. A character-class restriction; length rules apply only with this kind.",
-        "allOf": [
+        "required": [
+          "kind",
+          "charset",
+          "editedBy",
+          "editedAt"
+        ],
+        "properties": {
+          "kind": {
+            "type": "string",
+            "enum": [
+              "FREE_TEXT"
+            ]
+          },
+          "charset": {
+            "$ref": "#/components/schemas/StringCharsetPreset"
+          },
+          "editedBy": {
+            "type": "string",
+            "enum": [
+              "default",
+              "llm",
+              "agent",
+              "ops",
+              "user"
+            ],
+            "description": "Actor type that produced the last edit. API clients send `user`."
+          },
+          "editedByLabel": {
+            "type": "string",
+            "description": "Optional human-readable label for the editor (e.g. email for users, agent name for agents)."
+          },
+          "editedAt": {
+            "type": "string",
+            "format": "date-time",
+            "description": "ISO-8601 timestamp of the last edit."
+          }
+        }
+      },
+      "StringPatternPreset": {
+        "type": "object",
+        "description": "A named pattern preset.",
+        "required": [
+          "kind",
+          "preset"
+        ],
+        "properties": {
+          "kind": {
+            "type": "string",
+            "enum": [
+              "PRESET"
+            ]
+          },
+          "preset": {
+            "type": "string",
+            "enum": [
+              "url",
+              "email",
+              "phone",
+              "date",
+              "datetime",
+              "time",
+              "uuid",
+              "slug"
+            ]
+          }
+        }
+      },
+      "StringCustomPattern": {
+        "type": "object",
+        "description": "A custom regular expression.",
+        "required": [
+          "kind",
+          "pattern"
+        ],
+        "properties": {
+          "kind": {
+            "type": "string",
+            "enum": [
+              "CUSTOM"
+            ]
+          },
+          "pattern": {
+            "type": "string",
+            "minLength": 1,
+            "description": "Must be a valid regular expression."
+          }
+        }
+      },
+      "StringPatternSource": {
+        "oneOf": [
           {
-            "$ref": "#/components/schemas/Attribution"
+            "$ref": "#/components/schemas/StringPatternPreset"
           },
           {
-            "type": "object",
-            "required": [
-              "kind",
-              "charset"
-            ],
-            "properties": {
-              "kind": {
-                "type": "string",
-                "enum": [
-                  "FREE_TEXT"
-                ]
-              },
-              "charset": {
-                "type": "object",
-                "required": [
-                  "kind",
-                  "preset"
-                ],
-                "properties": {
-                  "kind": {
-                    "type": "string",
-                    "enum": [
-                      "PRESET"
-                    ]
-                  },
-                  "preset": {
-                    "type": "string",
-                    "enum": [
-                      "natural_language",
-                      "alphanumeric",
-                      "alpha"
-                    ]
-                  }
-                }
-              }
-            }
+            "$ref": "#/components/schemas/StringCustomPattern"
           }
-        ]
+        ],
+        "discriminator": {
+          "propertyName": "kind"
+        }
       },
       "StringFormatFormatRule": {
+        "type": "object",
         "description": "Pattern format. Values must match a named pattern preset or a custom regular expression.",
-        "allOf": [
+        "required": [
+          "kind",
+          "source",
+          "editedBy",
+          "editedAt"
+        ],
+        "properties": {
+          "kind": {
+            "type": "string",
+            "enum": [
+              "FORMAT"
+            ]
+          },
+          "source": {
+            "$ref": "#/components/schemas/StringPatternSource"
+          },
+          "editedBy": {
+            "type": "string",
+            "enum": [
+              "default",
+              "llm",
+              "agent",
+              "ops",
+              "user"
+            ],
+            "description": "Actor type that produced the last edit. API clients send `user`."
+          },
+          "editedByLabel": {
+            "type": "string",
+            "description": "Optional human-readable label for the editor (e.g. email for users, agent name for agents)."
+          },
+          "editedAt": {
+            "type": "string",
+            "format": "date-time",
+            "description": "ISO-8601 timestamp of the last edit."
+          }
+        }
+      },
+      "StringListPreset": {
+        "type": "object",
+        "description": "A named list of allowed values.",
+        "required": [
+          "kind",
+          "preset"
+        ],
+        "properties": {
+          "kind": {
+            "type": "string",
+            "enum": [
+              "PRESET"
+            ]
+          },
+          "preset": {
+            "type": "string",
+            "enum": [
+              "language2",
+              "country2",
+              "country3",
+              "currency3",
+              "month3",
+              "usState2"
+            ]
+          }
+        }
+      },
+      "StringCustomList": {
+        "type": "object",
+        "description": "A custom closed set of allowed values.",
+        "required": [
+          "kind",
+          "values"
+        ],
+        "properties": {
+          "kind": {
+            "type": "string",
+            "enum": [
+              "CUSTOM"
+            ]
+          },
+          "values": {
+            "type": "array",
+            "items": {
+              "type": "string",
+              "minLength": 1
+            },
+            "minItems": 1,
+            "description": "The closed set of allowed values."
+          }
+        }
+      },
+      "StringListSource": {
+        "oneOf": [
           {
-            "$ref": "#/components/schemas/Attribution"
+            "$ref": "#/components/schemas/StringListPreset"
           },
           {
-            "type": "object",
-            "required": [
-              "kind",
-              "source"
-            ],
-            "properties": {
-              "kind": {
-                "type": "string",
-                "enum": [
-                  "FORMAT"
-                ]
-              },
-              "source": {
-                "oneOf": [
-                  {
-                    "type": "object",
-                    "required": [
-                      "kind",
-                      "preset"
-                    ],
-                    "properties": {
-                      "kind": {
-                        "type": "string",
-                        "enum": [
-                          "PRESET"
-                        ]
-                      },
-                      "preset": {
-                        "type": "string",
-                        "enum": [
-                          "url",
-                          "email",
-                          "phone",
-                          "date",
-                          "datetime",
-                          "time",
-                          "uuid",
-                          "slug"
-                        ]
-                      }
-                    }
-                  },
-                  {
-                    "type": "object",
-                    "required": [
-                      "kind",
-                      "pattern"
-                    ],
-                    "properties": {
-                      "kind": {
-                        "type": "string",
-                        "enum": [
-                          "CUSTOM"
-                        ]
-                      },
-                      "pattern": {
-                        "type": "string",
-                        "minLength": 1,
-                        "description": "Must be a valid regular expression."
-                      }
-                    }
-                  }
-                ],
-                "discriminator": {
-                  "propertyName": "kind"
-                }
-              }
-            }
+            "$ref": "#/components/schemas/StringCustomList"
           }
-        ]
+        ],
+        "discriminator": {
+          "propertyName": "kind"
+        }
       },
       "StringFormatListRule": {
-        "description": "List format. Values must come from a named enum preset or a custom list.",
-        "allOf": [
-          {
-            "$ref": "#/components/schemas/Attribution"
+        "type": "object",
+        "description": "List format. Values must come from a named list preset or a custom list.",
+        "required": [
+          "kind",
+          "source",
+          "editedBy",
+          "editedAt"
+        ],
+        "properties": {
+          "kind": {
+            "type": "string",
+            "enum": [
+              "LIST"
+            ]
           },
-          {
-            "type": "object",
-            "required": [
-              "kind",
-              "source"
+          "source": {
+            "$ref": "#/components/schemas/StringListSource"
+          },
+          "editedBy": {
+            "type": "string",
+            "enum": [
+              "default",
+              "llm",
+              "agent",
+              "ops",
+              "user"
             ],
-            "properties": {
-              "kind": {
-                "type": "string",
-                "enum": [
-                  "LIST"
-                ]
-              },
-              "source": {
-                "oneOf": [
-                  {
-                    "type": "object",
-                    "required": [
-                      "kind",
-                      "preset"
-                    ],
-                    "properties": {
-                      "kind": {
-                        "type": "string",
-                        "enum": [
-                          "PRESET"
-                        ]
-                      },
-                      "preset": {
-                        "type": "string",
-                        "enum": [
-                          "language2",
-                          "country2",
-                          "country3",
-                          "currency3",
-                          "month3",
-                          "usState2"
-                        ]
-                      }
-                    }
-                  },
-                  {
-                    "type": "object",
-                    "required": [
-                      "kind",
-                      "values"
-                    ],
-                    "properties": {
-                      "kind": {
-                        "type": "string",
-                        "enum": [
-                          "CUSTOM"
-                        ]
-                      },
-                      "values": {
-                        "type": "array",
-                        "items": {
-                          "type": "string",
-                          "minLength": 1
-                        },
-                        "minItems": 1,
-                        "description": "The closed set of allowed values."
-                      }
-                    }
-                  }
-                ],
-                "discriminator": {
-                  "propertyName": "kind"
-                }
-              }
-            }
+            "description": "Actor type that produced the last edit. API clients send `user`."
+          },
+          "editedByLabel": {
+            "type": "string",
+            "description": "Optional human-readable label for the editor (e.g. email for users, agent name for agents)."
+          },
+          "editedAt": {
+            "type": "string",
+            "format": "date-time",
+            "description": "ISO-8601 timestamp of the last edit."
           }
-        ]
+        }
       },
       "StringFormatRule": {
-        "description": "Format rule for string fields. The `kind` discriminator selects one of three shapes:\n  - `FREE_TEXT` (see `StringFormatFreeTextRule`): a character-class restriction. Length rules apply only with this kind.\n  - `FORMAT` (see `StringFormatFormatRule`): a named pattern preset or a custom regex.\n  - `LIST` (see `StringFormatListRule`): a named enum preset or a custom list of allowed values.\n",
+        "description": "Format rule for string fields. The `kind` discriminator selects one of three shapes:\n  - `FREE_TEXT` (see `StringFormatFreeTextRule`): a character-class restriction. Length rules apply only with this kind.\n  - `FORMAT` (see `StringFormatFormatRule`): a named pattern preset or a custom regex.\n  - `LIST` (see `StringFormatListRule`): a named list preset or a custom list of allowed values.\n",
         "oneOf": [
           {
             "$ref": "#/components/schemas/StringFormatFreeTextRule"
@@ -21810,6 +21883,250 @@
         ],
         "discriminator": {
           "propertyName": "kind"
+        }
+      },
+      "NumberBoundRule": {
+        "type": "object",
+        "description": "Inclusive bound on the numeric value.",
+        "required": [
+          "value",
+          "editedBy",
+          "editedAt"
+        ],
+        "properties": {
+          "value": {
+            "type": "number"
+          },
+          "editedBy": {
+            "type": "string",
+            "enum": [
+              "default",
+              "llm",
+              "agent",
+              "ops",
+              "user"
+            ],
+            "description": "Actor type that produced the last edit. API clients send `user`."
+          },
+          "editedByLabel": {
+            "type": "string",
+            "description": "Optional human-readable label for the editor (e.g. email for users, agent name for agents)."
+          },
+          "editedAt": {
+            "type": "string",
+            "format": "date-time",
+            "description": "ISO-8601 timestamp of the last edit."
+          }
+        }
+      },
+      "NumberMaxDecimalPlacesRule": {
+        "type": "object",
+        "description": "Maximum number of decimal places (0 for whole numbers).",
+        "required": [
+          "value",
+          "editedBy",
+          "editedAt"
+        ],
+        "properties": {
+          "value": {
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 16
+          },
+          "editedBy": {
+            "type": "string",
+            "enum": [
+              "default",
+              "llm",
+              "agent",
+              "ops",
+              "user"
+            ],
+            "description": "Actor type that produced the last edit. API clients send `user`."
+          },
+          "editedByLabel": {
+            "type": "string",
+            "description": "Optional human-readable label for the editor (e.g. email for users, agent name for agents)."
+          },
+          "editedAt": {
+            "type": "string",
+            "format": "date-time",
+            "description": "ISO-8601 timestamp of the last edit."
+          }
+        }
+      },
+      "DateFixedBoundRule": {
+        "type": "object",
+        "description": "A fixed calendar date bound.",
+        "required": [
+          "kind",
+          "date",
+          "editedBy",
+          "editedAt"
+        ],
+        "properties": {
+          "kind": {
+            "type": "string",
+            "enum": [
+              "FIXED"
+            ]
+          },
+          "date": {
+            "type": "string",
+            "format": "date",
+            "description": "A valid calendar date in `YYYY-MM-DD` format."
+          },
+          "editedBy": {
+            "type": "string",
+            "enum": [
+              "default",
+              "llm",
+              "agent",
+              "ops",
+              "user"
+            ],
+            "description": "Actor type that produced the last edit. API clients send `user`."
+          },
+          "editedByLabel": {
+            "type": "string",
+            "description": "Optional human-readable label for the editor (e.g. email for users, agent name for agents)."
+          },
+          "editedAt": {
+            "type": "string",
+            "format": "date-time",
+            "description": "ISO-8601 timestamp of the last edit."
+          }
+        }
+      },
+      "DateRelativeBoundRule": {
+        "type": "object",
+        "description": "A bound relative to the run date (UTC). As a minimum it resolves to the first day of the\nperiod, as a maximum to the last day (e.g. `THIS_MONTH` is the 1st or the last day of the run month).\n",
+        "required": [
+          "kind",
+          "preset",
+          "editedBy",
+          "editedAt"
+        ],
+        "properties": {
+          "kind": {
+            "type": "string",
+            "enum": [
+              "RELATIVE"
+            ]
+          },
+          "preset": {
+            "type": "string",
+            "enum": [
+              "TODAY",
+              "YESTERDAY",
+              "THIS_WEEK",
+              "THIS_MONTH",
+              "THIS_YEAR"
+            ]
+          },
+          "editedBy": {
+            "type": "string",
+            "enum": [
+              "default",
+              "llm",
+              "agent",
+              "ops",
+              "user"
+            ],
+            "description": "Actor type that produced the last edit. API clients send `user`."
+          },
+          "editedByLabel": {
+            "type": "string",
+            "description": "Optional human-readable label for the editor (e.g. email for users, agent name for agents)."
+          },
+          "editedAt": {
+            "type": "string",
+            "format": "date-time",
+            "description": "ISO-8601 timestamp of the last edit."
+          }
+        }
+      },
+      "DateBoundRule": {
+        "description": "Inclusive bound on a date value, either fixed or relative to the run date.",
+        "oneOf": [
+          {
+            "$ref": "#/components/schemas/DateFixedBoundRule"
+          },
+          {
+            "$ref": "#/components/schemas/DateRelativeBoundRule"
+          }
+        ],
+        "discriminator": {
+          "propertyName": "kind"
+        }
+      },
+      "ObjectAdditionalPropertiesRule": {
+        "type": "object",
+        "description": "Whether the object may contain properties that are not listed under `properties`.",
+        "required": [
+          "allowed",
+          "editedBy",
+          "editedAt"
+        ],
+        "properties": {
+          "allowed": {
+            "type": "boolean"
+          },
+          "editedBy": {
+            "type": "string",
+            "enum": [
+              "default",
+              "llm",
+              "agent",
+              "ops",
+              "user"
+            ],
+            "description": "Actor type that produced the last edit. API clients send `user`."
+          },
+          "editedByLabel": {
+            "type": "string",
+            "description": "Optional human-readable label for the editor (e.g. email for users, agent name for agents)."
+          },
+          "editedAt": {
+            "type": "string",
+            "format": "date-time",
+            "description": "ISO-8601 timestamp of the last edit."
+          }
+        }
+      },
+      "ArrayItemCountRule": {
+        "type": "object",
+        "description": "Bound on the number of items in the array.",
+        "required": [
+          "value",
+          "editedBy",
+          "editedAt"
+        ],
+        "properties": {
+          "value": {
+            "type": "integer",
+            "minimum": 0
+          },
+          "editedBy": {
+            "type": "string",
+            "enum": [
+              "default",
+              "llm",
+              "agent",
+              "ops",
+              "user"
+            ],
+            "description": "Actor type that produced the last edit. API clients send `user`."
+          },
+          "editedByLabel": {
+            "type": "string",
+            "description": "Optional human-readable label for the editor (e.g. email for users, agent name for agents)."
+          },
+          "editedAt": {
+            "type": "string",
+            "format": "date-time",
+            "description": "ISO-8601 timestamp of the last edit."
+          }
         }
       },
       "StringFieldRules": {
@@ -21878,6 +22195,33 @@
           }
         }
       },
+      "DateFieldRules": {
+        "type": "object",
+        "required": [
+          "kind"
+        ],
+        "description": "Validation rules for date fields. Values are cast to a calendar date (`YYYY-MM-DD`,\nor a `YYYY-MM-DD HH:MM:SS` timestamp truncated to its day) before the bounds apply.\n",
+        "properties": {
+          "kind": {
+            "type": "string",
+            "enum": [
+              "DATE"
+            ]
+          },
+          "presence": {
+            "$ref": "#/components/schemas/PresenceRule"
+          },
+          "uniqueness": {
+            "$ref": "#/components/schemas/UniquenessRule"
+          },
+          "minimum": {
+            "$ref": "#/components/schemas/DateBoundRule"
+          },
+          "maximum": {
+            "$ref": "#/components/schemas/DateBoundRule"
+          }
+        }
+      },
       "ObjectFieldRules": {
         "type": "object",
         "required": [
@@ -21897,6 +22241,9 @@
           },
           "uniqueness": {
             "$ref": "#/components/schemas/UniquenessRule"
+          },
+          "additionalProperties": {
+            "$ref": "#/components/schemas/ObjectAdditionalPropertiesRule"
           },
           "properties": {
             "type": "object",
@@ -21926,6 +22273,12 @@
           "uniqueness": {
             "$ref": "#/components/schemas/UniquenessRule"
           },
+          "minItems": {
+            "$ref": "#/components/schemas/ArrayItemCountRule"
+          },
+          "maxItems": {
+            "$ref": "#/components/schemas/ArrayItemCountRule"
+          },
           "items": {
             "$ref": "#/components/schemas/FieldValidationRules"
           }
@@ -21953,12 +22306,16 @@
         }
       },
       "FieldValidationRules": {
+        "description": "Rules for one schema field. The `kind` discriminator selects the rule shape and casts the\nfield's values to that type before evaluation. A rule tree may nest at most 4 levels deep\nand hold at most 200 evaluable rules.\n",
         "oneOf": [
           {
             "$ref": "#/components/schemas/StringFieldRules"
           },
           {
             "$ref": "#/components/schemas/NumberFieldRules"
+          },
+          {
+            "$ref": "#/components/schemas/DateFieldRules"
           },
           {
             "$ref": "#/components/schemas/ObjectFieldRules"

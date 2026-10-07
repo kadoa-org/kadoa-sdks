@@ -65,6 +65,28 @@ workflow = client.workflow.create(
 print(workflow.id)
 ```
 
+## Data Quality Rules
+
+Per-field rules run at the end of every workflow run. Set them for the fields you care about, and other fields keep their rules. Rules are plain dicts in the shape the [API reference](https://docs.kadoa.com/api-reference/data-quality/get-rules) documents. Send `editedAt` as UTC ending in `Z`.
+
+```python
+from datetime import datetime, timezone
+
+workflow_id = "your-workflow-id"
+edited = {
+    "editedBy": "user",
+    "editedAt": datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ"),
+}
+
+client.data_quality.upsert_rules(workflow_id, {
+    "title": {"kind": "STRING", "presence": {"target": 100, **edited}},
+    "price": {"kind": "NUMBER", "minimum": {"value": 0, **edited}},
+})
+
+rules = client.data_quality.get_rules(workflow_id)  # None when none
+client.data_quality.delete_field_rules(workflow_id, "price")
+```
+
 ## Node.js-only APIs
 
 Workflow Assistant, personal Inbox, and `listWorkflowRuns` are currently available only in the [Node.js SDK](https://www.npmjs.com/package/@kadoa/node-sdk). They are not exposed by this Python SDK. See [Create Workflows from Templates](https://docs.kadoa.com/docs/sdk/templates/overview) for template lifecycle semantics.

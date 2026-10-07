@@ -9,6 +9,7 @@ from ..core.realtime import Realtime, RealtimeConfig
 from ..core.settings import get_settings
 from ..core.version_check import check_for_updates
 from ..changes import ChangesService
+from ..data_quality import DataQualityService
 from ..extraction import ExtractionModule
 from ..extraction.services.extraction_builder_service import (
     ExtractionBuilderService,
@@ -113,6 +114,7 @@ class KadoaClient:
         self.template = TemplatesService(self)
         self.variable = VariablesService(self)
         self.changes = ChangesService(self)
+        self.data_quality = DataQualityService(self)
         self._extraction_builder = ExtractionBuilderService(self)
 
         # domains
