@@ -161,6 +161,45 @@ def test_changes_list_maps_response(monkeypatch):
 
 
 @pytest.mark.unit
+def test_changes_list_accepts_non_string_field_values(monkeypatch):
+    """Diff values are raw cells: objects, numbers, and None must parse, not just strings."""
+    from openapi_client.models.v4_changes_get200_response import V4ChangesGet200Response
+
+    money = {"amount": 25000, "currencyCode": "CRC"}
+    raw = V4ChangesGet200Response.from_dict(
+        {
+            "changesCount": 1,
+            "changes": [
+                {
+                    "id": "c1",
+                    "workflowId": "wf-1",
+                    "differences": [
+                        {
+                            "type": "changed",
+                            "fields": [
+                                {"key": "price", "value": money, "previousValue": money},
+                                {"key": "rooms", "value": 3, "previousValue": 2},
+                                {"key": "note", "value": None},
+                            ],
+                        }
+                    ],
+                }
+            ],
+        }
+    )
+    mock_api = Mock()
+    mock_api.v4_changes_get.return_value = raw
+    monkeypatch.setattr(ch_mod, "get_workflows_api", lambda _c: mock_api)
+
+    fields = ChangesService(Mock()).list(ListChangesOptions()).changes[0].differences[0].fields
+    assert [(f.key, f.value, f.previous_value) for f in fields] == [
+        ("price", money, money),
+        ("rooms", 3, 2),
+        ("note", None, None),
+    ]
+
+
+@pytest.mark.unit
 def test_changes_coalesce_pairs_added_removed_same_row():
     """An added+removed sharing rowRef should coalesce into one 'changed' diff."""
     added = Mock(

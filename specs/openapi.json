@@ -353,12 +353,12 @@
                                         "description": "Field name"
                                       },
                                       "value": {
-                                        "type": "string",
-                                        "description": "Current field value"
+                                        "nullable": true,
+                                        "description": "Current field value. Any JSON type, matching the workflow schema field (string, number, boolean, object such as a money value, array, or null)."
                                       },
                                       "previousValue": {
-                                        "type": "string",
-                                        "description": "Previous field value (only present for changed type)"
+                                        "nullable": true,
+                                        "description": "Previous field value, only present for the changed type. Same types as `value`."
                                       }
                                     }
                                   }
@@ -548,12 +548,12 @@
                                   "description": "Field name"
                                 },
                                 "value": {
-                                  "type": "string",
-                                  "description": "Current field value"
+                                  "nullable": true,
+                                  "description": "Current field value. Any JSON type, matching the workflow schema field (string, number, boolean, object such as a money value, array, or null)."
                                 },
                                 "previousValue": {
-                                  "type": "string",
-                                  "description": "Previous field value (only present for changed type)"
+                                  "nullable": true,
+                                  "description": "Previous field value, only present for the changed type. Same types as `value`."
                                 }
                               }
                             }
@@ -7050,12 +7050,12 @@
                                         "description": "Field name"
                                       },
                                       "value": {
-                                        "type": "string",
-                                        "description": "Current field value"
+                                        "nullable": true,
+                                        "description": "Current field value. Any JSON type, matching the workflow schema field (string, number, boolean, object such as a money value, array, or null)."
                                       },
                                       "previousValue": {
-                                        "type": "string",
-                                        "description": "Previous field value (only present for changed type)"
+                                        "nullable": true,
+                                        "description": "Previous field value, only present for the changed type. Same types as `value`."
                                       }
                                     }
                                   }
@@ -7229,12 +7229,12 @@
                                   "description": "Field name"
                                 },
                                 "value": {
-                                  "type": "string",
-                                  "description": "Current field value"
+                                  "nullable": true,
+                                  "description": "Current field value. Any JSON type, matching the workflow schema field (string, number, boolean, object such as a money value, array, or null)."
                                 },
                                 "previousValue": {
-                                  "type": "string",
-                                  "description": "Previous field value (only present for changed type)"
+                                  "nullable": true,
+                                  "description": "Previous field value, only present for the changed type. Same types as `value`."
                                 }
                               }
                             }
