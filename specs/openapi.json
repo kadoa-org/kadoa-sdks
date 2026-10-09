@@ -19292,10 +19292,19 @@
                         "scrape"
                       ],
                       "description": "Capabilities enabled for the authenticated team."
+                    },
+                    "defaultProductType": {
+                      "type": "string",
+                      "enum": [
+                        "realtime",
+                        "workflow"
+                      ],
+                      "description": "The product this team creates by default when a request does not name one: realtime monitoring or a one-time/scheduled workflow."
                     }
                   },
                   "required": [
-                    "features"
+                    "features",
+                    "defaultProductType"
                   ]
                 }
               }

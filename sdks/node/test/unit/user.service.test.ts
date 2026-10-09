@@ -80,6 +80,26 @@ describe("UserService", () => {
     expect(result).toEqual({ features: { scrape: false } });
   });
 
+  test("getFeatures returns the team's default product type", async () => {
+    const client = new KadoaClient({ apiKey: "tk-test" });
+    let result: Awaited<ReturnType<typeof client.user.getFeatures>> | undefined;
+    await captureRequest(
+      client,
+      async () => {
+        result = await client.user.getFeatures();
+      },
+      { features: { scrape: false }, defaultProductType: "realtime" },
+    );
+
+    expect(result).toEqual({
+      features: { scrape: false },
+      defaultProductType: "realtime",
+    });
+    const typed: "realtime" | "workflow" | undefined =
+      result?.defaultProductType;
+    expect(typed).toBe("realtime");
+  });
+
   test("getFeatures rejects malformed capability responses", async () => {
     const client = new KadoaClient({ apiKey: "tk-test" });
     expect(
