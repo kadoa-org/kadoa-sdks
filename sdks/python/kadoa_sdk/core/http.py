@@ -13,7 +13,6 @@ if TYPE_CHECKING:  # pragma: no cover
     from ..client import KadoaClient
     from ..extraction.extraction_acl import CrawlApi, WorkflowsApi
     from ..schemas.schemas_acl import SchemasApi
-    from ..validation.validation_acl import DataValidationApi
 
 # Use WeakKeyDictionary to automatically clean up when clients are garbage collected
 _crawl_cache: weakref.WeakKeyDictionary["KadoaClient", "CrawlApi"] = weakref.WeakKeyDictionary()
@@ -24,9 +23,6 @@ _notifications_cache: weakref.WeakKeyDictionary["KadoaClient", NotificationsApi]
     weakref.WeakKeyDictionary()
 )
 _schemas_cache: weakref.WeakKeyDictionary["KadoaClient", "SchemasApi"] = weakref.WeakKeyDictionary()
-_validation_cache: weakref.WeakKeyDictionary["KadoaClient", "DataValidationApi"] = (
-    weakref.WeakKeyDictionary()
-)
 _templates_cache: weakref.WeakKeyDictionary["KadoaClient", "TemplatesApi"] = (
     weakref.WeakKeyDictionary()
 )
@@ -72,15 +68,6 @@ def get_schemas_api(client: "KadoaClient") -> "SchemasApi":
         _schemas_cache[client] = api
     return api
 
-
-def get_validation_api(client: "KadoaClient") -> "DataValidationApi":
-    from ..validation.validation_acl import DataValidationApi  # noqa: PLC0415
-
-    api = _validation_cache.get(client)
-    if api is None:
-        api = DataValidationApi(create_api_client(client.configuration))
-        _validation_cache[client] = api
-    return api
 
 
 def get_templates_api(client: "KadoaClient") -> "TemplatesApi":

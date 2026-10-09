@@ -9,8 +9,9 @@ ChangeDifferenceType = Literal["added", "removed", "changed"]
 
 class ChangeDifferenceField(BaseModel):
     key: Optional[str] = None
-    value: Optional[str] = None
-    previous_value: Optional[str] = None
+    # Raw extracted values: strings, numbers, objects, arrays, or None.
+    value: Any = None
+    previous_value: Any = None
 
 
 class ChangeDifference(BaseModel):

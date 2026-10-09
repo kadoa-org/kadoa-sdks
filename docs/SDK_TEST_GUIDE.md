@@ -17,14 +17,12 @@ Both SDKs maintain parallel test file structure:
 | Client | `kadoa-client.test.ts` | `test_kadoa_client.py` |
 | User | `user.test.ts` | `test_user.py` |
 | Workflows | `workflows.test.ts` | `test_workflows.py` |
-| Validation Core | `validation-core.test.ts` | `test_validation_core.py` |
-| Validation Rules | `validation-rules.test.ts` | `test_validation_rules.py` |
 | Extraction Builder | `extraction-builder.test.ts` | `test_extraction_builder.py` |
 | Realtime | `realtime-extraction.test.ts` | `test_realtime_extraction.py` |
 
-docs_snippets test files (8 per SDK):
+docs_snippets test files include:
 
-- `introduction`, `schemas`, `workflows`, `notifications`, `webhooks`, `data-delivery`, `data-validation`, `websockets`
+- `introduction`, `schemas`, `workflows`, `notifications`, `webhooks`, `data-delivery`, `data-quality`, `websockets`
 
 ### 1.2 Data Access Patterns
 
@@ -32,10 +30,8 @@ Tests cluster by data access pattern:
 
 | Cluster | Pattern | Tests |
 |---------|---------|-------|
-| Validation Core | Read-only | `list`, `get`, `getLatest`, `getAnomalies` |
 | Docs Snippets | Shared + Isolated | Read shared fixture, create per-test resources |
 | Workflows | Mixed | Updates use shared fixture, deletes use isolated |
-| Validation Rules | Unique IDs | Creates rules with timestamp-based names |
 | Extraction Builder | Fully isolated | Each test creates own workflow |
 | Realtime | Isolated | Self-contained workflow creation |
 
@@ -48,13 +44,9 @@ Use for read-only tests. Fixtures seed once and cache for all tests.
 **Node** (`sdks/node/test/utils/shared-fixtures.ts`):
 
 ```typescript
-import { getSharedValidationFixture, getSharedWorkflowFixture } from "../utils/shared-fixtures";
+import { clearFixtureCache, getSharedWorkflowFixture } from "../utils/shared-fixtures";
 
-// Get validation fixture (workflow + rule + validation)
-const fixture = await getSharedValidationFixture(client);
-// Returns: { workflowId, jobId, ruleId, ruleName, validationId }
-
-// Get workflow-only fixture
+// Get workflow fixture
 const workflow = await getSharedWorkflowFixture(client, { runJob: true });
 // Returns: { workflowId, jobId? }
 
@@ -65,13 +57,9 @@ clearFixtureCache();
 **Python** (`sdks/python/tests/utils/shared_fixtures.py`):
 
 ```python
-from tests.utils.shared_fixtures import get_shared_validation_fixture, get_shared_workflow_fixture
+from tests.utils.shared_fixtures import clear_fixture_cache, get_shared_workflow_fixture
 
-# Get validation fixture
-fixture = get_shared_validation_fixture(client)
-# Returns: SharedValidationFixture(workflow_id, job_id, rule_id, rule_name, validation_id)
-
-# Get workflow-only fixture
+# Get workflow fixture
 workflow = get_shared_workflow_fixture(client, run_job=True)
 # Returns: SharedWorkflowFixture(workflow_id, job_id)
 
@@ -83,8 +71,6 @@ Fixture names (deterministic):
 
 | Fixture | Name |
 |---------|------|
-| Validation workflow | `shared-fixture-validation` |
-| Validation rule | `shared-fixture-validation-rule` |
 | Read-only workflow | `shared-fixture-workflow-readonly` |
 
 ### 1.4 Seeder Utilities
@@ -95,16 +81,12 @@ Use for per-test isolation. Seeders check existence before creating.
 
 ```typescript
 seedWorkflow({ name: "test-workflow" }, client)   // Returns { workflowId, jobId? }
-seedRule({ name: "test-rule", workflowId }, client)  // Returns ruleId
-seedValidation({ workflowId, jobId }, client)   // Returns validationId
 ```
 
 **Python** (`sdks/python/tests/utils/seeder.py`):
 
 ```python
 seed_workflow("test-workflow", client, run_job=True)  # Returns { "workflow_id", "job_id" }
-seed_rule("test-rule", workflow_id, client)           # Returns rule_id
-seed_validation(workflow_id, job_id, client)          # Returns validation_id
 ```
 
 Parameter style differences:
@@ -119,11 +101,9 @@ Parameter style differences:
 
 | Cluster | Within File | Across Files | Notes |
 |---------|-------------|--------------|-------|
-| Validation Core | Safe | Safe | Shared seeded data |
 | Docs Snippets | Safe | Safe | Module fixtures |
 | Workflows (updates) | Safe | Safe | Shared fixture |
 | Workflows (delete) | Unsafe | Unsafe | Needs per-test fixture |
-| Validation Rules | Safe | Safe | Unique timestamps |
 | Extraction Builder | Safe | Safe | Self-contained |
 | Realtime | Safe | Safe | Self-contained |
 
@@ -137,32 +117,30 @@ Use shared fixtures for tests that only read data:
 
 ```typescript
 // Node
-import { getSharedValidationFixture, type SharedValidationFixture } from "../utils/shared-fixtures";
+import { getSharedWorkflowFixture, type SharedWorkflowFixture } from "../utils/shared-fixtures";
 
-let fixture: SharedValidationFixture;
+let fixture: SharedWorkflowFixture;
 
 beforeAll(async () => {
-  fixture = await getSharedValidationFixture(client);
+  fixture = await getSharedWorkflowFixture(client);
 });
 
-test("lists validations", async () => {
-  const result = await client.validation.list({ workflowId: fixture.workflowId });
+test("gets the workflow", async () => {
+  const workflow = await client.workflow.get(fixture.workflowId);
   // ...
 });
 ```
 
 ```python
 # Python
-from tests.utils.shared_fixtures import get_shared_validation_fixture
+from tests.utils.shared_fixtures import get_shared_workflow_fixture
 
 @pytest.fixture(scope="module")
 def fixture(client):
-    return get_shared_validation_fixture(client)
+    return get_shared_workflow_fixture(client)
 
-def test_lists_validations(client, fixture):
-    result = client.validation.list_workflow_validations(
-        ListWorkflowValidationsRequest(workflow_id=fixture.workflow_id)
-    )
+def test_gets_workflow(client, fixture):
+    workflow = client.workflow.get(fixture.workflow_id)
 ```
 
 ### 2.2 Isolated Write Tests
@@ -293,14 +271,13 @@ async def test_creates_schema(client):
 - Cleanup happens immediately, not deferred
 - Clear per-test responsibility
 
-**Alternative: Unique naming (for rules):**
+**Alternative: Unique naming:**
 
 ```typescript
-const uniqueId = Date.now();
-const rule = await client.validation.rules.createRule({
-  name: `test-rule-${uniqueId}`,
-  ...
-});
+const { workflowId } = await seedWorkflow(
+  { name: `test-workflow-${Date.now()}` },
+  client,
+);
 ```
 
 ---
@@ -314,8 +291,6 @@ const rule = await client.validation.rules.createRule({
 | kadoa-client | `client.status()` |
 | user | `getCurrentUser()`, invalid API key handling |
 | workflows | `update()` (limit, name), `delete()`, additionalData validation |
-| validation-core | `list()`, `get()`, `getLatest()`, `getAnomalies()`, `getAnomaliesByRule()` |
-| validation-rules | `createRule()`, `listRules()`, `bulkApproveRules()`, `bulkDeleteRules()` |
 | extraction-builder | default extraction, raw extraction, custom schema, hybrid, classification, additionalData |
 | realtime-extraction | WebSocket connection, event subscription |
 
@@ -331,7 +306,7 @@ Each test uses naming format `<LANG>-<FEATURE>-<NUMBER>` for documentation extra
 | notifications | Workflow setup, WebSocket, channel management |
 | webhooks | Quick setup, channel management |
 | data-delivery | Fetch patterns |
-| data-validation | Validation setup, anomaly handling |
+| data-quality | Set, read, and remove per-field rules |
 | websockets | Real-time updates |
 
 ### 3.3 Known Discrepancies

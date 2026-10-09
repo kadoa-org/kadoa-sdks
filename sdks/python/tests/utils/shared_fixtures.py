@@ -6,17 +6,15 @@ Fixtures are seeded once and reused across test runs.
 
 Example:
     ```python
-    from tests.utils.shared_fixtures import get_shared_validation_fixture
+    from tests.utils.shared_fixtures import get_shared_workflow_fixture
 
     @pytest.fixture(scope="module")
-    def validation_fixture(client):
-        return get_shared_validation_fixture(client)
+    def workflow_fixture(client):
+        return get_shared_workflow_fixture(client)
 
-    def test_lists_validations(client, validation_fixture):
-        result = client.validation.list_workflow_validations(
-            ListWorkflowValidationsRequest(workflow_id=validation_fixture["workflow_id"])
-        )
-        assert len(result.data) > 0
+    def test_gets_workflow(client, workflow_fixture):
+        workflow = client.workflow.get(workflow_fixture.workflow_id)
+        assert workflow.id == workflow_fixture.workflow_id
     ```
 """
 
@@ -27,24 +25,12 @@ from typing import TYPE_CHECKING, Optional
 if TYPE_CHECKING:
     from kadoa_sdk import KadoaClient
 
-from tests.utils.seeder import seed_rule, seed_validation, seed_workflow
+from tests.utils.seeder import seed_workflow
 
 
 # ============================================================================
 # Types
 # ============================================================================
-
-
-@dataclass
-class SharedValidationFixture:
-    """Fixture containing workflow, rule, and validation for read-only tests."""
-
-    workflow_id: str
-    job_id: str
-    rule_id: str
-    rule_name: str
-    validation_id: str
-    columns: list[str]
 
 
 @dataclass
@@ -60,8 +46,6 @@ class SharedWorkflowFixture:
 # ============================================================================
 
 FIXTURE_NAMES = {
-    "VALIDATION_WORKFLOW": "shared-fixture-validation",
-    "VALIDATION_RULE": "shared-fixture-validation-rule",
     "WORKFLOW_READ_ONLY": "shared-fixture-workflow-readonly",
     "DOCS_WORKFLOW": "Fixture Workflow - Docs Snippets",
 }
@@ -71,7 +55,6 @@ FIXTURE_NAMES = {
 # Singleton Cache
 # ============================================================================
 
-_validation_fixture_cache: Optional[SharedValidationFixture] = None
 _workflow_fixture_cache: Optional[SharedWorkflowFixture] = None
 _docs_workflow_id_cache: Optional[str] = None
 
@@ -79,69 +62,6 @@ _docs_workflow_id_cache: Optional[str] = None
 # ============================================================================
 # Public API
 # ============================================================================
-
-
-def get_shared_validation_fixture(client: "KadoaClient") -> SharedValidationFixture:
-    """
-    Get shared validation fixture for read-only tests.
-
-    Seeds workflow, rule, and validation once. Subsequent calls return cached fixture.
-    Safe for parallel test execution - all tests read from same fixture.
-
-    Args:
-        client: KadoaClient instance
-
-    Returns:
-        SharedValidationFixture with workflow_id, job_id, rule_id, rule_name, validation_id
-    """
-    global _validation_fixture_cache
-
-    if _validation_fixture_cache:
-        print("[SharedFixture] Using cached validation fixture")
-        return _validation_fixture_cache
-
-    print("[SharedFixture] Seeding validation fixture...")
-
-    result = seed_workflow(
-        FIXTURE_NAMES["VALIDATION_WORKFLOW"],
-        client,
-        run_job=True,
-    )
-
-    workflow_id = result["workflow_id"]
-    job_id = result.get("job_id")
-
-    if not job_id:
-        raise Exception("[SharedFixture] Failed to seed workflow with job")
-
-    rule_id = seed_rule(
-        FIXTURE_NAMES["VALIDATION_RULE"],
-        workflow_id,
-        client,
-    )
-
-    validation_id = seed_validation(workflow_id, job_id, client)
-
-    # Fetch schema columns for dynamic test assertions
-    workflow = client.workflow.get(workflow_id)
-    # Pydantic renames 'schema' to 'var_schema' to avoid reserved word
-    schema = getattr(workflow, "var_schema", None) or []
-    columns = [f.name for f in schema if getattr(f, "name", None)]
-
-    if not columns:
-        print("[SharedFixture] No schema columns found for workflow")
-
-    _validation_fixture_cache = SharedValidationFixture(
-        workflow_id=workflow_id,
-        job_id=job_id,
-        rule_id=rule_id,
-        rule_name=FIXTURE_NAMES["VALIDATION_RULE"],
-        validation_id=validation_id,
-        columns=columns,
-    )
-
-    print(f"[SharedFixture] Validation fixture ready: {_validation_fixture_cache}")
-    return _validation_fixture_cache
 
 
 def get_shared_workflow_fixture(
@@ -237,9 +157,8 @@ def clear_fixture_cache() -> None:
     Call in conftest.py teardown if running tests in watch mode.
     Not needed for CI runs.
     """
-    global _validation_fixture_cache, _workflow_fixture_cache, _docs_workflow_id_cache
+    global _workflow_fixture_cache, _docs_workflow_id_cache
 
-    _validation_fixture_cache = None
     _workflow_fixture_cache = None
     _docs_workflow_id_cache = None
     print("[SharedFixture] Cache cleared")
@@ -248,6 +167,5 @@ def clear_fixture_cache() -> None:
 def is_fixture_cached() -> dict:
     """Check if fixtures are cached."""
     return {
-        "validation": _validation_fixture_cache is not None,
         "workflow": _workflow_fixture_cache is not None,
     }

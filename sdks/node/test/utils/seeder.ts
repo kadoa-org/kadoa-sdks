@@ -9,7 +9,9 @@ export const seedSchema = async (
   const schemas = await client.schema.listSchemas();
   const existing = schemas.find((s) => s.name === request.name);
   if (existing?.id) {
-    console.log(`[Seeder] Schema ${request.name} already exists: ${existing.id}`);
+    console.log(
+      `[Seeder] Schema ${request.name} already exists: ${existing.id}`,
+    );
     return { schemaId: existing.id };
   }
 
@@ -82,64 +84,4 @@ export const seedWorkflow = async (
       workflowId: createdWorkflow.id,
     };
   }
-};
-
-export const seedRule = async (
-  { name, workflowId }: { name: string; workflowId: string },
-  client: KadoaClient,
-): Promise<string> => {
-  console.log(`[Seeder] Seeding rule: ${name}`);
-  const existingRule = await client.validation.rules.getRuleByName(name);
-  if (existingRule?.id) {
-    console.log(`[Seeder] Rule ${name} already exists: ${existingRule.id}`);
-    return existingRule.id;
-  }
-
-  const rule = await client.validation.rules.generateRule({
-    userPrompt: "Flag rows where title length exceeds 15 characters",
-    workflowId,
-  });
-  console.log(`[Seeder] Rule ${name} seeded: ${rule.id}`);
-  return rule.id;
-};
-
-export const seedValidation = async (
-  { workflowId, jobId }: { workflowId: string; jobId: string },
-  client: KadoaClient,
-): Promise<string> => {
-  console.log(`[Seeder] Seeding validation: ${workflowId}`);
-
-  const existingValidation = await client.validation.getLatest(
-    workflowId,
-    jobId,
-  );
-
-  // Reuse if exists, has no error, and has anomalies
-  if (
-    existingValidation?.id &&
-    !existingValidation.error &&
-    existingValidation.anomaliesCountTotal > 0
-  ) {
-    console.log(
-      `[Seeder] Found existing validation: ${existingValidation.id} [anomalies: ${existingValidation.anomaliesCountTotal}]`,
-    );
-    return existingValidation.id;
-  }
-
-  // Log warning if existing validation has issues
-  if (existingValidation?.error) {
-    console.warn(
-      `[Seeder] Existing validation has error: ${existingValidation.error}. Scheduling new validation...`,
-    );
-  } else if (existingValidation?.anomaliesCountTotal === 0) {
-    console.warn(
-      `[Seeder] Existing validation has no anomalies. Scheduling new validation...`,
-    );
-  }
-
-  const result = await client.validation.schedule(workflowId, jobId);
-  await client.validation.waitUntilCompleted(result.validationId, {
-    pollIntervalMs: 2000,
-  });
-  return result.validationId;
 };

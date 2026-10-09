@@ -21,18 +21,16 @@ from kadoa_sdk.core.settings import get_settings
 from kadoa_sdk.extraction.types import ExtractOptions
 from kadoa_sdk.schemas.schema_builder import FieldOptions
 from kadoa_sdk.schemas.schemas_acl import CreateSchemaRequest, DataField, FieldExample, SchemaField
-from kadoa_sdk.validation import BulkDeleteRulesRequest
 
 from tests.utils.cleanup_helpers import (
     delete_channel_by_name,
     delete_schema_by_name,
     delete_workflow_by_name,
 )
-from tests.utils.seeder import seed_rule, seed_validation, seed_workflow
+from tests.utils.seeder import seed_workflow
 from tests.utils.shared_fixtures import (
     clear_fixture_cache,
     get_docs_workflow_fixture,
-    get_shared_validation_fixture,
     get_shared_workflow_fixture,
 )
 
@@ -40,7 +38,6 @@ from tests.utils.shared_fixtures import (
 TEST_WORKFLOW_NAME = "test-util-workflow-manual"
 TEST_SCHEMA_NAME = "test-util-schema-manual"
 TEST_CHANNEL_NAME = "test-util-channel-manual"
-TEST_RULE_NAME = "test-util-rule-manual"
 
 
 class ManualTestResult:
@@ -75,16 +72,6 @@ def print_fail(error: str) -> None:
 def create_test_client() -> KadoaClient:
     settings = get_settings()
     return KadoaClient(KadoaClientConfig(api_key=settings.api_key, timeout=60))
-
-
-def delete_rule(client: KadoaClient, workflow_id: str, rule_id: str) -> None:
-    """Delete a single rule using bulk_delete_rules."""
-    try:
-        client.validation.rules.bulk_delete_rules(
-            BulkDeleteRulesRequest(workflow_id=workflow_id, rule_ids=[rule_id])
-        )
-    except Exception as e:
-        print(f"    Warning: Failed to delete rule {rule_id}: {e}")
 
 
 # =============================================================================
@@ -331,167 +318,6 @@ def check_seed_workflow_with_job(client: KadoaClient) -> ManualTestResult:
     return result
 
 
-def check_seed_rule_new(client: KadoaClient) -> ManualTestResult:
-    """Test seeding a new rule."""
-    result = ManualTestResult("seed_rule (new)")
-    workflow_name = f"{TEST_WORKFLOW_NAME}-rule-test"
-    rule_name = f"{TEST_RULE_NAME}-new"
-    workflow_id = None
-    rule_id = None
-
-    try:
-        # Cleanup and setup
-        delete_workflow_by_name(client, workflow_name)
-        seeded_wf = seed_workflow(workflow_name, client, run_job=True)
-        workflow_id = seeded_wf.get("workflow_id")
-
-        # Delete existing rule if any
-        existing_rule = client.validation.rules.get_rule_by_name(rule_name)
-        if existing_rule:
-            rule_id_to_delete = getattr(existing_rule, "id", None)
-            existing_wf_id = getattr(existing_rule, "workflow_id", None)
-            if rule_id_to_delete and existing_wf_id:
-                delete_rule(client, existing_wf_id, rule_id_to_delete)
-
-        # Test: seed rule
-        rule_id = seed_rule(rule_name, workflow_id, client)
-        print(f"    rule_id: {rule_id}")
-
-        if rule_id:
-            result.passed = True
-            result.details["rule_id"] = rule_id
-        else:
-            result.error = "No rule_id returned"
-
-    except Exception as e:
-        result.error = f"{type(e).__name__}: {e}"
-        traceback.print_exc()
-    finally:
-        # Cleanup
-        if rule_id and workflow_id:
-            delete_rule(client, workflow_id, rule_id)
-        if workflow_id:
-            client.workflow.delete(workflow_id)
-
-    return result
-
-
-def check_seed_rule_existing(client: KadoaClient) -> ManualTestResult:
-    """Test seeding an existing rule (should reuse)."""
-    result = ManualTestResult("seed_rule (existing)")
-    workflow_name = f"{TEST_WORKFLOW_NAME}-rule-reuse"
-    rule_name = f"{TEST_RULE_NAME}-existing"
-    workflow_id = None
-    first_id = None
-
-    try:
-        # Cleanup and setup
-        delete_workflow_by_name(client, workflow_name)
-        seeded_wf = seed_workflow(workflow_name, client, run_job=True)
-        workflow_id = seeded_wf.get("workflow_id")
-
-        # Delete existing rule if any
-        existing_rule = client.validation.rules.get_rule_by_name(rule_name)
-        if existing_rule:
-            rule_id_to_delete = getattr(existing_rule, "id", None)
-            existing_wf_id = getattr(existing_rule, "workflow_id", None)
-            if rule_id_to_delete and existing_wf_id:
-                delete_rule(client, existing_wf_id, rule_id_to_delete)
-
-        # Seed first time
-        first_id = seed_rule(rule_name, workflow_id, client)
-        print(f"    First seed: {first_id}")
-
-        # Debug: check what get_rule_by_name returns after creating
-        check_rule = client.validation.rules.get_rule_by_name(rule_name)
-        print(f"    After first seed, get_rule_by_name returns: {check_rule}")
-        if check_rule:
-            print(f"    - name: {getattr(check_rule, 'name', 'N/A')}")
-            print(f"    - id: {getattr(check_rule, 'id', 'N/A')}")
-
-        # Debug: list all rules to see what's there
-        print("    Listing all rules...")
-        all_rules = client.validation.rules.list_rules()
-        # list_rules returns a list directly
-        rules_list = all_rules if isinstance(all_rules, list) else (all_rules.data if hasattr(all_rules, 'data') else [])
-        print(f"    Total rules: {len(rules_list)}")
-        for r in rules_list[:5]:
-            r_name = getattr(r, 'name', None)
-            r_id = getattr(r, 'id', None)
-            print(f"      - {r_name}: {r_id}")
-
-        # Test: seed second time (should reuse)
-        second_id = seed_rule(rule_name, workflow_id, client)
-        print(f"    Second seed: {second_id}")
-
-        if first_id == second_id:
-            result.passed = True
-            result.details["rule_id"] = first_id
-        else:
-            result.error = f"IDs don't match: {first_id} != {second_id}"
-
-    except Exception as e:
-        result.error = f"{type(e).__name__}: {e}"
-        traceback.print_exc()
-    finally:
-        # Cleanup
-        if first_id and workflow_id:
-            delete_rule(client, workflow_id, first_id)
-        if workflow_id:
-            client.workflow.delete(workflow_id)
-
-    return result
-
-
-def check_seed_validation(client: KadoaClient) -> ManualTestResult:
-    """Test seeding a validation."""
-    result = ManualTestResult("seed_validation")
-    workflow_name = f"{TEST_WORKFLOW_NAME}-validation-test"
-    rule_name = f"{TEST_RULE_NAME}-validation"
-    workflow_id = None
-    rule_id = None
-
-    try:
-        # Cleanup and setup
-        delete_workflow_by_name(client, workflow_name)
-        seeded_wf = seed_workflow(workflow_name, client, run_job=True)
-        workflow_id = seeded_wf.get("workflow_id")
-        job_id = seeded_wf.get("job_id")
-
-        print(f"    workflow_id: {workflow_id}")
-        print(f"    job_id: {job_id}")
-
-        # Create rule first
-        existing_rule = client.validation.rules.get_rule_by_name(rule_name)
-        if existing_rule:
-            rule_id = getattr(existing_rule, "id", None)
-        else:
-            rule_id = seed_rule(rule_name, workflow_id, client)
-        print(f"    rule_id: {rule_id}")
-
-        # Test: seed validation
-        validation_id = seed_validation(workflow_id, job_id, client)
-        print(f"    validation_id: {validation_id}")
-
-        if validation_id:
-            result.passed = True
-            result.details["validation_id"] = validation_id
-        else:
-            result.error = "No validation_id returned"
-
-    except Exception as e:
-        result.error = f"{type(e).__name__}: {e}"
-        traceback.print_exc()
-    finally:
-        # Cleanup
-        if rule_id and workflow_id:
-            delete_rule(client, workflow_id, rule_id)
-        if workflow_id:
-            client.workflow.delete(workflow_id)
-
-    return result
-
-
 # =============================================================================
 # Shared Fixture Tests
 # =============================================================================
@@ -520,39 +346,6 @@ def check_shared_workflow_fixture(client: KadoaClient) -> ManualTestResult:
             result.error = "Caching not working"
 
         # Note: Don't delete shared fixtures - they're meant to be reused
-
-    except Exception as e:
-        result.error = f"{type(e).__name__}: {e}"
-        traceback.print_exc()
-
-    return result
-
-
-def check_shared_validation_fixture(client: KadoaClient) -> ManualTestResult:
-    """Test get_shared_validation_fixture."""
-    result = ManualTestResult("get_shared_validation_fixture")
-
-    try:
-        # Clear cache first
-        clear_fixture_cache()
-
-        # Test: get fixture
-        fixture = get_shared_validation_fixture(client)
-        print(f"    workflow_id: {fixture.workflow_id}")
-        print(f"    job_id: {fixture.job_id}")
-        print(f"    rule_id: {fixture.rule_id}")
-        print(f"    validation_id: {fixture.validation_id}")
-
-        if fixture.workflow_id and fixture.job_id and fixture.rule_id and fixture.validation_id:
-            result.passed = True
-            result.details = {
-                "workflow_id": fixture.workflow_id,
-                "job_id": fixture.job_id,
-                "rule_id": fixture.rule_id,
-                "validation_id": fixture.validation_id,
-            }
-        else:
-            result.error = "Missing fixture fields"
 
     except Exception as e:
         result.error = f"{type(e).__name__}: {e}"
@@ -632,9 +425,6 @@ def main() -> int:
         check_seed_workflow_new,
         check_seed_workflow_existing,
         check_seed_workflow_with_job,
-        check_seed_rule_new,
-        check_seed_rule_existing,
-        check_seed_validation,
     ]
     all_results.extend(run_tests(seeder_tests, client))
 
@@ -642,7 +432,6 @@ def main() -> int:
     print_header("3. Shared Fixture Tests")
     fixture_tests = [
         check_shared_workflow_fixture,
-        check_shared_validation_fixture,
         check_docs_workflow_fixture,
     ]
     all_results.extend(run_tests(fixture_tests, client))
