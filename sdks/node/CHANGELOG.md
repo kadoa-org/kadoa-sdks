@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.46.0](https://github.com/kadoa-org/kadoa-sdks/compare/node-sdk-v0.45.0...node-sdk-v0.46.0) (2026-10-09)
+
+
+### Features
+
+* **node-sdk:** expose default product type from getfeatures (kad-26957) ([#381](https://github.com/kadoa-org/kadoa-sdks/issues/381)) ([cf8f8d1](https://github.com/kadoa-org/kadoa-sdks/commit/cf8f8d143b91a9b3b858c45e3cdb8d72a50d56d7))
+
 ## [0.45.0](https://github.com/kadoa-org/kadoa-sdks/compare/node-sdk-v0.44.0...node-sdk-v0.45.0) (2026-09-24)
 
 
