@@ -61,6 +61,7 @@ yarn-error.log*
 # Misc
 .DS_Store
 *.pem
+.history
 
 # Temporary OpenAPI specs
 specs/openapi.previous.json

@@ -11,7 +11,7 @@ from tests.utils.cleanup_helpers import (
     track_workflow,
 )
 from tests.utils.client_factory import create_client
-from tests.utils.shared_fixtures import get_docs_workflow_fixture, get_shared_validation_fixture
+from tests.utils.shared_fixtures import get_docs_workflow_fixture
 
 
 @pytest.fixture(scope="session")
@@ -60,8 +60,3 @@ def workflow_id(client) -> str:
     """Get shared workflow for docs tests."""
     return get_docs_workflow_fixture(client)
 
-
-@pytest.fixture(scope="session")
-def fixture_validation(client):
-    """Get shared validation fixture."""
-    return get_shared_validation_fixture(client)

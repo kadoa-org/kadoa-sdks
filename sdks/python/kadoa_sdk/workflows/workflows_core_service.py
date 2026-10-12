@@ -18,7 +18,7 @@ if TYPE_CHECKING:  # pragma: no cover
 from kadoa_sdk.core.exceptions import KadoaErrorCode, KadoaHttpError, KadoaSdkError
 from kadoa_sdk.core.http import get_workflows_api
 from kadoa_sdk.extraction.types import RunWorkflowOptions
-from openapi_client.models.create_schema_body_fields_inner import CreateSchemaBodyFieldsInner
+from openapi_client.models.schema_response_schema_inner import SchemaResponseSchemaInner
 from openapi_client.models.location import Location
 from openapi_client.models.monitoring_config import MonitoringConfig
 from openapi_client.models.prompt_workflow import PromptWorkflow
@@ -152,10 +152,10 @@ class WorkflowsCoreService:
         try:
             schema_fields = []
             for field in input.fields or []:
-                if isinstance(field, CreateSchemaBodyFieldsInner):
+                if isinstance(field, SchemaResponseSchemaInner):
                     schema_fields.append(field)
                 elif isinstance(field, (DataField, ClassificationField)):
-                    schema_fields.append(CreateSchemaBodyFieldsInner(actual_instance=field))
+                    schema_fields.append(SchemaResponseSchemaInner(actual_instance=field))
                 else:
                     field_data = field.model_dump() if hasattr(field, "model_dump") else dict(field)
                     field_type = field_data.get("fieldType") or field_data.get("field_type")
@@ -169,7 +169,7 @@ class WorkflowsCoreService:
                         elif example is not None:
                             field_data["example"] = example
                         field_model = DataField(**field_data)
-                    schema_fields.append(CreateSchemaBodyFieldsInner(actual_instance=field_model))
+                    schema_fields.append(SchemaResponseSchemaInner(actual_instance=field_model))
 
             optional_fields = {
                 "description": input.description,

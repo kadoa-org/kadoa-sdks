@@ -75,23 +75,23 @@ Dependency direction: `domains → runtime` (both layers may import `generated`)
 
 **File Layout**:
 - Place ACLs under `domains/<domain>/` with the suffix `<feature>.acl.ts`.
-- Mirror the generated module name to improve discoverability (`validation.acl.ts` ↔ `generated/api/data-validation-api.ts`).
+- Mirror the generated module name to improve discoverability (`activity.acl.ts` ↔ `generated/api/activity-api.ts`).
 - Keep each ACL focused; create additional ACL files when a domain integrates multiple generated modules.
 
 **Naming Conventions**:
-- **Request-like inputs**: `VerbResourceRequest` (e.g., `CreateRuleRequest`, `ListRulesRequest`) for payloads sent to the API.
+- **Request-like inputs**: `VerbResourceRequest` (e.g., `CreateWorkflowRequest`, `RunWorkflowRequest`) for payloads sent to the API.
 - **SDK-facing input wrappers**: `VerbResourceInput` when representing caller-provided data before adapter processing.
 - **Response types**: `ResourceResponse` or `VerbResourceResponse` for data returned from adapters.
 - **Filters/Options**: `ResourceFilter`, `ListResourceOptions`, or `ResourceQuery` depending on intent; keep suffixes consistent within a domain.
-- **Enums**: `PascalCase` singular names (`RuleStatus`) with literal members exported as `const` objects plus a `type` alias. Enum member identifiers should be `PascalCase` (`Enabled`) even if underlying values are snake/lower case.
+- **Enums**: `PascalCase` singular names (`WorkflowState`) with literal members exported as `const` objects plus a `type` alias. Enum member identifiers should be `PascalCase` (`Active`) even if underlying values are snake/lower case.
   ```typescript
   // Basic pattern
-  const RuleStatus = {
-    Preview: "preview",
-    Enabled: "enabled",
+  const WorkflowState = {
+    Active: "ACTIVE",
+    Paused: "PAUSED",
   } as const satisfies Record<keyof typeof GeneratedEnum, string>;
 
-  export type RuleStatus = (typeof RuleStatus)[keyof typeof RuleStatus];
+  export type WorkflowState = (typeof WorkflowState)[keyof typeof WorkflowState];
   ```
 - **Adapter helpers**: `toApiPayload`, `fromApiPayload`, `map<Resource>Response`, `normalize<Resource>`—prefix with verbs to convey direction.
 - Avoid generic names like `Data`, `Info`, `Result`; prefer domain-specific terms.
@@ -102,15 +102,13 @@ PREFERRED: Explicit classes/interfaces with flattened structure. Always prefer c
 
 ```typescript
 // ✅ PREFERRED: Explicit properties prevent nested structure leakage
-export class ListRulesRequest
-  implements DataValidationApiV4DataValidationRulesGetRequest
-{
-  groupId?: string;
+export class ListActivityOptions implements ActivityApiV4ActivityGetRequest {
+  limit?: number;
+  offset?: number;
   workflowId?: string;
-  page?: number;
-  status?: RuleStatus;
-  pageSize?: number;
-  includeDeleted?: boolean;
+  userId?: string;
+  startDate?: string;
+  endDate?: string;
 }
 ```
 
@@ -120,8 +118,8 @@ AVOID: Simple type aliases that merely rename or extract from generated types—
 
 ```typescript
 // ⚠️ AVOID: Just renaming, nested structure still leaks
-export type CreateRuleRequest =
-  DataValidationApiV4DataValidationRulesPostRequest["createRule"];
+export type UpdateWorkflowRequest =
+  WorkflowsApiV4WorkflowsWorkflowIdMetadataPutRequest["v4WorkflowsWorkflowIdMetadataPutRequest"];
 ```
 
 Exception: Type aliases are acceptable only when the generated type is already flat, stable, and unlikely to change, or when extracting a deeply nested utility type that would be impractical to redefine (document why).
@@ -139,7 +137,7 @@ Exception: Type aliases are acceptable only when the generated type is already f
 - Mixing ACL logic with business services or command handlers.
 
 **Implementation Checklist**:
-1. Identify the generated operations needed (`DataValidationApi` methods, types, enums).
+1. Identify the generated operations needed (for example `ActivityApi` methods, types, enums).
 2. **Verify no duplicate imports**: Check that the type is not already imported in another ACL file.
 3. Create/extend the relevant `<feature>.acl.ts`.
 4. Define SDK-facing types and ensure enums use literal unions.
@@ -150,8 +148,8 @@ Exception: Type aliases are acceptable only when the generated type is already f
 **Recommended File Header**:
 ```typescript
 /**
- * Validation domain ACL.
- * Wraps generated DataValidationApi requests/responses and normalizes enums.
+ * Activity domain ACL.
+ * Wraps generated ActivityApi requests/responses and normalizes enums.
  * Downstream code must import from this module instead of `generated/**`.
  */
 ```

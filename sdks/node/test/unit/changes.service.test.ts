@@ -37,6 +37,36 @@ const sampleChange = {
 
 describe("ChangesService", () => {
   describe("list()", () => {
+    test("passes non-string field values through unchanged", async () => {
+      const money = { amount: 25000, currencyCode: "CRC" };
+      mockV4ChangesGet.mockResolvedValueOnce({
+        data: {
+          changesCount: 1,
+          changes: [
+            {
+              ...sampleChange,
+              differences: [
+                {
+                  type: "changed",
+                  fields: [
+                    { key: "price", value: money, previousValue: money },
+                    { key: "rooms", value: 3, previousValue: 2 },
+                  ],
+                },
+              ],
+            },
+          ],
+        },
+      });
+
+      const result = await createTestClient().changes.list();
+
+      expect(result.changes[0].differences?.[0].fields).toEqual([
+        { key: "price", value: money, previousValue: money },
+        { key: "rooms", value: 3, previousValue: 2 },
+      ]);
+    });
+
     test("returns changes with default options", async () => {
       mockV4ChangesGet.mockResolvedValueOnce({
         data: {

@@ -2,7 +2,7 @@ export {
   ActivityApi,
   AgentApi,
   Configuration,
-  DataValidationApi,
+  DataQualityApi,
   MeApi,
   NotificationsApi,
   SchemasApi,

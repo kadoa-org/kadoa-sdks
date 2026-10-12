@@ -5,6 +5,7 @@ import { ActivityService } from "../domains/activity/activity.service";
 import { AssistantService } from "../domains/assistant";
 import { ChangesService } from "../domains/changes/changes.service";
 import { type CrawlerDomain, createCrawlerDomain } from "../domains/crawler";
+import { DataQualityService } from "../domains/data-quality/data-quality.service";
 import { DataFetcherService } from "../domains/extraction/services/data-fetcher.service";
 import { ExtractionService } from "../domains/extraction/services/extraction.service";
 import { ExtractionBuilderService } from "../domains/extraction/services/extraction-builder.service";
@@ -24,12 +25,6 @@ import { SupportService } from "../domains/support/support.service";
 import { TemplatesService } from "../domains/templates/templates.service";
 import { UsageService } from "../domains/usage/usage.service";
 import { UserService } from "../domains/user/user.service";
-import {
-  createValidationDomain,
-  type ValidationDomain,
-} from "../domains/validation/validation.facade";
-import { ValidationCoreService } from "../domains/validation/validation-core.service";
-import { ValidationRulesService } from "../domains/validation/validation-rules.service";
 import { VariablesService } from "../domains/variables/variables.service";
 import { WorkflowsCoreService } from "../domains/workflows/workflows-core.service";
 import { KadoaHttpException } from "../runtime/exceptions";
@@ -85,6 +80,7 @@ export function createClientDomains(params: { client: KadoaClient }): {
   activity: ActivityService;
   assistant: AssistantService;
   changes: ChangesService;
+  dataQuality: DataQualityService;
   extractionBuilderService: ExtractionBuilderService;
   extraction: ExtractionService;
   workflow: WorkflowsCoreService;
@@ -94,7 +90,6 @@ export function createClientDomains(params: { client: KadoaClient }): {
   support: SupportService;
   user: UserService;
   template: TemplatesService;
-  validation: ValidationDomain;
   variable: VariablesService;
   crawler: CrawlerDomain;
   usage: UsageService;
@@ -106,6 +101,7 @@ export function createClientDomains(params: { client: KadoaClient }): {
   const supportService = new SupportService(client);
   const assistantService = new AssistantService(client.apis.agent);
   const changesService = new ChangesService(client);
+  const dataQualityService = new DataQualityService(client);
   const userService = new UserService(client);
   const dataFetcherService = new DataFetcherService(client.apis.workflows);
   const channelsService = new NotificationChannelsService(
@@ -124,8 +120,6 @@ export function createClientDomains(params: { client: KadoaClient }): {
     channelsService,
     settingsService,
   );
-  const coreService = new ValidationCoreService(client);
-  const rulesService = new ValidationRulesService(client);
   const usageService = new UsageService(client);
   const observabilityService = new ObservabilityService(client);
 
@@ -150,7 +144,6 @@ export function createClientDomains(params: { client: KadoaClient }): {
     channelSetupService,
   });
 
-  const validation = createValidationDomain(coreService, rulesService);
   const crawler = createCrawlerDomain(client);
 
   return {
@@ -158,6 +151,7 @@ export function createClientDomains(params: { client: KadoaClient }): {
     assistant: assistantService,
     support: supportService,
     changes: changesService,
+    dataQuality: dataQualityService,
     extractionBuilderService,
     extraction: extractionService,
     workflow: workflowsCoreService,
@@ -166,7 +160,6 @@ export function createClientDomains(params: { client: KadoaClient }): {
     scrape: scrapeService,
     user: userService,
     template: templatesService,
-    validation,
     variable: variablesService,
     crawler,
     usage: usageService,

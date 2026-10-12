@@ -12,19 +12,14 @@ import {
   deleteSchemaByName,
   deleteWorkflowByName,
 } from "./cleanup-helpers";
-import { seedRule, seedValidation, seedWorkflow } from "./seeder";
-import {
-  clearFixtureCache,
-  getSharedValidationFixture,
-  getSharedWorkflowFixture,
-} from "./shared-fixtures";
 import { getTestEnv } from "./env";
+import { seedWorkflow } from "./seeder";
+import { clearFixtureCache, getSharedWorkflowFixture } from "./shared-fixtures";
 
 // Test resource names
 const TEST_WORKFLOW_NAME = "test-util-workflow-manual";
 const TEST_SCHEMA_NAME = "test-util-schema-manual";
 const TEST_CHANNEL_NAME = "test-util-channel-manual";
-const TEST_RULE_NAME = "test-util-rule-manual";
 
 interface TestResult {
   name: string;
@@ -57,21 +52,6 @@ function createTestClient(): KadoaClient {
   return new KadoaClient({ apiKey: env.KADOA_API_KEY, timeout: 60000 });
 }
 
-async function deleteRule(
-  client: KadoaClient,
-  workflowId: string,
-  ruleId: string,
-): Promise<void> {
-  try {
-    await client.validation.rules.bulkDeleteRules({
-      workflowId,
-      ruleIds: [ruleId],
-    });
-  } catch (e) {
-    console.log(`    Warning: Failed to delete rule ${ruleId}: ${e}`);
-  }
-}
-
 // =============================================================================
 // Cleanup Helper Tests
 // =============================================================================
@@ -79,7 +59,10 @@ async function deleteRule(
 async function testDeleteWorkflowByNameExists(
   client: KadoaClient,
 ): Promise<TestResult> {
-  const result: TestResult = { name: "deleteWorkflowByName (exists)", passed: false };
+  const result: TestResult = {
+    name: "deleteWorkflowByName (exists)",
+    passed: false,
+  };
   const name = `${TEST_WORKFLOW_NAME}-delete-exists`;
 
   try {
@@ -89,7 +72,9 @@ async function testDeleteWorkflowByNameExists(
         urls: ["https://sandbox.kadoa.com/ecommerce"],
         name,
         extraction: (builder) =>
-          builder.entity("Test").field("title", "Title", "STRING", { example: "Test" }),
+          builder
+            .entity("Test")
+            .field("title", "Title", "STRING", { example: "Test" }),
       })
       .bypassPreview()
       .create();
@@ -139,7 +124,10 @@ async function testDeleteWorkflowByNameNotExists(
 async function testDeleteSchemaByNameExists(
   client: KadoaClient,
 ): Promise<TestResult> {
-  const result: TestResult = { name: "deleteSchemaByName (exists)", passed: false };
+  const result: TestResult = {
+    name: "deleteSchemaByName (exists)",
+    passed: false,
+  };
   const name = `${TEST_SCHEMA_NAME}-delete-exists`;
 
   try {
@@ -336,170 +324,6 @@ async function testSeedWorkflowWithJob(
   return result;
 }
 
-async function testSeedRuleNew(client: KadoaClient): Promise<TestResult> {
-  const result: TestResult = { name: "seedRule (new)", passed: false };
-  const workflowName = `${TEST_WORKFLOW_NAME}-rule-test`;
-  const ruleName = `${TEST_RULE_NAME}-new`;
-  let workflowId: string | undefined;
-  let ruleId: string | undefined;
-
-  try {
-    // Cleanup and setup
-    await deleteWorkflowByName(workflowName, client);
-    const seededWf = await seedWorkflow(
-      { name: workflowName, runJob: true },
-      client,
-    );
-    workflowId = seededWf.workflowId;
-
-    // Delete existing rule if any
-    const existingRule = await client.validation.rules.getRuleByName(ruleName);
-    if (existingRule?.id && existingRule?.workflowId) {
-      await deleteRule(client, existingRule.workflowId, existingRule.id);
-    }
-
-    // Test: seed rule
-    ruleId = await seedRule({ name: ruleName, workflowId }, client);
-    console.log(`    ruleId: ${ruleId}`);
-
-    if (ruleId) {
-      result.passed = true;
-      result.details = { ruleId };
-    } else {
-      result.error = "No ruleId returned";
-    }
-  } catch (e) {
-    result.error = `${(e as Error).name}: ${(e as Error).message}`;
-    console.error(e);
-  } finally {
-    // Cleanup
-    if (ruleId && workflowId) {
-      await deleteRule(client, workflowId, ruleId);
-    }
-    if (workflowId) {
-      await client.workflow.delete(workflowId);
-    }
-  }
-
-  return result;
-}
-
-async function testSeedRuleExisting(client: KadoaClient): Promise<TestResult> {
-  const result: TestResult = { name: "seedRule (existing)", passed: false };
-  const workflowName = `${TEST_WORKFLOW_NAME}-rule-reuse`;
-  const ruleName = `${TEST_RULE_NAME}-existing`;
-  let workflowId: string | undefined;
-  let firstId: string | undefined;
-
-  try {
-    // Cleanup and setup
-    await deleteWorkflowByName(workflowName, client);
-    const seededWf = await seedWorkflow(
-      { name: workflowName, runJob: true },
-      client,
-    );
-    workflowId = seededWf.workflowId;
-
-    // Delete existing rule if any
-    const existingRule = await client.validation.rules.getRuleByName(ruleName);
-    if (existingRule?.id && existingRule?.workflowId) {
-      await deleteRule(client, existingRule.workflowId, existingRule.id);
-    }
-
-    // Seed first time
-    firstId = await seedRule({ name: ruleName, workflowId }, client);
-    console.log(`    First seed: ${firstId}`);
-
-    // Debug: check what getRuleByName returns after creating
-    const checkRule = await client.validation.rules.getRuleByName(ruleName);
-    console.log(`    After first seed, getRuleByName returns: ${checkRule?.id}`);
-
-    // Test: seed second time (should reuse)
-    const secondId = await seedRule({ name: ruleName, workflowId }, client);
-    console.log(`    Second seed: ${secondId}`);
-
-    if (firstId === secondId) {
-      result.passed = true;
-      result.details = { ruleId: firstId };
-    } else {
-      result.error = `IDs don't match: ${firstId} != ${secondId}`;
-    }
-  } catch (e) {
-    result.error = `${(e as Error).name}: ${(e as Error).message}`;
-    console.error(e);
-  } finally {
-    // Cleanup
-    if (firstId && workflowId) {
-      await deleteRule(client, workflowId, firstId);
-    }
-    if (workflowId) {
-      await client.workflow.delete(workflowId);
-    }
-  }
-
-  return result;
-}
-
-async function testSeedValidation(client: KadoaClient): Promise<TestResult> {
-  const result: TestResult = { name: "seedValidation", passed: false };
-  const workflowName = `${TEST_WORKFLOW_NAME}-validation-test`;
-  const ruleName = `${TEST_RULE_NAME}-validation`;
-  let workflowId: string | undefined;
-  let ruleId: string | undefined;
-
-  try {
-    // Cleanup and setup
-    await deleteWorkflowByName(workflowName, client);
-    const seededWf = await seedWorkflow(
-      { name: workflowName, runJob: true },
-      client,
-    );
-    workflowId = seededWf.workflowId;
-    const jobId = seededWf.jobId;
-
-    console.log(`    workflowId: ${workflowId}`);
-    console.log(`    jobId: ${jobId}`);
-
-    if (!jobId) {
-      result.error = "No jobId from seedWorkflow";
-      return result;
-    }
-
-    // Create rule first
-    const existingRule = await client.validation.rules.getRuleByName(ruleName);
-    if (existingRule?.id) {
-      ruleId = existingRule.id;
-    } else {
-      ruleId = await seedRule({ name: ruleName, workflowId }, client);
-    }
-    console.log(`    ruleId: ${ruleId}`);
-
-    // Test: seed validation
-    const validationId = await seedValidation({ workflowId, jobId }, client);
-    console.log(`    validationId: ${validationId}`);
-
-    if (validationId) {
-      result.passed = true;
-      result.details = { validationId };
-    } else {
-      result.error = "No validationId returned";
-    }
-  } catch (e) {
-    result.error = `${(e as Error).name}: ${(e as Error).message}`;
-    console.error(e);
-  } finally {
-    // Cleanup
-    if (ruleId && workflowId) {
-      await deleteRule(client, workflowId, ruleId);
-    }
-    if (workflowId) {
-      await client.workflow.delete(workflowId);
-    }
-  }
-
-  return result;
-}
-
 // =============================================================================
 // Shared Fixture Tests
 // =============================================================================
@@ -507,7 +331,10 @@ async function testSeedValidation(client: KadoaClient): Promise<TestResult> {
 async function testSharedWorkflowFixture(
   client: KadoaClient,
 ): Promise<TestResult> {
-  const result: TestResult = { name: "getSharedWorkflowFixture", passed: false };
+  const result: TestResult = {
+    name: "getSharedWorkflowFixture",
+    passed: false,
+  };
 
   try {
     // Clear cache first
@@ -529,49 +356,6 @@ async function testSharedWorkflowFixture(
     }
 
     // Note: Don't delete shared fixtures - they're meant to be reused
-  } catch (e) {
-    result.error = `${(e as Error).name}: ${(e as Error).message}`;
-    console.error(e);
-  }
-
-  return result;
-}
-
-async function testSharedValidationFixture(
-  client: KadoaClient,
-): Promise<TestResult> {
-  const result: TestResult = {
-    name: "getSharedValidationFixture",
-    passed: false,
-  };
-
-  try {
-    // Clear cache first
-    clearFixtureCache();
-
-    // Test: get fixture
-    const fixture = await getSharedValidationFixture(client);
-    console.log(`    workflowId: ${fixture.workflowId}`);
-    console.log(`    jobId: ${fixture.jobId}`);
-    console.log(`    ruleId: ${fixture.ruleId}`);
-    console.log(`    validationId: ${fixture.validationId}`);
-
-    if (
-      fixture.workflowId &&
-      fixture.jobId &&
-      fixture.ruleId &&
-      fixture.validationId
-    ) {
-      result.passed = true;
-      result.details = {
-        workflowId: fixture.workflowId,
-        jobId: fixture.jobId,
-        ruleId: fixture.ruleId,
-        validationId: fixture.validationId,
-      };
-    } else {
-      result.error = "Missing fixture fields";
-    }
   } catch (e) {
     result.error = `${(e as Error).name}: ${(e as Error).message}`;
     console.error(e);
@@ -625,15 +409,12 @@ async function main(): Promise<number> {
     testSeedWorkflowNew,
     testSeedWorkflowExisting,
     testSeedWorkflowWithJob,
-    testSeedRuleNew,
-    testSeedRuleExisting,
-    testSeedValidation,
   ];
   allResults.push(...(await runTests(seederTests, client)));
 
   // Shared Fixture Tests
   printHeader("3. Shared Fixture Tests");
-  const fixtureTests = [testSharedWorkflowFixture, testSharedValidationFixture];
+  const fixtureTests = [testSharedWorkflowFixture];
   allResults.push(...(await runTests(fixtureTests, client)));
 
   // Summary

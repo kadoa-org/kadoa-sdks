@@ -6,7 +6,6 @@ Covers:
 - variables full CRUD
 - changes.list + get
 - workflow.get_audit_log
-- validation.rules.delete_rule
 
 Run with: KADOA_API_KEY=... KADOA_PUBLIC_API_URI=http://localhost:12380 \
          uv run --extra dev pytest tests/e2e/test_parity_e2e.py -m e2e -v
@@ -241,35 +240,3 @@ class TestExportData:
             pytest.skip(f"signed URL not reachable from test env: {e}")
         assert isinstance(content, bytes)
         assert len(content) >= 0
-
-
-# ---------------------------------------------------------------------------
-# validation.rules.delete_rule — needs an existing rule
-# ---------------------------------------------------------------------------
-
-
-class TestValidationDeleteRule:
-    """The backend's DELETE /v4/data-validation/rules/{ruleId} is idempotent:
-    it returns 200 with ``error: false`` even when no rule matched. We just
-    verify the SDK successfully sends both body variants."""
-
-    def test_delete_without_workflow_scope_400s(self, client):
-        """No body — backend's Zod schema rejects with 400."""
-        from kadoa_sdk.validation.validation_acl import DeleteRuleRequest
-
-        with pytest.raises(Exception):
-            client.validation.rules.delete_rule(
-                DeleteRuleRequest(rule_id="00000000-0000-0000-0000-000000000000")
-            )
-
-    def test_delete_with_workflow_scope_carries_body(self, client):
-        from kadoa_sdk.validation.validation_acl import DeleteRuleRequest
-
-        result = client.validation.rules.delete_rule(
-            DeleteRuleRequest(
-                rule_id="00000000-0000-0000-0000-000000000000",
-                workflow_id="00000000-0000-0000-0000-000000000000",
-                reason="sdk e2e probe",
-            )
-        )
-        assert result is not None
