@@ -91,6 +91,48 @@ describe("published OpenAPI source", () => {
     expect(used.currentPeriodExtractedRows).toBeDefined();
   });
 
+  test("documents the workflow data quality rules used by client.dataQuality", () => {
+    const spec = JSON.parse(readFileSync(specPath, "utf8"));
+    const schemas = spec.components.schemas;
+
+    const kinds = schemas.FieldValidationRules.oneOf.map(
+      (ref: { $ref: string }) => ref.$ref.split("/").pop(),
+    );
+    expect(kinds).toEqual([
+      "StringFieldRules",
+      "NumberFieldRules",
+      "DateFieldRules",
+      "ObjectFieldRules",
+      "ArrayFieldRules",
+      "OtherFieldRules",
+    ]);
+    // Every rule carries its own attribution next to its value.
+    expect(schemas.PresenceRule.required).toEqual([
+      "target",
+      "editedBy",
+      "editedAt",
+    ]);
+    expect(schemas.StringFormatFreeTextRule.properties.charset.$ref).toBe(
+      "#/components/schemas/StringCharsetPreset",
+    );
+    expect(
+      schemas.ObjectFieldRules.properties.additionalProperties,
+    ).toBeDefined();
+    expect(schemas.ArrayFieldRules.properties.minItems).toBeDefined();
+
+    const base = "/v4/workflows/{workflowId}/schema-validation-rules";
+    for (const [path, method] of [
+      [base, "get"],
+      [base, "put"],
+      [`${base}/{fieldName}`, "delete"],
+    ]) {
+      const schema =
+        spec.paths[path][method].responses["200"].content["application/json"]
+          .schema;
+      expect(schema.required).toEqual(["rules"]);
+    }
+  });
+
   test("documents the workspace observability endpoint with a 1-365 day range", () => {
     const spec = JSON.parse(readFileSync(specPath, "utf8"));
     const operation =

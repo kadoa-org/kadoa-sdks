@@ -58,10 +58,12 @@ export type ChangeDifferenceType =
 export interface ChangeDifferenceField {
   /** Field name */
   key?: string;
-  /** Current field value */
-  value?: string;
+  /** Current field value: any JSON type, e.g. string, number, or object */
+  // biome-ignore lint/suspicious/noExplicitAny: raw cell values of any JSON type
+  value?: any;
   /** Previous field value (only present for 'changed' type) */
-  previousValue?: string;
+  // biome-ignore lint/suspicious/noExplicitAny: raw cell values of any JSON type
+  previousValue?: any;
 }
 
 export type ChangesPagination = V4ChangesGet200ResponsePagination;
@@ -169,7 +171,7 @@ function mergeAddedRemoved(
   added: V4ChangesGet200ResponseChangesInnerDifferencesInner,
   removed: V4ChangesGet200ResponseChangesInnerDifferencesInner,
 ): ChangeDifference {
-  const previousByKey = new Map<string, string | undefined>();
+  const previousByKey = new Map<string, unknown>();
   for (const f of removed.fields ?? []) {
     if (f.key !== undefined) previousByKey.set(f.key, f.value);
   }

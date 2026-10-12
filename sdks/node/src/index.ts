@@ -11,6 +11,7 @@ export * from "./domains/activity";
 export * from "./domains/assistant";
 export * from "./domains/changes";
 export * from "./domains/crawler";
+export * from "./domains/data-quality";
 export * from "./domains/extraction";
 export * from "./domains/notifications";
 export * from "./domains/observability";
@@ -21,7 +22,6 @@ export * from "./domains/support";
 export * from "./domains/templates";
 export * from "./domains/usage";
 export * from "./domains/user";
-export * from "./domains/validation";
 export * from "./domains/variables";
 export * from "./domains/workflows";
 // ============================================================================
@@ -37,7 +37,6 @@ export {
   type TeamInfo,
   type TestNotificationRequest,
   type TestNotificationResult,
-  type ValidationDomain,
 } from "./kadoa-client";
 // ============================================================================
 // Error Handling
