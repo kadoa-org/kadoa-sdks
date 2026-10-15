@@ -37,6 +37,19 @@ import type {
   TestNotificationResult,
 } from "./types";
 
+function omitSecretVariableValues(value: unknown): unknown {
+  if (Array.isArray(value)) return value.map(omitSecretVariableValues);
+  if (value === null || typeof value !== "object") return value;
+  const prototype = Object.getPrototypeOf(value);
+  if (prototype !== Object.prototype && prototype !== null) return value;
+  const object = value as Record<string, unknown>;
+  return Object.fromEntries(
+    Object.entries(object)
+      .filter(([key]) => !(key === "value" && object.dataType === "SECRET"))
+      .map(([key, child]) => [key, omitSecretVariableValues(child)]),
+  );
+}
+
 export function createSdkHeaders(): Record<string, string> {
   return {
     "User-Agent": `${SDK_NAME}/${SDK_VERSION}`,
@@ -60,7 +73,10 @@ export function createAxiosInstance(params: {
   });
 
   axiosInstance.interceptors.response.use(
-    (response) => response,
+    (response) => {
+      response.data = omitSecretVariableValues(response.data);
+      return response;
+    },
     (error) => {
       if (error instanceof AxiosError) {
         const status = error.response?.status;
