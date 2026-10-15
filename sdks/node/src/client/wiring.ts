@@ -41,9 +41,14 @@ function stripRunCosts(value: unknown): unknown {
   if (value === null || typeof value !== "object") return value;
   const prototype = Object.getPrototypeOf(value);
   if (prototype !== Object.prototype && prototype !== null) return value;
+  const object = value as Record<string, unknown>;
   return Object.fromEntries(
-    Object.entries(value as Record<string, unknown>)
-      .filter(([key]) => key !== "runCost" && key !== "runCosts")
+    Object.entries(object)
+      .filter(([key]) =>
+        key !== "runCost" &&
+        key !== "runCosts" &&
+        !(key === "value" && object.dataType === "SECRET"),
+      )
       .map(([key, child]) => [key, stripRunCosts(child)]),
   );
 }
