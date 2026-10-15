@@ -4,6 +4,26 @@ import { readFileSync } from "node:fs";
 const specPath = new URL("../../../../specs/openapi.json", import.meta.url);
 
 describe("published OpenAPI source", () => {
+  test("documents SECRET variable metadata without a value and ordinary values", () => {
+    const spec = JSON.parse(readFileSync(specPath, "utf8"));
+    const branches = spec.components.schemas.Variable.oneOf as Array<{
+      properties: Record<string, { enum?: string[] }>;
+      required: string[];
+    }>;
+    const secret = branches.find((branch) =>
+      branch.properties.dataType.enum?.includes("SECRET"),
+    );
+    const ordinary = branches.find((branch) =>
+      branch.properties.dataType.enum?.includes("STRING"),
+    );
+
+    expect(secret).toBeDefined();
+    expect(secret?.properties).not.toHaveProperty("value");
+    expect(secret?.required).not.toContain("value");
+    expect(ordinary?.properties).toHaveProperty("value");
+    expect(ordinary?.required).toContain("value");
+  });
+
   test("omits legacy costs from workflow list and detail contracts", () => {
     const spec = JSON.parse(readFileSync(specPath, "utf8"));
     const list =
