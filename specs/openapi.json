@@ -1972,10 +1972,6 @@
                         }
                       }
                     },
-                    "runCosts": {
-                      "type": "number",
-                      "description": "Cost of the last job run in credits"
-                    },
                     "runState": {
                       "type": "string",
                       "enum": [
@@ -3824,10 +3820,6 @@
                               }
                             },
                             "description": "Scraping location configuration"
-                          },
-                          "runCosts": {
-                            "type": "number",
-                            "description": "Cost of the last job run in credits"
                           },
                           "runState": {
                             "type": "string",

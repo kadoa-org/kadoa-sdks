@@ -221,7 +221,7 @@ export type AgenticWorkflow = PromptWorkflow;
 export interface WorkflowResponse
   extends Omit<
     V4WorkflowsGet200ResponseWorkflowsInner,
-    "state" | "displayState" | "additionalData"
+    "state" | "displayState" | "additionalData" | "runCosts"
   > {
   state?: WorkflowStateEnum;
   displayState?: WorkflowDisplayStateEnum;
@@ -234,7 +234,7 @@ export interface WorkflowResponse
 export interface GetWorkflowResponse
   extends Omit<
     V4WorkflowsWorkflowIdGet200Response,
-    "state" | "displayState" | "additionalData"
+    "state" | "displayState" | "additionalData" | "runCosts"
   > {
   state?: WorkflowStateEnum;
   displayState?: WorkflowDisplayStateEnum;
