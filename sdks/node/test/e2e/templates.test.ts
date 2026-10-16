@@ -104,7 +104,6 @@ describe("Templates", () => {
       },
       { timeout: 60000 },
     );
-
   });
 
   describe("Destructive Operations", () => {
@@ -117,9 +116,9 @@ describe("Templates", () => {
 
         await client.template.delete(template.id);
 
-        expect(
-          client.template.get(template.id),
-        ).rejects.toThrow(KadoaHttpException);
+        expect(client.template.get(template.id)).rejects.toThrow(
+          KadoaHttpException,
+        );
       },
       { timeout: 60000 },
     );
