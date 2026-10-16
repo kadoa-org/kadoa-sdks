@@ -1,5 +1,27 @@
 # Changelog
 
+## [0.21.0](https://github.com/kadoa-org/kadoa-sdks/compare/python-sdk-v0.20.0...python-sdk-v0.21.0) (2026-10-16)
+
+
+### ⚠ BREAKING CHANGES
+
+* Workflow list and detail response models no longer include runCosts, and workflow run history models no longer include the internal credits field. Internal accounting and account balances are unchanged.
+* Node `client.crawler` and its exported crawler types (`CrawlerDomain`, `createCrawlerDomain`, `CrawlerConfigService`, `CrawlerSessionService` and the crawler request/response types), and Python `client.crawler` and `CrawlApi`, are removed.
+* Add data quality rules, remove retired data validation ([#380](https://github.com/kadoa-org/kadoa-sdks/issues/380))
+
+### Features
+
+* Add data quality rules, remove retired data validation ([#380](https://github.com/kadoa-org/kadoa-sdks/issues/380)) ([c688c54](https://github.com/kadoa-org/kadoa-sdks/commit/c688c54772a0742347b22c03a4d0e0ac08f302e3))
+* **python-sdk:** backfill parity vs node-sdk (KAD-7030) ([#301](https://github.com/kadoa-org/kadoa-sdks/issues/301)) ([a876109](https://github.com/kadoa-org/kadoa-sdks/commit/a876109a0a607c1104562cb3367f213818eaff5a))
+* remove client.crawler ([#385](https://github.com/kadoa-org/kadoa-sdks/issues/385)) ([0b612fa](https://github.com/kadoa-org/kadoa-sdks/commit/0b612fa27190ea75b8f11eb91c8aa88f41cae8dc))
+* support template-specific workflow instructions in SDKs ([3848360](https://github.com/kadoa-org/kadoa-sdks/commit/38483600d59438130c140a86d7315c4ab875eb9f))
+
+
+### Bug Fixes
+
+* align SDK contracts and documentation snippets ([#335](https://github.com/kadoa-org/kadoa-sdks/issues/335)) ([79c1ccc](https://github.com/kadoa-org/kadoa-sdks/commit/79c1ccc195fe42626de02be0125e9e887503b7f6))
+* remove legacy workflow run costs from SDK contracts ([3404cca](https://github.com/kadoa-org/kadoa-sdks/commit/3404cca1fc5aad4cedd6f2787620803261061d39))
+
 ## [0.20.0](https://github.com/kadoa-org/kadoa-sdks/compare/python-sdk-v0.19.0...python-sdk-v0.20.0) (2026-04-28)
 
 
