@@ -1,5 +1,16 @@
 # Changelog
 
+## [0.48.0](https://github.com/kadoa-org/kadoa-sdks/compare/node-sdk-v0.47.0...node-sdk-v0.48.0) (2026-10-16)
+
+
+### ⚠ BREAKING CHANGES
+
+* **node-sdk:** removes RawDataWorkflow from CreateWorkflowRequest and drops dataStale, dataValidation, validationStatistics from WorkflowResponse and GetWorkflowResponse, and dataValidationEnabled from create bodies, matching the current public api.
+
+### Bug Fixes
+
+* **node-sdk:** refresh spec for workflow presentation fields ([#386](https://github.com/kadoa-org/kadoa-sdks/issues/386)) ([5a1e861](https://github.com/kadoa-org/kadoa-sdks/commit/5a1e861279e0d7c8c0e4f77473ad3db252607c61))
+
 ## [0.47.0](https://github.com/kadoa-org/kadoa-sdks/compare/node-sdk-v0.46.0...node-sdk-v0.47.0) (2026-10-16)
 
 
