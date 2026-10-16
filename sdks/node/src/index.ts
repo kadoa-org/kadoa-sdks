@@ -10,7 +10,6 @@
 export * from "./domains/activity";
 export * from "./domains/assistant";
 export * from "./domains/changes";
-export * from "./domains/crawler";
 export * from "./domains/data-quality";
 export * from "./domains/extraction";
 export * from "./domains/notifications";

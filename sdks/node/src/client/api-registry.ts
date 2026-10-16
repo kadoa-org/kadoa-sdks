@@ -1,5 +1,4 @@
 import type { AxiosInstance } from "axios";
-import { CrawlerApi } from "../domains/crawler/crawler.acl";
 import {
   ActivityApi,
   AgentApi,
@@ -76,10 +75,6 @@ export class ApiRegistry {
 
   get dataQuality(): DataQualityApi {
     return this.get(DataQualityApi);
-  }
-
-  get crawler(): CrawlerApi {
-    return this.get(CrawlerApi);
   }
 
   get workflows(): WorkflowsApi {

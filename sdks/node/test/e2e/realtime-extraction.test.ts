@@ -191,7 +191,10 @@ describe("Realtime extraction lifecycle", () => {
           const candidate = toWorkflowId(event);
 
           if (candidate === workflowId) {
-            console.debug("Realtime event received for workflow %s", workflowId);
+            console.debug(
+              "Realtime event received for workflow %s",
+              workflowId,
+            );
           }
         });
 
@@ -204,10 +207,7 @@ describe("Realtime extraction lifecycle", () => {
             await client.workflow.delete(workflowId);
           } catch (error) {
             // Log but don't fail test if cleanup fails
-            console.warn(
-              `Failed to cleanup workflow ${workflowId}:`,
-              error,
-            );
+            console.warn(`Failed to cleanup workflow ${workflowId}:`, error);
           }
         }
       }

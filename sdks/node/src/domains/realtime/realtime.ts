@@ -30,10 +30,7 @@ interface SubscribeMessage {
 
 type SocketRole = "active" | "replacement" | "draining";
 
-type RealtimeMessage =
-  | RealtimeEvent
-  | DrainControlMessage
-  | HeartbeatMessage;
+type RealtimeMessage = RealtimeEvent | DrainControlMessage | HeartbeatMessage;
 
 export interface RealtimeEvent {
   type: string;

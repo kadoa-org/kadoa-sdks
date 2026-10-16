@@ -11,11 +11,10 @@ if TYPE_CHECKING:  # pragma: no cover
     from openapi_client.api.variables_api import VariablesApi
 
     from ..client import KadoaClient
-    from ..extraction.extraction_acl import CrawlApi, WorkflowsApi
+    from ..extraction.extraction_acl import WorkflowsApi
     from ..schemas.schemas_acl import SchemasApi
 
 # Use WeakKeyDictionary to automatically clean up when clients are garbage collected
-_crawl_cache: weakref.WeakKeyDictionary["KadoaClient", "CrawlApi"] = weakref.WeakKeyDictionary()
 _workflows_cache: weakref.WeakKeyDictionary["KadoaClient", "WorkflowsApi"] = (
     weakref.WeakKeyDictionary()
 )
@@ -29,16 +28,6 @@ _templates_cache: weakref.WeakKeyDictionary["KadoaClient", "TemplatesApi"] = (
 _variables_cache: weakref.WeakKeyDictionary["KadoaClient", "VariablesApi"] = (
     weakref.WeakKeyDictionary()
 )
-
-
-def get_crawl_api(client: "KadoaClient") -> "CrawlApi":
-    from ..extraction.extraction_acl import CrawlApi  # noqa: PLC0415
-
-    api = _crawl_cache.get(client)
-    if api is None:
-        api = CrawlApi(create_api_client(client.configuration))
-        _crawl_cache[client] = api
-    return api
 
 
 def get_workflows_api(client: "KadoaClient") -> "WorkflowsApi":

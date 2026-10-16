@@ -2,7 +2,6 @@ import type { AxiosInstance } from "axios";
 import type { ActivityService } from "../domains/activity/activity.service";
 import type { AssistantService } from "../domains/assistant";
 import type { ChangesService } from "../domains/changes/changes.service";
-import type { CrawlerDomain } from "../domains/crawler";
 import type { DataQualityService } from "../domains/data-quality/data-quality.service";
 import type { ExtractionService } from "../domains/extraction/services/extraction.service";
 import type {
@@ -79,7 +78,6 @@ export class KadoaClient {
   public readonly user: UserService;
   public readonly template: TemplatesService;
   public readonly variable: VariablesService;
-  public readonly crawler: CrawlerDomain;
   public readonly usage: UsageService;
   public readonly observability: ObservabilityService;
 
@@ -143,7 +141,6 @@ export class KadoaClient {
     this.notification = domains.notification;
     this.template = domains.template;
     this.variable = domains.variable;
-    this.crawler = domains.crawler;
     this.usage = domains.usage;
     this.observability = domains.observability;
     this._extractionBuilderService = domains.extractionBuilderService;

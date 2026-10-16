@@ -28,8 +28,8 @@ import {
 // API Client
 // ========================================
 
-export { NotificationsApi };
 export type { NotificationsApiInterface };
+export { NotificationsApi };
 
 // ========================================
 // Enums
@@ -102,22 +102,21 @@ export type NotificationChannelConfig =
 /**
  * Email channel configuration.
  */
-export type { EmailChannelConfig };
-
 /**
  * Slack channel configuration.
  */
-export type { SlackChannelConfig };
-
 /**
  * Webhook channel configuration.
  */
-export type { WebhookChannelConfig };
-
 /**
  * Webhook authentication configuration.
  */
-export type { WebhookChannelConfigAuth };
+export type {
+  EmailChannelConfig,
+  SlackChannelConfig,
+  WebhookChannelConfig,
+  WebhookChannelConfigAuth,
+};
 
 /**
  * WebSocket channel configuration (empty object).

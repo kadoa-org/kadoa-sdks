@@ -1,10 +1,12 @@
 import type { KadoaClient } from "../../kadoa-client";
 import { KadoaSdkException } from "../../runtime/exceptions";
-import {
-  KadoaErrorCode,
-} from "../../runtime/exceptions/base.exception";
+import { KadoaErrorCode } from "../../runtime/exceptions/base.exception";
 import { logger } from "../../runtime/logger";
-import type { Change, ListChangesOptions, ListChangesResult } from "./changes.acl";
+import type {
+  Change,
+  ListChangesOptions,
+  ListChangesResult,
+} from "./changes.acl";
 import { mapChange, mapListChangesResponse } from "./changes.acl";
 
 const debug = logger.changes;

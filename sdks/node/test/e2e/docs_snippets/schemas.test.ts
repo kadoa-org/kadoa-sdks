@@ -342,6 +342,7 @@ describe("TS-SCHEMAS: schemas.mdx snippets", () => {
     expect(updated).toBeDefined();
     expect(updated.id).toBeDefined();
     // Cleanup (best effort)
-    if (updated.id) await client.schema.deleteSchema(updated.id).catch(() => {});
+    if (updated.id)
+      await client.schema.deleteSchema(updated.id).catch(() => {});
   });
 });
