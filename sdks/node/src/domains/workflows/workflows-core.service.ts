@@ -23,6 +23,7 @@ import {
   type RunWorkflowResponse,
   type UpdateWorkflowRequest,
   type UpdateWorkflowResponse,
+  type V4WorkflowsGetStatusFiltersEnum,
   type WorkflowAuditLogOptions,
   type WorkflowAuditLogResponse,
   type WorkflowFromTemplate,
@@ -215,9 +216,13 @@ export class WorkflowsCoreService {
       return (response.data?.workflows ?? []) as WorkflowResponse[];
     }
 
-    const { templateId, ...rest } = filters;
+    const { templateId, statusFilters, ...rest } = filters;
     const response = await this.workflowsApi.v4WorkflowsGet({
       ...rest,
+      // Unknown strings are intentionally passed through to the API.
+      ...(statusFilters != null && {
+        statusFilters: statusFilters as V4WorkflowsGetStatusFiltersEnum[],
+      }),
       ...(templateId != null && {
         templateId: Array.isArray(templateId) ? templateId : [templateId],
       }),

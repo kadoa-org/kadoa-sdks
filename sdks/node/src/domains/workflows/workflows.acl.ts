@@ -10,7 +10,6 @@ import type {
   JobStatusResponseStateEnum,
   MonitoringConfig,
   PromptWorkflow,
-  RawDataWorkflow,
   V4WorkflowsGet200ResponseWorkflowsInner,
   V4WorkflowsGet200ResponseWorkflowsInnerDisplayStateEnum,
   V4WorkflowsGet200ResponseWorkflowsInnerStateEnum,
@@ -18,6 +17,7 @@ import type {
   V4WorkflowsGetIncludeDeletedEnum,
   V4WorkflowsGetMonitoringEnum,
   V4WorkflowsGetStateEnum,
+  V4WorkflowsGetStatusFiltersEnum,
   V4WorkflowsGetUpdateIntervalEnum,
   V4WorkflowsWorkflowIdAuditlogGet200Response,
   V4WorkflowsWorkflowIdAuditlogGet200ResponseLogEntriesInner,
@@ -44,7 +44,7 @@ import {
 // API Client
 // ========================================
 
-export type { WorkflowsApiInterface };
+export type { V4WorkflowsGetStatusFiltersEnum, WorkflowsApiInterface };
 
 // ========================================
 // Enums
@@ -231,7 +231,6 @@ export class ListWorkflowsRequest {
 
 export type CreateWorkflowRequest =
   | PromptWorkflow
-  | RawDataWorkflow
   | WorkflowFromTemplate
   | WorkflowWithExistingSchema
   | WorkflowWithEntityAndFields;
@@ -241,7 +240,6 @@ export type CreateWorkflowWithCustomSchemaRequest = WorkflowWithEntityAndFields;
 export type {
   GeneratedCreateWorkflowBody,
   PromptWorkflow,
-  RawDataWorkflow,
   WorkflowFromTemplate,
 };
 
