@@ -1,5 +1,24 @@
 # Changelog
 
+## [0.47.0](https://github.com/kadoa-org/kadoa-sdks/compare/node-sdk-v0.46.0...node-sdk-v0.47.0) (2026-10-16)
+
+
+### ⚠ BREAKING CHANGES
+
+* Workflow list and detail response models no longer include runCosts, and workflow run history models no longer include the internal credits field. Internal accounting and account balances are unchanged.
+* Node `client.crawler` and its exported crawler types (`CrawlerDomain`, `createCrawlerDomain`, `CrawlerConfigService`, `CrawlerSessionService` and the crawler request/response types), and Python `client.crawler` and `CrawlApi`, are removed.
+* Add data quality rules, remove retired data validation ([#380](https://github.com/kadoa-org/kadoa-sdks/issues/380))
+
+### Features
+
+* Add data quality rules, remove retired data validation ([#380](https://github.com/kadoa-org/kadoa-sdks/issues/380)) ([c688c54](https://github.com/kadoa-org/kadoa-sdks/commit/c688c54772a0742347b22c03a4d0e0ac08f302e3))
+* remove client.crawler ([#385](https://github.com/kadoa-org/kadoa-sdks/issues/385)) ([0b612fa](https://github.com/kadoa-org/kadoa-sdks/commit/0b612fa27190ea75b8f11eb91c8aa88f41cae8dc))
+
+
+### Bug Fixes
+
+* remove legacy workflow run costs from SDK contracts ([3404cca](https://github.com/kadoa-org/kadoa-sdks/commit/3404cca1fc5aad4cedd6f2787620803261061d39))
+
 ## [0.46.0](https://github.com/kadoa-org/kadoa-sdks/compare/node-sdk-v0.45.0...node-sdk-v0.46.0) (2026-10-09)
 
 
