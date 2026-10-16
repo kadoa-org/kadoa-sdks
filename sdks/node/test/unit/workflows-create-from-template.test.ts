@@ -71,7 +71,9 @@ describe("WorkflowsCoreService.create — templateId support", () => {
   });
 
   test("forwards userPrompt as workflow-specific template instructions", async () => {
-    const mockPost = mock(() => Promise.resolve({ data: { workflowId: "wf-3" } }));
+    const mockPost = mock(() =>
+      Promise.resolve({ data: { workflowId: "wf-3" } }),
+    );
     const client = createTestClient(mockPost);
 
     await client.workflow.create({
@@ -91,7 +93,9 @@ describe("WorkflowsCoreService.create — templateId support", () => {
   });
 
   test("template-only creation still omits userPrompt", async () => {
-    const mockPost = mock(() => Promise.resolve({ data: { workflowId: "wf-4" } }));
+    const mockPost = mock(() =>
+      Promise.resolve({ data: { workflowId: "wf-4" } }),
+    );
     const client = createTestClient(mockPost);
 
     await client.workflow.create({

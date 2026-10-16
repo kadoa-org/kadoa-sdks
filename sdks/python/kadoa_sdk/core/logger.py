@@ -130,7 +130,6 @@ wss = create_logger("wss")
 extraction = create_logger("extraction")
 http = create_logger("http")
 workflow = create_logger("workflow")
-crawl = create_logger("crawl")
 notifications = create_logger("notifications")
 schemas = create_logger("schemas")
 
@@ -141,7 +140,6 @@ __all__ = [
     "extraction",
     "http",
     "workflow",
-    "crawl",
     "notifications",
     "schemas",
 ]

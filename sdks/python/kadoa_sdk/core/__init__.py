@@ -6,7 +6,6 @@ from .exceptions import (
 )
 from .logger import (
     client,
-    crawl,
     create_logger,
     extraction,
     http,
@@ -30,7 +29,6 @@ __all__ = [
     "extraction",
     "http",
     "workflow",
-    "crawl",
     "notifications",
     "schemas",
     "Realtime",

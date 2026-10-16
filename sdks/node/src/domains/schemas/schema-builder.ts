@@ -3,7 +3,7 @@ import { KadoaSdkException } from "../../runtime/exceptions";
 import type { DataType, RawFormat } from "../extraction/extraction.acl";
 import type { Category, FieldExample, SchemaField } from "./schemas.acl";
 
-export type { FieldExample, Category };
+export type { Category, FieldExample };
 
 const RAW_HELPER_FIELD_CONFIG = {
   HTML: {
