@@ -12,7 +12,6 @@ export const logger = {
   extraction: createLogger("extraction"),
   http: createLogger("http"),
   workflow: createLogger("workflow"),
-  crawl: createLogger("crawl"),
   notifications: createLogger("notifications"),
   schemas: createLogger("schemas"),
   templates: createLogger("templates"),

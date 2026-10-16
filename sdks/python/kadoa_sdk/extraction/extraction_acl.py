@@ -1,6 +1,6 @@
 """Extraction/Workflows domain ACL.
 
-Wraps generated WorkflowsApi, CrawlApi requests/responses and normalizes types.
+Wraps generated WorkflowsApi requests/responses and normalizes types.
 Downstream code must import from this module instead of `openapi_client/**`.
 """
 
@@ -9,11 +9,6 @@ from __future__ import annotations
 from typing import TYPE_CHECKING, Any, Dict, List, Literal, Optional, Union
 
 from pydantic import BaseModel, ConfigDict, Field
-
-try:  # pragma: no cover - compatibility shim for generator rename
-    from openapi_client.api.crawler_api import CrawlerApi as CrawlApi  # type: ignore[attr-defined]
-except ImportError:  # pragma: no cover
-    from openapi_client.api.crawl_api import CrawlApi  # type: ignore[attr-defined]
 
 from openapi_client.api.workflows_api import WorkflowsApi
 from openapi_client.models.create_workflow_body import CreateWorkflowBody
@@ -46,7 +41,7 @@ if TYPE_CHECKING:
         SchemaResponseSchemaInner,
     )
 
-__all__ = ["WorkflowsApi", "CrawlApi"]
+__all__ = ["WorkflowsApi"]
 
 # ========================================
 # Enum Types
@@ -258,7 +253,6 @@ def __getattr__(name: str):
 
 __all__ = [
     "WorkflowsApi",
-    "CrawlApi",
     "WorkflowStateEnum",
     "WorkflowDisplayStateEnum",
     "JobStateEnum",

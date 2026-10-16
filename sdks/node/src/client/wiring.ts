@@ -4,7 +4,6 @@ import { v4 } from "uuid";
 import { ActivityService } from "../domains/activity/activity.service";
 import { AssistantService } from "../domains/assistant";
 import { ChangesService } from "../domains/changes/changes.service";
-import { type CrawlerDomain, createCrawlerDomain } from "../domains/crawler";
 import { DataQualityService } from "../domains/data-quality/data-quality.service";
 import { DataFetcherService } from "../domains/extraction/services/data-fetcher.service";
 import { ExtractionService } from "../domains/extraction/services/extraction.service";
@@ -91,7 +90,6 @@ export function createClientDomains(params: { client: KadoaClient }): {
   user: UserService;
   template: TemplatesService;
   variable: VariablesService;
-  crawler: CrawlerDomain;
   usage: UsageService;
   observability: ObservabilityService;
 } {
@@ -144,8 +142,6 @@ export function createClientDomains(params: { client: KadoaClient }): {
     channelSetupService,
   });
 
-  const crawler = createCrawlerDomain(client);
-
   return {
     activity: activityService,
     assistant: assistantService,
@@ -161,7 +157,6 @@ export function createClientDomains(params: { client: KadoaClient }): {
     user: userService,
     template: templatesService,
     variable: variablesService,
-    crawler,
     usage: usageService,
     observability: observabilityService,
   };

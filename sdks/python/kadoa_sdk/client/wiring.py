@@ -9,7 +9,6 @@ from ..notifications import (
     NotificationSetupService,
 )
 from ..user import UserService
-from .crawler_domain import CrawlerDomain
 from .notification_domain import NotificationDomain
 
 if TYPE_CHECKING:  # pragma: no cover
@@ -30,13 +29,3 @@ def create_notification_domain(client: "KadoaClient") -> NotificationDomain:
         settings=settings_service,
         setup=setup_service,
     )
-
-
-def create_crawler_domain(client: "KadoaClient") -> CrawlerDomain:
-    from ..crawler import CrawlerConfigService, CrawlerSessionService
-
-    config_service = CrawlerConfigService(client)
-    session_service = CrawlerSessionService(client)
-    return CrawlerDomain(config=config_service, session=session_service)
-
-
