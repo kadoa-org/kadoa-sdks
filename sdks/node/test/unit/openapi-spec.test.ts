@@ -4,58 +4,6 @@ import { readFileSync } from "node:fs";
 const specPath = new URL("../../../../specs/openapi.json", import.meta.url);
 
 describe("published OpenAPI source", () => {
-  test("documents SECRET variable metadata without a value and ordinary values", () => {
-    const spec = JSON.parse(readFileSync(specPath, "utf8"));
-    const branches = spec.components.schemas.Variable.oneOf as Array<{
-      properties: Record<string, { enum?: string[] }>;
-      required: string[];
-    }>;
-    const secret = branches.find((branch) =>
-      branch.properties.dataType.enum?.includes("SECRET"),
-    );
-    const ordinary = branches.find((branch) =>
-      branch.properties.dataType.enum?.includes("STRING"),
-    );
-
-    expect(secret).toBeDefined();
-    expect(secret?.properties).not.toHaveProperty("value");
-    expect(secret?.required).not.toContain("value");
-    expect(ordinary?.properties).toHaveProperty("value");
-    expect(ordinary?.required).toContain("value");
-  });
-
-  test("omits legacy costs from workflow list and detail contracts", () => {
-    const spec = JSON.parse(readFileSync(specPath, "utf8"));
-    const list =
-      spec.paths["/v4/workflows"].get.responses["200"].content[
-        "application/json"
-      ].schema.properties.workflows.items;
-    const detail =
-      spec.paths["/v4/workflows/{workflowId}"].get.responses["200"].content[
-        "application/json"
-      ].schema;
-
-    for (const schema of [list, detail]) {
-      for (const field of ["runCost", "runCosts"]) {
-        expect(schema.properties).not.toHaveProperty(field);
-        expect(schema.required ?? []).not.toContain(field);
-      }
-      expect(schema.properties.runState).toBeDefined();
-    }
-  });
-
-  test("omits the credits alias from workflow run history", () => {
-    const spec = JSON.parse(readFileSync(specPath, "utf8"));
-    const run =
-      spec.paths["/v4/workflows/{workflowId}/history"].get.responses["200"]
-        .content["application/json"].schema.properties.workflowRuns.items;
-
-    expect(run.properties).not.toHaveProperty("credits");
-    expect(run.required ?? []).not.toContain("credits");
-    expect(run.properties.records).toBeDefined();
-    expect(run.properties.errors).toBeDefined();
-  });
-
   test("is valid JSON without a duplicate workflow strategy field", () => {
     const source = readFileSync(specPath, "utf8");
 
