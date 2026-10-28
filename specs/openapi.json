@@ -14,186 +14,6 @@
     }
   ],
   "paths": {
-    "/v4/adhoc/{schemaId}": {
-      "post": {
-        "summary": "Extract data from a single webpage (Proxy to Scraper API)",
-        "description": "Instantly extracts data from a webpage using either a schema for structured data or markdown/html for unstructured content. This endpoint proxies requests to the scraper API.",
-        "tags": [
-          "Adhoc"
-        ],
-        "security": [
-          {
-            "ApiKeyAuth": []
-          }
-        ],
-        "parameters": [
-          {
-            "in": "path",
-            "name": "schemaId",
-            "required": true,
-            "schema": {
-              "type": "string"
-            },
-            "description": "Either a custom schema ID or one of the following special values:\n* `html` - Returns raw HTML of the page\n* `body` - Returns cleaned HTML body content\n* `markdown` - Returns content converted to markdown format\n"
-          }
-        ],
-        "requestBody": {
-          "content": {
-            "application/json": {
-              "schema": {
-                "type": "object",
-                "required": [
-                  "link"
-                ],
-                "properties": {
-                  "link": {
-                    "type": "string",
-                    "description": "The URL link to be scraped"
-                  },
-                  "location": {
-                    "type": "object",
-                    "properties": {
-                      "type": {
-                        "type": "string",
-                        "description": "The type of location, either auto or manual"
-                      },
-                      "isoCode": {
-                        "type": "string",
-                        "description": "The ISO code of the location, only required if type is manual. Available locations can be found on the locations api."
-                      }
-                    },
-                    "description": "The location object for the proxy"
-                  }
-                }
-              }
-            }
-          }
-        },
-        "responses": {
-          "200": {
-            "description": "Response object containing scraping data and request metadata",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "type": "object",
-                  "properties": {
-                    "status": {
-                      "type": "string",
-                      "description": "Status of the response (SUCCESS, NO_DATA, TIMEOUT, NETWORK_ERROR, ERROR)"
-                    },
-                    "link": {
-                      "type": "string",
-                      "description": "The URL that was scraped"
-                    },
-                    "location": {
-                      "type": "object",
-                      "description": "The location object used for the proxy"
-                    },
-                    "data": {
-                      "type": "object",
-                      "description": "Validated data after scraping and processing (null for NO_DATA, TIMEOUT, etc.)"
-                    },
-                    "screenshotUrl": {
-                      "type": "string",
-                      "description": "Path to the screenshot"
-                    },
-                    "requestTimeMs": {
-                      "type": "integer",
-                      "description": "The time taken to process the request in milliseconds"
-                    },
-                    "message": {
-                      "type": "string",
-                      "description": "Human-readable message explaining the result (present for error/timeout scenarios)"
-                    }
-                  }
-                }
-              }
-            }
-          },
-          "400": {
-            "description": "Bad Request, either due to missing 'link' or 'schemaId'",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "type": "object",
-                  "properties": {
-                    "error": {
-                      "type": "string"
-                    }
-                  }
-                }
-              }
-            }
-          },
-          "404": {
-            "description": "Adhoc config not found",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "type": "object",
-                  "properties": {
-                    "error": {
-                      "type": "string"
-                    }
-                  }
-                }
-              }
-            }
-          },
-          "429": {
-            "description": "Not enough credits",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "type": "object",
-                  "properties": {
-                    "error": {
-                      "type": "string"
-                    }
-                  }
-                }
-              }
-            }
-          },
-          "500": {
-            "description": "Internal server error (rare - most failures return 200 with appropriate status)",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "type": "object",
-                  "properties": {
-                    "status": {
-                      "type": "string",
-                      "description": "Status of the response (ERROR)"
-                    },
-                    "link": {
-                      "type": "string",
-                      "description": "The URL that was being scraped"
-                    },
-                    "location": {
-                      "type": "object",
-                      "description": "The location object used for the proxy"
-                    },
-                    "requestTimeMs": {
-                      "type": "integer",
-                      "description": "The time taken to process the request in milliseconds"
-                    },
-                    "screenshotUrl": {
-                      "type": "string",
-                      "description": "Path to the screenshot"
-                    },
-                    "message": {
-                      "type": "string",
-                      "description": "Error message"
-                    }
-                  }
-                }
-              }
-            }
-          }
-        }
-      }
-    },
     "/v4/changes": {
       "get": {
         "summary": "Get all data changes",
@@ -353,12 +173,12 @@
                                         "description": "Field name"
                                       },
                                       "value": {
-                                        "nullable": true,
-                                        "description": "Current field value. Any JSON type, matching the workflow schema field (string, number, boolean, object such as a money value, array, or null)."
+                                        "type": "string",
+                                        "description": "Current field value"
                                       },
                                       "previousValue": {
-                                        "nullable": true,
-                                        "description": "Previous field value, only present for the changed type. Same types as `value`."
+                                        "type": "string",
+                                        "description": "Previous field value (only present for changed type)"
                                       }
                                     }
                                   }
@@ -548,12 +368,12 @@
                                   "description": "Field name"
                                 },
                                 "value": {
-                                  "nullable": true,
-                                  "description": "Current field value. Any JSON type, matching the workflow schema field (string, number, boolean, object such as a money value, array, or null)."
+                                  "type": "string",
+                                  "description": "Current field value"
                                 },
                                 "previousValue": {
-                                  "nullable": true,
-                                  "description": "Previous field value, only present for the changed type. Same types as `value`."
+                                  "type": "string",
+                                  "description": "Previous field value (only present for changed type)"
                                 }
                               }
                             }
@@ -1713,7 +1533,7 @@
     "/v4/workflows/bulk": {
       "post": {
         "summary": "Perform bulk operations on multiple workflows",
-        "description": "Execute actions on multiple workflows at once. Best-effort processing - each workflow is processed independently. The 'approve' action approves preview data for workflows in PREVIEW state.",
+        "description": "Execute actions on multiple workflows at once. Best-effort processing - each workflow is processed independently. The 'approve' action approves preview data for workflows in PREVIEW state. The 'stop' action cancels each workflow's running job without changing its schedule.",
         "tags": [
           "Workflows"
         ],
@@ -1751,6 +1571,7 @@
                       "run",
                       "pause",
                       "resume",
+                      "stop",
                       "delete",
                       "approve",
                       "assignTags"
@@ -1800,7 +1621,11 @@
                           },
                           "jobId": {
                             "type": "string",
-                            "description": "Job ID (for run action only)"
+                            "description": "Job ID of the started run (run action, or approve when previewRestarted)"
+                          },
+                          "previewRestarted": {
+                            "type": "boolean",
+                            "description": "Approve found the preview out of date and started a new preview run (jobId) instead; the workflow stays in PREVIEW."
                           }
                         }
                       }
@@ -1812,10 +1637,15 @@
                           "type": "integer"
                         },
                         "succeeded": {
-                          "type": "integer"
+                          "type": "integer",
+                          "description": "Workflows the action was applied to; excludes restarted previews"
                         },
                         "failed": {
                           "type": "integer"
+                        },
+                        "previewRestarted": {
+                          "type": "integer",
+                          "description": "Approvals that started a new preview run instead of approving"
                         }
                       }
                     }
@@ -1935,7 +1765,6 @@
                       "enum": [
                         "COMPLIANCE_REVIEW",
                         "HARD_FAIL",
-                        "BLOCKED",
                         "TRANSFORMATION_REPAIR_REQUIRED",
                         "MINIMUM_HUMAN_APPROVALS",
                         "DATA_QUALITY_SCHEMA_ADHERENCE",
@@ -2149,6 +1978,10 @@
                         }
                       }
                     },
+                    "runCosts": {
+                      "type": "number",
+                      "description": "Cost of the last job run in credits"
+                    },
                     "runState": {
                       "type": "string",
                       "enum": [
@@ -2203,18 +2036,6 @@
                         }
                       }
                     },
-                    "maxDepth": {
-                      "type": "integer",
-                      "minimum": 1,
-                      "maximum": 200,
-                      "description": "Maximum crawl depth (default: 50, max: 200)."
-                    },
-                    "maxPages": {
-                      "type": "integer",
-                      "minimum": 1,
-                      "maximum": 100000,
-                      "description": "Maximum pages to crawl (default: 10,000, max: 100,000)."
-                    },
                     "schema": {
                       "type": "array",
                       "items": {
@@ -2258,6 +2079,52 @@
                       },
                       "description": "Extraction schema fields"
                     },
+                    "transformation": {
+                      "type": "object",
+                      "nullable": true,
+                      "description": "The workflow's transformation: the input fields it reads as context and the output fields it adds or modifies, each with a one-sentence customer summary. Null when the workflow has no transformation.",
+                      "properties": {
+                        "contextFields": {
+                          "type": "array",
+                          "items": {
+                            "type": "string"
+                          },
+                          "description": "Input fields the transformation reads as mapping context. Absent when the step reads the full row."
+                        },
+                        "fields": {
+                          "type": "array",
+                          "items": {
+                            "type": "object",
+                            "properties": {
+                              "name": {
+                                "type": "string"
+                              },
+                              "summary": {
+                                "type": "string",
+                                "nullable": true
+                              },
+                              "type": {
+                                "type": "string",
+                                "enum": [
+                                  "STRING",
+                                  "NUMBER",
+                                  "BOOLEAN",
+                                  "DATE",
+                                  "DATETIME",
+                                  "CURRENCY",
+                                  "MONEY",
+                                  "IMAGE",
+                                  "LINK",
+                                  "OBJECT",
+                                  "ARRAY"
+                                ],
+                                "description": "Field data type"
+                              }
+                            }
+                          }
+                        }
+                      }
+                    },
                     "entity": {
                       "type": "string",
                       "description": "Canonical extracted entity name"
@@ -2266,10 +2133,6 @@
                       "type": "object",
                       "additionalProperties": true,
                       "description": "Canonical extraction intent for Assistant-built workflows"
-                    },
-                    "dataStale": {
-                      "type": "boolean",
-                      "description": "Whether batch workflow data predates the current canonical configuration/build"
                     },
                     "isSchemaEditable": {
                       "type": "boolean",
@@ -2282,48 +2145,6 @@
                     "additionalData": {
                       "type": "object",
                       "description": "Additional static data for the workflow"
-                    },
-                    "dataValidation": {
-                      "type": "object",
-                      "description": "Data validation configuration",
-                      "properties": {
-                        "enabled": {
-                          "type": "boolean",
-                          "description": "Whether data validation is enabled"
-                        },
-                        "ruleCounts": {
-                          "type": "object",
-                          "description": "Counts of validation rules by status",
-                          "properties": {
-                            "enabled": {
-                              "type": "integer",
-                              "description": "Number of enabled validation rules"
-                            },
-                            "disabled": {
-                              "type": "integer",
-                              "description": "Number of disabled validation rules"
-                            },
-                            "preview": {
-                              "type": "integer",
-                              "description": "Number of preview validation rules"
-                            }
-                          }
-                        }
-                      }
-                    },
-                    "validationStatistics": {
-                      "type": "object",
-                      "description": "Validation statistics",
-                      "properties": {
-                        "count": {
-                          "type": "number",
-                          "description": "Overall validation score"
-                        },
-                        "change": {
-                          "type": "number",
-                          "description": "Change in validation score since last validation"
-                        }
-                      }
                     },
                     "notificationConfig": {
                       "type": "object",
@@ -2433,7 +2254,7 @@
                         }
                       ],
                       "nullable": true,
-                      "description": "Customer-safe extraction strategy for custom SCRIPT workflows without an Assistant build. Omitted for Assistant-owned workflows, whose current strategy is available from the Agent strategy endpoint."
+                      "description": "Customer-safe extraction strategy: from workflow metadata for custom SCRIPT workflows, else from the latest completed build. Suppressed while an Assistant setup session is pollable — use the Agent strategy endpoint then."
                     },
                     "assistantSessionId": {
                       "type": "string",
@@ -2448,6 +2269,32 @@
                     "assistantEligible": {
                       "type": "boolean",
                       "description": "True when this workflow's lane supports the assistant (SHELLY_SCRIPT or SHELLY_REAL_TIME_SCRIPT). Independent of assistantSessionId; combine with !assistantSessionId for start-vs-continue."
+                    },
+                    "assistantState": {
+                      "$ref": "#/components/schemas/WorkflowAssistantState"
+                    },
+                    "presentation": {
+                      "$ref": "#/components/schemas/WorkflowPresentation"
+                    },
+                    "execution": {
+                      "$ref": "#/components/schemas/WorkflowExecutionState"
+                    },
+                    "availableActions": {
+                      "$ref": "#/components/schemas/WorkflowAvailableActions"
+                    },
+                    "workspaceActivity": {
+                      "type": "string",
+                      "enum": [
+                        "idle",
+                        "assistant",
+                        "repair"
+                      ],
+                      "description": "Current workspace execution lane, independent of preview readiness."
+                    },
+                    "assistantFinishedAt": {
+                      "type": "string",
+                      "format": "date-time",
+                      "nullable": true
                     },
                     "sessionStatus": {
                       "type": "string",
@@ -2744,6 +2591,82 @@
         }
       }
     },
+    "/v4/workflows/{workflowId}/connectors": {
+      "get": {
+        "summary": "List destinations delivering this workflow's results",
+        "description": "Returns the team's destinations that deliver this workflow after each run. Only deliverable destinations are listed (enabled, verified, not revoked).",
+        "tags": [
+          "Workflows"
+        ],
+        "parameters": [
+          {
+            "name": "workflowId",
+            "in": "path",
+            "required": true,
+            "description": "The ID of the workflow",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "security": [
+          {
+            "ApiKeyAuth": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Destinations delivering this workflow",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "connectors": {
+                      "type": "array",
+                      "items": {
+                        "type": "object",
+                        "properties": {
+                          "name": {
+                            "type": "string"
+                          },
+                          "provider": {
+                            "type": "string",
+                            "enum": [
+                              "s3",
+                              "gcs",
+                              "snowflake",
+                              "databricks",
+                              "sftp"
+                            ]
+                          },
+                          "destination": {
+                            "type": "string",
+                            "description": "Display-safe delivery destination (bucket URI, SFTP host, warehouse share). Contains no credentials."
+                          },
+                          "formats": {
+                            "type": "array",
+                            "items": {
+                              "type": "string"
+                            }
+                          }
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "401": {
+            "description": "Unauthorized"
+          },
+          "404": {
+            "description": "Workflow not found"
+          }
+        }
+      }
+    },
     "/v4/workflows/{workflowId}/data": {
       "get": {
         "summary": "Get workflow data by ID",
@@ -2875,16 +2798,6 @@
               "type": "string"
             },
             "example": "id1,id2,id3"
-          },
-          {
-            "name": "includeAnomalies",
-            "in": "query",
-            "required": false,
-            "description": "Include validation anomalies for each row in the response",
-            "schema": {
-              "type": "boolean",
-              "default": false
-            }
           },
           {
             "name": "download",
@@ -3544,6 +3457,14 @@
           },
           {
             "in": "query",
+            "name": "runId",
+            "schema": {
+              "type": "string"
+            },
+            "description": "Look up one run belonging to this workflow, independently of pagination"
+          },
+          {
+            "in": "query",
             "name": "status",
             "required": false,
             "schema": {
@@ -3661,6 +3582,23 @@
                                 }
                               }
                             }
+                          },
+                          "credits": {
+                            "type": "number",
+                            "description": "Number of credits used for this workflow run"
+                          },
+                          "startedBy": {
+                            "type": "string",
+                            "nullable": true,
+                            "enum": [
+                              "SCHEDULE",
+                              "DASHBOARD",
+                              "API",
+                              "WORKFLOW_TRIGGER",
+                              "ASSISTANT",
+                              "KADOA"
+                            ],
+                            "description": "What started the run. API covers the API, SDKs, MCP, and CLI. KADOA means Kadoa started it. Null when the origin was not recorded."
                           }
                         }
                       }
@@ -3848,6 +3786,16 @@
                     "error",
                     "message"
                   ]
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "422",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SourcesMultipleSitesError"
                 }
               }
             }
@@ -4044,19 +3992,40 @@
           {
             "name": "statusFilters",
             "in": "query",
-            "description": "Filter by dashboard category. Categories are group:attention, group:working, group:support, group:failed, group:active, group:complete, and group:paused. Accepts repeated params, comma-separated values, or a JSON array.",
+            "description": "Filter by dashboard category. group:attention returns the workflows shown under \"Needs your attention\" in the dashboard, which is where the requesting user must reply to the Assistant or approve preview data. Accepts repeated params, comma-separated values, or a JSON array. The API also accepts dashboard-internal composite values sent by the Kadoa dashboard; those are not part of the public contract and may change.",
             "required": false,
             "schema": {
               "type": "array",
               "items": {
-                "type": "string"
+                "type": "string",
+                "enum": [
+                  "group:attention",
+                  "group:working",
+                  "group:support",
+                  "group:failed",
+                  "group:active",
+                  "group:complete",
+                  "group:paused"
+                ]
               }
+            }
+          },
+          {
+            "name": "view",
+            "in": "query",
+            "description": "Use dashboard for a compact list without schema, notificationConfig, additionalData, or monitored_fields. Includes summaryOnly, hasPrompt, and hasSchema flags. Omit for the full list representation. CSV exports are unchanged.",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "enum": [
+                "dashboard"
+              ]
             }
           },
           {
             "name": "groupWindows",
             "in": "query",
-            "description": "Dashboard-only grouped list mode. JSON object mapping expanded dashboard groups to an offset and batch limit. Omitted groups return counts but no workflow rows. The response includes groupPagination.",
+            "description": "Dashboard-only grouped list mode. JSON object mapping expanded dashboard groups to an offset and batch limit. Omitted groups return counts but no workflow rows. The response includes groupPagination. Besides the status groups, the \"pinned\" group holds the workflows the requesting user pinned, whatever their status.",
             "required": false,
             "schema": {
               "type": "string"
@@ -4240,7 +4209,6 @@
                             "enum": [
                               "COMPLIANCE_REVIEW",
                               "HARD_FAIL",
-                              "BLOCKED",
                               "TRANSFORMATION_REPAIR_REQUIRED",
                               "MINIMUM_HUMAN_APPROVALS",
                               "DATA_QUALITY_SCHEMA_ADHERENCE",
@@ -4335,10 +4303,6 @@
                             "nullable": true,
                             "description": "Most recent persisted customer-visible data change for a real-time workflow"
                           },
-                          "dataStale": {
-                            "type": "boolean",
-                            "description": "Whether published batch Assistant data is stale versus current config or build. Always false for unsupported workflow modes and when no confirmed snapshot exists."
-                          },
                           "assistantEligible": {
                             "type": "boolean",
                             "description": "Whether this workflow mode supports the workflow Assistant."
@@ -4352,6 +4316,32 @@
                             "type": "string",
                             "nullable": true,
                             "description": "Most recent customer-facing Assistant thread within assistantSessionId."
+                          },
+                          "assistantState": {
+                            "$ref": "#/components/schemas/WorkflowAssistantState"
+                          },
+                          "presentation": {
+                            "$ref": "#/components/schemas/WorkflowPresentation"
+                          },
+                          "execution": {
+                            "$ref": "#/components/schemas/WorkflowExecutionState"
+                          },
+                          "availableActions": {
+                            "$ref": "#/components/schemas/WorkflowAvailableActions"
+                          },
+                          "workspaceActivity": {
+                            "type": "string",
+                            "enum": [
+                              "idle",
+                              "assistant",
+                              "repair"
+                            ],
+                            "description": "Current workspace execution lane, independent of preview readiness."
+                          },
+                          "assistantFinishedAt": {
+                            "type": "string",
+                            "format": "date-time",
+                            "nullable": true
                           },
                           "sessionStatus": {
                             "type": "string",
@@ -4432,6 +4422,10 @@
                             },
                             "description": "Scraping location configuration"
                           },
+                          "runCosts": {
+                            "type": "number",
+                            "description": "Cost of the last job run in credits"
+                          },
                           "runState": {
                             "type": "string",
                             "enum": [
@@ -4504,18 +4498,6 @@
                                 }
                               }
                             }
-                          },
-                          "maxDepth": {
-                            "type": "integer",
-                            "minimum": 1,
-                            "maximum": 200,
-                            "description": "Maximum crawl depth (default: 50, max: 200)."
-                          },
-                          "maxPages": {
-                            "type": "integer",
-                            "minimum": 1,
-                            "maximum": 100000,
-                            "description": "Maximum pages to crawl (default: 10,000, max: 100,000)."
                           },
                           "schema": {
                             "type": "array",
@@ -4618,46 +4600,6 @@
                                     }
                                   },
                                   "additionalProperties": true
-                                }
-                              }
-                            }
-                          },
-                          "dataValidation": {
-                            "type": "object",
-                            "description": "Data validation configuration",
-                            "properties": {
-                              "enabled": {
-                                "type": "boolean",
-                                "description": "Whether data validation is enabled for the workflow"
-                              }
-                            }
-                          },
-                          "validationStatistics": {
-                            "type": "object",
-                            "description": "Validation statistics for the workflow",
-                            "properties": {
-                              "total": {
-                                "type": "object",
-                                "properties": {
-                                  "count": {
-                                    "type": "number",
-                                    "description": "Overall validation score"
-                                  },
-                                  "change": {
-                                    "type": "number",
-                                    "description": "Change in validation score since last validation"
-                                  }
-                                }
-                              },
-                              "byRule": {
-                                "type": "object",
-                                "properties": {
-                                  "ruleName": {
-                                    "type": "string"
-                                  },
-                                  "count": {
-                                    "type": "number"
-                                  }
                                 }
                               }
                             }
@@ -5242,12 +5184,9 @@
                               "type": "object",
                               "description": "Metric details, present when status is OK.",
                               "properties": {
-                                "score": {
-                                  "type": "number",
-                                  "minimum": 0,
-                                  "maximum": 100,
-                                  "deprecated": true,
-                                  "description": "Deprecated & scheduled for removal."
+                                "issueCount": {
+                                  "type": "integer",
+                                  "description": "Number of issues this metric found. 0 means the metric passed."
                                 },
                                 "actualRowCount": {
                                   "type": "integer",
@@ -5330,12 +5269,9 @@
                               "type": "object",
                               "description": "Metric details, present when status is OK.",
                               "properties": {
-                                "score": {
-                                  "type": "number",
-                                  "minimum": 0,
-                                  "maximum": 100,
-                                  "deprecated": true,
-                                  "description": "Deprecated & scheduled for removal."
+                                "issueCount": {
+                                  "type": "integer",
+                                  "description": "Number of issues this metric found. 0 means the metric passed."
                                 },
                                 "ruleViolationCount": {
                                   "type": "integer",
@@ -5353,11 +5289,6 @@
                                     "properties": {
                                       "name": {
                                         "type": "string"
-                                      },
-                                      "score": {
-                                        "type": "number",
-                                        "deprecated": true,
-                                        "description": "Deprecated & scheduled for removal."
                                       },
                                       "rulesConfigured": {
                                         "type": "boolean"
@@ -5402,12 +5333,9 @@
                               "type": "object",
                               "description": "Metric details, present when status is OK.",
                               "properties": {
-                                "score": {
-                                  "type": "number",
-                                  "minimum": 0,
-                                  "maximum": 100,
-                                  "deprecated": true,
-                                  "description": "Deprecated & scheduled for removal."
+                                "issueCount": {
+                                  "type": "integer",
+                                  "description": "Number of issues this metric found. 0 means the metric passed."
                                 },
                                 "columns": {
                                   "type": "array",
@@ -5417,11 +5345,6 @@
                                     "properties": {
                                       "name": {
                                         "type": "string"
-                                      },
-                                      "score": {
-                                        "type": "number",
-                                        "deprecated": true,
-                                        "description": "Deprecated & scheduled for removal."
                                       },
                                       "flaggedPercent": {
                                         "type": "number"
@@ -5519,6 +5442,25 @@
               }
             }
           },
+          "202": {
+            "description": "The preview no longer reflects the current settings, so approving it started a new preview run instead. Approve the new preview once it finishes.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "message": {
+                      "type": "string"
+                    },
+                    "jobId": {
+                      "type": "string",
+                      "description": "The new preview run"
+                    }
+                  }
+                }
+              }
+            }
+          },
           "400": {
             "description": "Cannot resume workflow in current state"
           },
@@ -5566,6 +5508,10 @@
                     "type": "number",
                     "description": "Optional limit for the number of records to process",
                     "example": 100
+                  },
+                  "preview": {
+                    "type": "boolean",
+                    "description": "Rerun the preview of a PREVIEW-state workflow instead of starting a production run"
                   }
                 }
               }
@@ -5622,7 +5568,7 @@
             "description": "x-api-key missing or not authorized"
           },
           "409": {
-            "description": "Workflow lifecycle conflict",
+            "description": "Workflow lifecycle conflict. Pass preview=true to rerun a stale preview instead.",
             "content": {
               "application/json": {
                 "schema": {
@@ -5729,7 +5675,7 @@
             }
           },
           "400": {
-            "description": "Invalid date or workflowId missing"
+            "description": "Invalid date, workflowId missing, or workflow has no schedule"
           },
           "401": {
             "description": "x-api-key missing or not authorized"
@@ -5947,6 +5893,135 @@
         }
       }
     },
+    "/v4/workflows/{workflowId}/sql": {
+      "post": {
+        "summary": "Generate a DuckDB query from a natural-language request",
+        "description": "Generates SQL without executing it. Requires read access to the workflow. Send the selected dataset's columns and up to five sample rows. Ambiguous requests use reasonable defaults explained in the response. A null SQL result explains why the request cannot be answered.",
+        "tags": [
+          "Workflows"
+        ],
+        "security": [
+          {
+            "ApiKeyAuth": []
+          }
+        ],
+        "parameters": [
+          {
+            "in": "path",
+            "name": "workflowId",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "required": [
+                  "prompt",
+                  "columns",
+                  "sampleRows"
+                ],
+                "properties": {
+                  "prompt": {
+                    "type": "string",
+                    "minLength": 1,
+                    "maxLength": 2000
+                  },
+                  "columns": {
+                    "type": "array",
+                    "minItems": 1,
+                    "maxItems": 200,
+                    "items": {
+                      "type": "object",
+                      "required": [
+                        "name",
+                        "type"
+                      ],
+                      "properties": {
+                        "name": {
+                          "type": "string",
+                          "maxLength": 256
+                        },
+                        "type": {
+                          "type": "string",
+                          "maxLength": 256
+                        }
+                      }
+                    }
+                  },
+                  "sampleRows": {
+                    "type": "array",
+                    "maxItems": 5,
+                    "items": {
+                      "type": "array",
+                      "maxItems": 200,
+                      "items": {
+                        "type": "string",
+                        "maxLength": 500
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Generated SQL with assumptions, or an explanation of missing data or unsupported requests",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "required": [
+                    "sql",
+                    "explanation"
+                  ],
+                  "properties": {
+                    "sql": {
+                      "type": "string",
+                      "nullable": true
+                    },
+                    "explanation": {
+                      "type": "string"
+                    }
+                  }
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Invalid request"
+          },
+          "401": {
+            "description": "Unauthorized"
+          },
+          "403": {
+            "description": "Access denied"
+          },
+          "404": {
+            "description": "Workflow not found"
+          },
+          "413": {
+            "description": "Query context is too large"
+          },
+          "429": {
+            "description": "Too many SQL requests for this team"
+          },
+          "502": {
+            "description": "SQL generation failed"
+          },
+          "503": {
+            "description": "SQL generation is not configured"
+          }
+        }
+      }
+    },
     "/v4/workflows/{workflowId}/stop": {
       "put": {
         "summary": "Stop a running workflow",
@@ -6120,7 +6195,7 @@
                       "workflow_recovered",
                       "workflow_sample_finished",
                       "workflow_data_change",
-                      "workflow_validation_anomaly_change",
+                      "workflow_data_quality_change",
                       "workflow_health_degraded"
                     ],
                     "description": "Event type that triggers the target workflow"
@@ -6294,7 +6369,7 @@
                       "workflow_recovered",
                       "workflow_sample_finished",
                       "workflow_data_change",
-                      "workflow_validation_anomaly_change",
+                      "workflow_data_quality_change",
                       "workflow_health_degraded"
                     ]
                   },
@@ -6795,6 +6870,110 @@
         }
       }
     },
+    "/v5/agent/data/{sessionId}/builds": {
+      "get": {
+        "operationId": "v5AgentBuilds",
+        "summary": "List extraction script builds for an Assistant session",
+        "description": "Requires the ACCESS_SOURCE_CODE feature flag. Returns versions/statuses only, newest first.",
+        "tags": [
+          "Agent"
+        ],
+        "parameters": [
+          {
+            "name": "sessionId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
+          {
+            "name": "limit",
+            "in": "query",
+            "schema": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 100,
+              "default": 20
+            }
+          },
+          {
+            "name": "cursor",
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Build history page",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AgentBuildsResponse"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Feature flag not enabled for the account"
+          },
+          "404": {
+            "description": "Session not found"
+          }
+        }
+      }
+    },
+    "/v5/agent/data/{sessionId}/builds/{buildId}/input": {
+      "get": {
+        "operationId": "v5AgentBuildInput",
+        "summary": "Get the extraction script source of one build",
+        "description": "Requires the ACCESS_SOURCE_CODE feature flag. Returns the script source, no file names.",
+        "tags": [
+          "Agent"
+        ],
+        "parameters": [
+          {
+            "name": "sessionId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
+          {
+            "name": "buildId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Build script source",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AgentBuildInputResponse"
+                }
+              }
+            }
+          },
+          "403": {
+            "description": "Feature flag not enabled for the account"
+          },
+          "404": {
+            "description": "Build not found for this session/team"
+          }
+        }
+      }
+    },
     "/v5/agent/{sessionId}": {
       "delete": {
         "operationId": "v5AgentDeleteSession",
@@ -7038,12 +7217,12 @@
                                         "description": "Field name"
                                       },
                                       "value": {
-                                        "nullable": true,
-                                        "description": "Current field value. Any JSON type, matching the workflow schema field (string, number, boolean, object such as a money value, array, or null)."
+                                        "type": "string",
+                                        "description": "Current field value"
                                       },
                                       "previousValue": {
-                                        "nullable": true,
-                                        "description": "Previous field value, only present for the changed type. Same types as `value`."
+                                        "type": "string",
+                                        "description": "Previous field value (only present for changed type)"
                                       }
                                     }
                                   }
@@ -7217,12 +7396,12 @@
                                   "description": "Field name"
                                 },
                                 "value": {
-                                  "nullable": true,
-                                  "description": "Current field value. Any JSON type, matching the workflow schema field (string, number, boolean, object such as a money value, array, or null)."
+                                  "type": "string",
+                                  "description": "Current field value"
                                 },
                                 "previousValue": {
-                                  "nullable": true,
-                                  "description": "Previous field value, only present for the changed type. Same types as `value`."
+                                  "type": "string",
+                                  "description": "Previous field value (only present for changed type)"
                                 }
                               }
                             }
@@ -7392,62 +7571,6 @@
             "source": "import requests\n\nurl = \"https://api.kadoa.com/v5/changes/123456789\"\nheaders = {\n    \"x-api-key\": \"YOUR_API_KEY\"\n}\n\nresponse = requests.get(url, headers=headers)\ndata = response.json()\nprint(data)\n"
           }
         ]
-      }
-    },
-    "/v5/compliance/workflows": {
-      "get": {
-        "summary": "Export workflows for compliance (CSV format)",
-        "description": "Returns a CSV export of workflows for compliance officers.\nIncludes deleted workflows and supports time-based filtering.\nAccess restricted to compliance officers only.\n",
-        "tags": [
-          "Compliance"
-        ],
-        "parameters": [
-          {
-            "name": "timeFilter",
-            "in": "query",
-            "required": false,
-            "description": "Filter workflows by creation time",
-            "schema": {
-              "type": "string",
-              "enum": [
-                "last-week",
-                "last-month",
-                "all-time"
-              ],
-              "default": "all-time"
-            }
-          }
-        ],
-        "security": [
-          {
-            "ApiKeyAuth": []
-          },
-          {
-            "BearerAuth": []
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "CSV file with workflows",
-            "content": {
-              "text/csv": {
-                "schema": {
-                  "type": "string",
-                  "format": "binary"
-                }
-              }
-            }
-          },
-          "401": {
-            "description": "Unauthorized - Authentication required"
-          },
-          "403": {
-            "description": "Forbidden - Compliance officer access required"
-          },
-          "500": {
-            "description": "Internal server error"
-          }
-        }
       }
     },
     "/v5/notifications/workflows/{workflowId}/changes/{changeId}/csv": {
@@ -9565,7 +9688,7 @@
     },
     "/v5/workspaces/{workspaceId}/details": {
       "get": {
-        "summary": "Get workspace details (supports users, teams, and organizations)",
+        "summary": "Get workspace details (supports teams and organizations)",
         "tags": [
           "Workspaces"
         ],
@@ -9574,7 +9697,7 @@
             "name": "workspaceId",
             "in": "path",
             "required": true,
-            "description": "Workspace ID (user, team, or organization)",
+            "description": "Workspace ID (team or organization)",
             "schema": {
               "type": "string",
               "format": "uuid"
@@ -9626,7 +9749,6 @@
                         "type": {
                           "type": "string",
                           "enum": [
-                            "user",
                             "team",
                             "organization"
                           ],
@@ -9635,17 +9757,6 @@
                         "name": {
                           "type": "string",
                           "description": "Workspace name"
-                        },
-                        "email": {
-                          "type": "string",
-                          "description": "User email (only for user type)"
-                        },
-                        "featureFlags": {
-                          "type": "array",
-                          "items": {
-                            "type": "string"
-                          },
-                          "description": "User feature flags (only for user type)"
                         },
                         "description": {
                           "type": "string",
@@ -9726,8 +9837,8 @@
     },
     "/v5/workspaces/{workspaceId}/monthly-active": {
       "get": {
-        "summary": "Compatibility activity history for teams and organizations",
-        "description": "Today's active value uses the current enabled-schedule or realtime billing rule. Older points retain the previous run-activity approximation. active35 is the deprecated rolling comparison.\n",
+        "summary": "Recorded usage and historical Active workflow estimates",
+        "description": "Historical values come from daily usage snapshots; unavailable values are null. activeWorkflows counts ACTIVE-state workflows, while active and activeSlots count billable usage. Active billing counts real-time workflows or workflows on an enabled schedule. Today's values are computed live. active35 is retired and always null. estimatedActive is a separate display-only workflow estimate; recorded values and slot weights are unchanged. activeEstimateSource identifies calibrated historical ACTIVE counts or bounded interpolation.\n",
         "tags": [
           "Workspaces"
         ],
@@ -9778,7 +9889,7 @@
         ],
         "responses": {
           "200": {
-            "description": "Monthly-active daily history retrieved successfully",
+            "description": "Daily workflow and slot usage retrieved successfully",
             "content": {
               "application/json": {
                 "schema": {
@@ -9795,16 +9906,38 @@
                           },
                           "active": {
                             "type": "integer",
-                            "description": "Compatibility activity count; only today's point matches current Active billing"
+                            "nullable": true,
+                            "description": "Recorded real-time or enabled scheduled workflow count; null when billing snapshots are unavailable"
+                          },
+                          "activeWorkflows": {
+                            "type": "integer",
+                            "nullable": true,
+                            "description": "Recorded ACTIVE-state workflow count; null for missing snapshots"
                           },
                           "activeSlots": {
                             "type": "number",
                             "format": "float",
-                            "description": "Weighted slot usage for active"
+                            "nullable": true,
+                            "description": "Recorded weighted billable slot usage; null when exact history is unavailable"
                           },
                           "active35": {
                             "type": "integer",
-                            "description": "Distinct workflows that ran in the 35 days ending this day, plus live real-time monitors"
+                            "nullable": true,
+                            "description": "Retired trailing-35-day comparison; always null"
+                          },
+                          "estimatedActive": {
+                            "type": "integer",
+                            "nullable": true,
+                            "description": "Display-only Active billing workflow estimate for missing history; null for recorded days or insufficient evidence"
+                          },
+                          "activeEstimateSource": {
+                            "type": "string",
+                            "nullable": true,
+                            "enum": [
+                              "historical_active",
+                              "interpolated"
+                            ],
+                            "description": "Estimate method; null when estimatedActive is null"
                           }
                         }
                       }
@@ -9834,8 +9967,8 @@
     },
     "/v5/workspaces/{workspaceId}/observability": {
       "get": {
-        "summary": "Get observability uptime metrics for a workspace",
-        "description": "Returns per-workflow uptime (successful runs / total runs) aggregated daily.",
+        "summary": "Get observability run metrics for a workspace",
+        "description": "Returns per-workflow reliability for enterprise workspaces over the last N UTC calendar days\nincluding today. The top level covers scheduled workflows (success rate, records delivered,\nmean time to recover, lifecycles) and the workspace's tickets. `realtime` covers\nrealtime monitors (measured uptime, incidents and current status, paused ones included) and\nis null when the workspace has none. Complete days come from a daily aggregate; today is\ncomputed live. Workflow lifecycles come from stored per-workflow milestones advanced with\nthe audit rows written since the nightly pass.\n",
         "tags": [
           "Workspaces"
         ],
@@ -9896,7 +10029,7 @@
             "description": "Unauthorized"
           },
           "404": {
-            "description": "Workspace not found"
+            "description": "Workspace not found or not an enterprise workspace"
           },
           "500": {
             "description": "Internal server error"
@@ -13126,14 +13259,10 @@
                     "properties": {
                       "id": {
                         "type": "string",
-                        "description": "Context ID for session persistence. Use workflow ID for convenience. Created automatically if it does not exist."
-                      },
-                      "persist": {
-                        "type": "boolean",
-                        "description": "Save browser state (cookies, localStorage) after scrape. Default: false"
+                        "description": "Sticky proxy session ID. Requests sharing an ID reuse the same proxy exit where the tier supports it."
                       }
                     },
-                    "description": "Session context for cookie persistence"
+                    "description": "Sticky proxy session"
                   },
                   "captureResponses": {
                     "type": "array",
@@ -13496,6 +13625,28 @@
                 "schema": {
                   "type": "object",
                   "properties": {
+                    "session": {
+                      "type": "object",
+                      "properties": {
+                        "id": {
+                          "type": "string"
+                        }
+                      },
+                      "required": [
+                        "id"
+                      ],
+                      "description": "Acknowledged browser-session handle; pass it on subsequent raw API calls."
+                    },
+                    "retryable": {
+                      "type": "boolean",
+                      "description": "Whether repeating this scrape is safe and useful; absence does not authorize retry"
+                    },
+                    "retryAfterMs": {
+                      "type": "integer",
+                      "minimum": 0,
+                      "maximum": 4294967295,
+                      "description": "Minimum delay before another scrape attempt, in milliseconds"
+                    },
                     "success": {
                       "type": "boolean",
                       "description": "Whether the scrape succeeded"
@@ -13627,6 +13778,11 @@
                           "format": "uuid",
                           "description": "Opaque request identifier for correlating scraper API and worker lifecycle diagnostics"
                         },
+                        "traceId": {
+                          "type": "string",
+                          "pattern": "^[0-9a-f]{32}$",
+                          "description": "Opaque trace identifier for retrieving sanitized scrape timing diagnostics when tracing is enabled"
+                        },
                         "totalDurationMs": {
                           "type": "number",
                           "description": "Total time including all retries in milliseconds"
@@ -13635,10 +13791,6 @@
                           "type": "string",
                           "nullable": true,
                           "description": "Context ID used or created, if context feature was used"
-                        },
-                        "contextPersisted": {
-                          "type": "boolean",
-                          "description": "Whether browser state was saved back to context"
                         },
                         "attempts": {
                           "type": "array",
@@ -13697,6 +13849,18 @@
                                 "type": "boolean",
                                 "description": "Whether this attempt succeeded"
                               },
+                              "provider": {
+                                "type": "string",
+                                "enum": [
+                                  "auto",
+                                  "curl-cffi",
+                                  "kurl",
+                                  "kadmium",
+                                  "scrape-ops",
+                                  "driver"
+                                ],
+                                "description": "Concrete provider used for this attempt"
+                              },
                               "error": {
                                 "type": "object",
                                 "properties": {
@@ -13710,6 +13874,7 @@
                                       "KYC_BLOCKED",
                                       "MAX_RETRIES_EXCEEDED",
                                       "NETWORK_ERROR",
+                                      "SCREENSHOT_TOO_LARGE",
                                       "DEADLINE_EXCEEDED"
                                     ],
                                     "description": "Error code"
@@ -13717,6 +13882,75 @@
                                   "message": {
                                     "type": "string",
                                     "description": "Human-readable error message"
+                                  },
+                                  "appCode": {
+                                    "type": "string",
+                                    "description": "Underlying backend application error code, when available"
+                                  },
+                                  "provider": {
+                                    "type": "string",
+                                    "enum": [
+                                      "auto",
+                                      "curl-cffi",
+                                      "kurl",
+                                      "kadmium",
+                                      "scrape-ops",
+                                      "driver"
+                                    ],
+                                    "description": "Concrete provider that produced the failure"
+                                  },
+                                  "cluster": {
+                                    "type": "string",
+                                    "description": "Cluster where the failure originated"
+                                  },
+                                  "cause": {
+                                    "type": "object",
+                                    "properties": {
+                                      "code": {
+                                        "type": "string",
+                                        "enum": [
+                                          "BOT_DETECTED",
+                                          "ACCESS_DENIED",
+                                          "TIMEOUT",
+                                          "JS_REQUIRED",
+                                          "KYC_BLOCKED",
+                                          "MAX_RETRIES_EXCEEDED",
+                                          "NETWORK_ERROR",
+                                          "SCREENSHOT_TOO_LARGE",
+                                          "DEADLINE_EXCEEDED"
+                                        ],
+                                        "description": "Error code"
+                                      },
+                                      "message": {
+                                        "type": "string",
+                                        "description": "Human-readable error message"
+                                      },
+                                      "appCode": {
+                                        "type": "string",
+                                        "description": "Underlying backend application error code, when available"
+                                      },
+                                      "provider": {
+                                        "type": "string",
+                                        "enum": [
+                                          "auto",
+                                          "curl-cffi",
+                                          "kurl",
+                                          "kadmium",
+                                          "scrape-ops",
+                                          "driver"
+                                        ],
+                                        "description": "Concrete provider that produced the failure"
+                                      },
+                                      "cluster": {
+                                        "type": "string",
+                                        "description": "Cluster where the failure originated"
+                                      }
+                                    },
+                                    "required": [
+                                      "code",
+                                      "message"
+                                    ],
+                                    "description": "Original failure when retries are exhausted"
                                   }
                                 },
                                 "required": [
@@ -13758,6 +13992,7 @@
                             "KYC_BLOCKED",
                             "MAX_RETRIES_EXCEEDED",
                             "NETWORK_ERROR",
+                            "SCREENSHOT_TOO_LARGE",
                             "DEADLINE_EXCEEDED"
                           ],
                           "description": "Error code"
@@ -13765,6 +14000,75 @@
                         "message": {
                           "type": "string",
                           "description": "Human-readable error message"
+                        },
+                        "appCode": {
+                          "type": "string",
+                          "description": "Underlying backend application error code, when available"
+                        },
+                        "provider": {
+                          "type": "string",
+                          "enum": [
+                            "auto",
+                            "curl-cffi",
+                            "kurl",
+                            "kadmium",
+                            "scrape-ops",
+                            "driver"
+                          ],
+                          "description": "Concrete provider that produced the failure"
+                        },
+                        "cluster": {
+                          "type": "string",
+                          "description": "Cluster where the failure originated"
+                        },
+                        "cause": {
+                          "type": "object",
+                          "properties": {
+                            "code": {
+                              "type": "string",
+                              "enum": [
+                                "BOT_DETECTED",
+                                "ACCESS_DENIED",
+                                "TIMEOUT",
+                                "JS_REQUIRED",
+                                "KYC_BLOCKED",
+                                "MAX_RETRIES_EXCEEDED",
+                                "NETWORK_ERROR",
+                                "SCREENSHOT_TOO_LARGE",
+                                "DEADLINE_EXCEEDED"
+                              ],
+                              "description": "Error code"
+                            },
+                            "message": {
+                              "type": "string",
+                              "description": "Human-readable error message"
+                            },
+                            "appCode": {
+                              "type": "string",
+                              "description": "Underlying backend application error code, when available"
+                            },
+                            "provider": {
+                              "type": "string",
+                              "enum": [
+                                "auto",
+                                "curl-cffi",
+                                "kurl",
+                                "kadmium",
+                                "scrape-ops",
+                                "driver"
+                              ],
+                              "description": "Concrete provider that produced the failure"
+                            },
+                            "cluster": {
+                              "type": "string",
+                              "description": "Cluster where the failure originated"
+                            }
+                          },
+                          "required": [
+                            "code",
+                            "message"
+                          ],
+                          "description": "Original failure when retries are exhausted"
                         }
                       },
                       "required": [
@@ -13797,6 +14101,21 @@
                       ]
                     },
                     "message": {
+                      "type": "string"
+                    },
+                    "code": {
+                      "type": "string"
+                    },
+                    "appCode": {
+                      "type": "string"
+                    },
+                    "traceId": {
+                      "type": "string"
+                    },
+                    "provider": {
+                      "type": "string"
+                    },
+                    "cluster": {
                       "type": "string"
                     },
                     "details": {
@@ -13848,6 +14167,21 @@
                     "message": {
                       "type": "string"
                     },
+                    "code": {
+                      "type": "string"
+                    },
+                    "appCode": {
+                      "type": "string"
+                    },
+                    "traceId": {
+                      "type": "string"
+                    },
+                    "provider": {
+                      "type": "string"
+                    },
+                    "cluster": {
+                      "type": "string"
+                    },
                     "details": {
                       "type": "object",
                       "additionalProperties": {
@@ -13879,6 +14213,21 @@
                     "message": {
                       "type": "string"
                     },
+                    "code": {
+                      "type": "string"
+                    },
+                    "appCode": {
+                      "type": "string"
+                    },
+                    "traceId": {
+                      "type": "string"
+                    },
+                    "provider": {
+                      "type": "string"
+                    },
+                    "cluster": {
+                      "type": "string"
+                    },
                     "details": {
                       "type": "object",
                       "additionalProperties": {
@@ -13895,32 +14244,54 @@
             }
           },
           "500": {
-            "description": "500",
+            "description": "Internal server error",
             "content": {
               "application/json": {
                 "schema": {
                   "type": "object",
                   "properties": {
+                    "retryable": {
+                      "type": "boolean",
+                      "description": "Whether repeating this scrape is safe and useful; absence does not authorize retry"
+                    },
+                    "retryAfterMs": {
+                      "type": "integer",
+                      "minimum": 0,
+                      "maximum": 4294967295,
+                      "description": "Minimum delay before another scrape attempt, in milliseconds"
+                    },
                     "error": {
                       "type": "boolean",
                       "enum": [
                         true
-                      ]
+                      ],
+                      "description": "Always true for error responses"
                     },
                     "message": {
+                      "type": "string",
+                      "description": "Human-readable error message"
+                    },
+                    "code": {
                       "type": "string"
                     },
-                    "details": {
-                      "type": "object",
-                      "additionalProperties": {
-                        "nullable": true
-                      }
+                    "appCode": {
+                      "type": "string"
+                    },
+                    "traceId": {
+                      "type": "string"
+                    },
+                    "provider": {
+                      "type": "string"
+                    },
+                    "cluster": {
+                      "type": "string"
                     }
                   },
                   "required": [
                     "error",
                     "message"
-                  ]
+                  ],
+                  "description": "Internal server error"
                 }
               }
             }
@@ -13941,6 +14312,21 @@
                     "message": {
                       "type": "string"
                     },
+                    "code": {
+                      "type": "string"
+                    },
+                    "appCode": {
+                      "type": "string"
+                    },
+                    "traceId": {
+                      "type": "string"
+                    },
+                    "provider": {
+                      "type": "string"
+                    },
+                    "cluster": {
+                      "type": "string"
+                    },
                     "details": {
                       "type": "object",
                       "additionalProperties": {
@@ -13952,6 +14338,62 @@
                     "error",
                     "message"
                   ]
+                }
+              }
+            }
+          },
+          "503": {
+            "description": "The scrape backend or managed browser capacity is unavailable",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "retryable": {
+                      "type": "boolean",
+                      "description": "Whether repeating this scrape is safe and useful; absence does not authorize retry"
+                    },
+                    "retryAfterMs": {
+                      "type": "integer",
+                      "minimum": 0,
+                      "maximum": 4294967295,
+                      "description": "Minimum delay before another scrape attempt, in milliseconds"
+                    },
+                    "error": {
+                      "type": "boolean",
+                      "enum": [
+                        true
+                      ]
+                    },
+                    "code": {
+                      "type": "string",
+                      "enum": [
+                        "SCRAPE_BACKEND_UNAVAILABLE",
+                        "BROWSER_CAPACITY_UNAVAILABLE"
+                      ]
+                    },
+                    "appCode": {
+                      "type": "string"
+                    },
+                    "message": {
+                      "type": "string"
+                    },
+                    "traceId": {
+                      "type": "string"
+                    },
+                    "provider": {
+                      "type": "string"
+                    },
+                    "cluster": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "error",
+                    "code",
+                    "message"
+                  ],
+                  "description": "The scrape backend or managed browser capacity is unavailable"
                 }
               }
             }
@@ -13970,6 +14412,21 @@
                       ]
                     },
                     "message": {
+                      "type": "string"
+                    },
+                    "code": {
+                      "type": "string"
+                    },
+                    "appCode": {
+                      "type": "string"
+                    },
+                    "traceId": {
+                      "type": "string"
+                    },
+                    "provider": {
+                      "type": "string"
+                    },
+                    "cluster": {
                       "type": "string"
                     },
                     "details": {
@@ -19177,6 +19634,263 @@
   },
   "components": {
     "schemas": {
+      "WorkflowAssistantState": {
+        "type": "object",
+        "required": [
+          "status",
+          "lastSettlement"
+        ],
+        "properties": {
+          "status": {
+            "type": "string",
+            "enum": [
+              "ready",
+              "running",
+              "awaiting_input",
+              "interrupted",
+              "error",
+              "aborted"
+            ]
+          },
+          "lastSettlement": {
+            "type": "object",
+            "nullable": true,
+            "description": "Last recorded customer-thread settlement; null for historical threads without this evidence. Private work never overwrites it.",
+            "required": [
+              "status",
+              "at"
+            ],
+            "properties": {
+              "status": {
+                "type": "string"
+              },
+              "at": {
+                "type": "string",
+                "format": "date-time"
+              },
+              "hasFailure": {
+                "type": "boolean"
+              }
+            }
+          }
+        }
+      },
+      "WorkflowPresentation": {
+        "type": "object",
+        "description": "The status selects one operational notice. Badges separate lifecycle, activity and binary support ownership. Published data remains available independently.",
+        "required": [
+          "status",
+          "badges",
+          "group"
+        ],
+        "properties": {
+          "status": {
+            "type": "string",
+            "enum": [
+              "DRAFT",
+              "ERROR",
+              "PAUSED",
+              "NOT_SUPPORTED",
+              "PREVIEW",
+              "QUEUED",
+              "SETUP",
+              "PENDING_START",
+              "RUNNING",
+              "FAILED",
+              "COMPLIANCE_REVIEW",
+              "COMPLIANCE_REJECTED",
+              "DEGRADED",
+              "DELETED",
+              "STOPPED",
+              "COMPLETE",
+              "SCHEDULED",
+              "UPDATING",
+              "AWAITING_REVIEW",
+              "REPLY_NEEDED",
+              "UPDATE_FAILED"
+            ]
+          },
+          "badges": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "required": [
+                "kind",
+                "status"
+              ],
+              "properties": {
+                "kind": {
+                  "type": "string",
+                  "enum": [
+                    "lifecycle",
+                    "activity",
+                    "support"
+                  ]
+                },
+                "status": {
+                  "type": "string",
+                  "enum": [
+                    "DRAFT",
+                    "ERROR",
+                    "PAUSED",
+                    "NOT_SUPPORTED",
+                    "PREVIEW",
+                    "QUEUED",
+                    "SETUP",
+                    "PENDING_START",
+                    "RUNNING",
+                    "FAILED",
+                    "COMPLIANCE_REVIEW",
+                    "COMPLIANCE_REJECTED",
+                    "DEGRADED",
+                    "DELETED",
+                    "STOPPED",
+                    "COMPLETE",
+                    "SCHEDULED",
+                    "UPDATING",
+                    "AWAITING_REVIEW",
+                    "REPLY_NEEDED",
+                    "UPDATE_FAILED",
+                    "ASSISTANT_WORKING",
+                    "IN_SUPPORT"
+                  ]
+                }
+              }
+            }
+          },
+          "group": {
+            "type": "string",
+            "enum": [
+              "attention",
+              "working",
+              "support",
+              "failed",
+              "active",
+              "complete",
+              "paused"
+            ]
+          }
+        }
+      },
+      "WorkflowExecutionState": {
+        "type": "object",
+        "required": [
+          "phase",
+          "inProgress",
+          "previewAvailable",
+          "updating"
+        ],
+        "properties": {
+          "phase": {
+            "type": "string",
+            "nullable": true,
+            "enum": [
+              "RUNNING",
+              "VALIDATING",
+              "FINISHED",
+              "FAILED",
+              "STOPPED",
+              null
+            ]
+          },
+          "inProgress": {
+            "type": "boolean"
+          },
+          "previewAvailable": {
+            "type": "boolean",
+            "description": "A finished published preview exists, including empty results. Independent of new runs or workspace activity."
+          },
+          "updating": {
+            "type": "boolean",
+            "description": "Workflow execution or assistant/repair work is in progress."
+          }
+        }
+      },
+      "WorkflowActionAvailability": {
+        "oneOf": [
+          {
+            "type": "object",
+            "required": [
+              "allowed"
+            ],
+            "properties": {
+              "allowed": {
+                "type": "boolean",
+                "enum": [
+                  true
+                ]
+              }
+            }
+          },
+          {
+            "type": "object",
+            "required": [
+              "allowed",
+              "reason"
+            ],
+            "properties": {
+              "allowed": {
+                "type": "boolean",
+                "enum": [
+                  false
+                ]
+              },
+              "reason": {
+                "type": "string",
+                "enum": [
+                  "ASSISTANT_ACTIVE",
+                  "REPAIR_ACTIVE",
+                  "RUN_IN_PROGRESS",
+                  "INITIAL_SETUP",
+                  "NOT_IN_PREVIEW",
+                  "NO_RUNNING_JOB",
+                  "WORKFLOW_UNAVAILABLE"
+                ]
+              }
+            }
+          }
+        ]
+      },
+      "WorkflowAvailableActions": {
+        "type": "object",
+        "description": "Customer lifecycle eligibility at read time. Authorization, quotas, template restrictions and mutation-time validation still apply. This is not an execution reservation.",
+        "required": [
+          "approve",
+          "rerun",
+          "run",
+          "pause",
+          "resume",
+          "edit",
+          "stop",
+          "delete"
+        ],
+        "properties": {
+          "approve": {
+            "$ref": "#/components/schemas/WorkflowActionAvailability"
+          },
+          "run": {
+            "$ref": "#/components/schemas/WorkflowActionAvailability"
+          },
+          "pause": {
+            "$ref": "#/components/schemas/WorkflowActionAvailability"
+          },
+          "resume": {
+            "$ref": "#/components/schemas/WorkflowActionAvailability"
+          },
+          "rerun": {
+            "$ref": "#/components/schemas/WorkflowActionAvailability"
+          },
+          "edit": {
+            "$ref": "#/components/schemas/WorkflowActionAvailability"
+          },
+          "stop": {
+            "$ref": "#/components/schemas/WorkflowActionAvailability"
+          },
+          "delete": {
+            "$ref": "#/components/schemas/WorkflowActionAvailability"
+          }
+        }
+      },
       "PresenceRule": {
         "type": "object",
         "description": "Minimum percentage of rows that must have a value for this field.",
@@ -20348,6 +21062,29 @@
               },
               "alreadyBootstrapped": {
                 "type": "boolean"
+              },
+              "realtimePlacementPolicy": {
+                "type": "object",
+                "description": "Present when mentioned tags were saved but the realtime placement policy publish failed or was skipped; the message itself still ran.",
+                "properties": {
+                  "status": {
+                    "type": "string",
+                    "enum": [
+                      "failed",
+                      "skipped"
+                    ]
+                  },
+                  "code": {
+                    "type": "string",
+                    "description": "Stable failure code, e.g. REALTIME_PLACEMENT_POLICY_PUBLISH_FAILED."
+                  },
+                  "reason": {
+                    "type": "string"
+                  },
+                  "policyVersion": {
+                    "type": "integer"
+                  }
+                }
               }
             }
           },
@@ -20418,6 +21155,9 @@
                   "resumeRequestedAt": {
                     "type": "string",
                     "format": "date-time"
+                  },
+                  "resumeError": {
+                    "type": "boolean"
                   }
                 }
               },
@@ -20539,6 +21279,111 @@
                     "$ref": "#/components/schemas/ExtractionStrategySummary"
                   }
                 ],
+                "nullable": true
+              }
+            }
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "success"
+            ]
+          }
+        }
+      },
+      "AgentBuild": {
+        "type": "object",
+        "required": [
+          "id",
+          "version",
+          "status",
+          "createdAt"
+        ],
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "version": {
+            "type": "integer"
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "queued",
+              "running",
+              "completed",
+              "failed"
+            ]
+          },
+          "errorMessage": {
+            "type": "string",
+            "nullable": true
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "completedAt": {
+            "type": "string",
+            "format": "date-time",
+            "nullable": true
+          }
+        }
+      },
+      "AgentBuildsResponse": {
+        "type": "object",
+        "required": [
+          "data",
+          "status"
+        ],
+        "properties": {
+          "data": {
+            "type": "object",
+            "required": [
+              "builds",
+              "nextCursor"
+            ],
+            "properties": {
+              "builds": {
+                "type": "array",
+                "items": {
+                  "$ref": "#/components/schemas/AgentBuild"
+                }
+              },
+              "nextCursor": {
+                "type": "string",
+                "nullable": true
+              }
+            }
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "success"
+            ]
+          }
+        }
+      },
+      "AgentBuildInputResponse": {
+        "type": "object",
+        "required": [
+          "data",
+          "status"
+        ],
+        "properties": {
+          "data": {
+            "type": "object",
+            "required": [
+              "scriptSource",
+              "scriptLibVersion"
+            ],
+            "properties": {
+              "scriptSource": {
+                "type": "string"
+              },
+              "scriptLibVersion": {
+                "type": "string",
                 "nullable": true
               }
             }
@@ -21099,13 +21944,15 @@
                 "type": "string",
                 "enum": [
                   "auto",
+                  "kurl",
                   "curl-cffi",
+                  "kadmium",
                   "patchright",
                   "camoufox",
                   "cloakbrowser",
                   "brightdata"
                 ],
-                "description": "Explicit Scrape V2 worker override. BrightData is blocked in crawler runtime. camoufox and cloakbrowser are retired and remapped to kadmium (accepted for backwards compatibility with stored configs)."
+                "description": "Crawler engine selection. Fetches use Kurl; browser mode and actions use Kadmium. curl-cffi maps to Kurl; patchright, camoufox, and cloakbrowser map to Kadmium. BrightData is blocked."
               },
               "proxy": {
                 "type": "string",
@@ -21116,7 +21963,7 @@
                   "resi",
                   "isp"
                 ],
-                "description": "Explicit proxy routing override for Scrape V2"
+                "description": "Explicit proxy routing override for crawler scraping"
               }
             },
             "additionalProperties": {
@@ -21460,13 +22307,15 @@
                 "type": "string",
                 "enum": [
                   "auto",
+                  "kurl",
                   "curl-cffi",
+                  "kadmium",
                   "patchright",
                   "camoufox",
                   "cloakbrowser",
                   "brightdata"
                 ],
-                "description": "Explicit Scrape V2 worker override. BrightData is blocked in crawler runtime. camoufox and cloakbrowser are retired and remapped to kadmium (accepted for backwards compatibility with stored configs)."
+                "description": "Crawler engine selection. Fetches use Kurl; browser mode and actions use Kadmium. curl-cffi maps to Kurl; patchright, camoufox, and cloakbrowser map to Kadmium. BrightData is blocked."
               },
               "proxy": {
                 "type": "string",
@@ -21477,7 +22326,7 @@
                   "resi",
                   "isp"
                 ],
-                "description": "Explicit proxy routing override for Scrape V2"
+                "description": "Explicit proxy routing override for crawler scraping"
               }
             },
             "additionalProperties": {
@@ -21838,13 +22687,15 @@
                 "type": "string",
                 "enum": [
                   "auto",
+                  "kurl",
                   "curl-cffi",
+                  "kadmium",
                   "patchright",
                   "camoufox",
                   "cloakbrowser",
                   "brightdata"
                 ],
-                "description": "Explicit Scrape V2 worker override. BrightData is blocked in crawler runtime. camoufox and cloakbrowser are retired and remapped to kadmium (accepted for backwards compatibility with stored configs)."
+                "description": "Crawler engine selection. Fetches use Kurl; browser mode and actions use Kadmium. curl-cffi maps to Kurl; patchright, camoufox, and cloakbrowser map to Kadmium. BrightData is blocked."
               },
               "proxy": {
                 "type": "string",
@@ -21855,7 +22706,7 @@
                   "resi",
                   "isp"
                 ],
-                "description": "Explicit proxy routing override for Scrape V2"
+                "description": "Explicit proxy routing override for crawler scraping"
               }
             },
             "additionalProperties": {
@@ -22249,13 +23100,15 @@
                 "type": "string",
                 "enum": [
                   "auto",
+                  "kurl",
                   "curl-cffi",
+                  "kadmium",
                   "patchright",
                   "camoufox",
                   "cloakbrowser",
                   "brightdata"
                 ],
-                "description": "Explicit Scrape V2 worker override. BrightData is blocked in crawler runtime. camoufox and cloakbrowser are retired and remapped to kadmium (accepted for backwards compatibility with stored configs)."
+                "description": "Crawler engine selection. Fetches use Kurl; browser mode and actions use Kadmium. curl-cffi maps to Kurl; patchright, camoufox, and cloakbrowser map to Kadmium. BrightData is blocked."
               },
               "proxy": {
                 "type": "string",
@@ -22266,7 +23119,7 @@
                   "resi",
                   "isp"
                 ],
-                "description": "Explicit proxy routing override for Scrape V2"
+                "description": "Explicit proxy routing override for crawler scraping"
               }
             },
             "additionalProperties": {
@@ -22970,6 +23823,26 @@
       "DataField": {
         "type": "object",
         "properties": {
+          "mapper": {
+            "type": "string",
+            "enum": [
+              "jobDescription",
+              "categoryClassifier",
+              "taxonomyMapping",
+              "stableUniqueId",
+              "linkExtraction",
+              "additionalData",
+              "categorize"
+            ],
+            "description": "Function that produces this field's value."
+          },
+          "mapperConfig": {
+            "type": "object",
+            "additionalProperties": {
+              "nullable": true
+            },
+            "description": "Configuration for the selected mapper."
+          },
           "name": {
             "description": "Field name (e.g., productName, 3dListings, listing-count)",
             "type": "string",
@@ -22978,19 +23851,20 @@
           "description": {
             "type": "string",
             "minLength": 1,
-            "description": "Field description"
+            "description": "Human-readable field description shown in Kadoa."
           },
           "instruction": {
             "type": "string",
             "minLength": 1,
-            "description": "AI instruction for field-specific extraction or transformation guidance"
+            "description": "Optional field-specific AI instruction. Use this for extraction guidance that is more specific than the description."
           },
           "fieldType": {
             "default": "SCHEMA",
             "type": "string",
             "enum": [
               "SCHEMA"
-            ]
+            ],
+            "description": "Field role. Use SCHEMA for extracted data fields."
           },
           "example": {
             "oneOf": [
@@ -23012,7 +23886,7 @@
           },
           "dataType": {
             "type": "string",
-            "description": "Data type of the field. Must be uppercase: STRING, NUMBER, BOOLEAN, DATE, DATETIME, MONEY, IMAGE, LINK, OBJECT, ARRAY",
+            "description": "Output data type for SCHEMA fields. Use uppercase public values: STRING, NUMBER, BOOLEAN, DATE, DATETIME, MONEY, IMAGE, LINK, OBJECT, ARRAY. Classification fields use fieldType=CLASSIFICATION instead of dataType=CLASSIFICATION. Kadoa-managed functions are not data types; they keep a normal output dataType and carry their function identity in mapper, with configuration in mapperConfig.",
             "enum": [
               "STRING",
               "NUMBER",
@@ -23028,7 +23902,7 @@
           },
           "isKey": {
             "type": "boolean",
-            "description": "Marks this field as part of the record's primary key. Key fields define row identity across runs and enable data linking (records with the same key values are treated as the same record over time, used for dedupe and change detection). Set true ONLY when the field is (1) unique per record on the source, (2) stable across runs (does not change for the same logical record), and (3) reliably present (not nullable/missing). Key fields should be scalar STRING, NUMBER, or LINK fields; avoid structured, semantic, boolean, image, and timestamp/date fields as keys. Good candidates: external IDs, SKUs, canonical URLs, posting IDs. Bad candidates: prices, counts, timestamps, free-text titles/descriptions, or anything that can change between runs. Multiple fields may be marked isKey to form a composite key (all parts must hold the same guarantees). If no field satisfies these guarantees, leave isKey unset on every field — data linking will simply be disabled, which is preferable to a wrong key. Choosing a non-stable or non-unique key causes duplicate rows and missed updates."
+            "description": "Marks this field as part of the record's primary key. Key fields define row identity across runs and enable data linking (records with the same key values are treated as the same record over time, used for dedupe and change detection). Set true ONLY when the complete key tuple uniquely identifies a logical output record and every component is stable across runs and reliably present (not nullable/missing). Key fields should be scalar STRING, NUMBER, or LINK fields; avoid structured, semantic, boolean, image, and timestamp/date fields as keys. Good candidates: external IDs, SKUs, canonical URLs, posting IDs. Bad candidates: prices, counts, timestamps, free-text titles/descriptions, or anything that can change between runs. Multiple fields may form a composite key; uniqueness applies to their combination, not each component. For derived rows, source-backed grouping dimensions and a deterministic output discriminator may identify the result; measured values and explanations do not. If no supported key tuple satisfies these guarantees, leave isKey unset on every field — data linking will simply be disabled, which is preferable to a wrong key. Choosing a non-stable or non-unique key causes duplicate rows and missed updates."
           }
         },
         "required": [
@@ -23040,7 +23914,7 @@
           "nullable": true
         },
         "title": "DataField",
-        "description": "Extract and structure specific data from web pages with typed values (e.g., product prices, article titles, dates). Use this for actual data you want to capture."
+        "description": "Extract and structure specific data from web pages with typed values (e.g., product prices, article titles, dates). `description` explains what the field is; optional `instruction` gives the AI field-specific extraction guidance. Use this for actual data you want to capture. Kadoa-managed functions such as job description, job type classification, taxonomy mapping, and stable unique ID are normal `fieldType: SCHEMA` fields with their output `dataType`; their function identity lives in `mapper`. To expose source values such as the page URL, full HTML, or full Markdown, use a normal `fieldType: SCHEMA` field with `params.sourceKey` (for example `link`, `allExtracts.fullHtml`, or `allExtracts.fullMarkdown`)."
       },
       "ClassificationField": {
         "type": "object",
@@ -23053,13 +23927,14 @@
           "description": {
             "type": "string",
             "minLength": 1,
-            "description": "Optional field description"
+            "description": "Optional human-readable field description"
           },
           "fieldType": {
             "type": "string",
             "enum": [
               "CLASSIFICATION"
-            ]
+            ],
+            "description": "Field role. Use CLASSIFICATION for predefined category labels."
           },
           "categories": {
             "type": "array",
@@ -23090,7 +23965,7 @@
         ],
         "additionalProperties": true,
         "title": "ClassificationField",
-        "description": "Categorize extracted data into predefined labels. Use this when you want the system to classify content into specific categories you define."
+        "description": "Categorize extracted data into predefined labels. Classification is a field role (`fieldType: CLASSIFICATION`), not a schema data type. Use this when you want the system to classify content into specific categories you define."
       },
       "SchemaResponse": {
         "type": "object",
@@ -23773,22 +24648,41 @@
                       "items": {
                         "type": "object",
                         "properties": {
+                          "mapper": {
+                            "type": "string",
+                            "enum": [
+                              "jobDescription",
+                              "categoryClassifier",
+                              "taxonomyMapping",
+                              "stableUniqueId",
+                              "linkExtraction",
+                              "additionalData",
+                              "categorize"
+                            ],
+                            "description": "Function that produces this field's value."
+                          },
+                          "mapperConfig": {
+                            "type": "object",
+                            "additionalProperties": {
+                              "nullable": true
+                            },
+                            "description": "Configuration for the selected mapper."
+                          },
                           "name": {
                             "type": "string",
                             "description": "Field name"
                           },
                           "description": {
                             "type": "string",
-                            "description": "Field description"
+                            "description": "Human-readable field description shown in Kadoa"
                           },
                           "instruction": {
                             "type": "string",
-                            "minLength": 1,
-                            "description": "AI instruction for field-specific extraction or transformation guidance"
+                            "description": "Optional field-specific AI instruction for extraction guidance"
                           },
                           "fieldType": {
                             "type": "string",
-                            "description": "Field type (SCHEMA, CLASSIFICATION, etc.)"
+                            "description": "Field role (SCHEMA or CLASSIFICATION)"
                           },
                           "example": {
                             "nullable": true,
@@ -23800,11 +24694,11 @@
                           },
                           "dataType": {
                             "type": "string",
-                            "description": "Data type (STRING, NUMBER, DATE, LINK, etc.)"
+                            "description": "Output data type for SCHEMA fields. Use public values such as STRING, NUMBER, BOOLEAN, DATE, DATETIME, MONEY, IMAGE, LINK, OBJECT, or ARRAY."
                           },
                           "isKey": {
                             "type": "boolean",
-                            "description": "Marks this field as part of the record's primary key. Key fields define row identity across runs and enable data linking (records with the same key values are treated as the same record over time, used for dedupe and change detection). Set true ONLY when the field is (1) unique per record on the source, (2) stable across runs (does not change for the same logical record), and (3) reliably present (not nullable/missing). Key fields should be scalar STRING, NUMBER, or LINK fields; avoid structured, semantic, boolean, image, and timestamp/date fields as keys. Good candidates: external IDs, SKUs, canonical URLs, posting IDs. Bad candidates: prices, counts, timestamps, free-text titles/descriptions, or anything that can change between runs. Multiple fields may be marked isKey to form a composite key (all parts must hold the same guarantees). If no field satisfies these guarantees, leave isKey unset on every field — data linking will simply be disabled, which is preferable to a wrong key. Choosing a non-stable or non-unique key causes duplicate rows and missed updates."
+                            "description": "Marks this field as part of the record's primary key. Key fields define row identity across runs and enable data linking (records with the same key values are treated as the same record over time, used for dedupe and change detection). Set true ONLY when the complete key tuple uniquely identifies a logical output record and every component is stable across runs and reliably present (not nullable/missing). Key fields should be scalar STRING, NUMBER, or LINK fields; avoid structured, semantic, boolean, image, and timestamp/date fields as keys. Good candidates: external IDs, SKUs, canonical URLs, posting IDs. Bad candidates: prices, counts, timestamps, free-text titles/descriptions, or anything that can change between runs. Multiple fields may form a composite key; uniqueness applies to their combination, not each component. For derived rows, source-backed grouping dimensions and a deterministic output discriminator may identify the result; measured values and explanations do not. If no supported key tuple satisfies these guarantees, leave isKey unset on every field — data linking will simply be disabled, which is preferable to a wrong key. Choosing a non-stable or non-unique key causes duplicate rows and missed updates."
                           },
                           "categories": {
                             "type": "array",
@@ -24328,22 +25222,41 @@
             "items": {
               "type": "object",
               "properties": {
+                "mapper": {
+                  "type": "string",
+                  "enum": [
+                    "jobDescription",
+                    "categoryClassifier",
+                    "taxonomyMapping",
+                    "stableUniqueId",
+                    "linkExtraction",
+                    "additionalData",
+                    "categorize"
+                  ],
+                  "description": "Function that produces this field's value."
+                },
+                "mapperConfig": {
+                  "type": "object",
+                  "additionalProperties": {
+                    "nullable": true
+                  },
+                  "description": "Configuration for the selected mapper."
+                },
                 "name": {
                   "type": "string",
                   "description": "Field name"
                 },
                 "description": {
                   "type": "string",
-                  "description": "Field description"
+                  "description": "Human-readable field description shown in Kadoa"
                 },
                 "instruction": {
                   "type": "string",
-                  "minLength": 1,
-                  "description": "AI instruction for field-specific extraction or transformation guidance"
+                  "description": "Optional field-specific AI instruction for extraction guidance"
                 },
                 "fieldType": {
                   "type": "string",
-                  "description": "Field type (SCHEMA, CLASSIFICATION, etc.)"
+                  "description": "Field role (SCHEMA or CLASSIFICATION)"
                 },
                 "example": {
                   "nullable": true,
@@ -24355,11 +25268,11 @@
                 },
                 "dataType": {
                   "type": "string",
-                  "description": "Data type (STRING, NUMBER, DATE, LINK, etc.)"
+                  "description": "Output data type for SCHEMA fields. Use public values such as STRING, NUMBER, BOOLEAN, DATE, DATETIME, MONEY, IMAGE, LINK, OBJECT, or ARRAY."
                 },
                 "isKey": {
                   "type": "boolean",
-                  "description": "Marks this field as part of the record's primary key. Key fields define row identity across runs and enable data linking (records with the same key values are treated as the same record over time, used for dedupe and change detection). Set true ONLY when the field is (1) unique per record on the source, (2) stable across runs (does not change for the same logical record), and (3) reliably present (not nullable/missing). Key fields should be scalar STRING, NUMBER, or LINK fields; avoid structured, semantic, boolean, image, and timestamp/date fields as keys. Good candidates: external IDs, SKUs, canonical URLs, posting IDs. Bad candidates: prices, counts, timestamps, free-text titles/descriptions, or anything that can change between runs. Multiple fields may be marked isKey to form a composite key (all parts must hold the same guarantees). If no field satisfies these guarantees, leave isKey unset on every field — data linking will simply be disabled, which is preferable to a wrong key. Choosing a non-stable or non-unique key causes duplicate rows and missed updates."
+                  "description": "Marks this field as part of the record's primary key. Key fields define row identity across runs and enable data linking (records with the same key values are treated as the same record over time, used for dedupe and change detection). Set true ONLY when the complete key tuple uniquely identifies a logical output record and every component is stable across runs and reliably present (not nullable/missing). Key fields should be scalar STRING, NUMBER, or LINK fields; avoid structured, semantic, boolean, image, and timestamp/date fields as keys. Good candidates: external IDs, SKUs, canonical URLs, posting IDs. Bad candidates: prices, counts, timestamps, free-text titles/descriptions, or anything that can change between runs. Multiple fields may form a composite key; uniqueness applies to their combination, not each component. For derived rows, source-backed grouping dimensions and a deterministic output discriminator may identify the result; measured values and explanations do not. If no supported key tuple satisfies these guarantees, leave isKey unset on every field — data linking will simply be disabled, which is preferable to a wrong key. Choosing a non-stable or non-unique key causes duplicate rows and missed updates."
                 },
                 "categories": {
                   "type": "array",
@@ -24621,22 +25534,41 @@
                 "items": {
                   "type": "object",
                   "properties": {
+                    "mapper": {
+                      "type": "string",
+                      "enum": [
+                        "jobDescription",
+                        "categoryClassifier",
+                        "taxonomyMapping",
+                        "stableUniqueId",
+                        "linkExtraction",
+                        "additionalData",
+                        "categorize"
+                      ],
+                      "description": "Function that produces this field's value."
+                    },
+                    "mapperConfig": {
+                      "type": "object",
+                      "additionalProperties": {
+                        "nullable": true
+                      },
+                      "description": "Configuration for the selected mapper."
+                    },
                     "name": {
                       "type": "string",
                       "description": "Field name"
                     },
                     "description": {
                       "type": "string",
-                      "description": "Field description"
+                      "description": "Human-readable field description shown in Kadoa"
                     },
                     "instruction": {
                       "type": "string",
-                      "minLength": 1,
-                      "description": "AI instruction for field-specific extraction or transformation guidance"
+                      "description": "Optional field-specific AI instruction for extraction guidance"
                     },
                     "fieldType": {
                       "type": "string",
-                      "description": "Field type (SCHEMA, CLASSIFICATION, etc.)"
+                      "description": "Field role (SCHEMA or CLASSIFICATION)"
                     },
                     "example": {
                       "nullable": true,
@@ -24648,11 +25580,11 @@
                     },
                     "dataType": {
                       "type": "string",
-                      "description": "Data type (STRING, NUMBER, DATE, LINK, etc.)"
+                      "description": "Output data type for SCHEMA fields. Use public values such as STRING, NUMBER, BOOLEAN, DATE, DATETIME, MONEY, IMAGE, LINK, OBJECT, or ARRAY."
                     },
                     "isKey": {
                       "type": "boolean",
-                      "description": "Marks this field as part of the record's primary key. Key fields define row identity across runs and enable data linking (records with the same key values are treated as the same record over time, used for dedupe and change detection). Set true ONLY when the field is (1) unique per record on the source, (2) stable across runs (does not change for the same logical record), and (3) reliably present (not nullable/missing). Key fields should be scalar STRING, NUMBER, or LINK fields; avoid structured, semantic, boolean, image, and timestamp/date fields as keys. Good candidates: external IDs, SKUs, canonical URLs, posting IDs. Bad candidates: prices, counts, timestamps, free-text titles/descriptions, or anything that can change between runs. Multiple fields may be marked isKey to form a composite key (all parts must hold the same guarantees). If no field satisfies these guarantees, leave isKey unset on every field — data linking will simply be disabled, which is preferable to a wrong key. Choosing a non-stable or non-unique key causes duplicate rows and missed updates."
+                      "description": "Marks this field as part of the record's primary key. Key fields define row identity across runs and enable data linking (records with the same key values are treated as the same record over time, used for dedupe and change detection). Set true ONLY when the complete key tuple uniquely identifies a logical output record and every component is stable across runs and reliably present (not nullable/missing). Key fields should be scalar STRING, NUMBER, or LINK fields; avoid structured, semantic, boolean, image, and timestamp/date fields as keys. Good candidates: external IDs, SKUs, canonical URLs, posting IDs. Bad candidates: prices, counts, timestamps, free-text titles/descriptions, or anything that can change between runs. Multiple fields may form a composite key; uniqueness applies to their combination, not each component. For derived rows, source-backed grouping dimensions and a deterministic output discriminator may identify the result; measured values and explanations do not. If no supported key tuple satisfies these guarantees, leave isKey unset on every field — data linking will simply be disabled, which is preferable to a wrong key. Choosing a non-stable or non-unique key causes duplicate rows and missed updates."
                     },
                     "categories": {
                       "type": "array",
@@ -25722,7 +26654,7 @@
               "format": "uri"
             },
             "minItems": 1,
-            "description": "List of URLs to scrape. Can be a single URL or multiple URLs to scrape across different pages or domains."
+            "description": "Source URLs. Multiple URLs must belong to one website: subdomains and country domains of the same name (acme.com, careers.acme.co.uk) count as one website. Requests that span several websites are rejected with 422 SOURCES_MULTIPLE_SITES; create one workflow per website instead, optionally from a shared template."
           },
           "name": {
             "type": "string",
@@ -25797,10 +26729,6 @@
               "$ref": "#/components/schemas/Interaction"
             },
             "description": "Browser interactions to perform before scraping (e.g., clicking buttons, filling forms, scrolling). See Interaction schema for available action types"
-          },
-          "dataValidationEnabled": {
-            "type": "boolean",
-            "description": "Enable data quality validation. When true, scraped data is validated against the schema and anomalies are detected"
           },
           "limit": {
             "type": "integer",
@@ -25901,7 +26829,7 @@
               "format": "uri"
             },
             "minItems": 1,
-            "description": "List of URLs to scrape. Can be a single URL or multiple URLs to scrape across different pages or domains."
+            "description": "Source URLs. Multiple URLs must belong to one website: subdomains and country domains of the same name (acme.com, careers.acme.co.uk) count as one website. Requests that span several websites are rejected with 422 SOURCES_MULTIPLE_SITES; create one workflow per website instead, optionally from a shared template."
           },
           "name": {
             "type": "string",
@@ -25982,10 +26910,6 @@
               "$ref": "#/components/schemas/Interaction"
             },
             "description": "Browser interactions to perform before scraping (e.g., clicking buttons, filling forms, scrolling). See Interaction schema for available action types"
-          },
-          "dataValidationEnabled": {
-            "type": "boolean",
-            "description": "Enable data quality validation. When true, scraped data is validated against the schema and anomalies are detected"
           },
           "additionalData": {
             "nullable": true,
@@ -26041,116 +26965,6 @@
         "title": "PromptWorkflow",
         "description": "Create a workflow using natural language instructions to extract data and navigate the site automatically.\n\nExample: `{\"urls\": [\"https://example.com\"], \"userPrompt\": \"Extract all job listings with title, company, salary, and location. Click on each listing to get full details.\"}`"
       },
-      "RawDataWorkflow": {
-        "type": "object",
-        "properties": {
-          "urls": {
-            "type": "array",
-            "items": {
-              "type": "string",
-              "format": "uri"
-            },
-            "minItems": 1,
-            "description": "URLs to crawl"
-          },
-          "name": {
-            "type": "string",
-            "minLength": 1,
-            "description": "Workflow name"
-          },
-          "description": {
-            "type": "string",
-            "maxLength": 500,
-            "description": "Workflow description"
-          },
-          "tags": {
-            "type": "array",
-            "items": {
-              "type": "string",
-              "minLength": 2
-            },
-            "description": "Tags for organization (minimum 2 characters per tag)"
-          },
-          "outputOptions": {
-            "description": "Which artifacts to include in output",
-            "type": "object",
-            "properties": {
-              "includeHtml": {
-                "default": true,
-                "type": "boolean",
-                "description": "Include raw HTML content"
-              },
-              "includeMarkdown": {
-                "default": false,
-                "type": "boolean",
-                "description": "Include Markdown conversion"
-              },
-              "includeScreenshots": {
-                "default": false,
-                "type": "boolean",
-                "description": "Include screenshots as Base64"
-              },
-              "includeJson": {
-                "default": false,
-                "type": "boolean",
-                "description": "Include JSON extraction results"
-              }
-            }
-          },
-          "interval": {
-            "type": "string",
-            "enum": [
-              "ONLY_ONCE",
-              "EVERY_10_MINUTES",
-              "EVERY_20_MINUTES",
-              "HALF_HOURLY",
-              "HOURLY",
-              "TWO_HOURLY",
-              "THREE_HOURLY",
-              "FOUR_HOURLY",
-              "SIX_HOURLY",
-              "TWELVE_HOURLY",
-              "EIGHTEEN_HOURLY",
-              "DAILY",
-              "TWO_DAY",
-              "THREE_DAY",
-              "WEEKLY",
-              "BIWEEKLY",
-              "TRIWEEKLY",
-              "FOUR_WEEKS",
-              "MONTHLY",
-              "CUSTOM"
-            ],
-            "description": "Update frequency for the workflow"
-          },
-          "schedules": {
-            "type": "array",
-            "items": {
-              "type": "string"
-            },
-            "description": "Cron expressions for custom schedules"
-          },
-          "timezone": {
-            "type": "string",
-            "description": "IANA timezone for cron `schedules` (e.g. 'America/New_York'). Defaults to UTC. Cron schedules only."
-          },
-          "templateId": {
-            "type": "string",
-            "format": "uuid",
-            "description": "Reserved provenance for template-derived workflows."
-          },
-          "templateVersion": {
-            "readOnly": true,
-            "description": "Reserved: only valid in the WorkflowFromTemplate variant."
-          }
-        },
-        "required": [
-          "urls",
-          "outputOptions"
-        ],
-        "title": "RawDataWorkflow",
-        "description": "Create a raw data workflow that crawls pages and returns artifacts (HTML, Markdown, Screenshots) without schema extraction.\n\nExample: `{\"urls\": [\"https://example.com\"], \"outputOptions\": {\"includeHtml\": true, \"includeMarkdown\": true}}`"
-      },
       "WorkflowWithExistingSchema": {
         "type": "object",
         "properties": {
@@ -26161,7 +26975,7 @@
               "format": "uri"
             },
             "minItems": 1,
-            "description": "List of URLs to scrape. Can be a single URL or multiple URLs to scrape across different pages or domains."
+            "description": "Source URLs. Multiple URLs must belong to one website: subdomains and country domains of the same name (acme.com, careers.acme.co.uk) count as one website. Requests that span several websites are rejected with 422 SOURCES_MULTIPLE_SITES; create one workflow per website instead, optionally from a shared template."
           },
           "name": {
             "type": "string",
@@ -26242,10 +27056,6 @@
               "$ref": "#/components/schemas/Interaction"
             },
             "description": "Browser interactions to perform before scraping (e.g., clicking buttons, filling forms, scrolling). See Interaction schema for available action types"
-          },
-          "dataValidationEnabled": {
-            "type": "boolean",
-            "description": "Enable data quality validation. When true, scraped data is validated against the schema and anomalies are detected"
           },
           "additionalData": {
             "nullable": true,
@@ -26282,7 +27092,7 @@
               "format": "uri"
             },
             "minItems": 1,
-            "description": "List of URLs to scrape. Can be a single URL or multiple URLs to scrape across different pages or domains."
+            "description": "Source URLs. Multiple URLs must belong to one website: subdomains and country domains of the same name (acme.com, careers.acme.co.uk) count as one website. Requests that span several websites are rejected with 422 SOURCES_MULTIPLE_SITES; create one workflow per website instead, optionally from a shared template."
           },
           "name": {
             "type": "string",
@@ -26363,10 +27173,6 @@
               "$ref": "#/components/schemas/Interaction"
             },
             "description": "Browser interactions to perform before scraping (e.g., clicking buttons, filling forms, scrolling). See Interaction schema for available action types"
-          },
-          "dataValidationEnabled": {
-            "type": "boolean",
-            "description": "Enable data quality validation. When true, scraped data is validated against the schema and anomalies are detected"
           },
           "additionalData": {
             "nullable": true,
@@ -26423,9 +27229,6 @@
           },
           {
             "$ref": "#/components/schemas/PromptWorkflow"
-          },
-          {
-            "$ref": "#/components/schemas/RawDataWorkflow"
           },
           {
             "$ref": "#/components/schemas/WorkflowWithExistingSchema"
@@ -26509,6 +27312,85 @@
           "fields"
         ],
         "title": "TemplateControlledFieldError"
+      },
+      "SourcesMultipleSitesError": {
+        "type": "object",
+        "properties": {
+          "error": {
+            "type": "boolean",
+            "enum": [
+              true
+            ],
+            "description": "Error flag"
+          },
+          "code": {
+            "type": "string",
+            "enum": [
+              "SOURCES_MULTIPLE_SITES"
+            ],
+            "description": "Stable error code"
+          },
+          "message": {
+            "type": "string",
+            "description": "What to do instead: one workflow per website, optionally from a template"
+          },
+          "details": {
+            "type": "object",
+            "properties": {
+              "sites": {
+                "type": "array",
+                "items": {
+                  "type": "object",
+                  "properties": {
+                    "site": {
+                      "type": "string",
+                      "description": "Website the URLs belong to, e.g. acme.com"
+                    },
+                    "urls": {
+                      "type": "array",
+                      "items": {
+                        "type": "string"
+                      },
+                      "description": "Requested URLs on this website"
+                    }
+                  },
+                  "required": [
+                    "site",
+                    "urls"
+                  ]
+                },
+                "description": "Requested URLs grouped by website"
+              },
+              "newSites": {
+                "type": "array",
+                "items": {
+                  "type": "string"
+                },
+                "description": "Websites the request adds to the workflow (all of them on create)"
+              },
+              "currentSites": {
+                "type": "array",
+                "items": {
+                  "type": "string"
+                },
+                "description": "Websites the workflow already covers (empty on create)"
+              }
+            },
+            "required": [
+              "sites",
+              "newSites",
+              "currentSites"
+            ]
+          }
+        },
+        "required": [
+          "error",
+          "code",
+          "message",
+          "details"
+        ],
+        "title": "SourcesMultipleSitesError",
+        "description": "The source URLs span several websites. A workflow covers one website."
       },
       "JobError": {
         "type": "object",
@@ -27165,6 +28047,5 @@
         "description": "Bearer token for authentication"
       }
     }
-  },
-  "tags": []
+  }
 }
