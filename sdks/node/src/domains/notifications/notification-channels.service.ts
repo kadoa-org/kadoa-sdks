@@ -6,6 +6,11 @@ import {
 } from "../../runtime/exceptions";
 import type { UserService } from "../user/user.service";
 import {
+  findReusableNotificationChannel,
+  type NotificationDeliveryConfig,
+  notificationChannelDestination,
+} from "./channel-identity";
+import {
   type CreateChannelRequest,
   type EmailChannelConfig,
   type ListChannelsRequest,
@@ -19,6 +24,11 @@ import {
 } from "./notifications.acl";
 
 const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+
+export interface ResolvedNotificationChannel {
+  channel: NotificationChannel;
+  reused: boolean;
+}
 
 function validateEmailChannelConfig(
   config: EmailChannelConfig,
@@ -158,6 +168,46 @@ export class NotificationChannelsService {
     });
   }
 
+  /** Resolve by delivery configuration. Concurrent creation is serialized by the API. */
+  async resolveChannel(
+    type: NotificationChannelType,
+    request: { name?: string; config?: NotificationDeliveryConfig } = {},
+    preferredChannelIds: readonly string[] = [],
+  ): Promise<ResolvedNotificationChannel> {
+    const payload = await this.buildPayload({
+      channelType: type,
+      name: request.name ?? "default",
+      config: request.config ?? {},
+    });
+    const channels = await this.listAllChannels();
+    const existing = findReusableNotificationChannel(
+      channels,
+      type,
+      payload.config,
+      preferredChannelIds,
+    );
+    if (existing) return { channel: existing, reused: true };
+    const destination =
+      notificationChannelDestination(type, payload.config) ??
+      JSON.stringify(payload.config);
+    const bytes = await crypto.subtle.digest(
+      "SHA-256",
+      new TextEncoder().encode(destination),
+    );
+    const suffix = Array.from(new Uint8Array(bytes))
+      .slice(0, 4)
+      .map((b) => b.toString(16).padStart(2, "0"))
+      .join("");
+    let name = request.name ?? `kadoa-${type.toLowerCase()}-${suffix}`;
+    if (channels.some((c) => c.channelType === type && c.name === name))
+      name = `${name.slice(0, 70)}-${suffix}`;
+    const channel = await this.createChannel(type, {
+      name,
+      config: payload.config,
+    });
+    return { channel, reused: channel.reused === true };
+  }
+
   private async buildPayload(
     request: CreateChannelRequest,
   ): Promise<CreateChannelRequest> {
@@ -203,7 +253,11 @@ export class NotificationChannelsService {
       const user = await this.userService.getCurrentUser();
       recipients = [user.email];
     }
-    const config = merge(defaults, { recipients });
+    const config = merge(defaults, {
+      recipients: [
+        ...new Set(recipients.map((r) => r.trim().toLowerCase())),
+      ].sort(),
+    });
     return validateEmailChannelConfig(config);
   }
 

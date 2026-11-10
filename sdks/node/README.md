@@ -263,6 +263,48 @@ const extraction = await client.extract({
 const result = await extraction.run();
 ```
 
+## Notification destinations and recipient edits
+
+Add an address while preserving the other destinations on an event:
+
+```typescript
+await client.notification.configure({
+  workflowId: "workflow-id",
+  events: ["workflow_data_change"],
+  channels: { EMAIL: { recipients: ["example@gmail.com"] } },
+});
+```
+
+Setup reuses matching delivery destinations, creates missing ones, preserves disabled
+settings, and verifies the saved bindings. Workspace setup uses workspace settings
+only. Existing email groups cover an address only on events already using that group.
+
+Resolve a channel without attaching it, or replace a setting's full channel list:
+
+```typescript
+const { channel, reused } = await client.notification.channels.resolveChannel(
+  "EMAIL", { config: { recipients: ["maxime@example.com"] } },
+);
+const [setting] = await client.notification.settings.listSettings({
+  workflowId: "workflow-id", eventType: "workflow_data_change",
+});
+const observed = setting.channels?.flatMap(c => c.id ? [c.id] : []) ?? [];
+await client.notification.settings.updateSettings(setting.id!, {
+  channelIds: observed.filter(id => id !== "raymond-channel-id").concat(channel.id!),
+  expectedChannelIds: observed,
+});
+```
+
+The backend rejects a stale `expectedChannelIds` set with HTTP 409. Read again before
+retrying. Low-level `updateSettings` returns the write response; read the setting to
+verify completion. Keep shared group channels unchanged and replace only the intended
+setting's bindings. A multi-event setup can partially apply before a later error;
+inspect settings after a failed or uncertain request before retrying.
+
+Channel resolution compares normalized recipient sets, Slack integration/channel IDs,
+or webhook URL, method, and authentication. Concurrent creation deduplication requires
+the companion backend notification changes from KAD-32318.
+
 ## Data Quality Rules
 
 Per-field rules run at the end of every workflow run. Set them for the fields you care about; other fields keep their rules:
