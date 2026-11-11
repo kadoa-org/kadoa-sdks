@@ -23,25 +23,26 @@ export function notificationChannelDestination(
   if (channelType === "WEBSOCKET") return "websocket";
 
   const config = (rawConfig ?? {}) as NotificationDeliveryConfig;
-  const recipients = config.recipients;
+  const normalized = { ...config };
   if (channelType === "EMAIL") {
-    if (!Array.isArray(recipients) || recipients.length === 0) return null;
-    return `email:${stableJson({ ...config, recipients: [...new Set(recipients.map((r) => r.trim().toLowerCase()))].sort() })}`;
-  }
-
-  if (channelType === "SLACK") {
-    const slackChannelId = config.slackChannelId;
-    if (typeof slackChannelId === "string" && slackChannelId.length > 0)
-      return `slack:${String(config.integrationId ?? config.workspaceId ?? "")}:${slackChannelId}`;
-  }
-
-  const webhookUrl = config.webhookUrl;
-  if (typeof webhookUrl === "string" && webhookUrl.length > 0)
-    return channelType === "WEBHOOK"
-      ? `webhook:${stableJson({ url: webhookUrl, method: String(config.httpMethod ?? "POST").toUpperCase(), auth: config.auth ?? null })}`
-      : `url:${webhookUrl}`;
-
-  return null;
+    if (
+      !Array.isArray(config.recipients) ||
+      config.recipients.length === 0 ||
+      config.recipients.some((r) => typeof r !== "string")
+    )
+      return null;
+    normalized.recipients = [
+      ...new Set(config.recipients.map((r) => r.trim().toLowerCase())),
+    ].sort();
+  } else if (channelType === "WEBHOOK") {
+    if (typeof config.webhookUrl !== "string") return null;
+    normalized.httpMethod = String(config.httpMethod ?? "POST").toUpperCase();
+    normalized.auth = config.auth ?? null;
+  } else if (channelType === "SLACK") {
+    if (config.slackChannelId) delete normalized.slackChannelName;
+    else if (!config.webhookUrl) return null;
+  } else return null;
+  return `${channelType.toLowerCase()}:${stableJson(normalized)}`;
 }
 
 function stableJson(value: unknown): string {

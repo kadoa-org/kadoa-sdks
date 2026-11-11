@@ -38,6 +38,9 @@ let settings: Setting[] = [];
 let writes: Body[] = [];
 let failReadback = false;
 let committed = false;
+let rejectEvent: string | undefined;
+let channelLists = 0;
+let userReads = 0;
 const api = Bun.serve({
   hostname: "127.0.0.1",
   port: 0,
@@ -47,10 +50,24 @@ const api = Bun.serve({
     const body = (req.method === "GET" ? {} : await req.json()) as Body;
     const ok = (data: unknown, status = 200) =>
       Response.json({ data, status: "success" }, { status });
-    if (path === "/v5/user")
+    if (path === "/v5/user") {
+      userReads++;
       return Response.json({ userId: "user", email: "owner@example.com" });
+    }
     if (path === "/v5/notifications/channels") {
-      if (req.method === "GET") return ok({ channels });
+      if (req.method === "GET") {
+        channelLists++;
+        return ok({ channels });
+      }
+      if (
+        channels.some(
+          (c) => c.name === body.name && c.channelType === body.channelType,
+        )
+      )
+        return Response.json(
+          { message: "channel name conflict" },
+          { status: 409 },
+        );
       const channel = {
         ...body,
         id: `channel-${channels.length}`,
@@ -77,13 +94,34 @@ const api = Bun.serve({
       path.startsWith("/v5/notifications/settings") &&
       ["PUT", "POST"].includes(req.method)
     ) {
-      writes.push(body);
       const s =
         req.method === "PUT"
           ? settings.find((s) => s.id === path.split("/").at(-1))
-          : { id: `setting-${settings.length}`, ...body };
+          : {
+              id: `setting-${settings.length}`,
+              ...body,
+              workflowId: body.workflowId ?? null,
+            };
       if (!s)
         return Response.json({ message: "missing setting" }, { status: 404 });
+      if (
+        s.eventType === rejectEvent ||
+        (req.method === "PUT" &&
+          body.expectedChannelIds &&
+          JSON.stringify([...body.expectedChannelIds].sort()) !==
+            JSON.stringify(s.channels.map((c) => c.id).sort()))
+      )
+        return Response.json({ message: "setting conflict" }, { status: 409 });
+      if (
+        req.method === "POST" &&
+        settings.some(
+          (other) =>
+            other.workflowId === (body.workflowId ?? null) &&
+            other.eventType === body.eventType,
+        )
+      )
+        return Response.json({ message: "duplicate setting" }, { status: 409 });
+      writes.push(body);
       if (req.method === "POST") settings.push(s);
       Object.assign(s, body, {
         channels: body.channelIds.map((id: string) =>
@@ -114,6 +152,9 @@ beforeEach(() => {
   writes = [];
   failReadback = false;
   committed = false;
+  rejectEvent = undefined;
+  channelLists = 0;
+  userReads = 0;
 });
 const seed = (
   id: string,
@@ -161,6 +202,27 @@ test("direct SDK setup reuses a matching destination under another name", async 
   expect(writes.at(-1).expectedChannelIds).toEqual(["socket"]);
 });
 
+test("default email setup reuses the event's group coverage", async () => {
+  const group = seed("owner-group", {
+    recipients: ["owner@example.com", "colleague@example.com"],
+  });
+  settings.push({
+    id: "alert",
+    workflowId: "workflow",
+    eventType: "workflow_data_change",
+    enabled: true,
+    channels: [group],
+  });
+  await client.notification.configure({
+    workflowId: "workflow",
+    events: ["workflow_data_change"],
+    channels: { EMAIL: true },
+  });
+  expect(channels).toHaveLength(1);
+  expect(settings[0].channels.map((c) => c.id)).toEqual(["owner-group"]);
+  expect(writes).toHaveLength(0);
+});
+
 test("workspace setup updates only the workspace event and is repeatable", async () => {
   const wrong = seed("workflow-email", { recipients: ["other@example.com"] });
   const right = seed("workspace-email", { recipients: ["owner@example.com"] });
@@ -191,6 +253,18 @@ test("workspace setup updates only the workspace event and is repeatable", async
     "workspace-email",
   ]);
   expect(writes).toHaveLength(0);
+});
+
+test("workspace setup creates and verifies a missing workspace event", async () => {
+  const result = await client.notification.setup.setupForWorkspace({
+    events: ["workflow_data_change"],
+    channels: { EMAIL: true },
+  });
+  expect(result).toHaveLength(1);
+  expect(result[0].workflowId).toBeNull();
+  expect(result[0].channels?.map((c) => c.config?.recipients)).toEqual([
+    ["owner@example.com"],
+  ]);
 });
 
 test("group coverage is local to each event, preserving other recipients without duplicate mail", async () => {
@@ -230,7 +304,7 @@ test("group coverage is local to each event, preserving other recipients without
   expect(channels).toHaveLength(3);
 });
 
-test("setup does not report completion without saved-state verification", async () => {
+test("setup identifies a committed setting when saved-state readback is unavailable", async () => {
   failReadback = true;
   await expect(
     client.notification.configure({
@@ -238,7 +312,10 @@ test("setup does not report completion without saved-state verification", async 
       events: ["workflow_data_change"],
       channels: { EMAIL: { recipients: ["new@example.com"] } },
     }),
-  ).rejects.toThrow();
+  ).rejects.toMatchObject({
+    details: { outcome: "applied_unverified", settingId: "setting-0" },
+    cause: { httpStatus: 503 },
+  });
   expect(settings).toHaveLength(1);
 });
 
@@ -324,6 +401,32 @@ test.each([
   expect(channels).toHaveLength(reuse ? 1 : 2);
 });
 
+test.each([
+  [
+    {
+      slackChannelId: "C1",
+      slackChannelName: "alerts",
+      webhookUrl: "https://example.com/slack-one",
+    },
+    {
+      slackChannelId: "C1",
+      slackChannelName: "alerts",
+      webhookUrl: "https://example.com/slack-two",
+    },
+  ],
+  [
+    { slackChannelId: "C1", integrationId: "one" },
+    { slackChannelId: "C1", workspaceId: "one" },
+  ],
+])("Slack resolution preserves the backend's complete destination identity: %j versus %j", async (existing, requested) => {
+  seed("existing", existing, "SLACK");
+  const result = await client.notification.channels.resolveChannel("SLACK", {
+    config: requested,
+  });
+  expect(result.reused).toBe(false);
+  expect(result.channel.config).toEqual(requested);
+});
+
 test("duplicate historical destinations prefer attached IDs deterministically", async () => {
   seed("older", { recipients: ["owner@example.com"] });
   seed("attached", { recipients: ["owner@example.com"] });
@@ -366,6 +469,175 @@ test("group coverage respects the requested sender", async () => {
     result.map((c) => (c.config as NotificationDeliveryConfig).from),
   ).toEqual(["new@kadoa.com"]);
   expect(group.config.from).toBe("old@kadoa.com");
+});
+
+test("repeated events do not conflict with the same request's first update", async () => {
+  const socket = seed("socket", {}, "WEBSOCKET");
+  settings.push({
+    id: "alert",
+    workflowId: "workflow",
+    eventType: "workflow_data_change",
+    enabled: true,
+    channels: [socket],
+  });
+  const result = await client.notification.configure({
+    workflowId: "workflow",
+    events: ["workflow_data_change", "workflow_data_change"],
+    channels: { EMAIL: true },
+  });
+  expect(result).toHaveLength(1);
+  expect(settings[0].channels.map((c) => c.channelType).sort()).toEqual([
+    "EMAIL",
+    "WEBSOCKET",
+  ]);
+  expect(writes.filter((w) => w.channelIds)).toHaveLength(1);
+});
+
+test.each([
+  "",
+  "   ",
+])("blank workflow scope %j cannot select another workflow's setting", async (workflowId) => {
+  const socket = seed("socket", {}, "WEBSOCKET");
+  settings.push({
+    id: "other",
+    workflowId: "other-workflow",
+    eventType: "workflow_data_change",
+    enabled: true,
+    channels: [socket],
+  });
+  await expect(
+    client.notification.configure({
+      workflowId,
+      events: ["workflow_data_change"],
+      channels: { EMAIL: true },
+    }),
+  ).rejects.toMatchObject({ code: "VALIDATION_ERROR" });
+  expect(writes).toHaveLength(0);
+  expect(settings[0].channels.map((c) => c.id)).toEqual(["socket"]);
+});
+
+test("missing explicit channel errors retain the requested ID and type", async () => {
+  await expect(
+    client.notification.setup.setupChannels({
+      channels: { EMAIL: { channelId: "missing" } },
+    }),
+  ).rejects.toMatchObject({
+    code: "NOT_FOUND",
+    details: { channelId: "missing", channelType: "EMAIL" },
+  });
+  expect(writes).toHaveLength(0);
+});
+
+test("generated names find an available suffix when the first two names are occupied", async () => {
+  const original = await client.notification.channels.resolveChannel("EMAIL", {
+    config: { recipients: ["requested@example.com"] },
+  });
+  const base = original.channel.name ?? "";
+  expect(base).toMatch(/^kadoa-email-[a-f0-9]{8}$/);
+  const suffix = base.slice(-8);
+  channels = [];
+  seed("occupied", { recipients: ["other@example.com"] }, "EMAIL", base);
+  seed(
+    "occupied-suffix",
+    { recipients: ["another@example.com"] },
+    "EMAIL",
+    `${base}-${suffix}`,
+  );
+  const result = await client.notification.channels.resolveChannel("EMAIL", {
+    config: { recipients: ["requested@example.com"] },
+  });
+  expect(result.channel.config).toEqual({
+    recipients: ["requested@example.com"],
+  });
+  expect(result.channel.name).not.toBe(base);
+  expect(result.channel.name).not.toBe(`${base}-${suffix}`);
+});
+
+test("all events resolve inventory and the default recipient once per request", async () => {
+  const result = await client.notification.configure({
+    workflowId: "workflow",
+    events: "all",
+    channels: { EMAIL: true },
+  });
+  expect(result.map((s) => s.eventType).sort()).toEqual(
+    [
+      "workflow_started",
+      "workflow_finished",
+      "workflow_failed",
+      "workflow_sample_finished",
+      "workflow_data_change",
+      "system_maintenance",
+      "service_degradation",
+      "credits_low",
+      "free_trial_ending",
+    ].sort(),
+  );
+  expect(channels).toHaveLength(1);
+  expect(channels[0].config.recipients).toEqual(["owner@example.com"]);
+  expect(channelLists).toBe(1);
+  expect(userReads).toBe(1);
+});
+
+test("multi-recipient setup creates stable distinct names and reuses both destinations", async () => {
+  const request = {
+    channels: {
+      EMAIL: {
+        name: "desk",
+        recipients: [
+          "First@Example.com",
+          "second@example.com",
+          "first@example.com",
+        ],
+      },
+    },
+  };
+  const first = await client.notification.setup.setupChannels(request);
+  expect(first.map((c) => c.config?.recipients)).toEqual([
+    ["first@example.com"],
+    ["second@example.com"],
+  ]);
+  expect(first[0].name).toBe("desk");
+  expect(first[1].name).toMatch(/^desk-[a-f0-9]{8}$/);
+  const count = writes.length;
+  const second = await client.notification.setup.setupChannels(request);
+  expect(second.map((c) => c.id)).toEqual(first.map((c) => c.id));
+  expect(writes).toHaveLength(count);
+});
+
+test("a rejected later event leaves earlier verified edits inspectable and stops the batch", async () => {
+  rejectEvent = "workflow_failed";
+  await expect(
+    client.notification.configure({
+      workflowId: "workflow",
+      events: ["workflow_started", "workflow_failed", "workflow_finished"],
+      channels: { EMAIL: true },
+    }),
+  ).rejects.toMatchObject({ httpStatus: 409 });
+  expect(settings.map((s) => s.eventType)).toEqual(["workflow_started"]);
+  expect(settings[0].channels.map((c) => c.config.recipients)).toEqual([
+    ["owner@example.com"],
+  ]);
+});
+
+test("a rejected setting update preserves its original binding", async () => {
+  const socket = seed("socket", {}, "WEBSOCKET");
+  settings.push({
+    id: "alert",
+    workflowId: "workflow",
+    eventType: "workflow_failed",
+    enabled: true,
+    channels: [socket],
+  });
+  rejectEvent = "workflow_failed";
+  await expect(
+    client.notification.configure({
+      workflowId: "workflow",
+      events: ["workflow_failed"],
+      channels: { EMAIL: true },
+    }),
+  ).rejects.toMatchObject({ httpStatus: 409 });
+  expect(settings[0].channels.map((c) => c.id)).toEqual(["socket"]);
+  expect(settings).toHaveLength(1);
 });
 
 test("setup rejects an existing channel with a different requested type", async () => {

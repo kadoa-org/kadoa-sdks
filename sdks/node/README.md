@@ -301,9 +301,34 @@ verify completion. Keep shared group channels unchanged and replace only the int
 setting's bindings. A multi-event setup can partially apply before a later error;
 inspect settings after a failed or uncertain request before retrying.
 
-Channel resolution compares normalized recipient sets, Slack integration/channel IDs,
-or webhook URL, method, and authentication. Concurrent creation deduplication requires
+Channel resolution follows the backend's complete delivery configuration: normalized
+email recipient sets and sender, webhook URL/method/authentication, and all Slack
+configuration except its display name when a channel ID is present. Concurrent creation deduplication requires
 the companion backend notification changes from KAD-32318.
+
+### Migration notes for the next minor release
+
+- `setupForWorkspace` now adds missing destinations and can be repeated when workspace
+  settings already exist; it no longer rejects every existing workspace setting.
+- Setup and `resolveChannel` match delivery configuration rather than display names.
+  A shared name no longer causes reuse of a different destination.
+- Omitted setup names derive from the destination as `kadoa-<type>-<hash>`. Name
+  collisions receive an available suffix. `DEFAULT_CHANNEL_NAME` remains the default
+  for low-level `createChannel`, which is separate from setup and resolution.
+- A multi-recipient setup `EMAIL` request resolves one channel per address. For
+  `name: "desk"`, a newly created first destination uses `desk`, and later destinations
+  use `desk-<hash>` or an available numbered suffix. An explicitly created email group
+  remains a group; existing group coverage is preserved on events already using it.
+- `setupChannels` resolves detached team destinations and no longer accepts the unused
+  `workflowId` option. Pass `preferredChannelIds` for event-local group coverage; use
+  `setupForWorkflow` or `configure` to bind destinations to a workflow.
+- Blank workflow IDs are rejected, and repeated event names are processed once.
+  Readback failures after a successful write report `details.outcome = "applied_unverified"`
+  and `details.settingId`; inspect that setting before retrying.
+
+These changes require the next **minor** Node SDK release. The feature commit is
+handled by Release Please; version files are updated by its release PR. No SDK
+publication is implied by merging this implementation PR.
 
 ## Data Quality Rules
 

@@ -30,6 +30,19 @@ export interface ResolvedNotificationChannel {
   reused: boolean;
 }
 
+export interface NotificationChannelResolver {
+  readonly channels: readonly NotificationChannel[];
+  normalizeConfig(
+    type: NotificationChannelType,
+    config?: NotificationDeliveryConfig,
+  ): Promise<NotificationDeliveryConfig>;
+  resolveChannel(
+    type: NotificationChannelType,
+    request?: { name?: string; config?: NotificationDeliveryConfig },
+    preferredChannelIds?: readonly string[],
+  ): Promise<ResolvedNotificationChannel>;
+}
+
 function validateEmailChannelConfig(
   config: EmailChannelConfig,
 ): EmailChannelConfig {
@@ -168,44 +181,75 @@ export class NotificationChannelsService {
     });
   }
 
-  /** Resolve by delivery configuration. Concurrent creation is serialized by the API. */
+  private async normalizeConfig(
+    type: NotificationChannelType,
+    config: NotificationDeliveryConfig = {},
+  ): Promise<NotificationDeliveryConfig> {
+    const payload = await this.buildPayload({
+      channelType: type,
+      name: "default",
+      config,
+    });
+    return payload.config as NotificationDeliveryConfig;
+  }
+
+  /** One inventory per setup request. Selection still uses each event’s own preferred bindings. */
+  async createResolver(): Promise<NotificationChannelResolver> {
+    const channels = await this.listAllChannels();
+    const normalizeConfig = this.normalizeConfig.bind(this);
+    return {
+      channels,
+      normalizeConfig,
+      resolveChannel: async (type, request = {}, preferredChannelIds = []) => {
+        const config = await normalizeConfig(type, request.config);
+        const existing = findReusableNotificationChannel(
+          channels,
+          type,
+          config,
+          preferredChannelIds,
+        );
+        if (existing) return { channel: existing, reused: true };
+        const destination =
+          notificationChannelDestination(type, config) ??
+          JSON.stringify(config);
+        const bytes = await crypto.subtle.digest(
+          "SHA-256",
+          new TextEncoder().encode(destination),
+        );
+        const suffix = Array.from(new Uint8Array(bytes))
+          .slice(0, 4)
+          .map((b) => b.toString(16).padStart(2, "0"))
+          .join("");
+        const base =
+          request.name ?? ["kadoa", type.toLowerCase(), suffix].join("-");
+        let name = base;
+        for (
+          let collision = 0;
+          channels.some((c) => c.channelType === type && c.name === name);
+          collision++
+        ) {
+          name = `${base.slice(0, 70)}-${suffix}${collision === 0 ? "" : `-${collision + 1}`}`;
+        }
+        const channel = await this.createChannel(type, { name, config });
+        const index = channels.findIndex((c) => c.id === channel.id);
+        if (index >= 0) channels[index] = channel;
+        else channels.push(channel);
+        return { channel, reused: channel.reused === true };
+      },
+    };
+  }
+
+  /** Resolve by the same complete delivery identity as the backend. */
   async resolveChannel(
     type: NotificationChannelType,
     request: { name?: string; config?: NotificationDeliveryConfig } = {},
     preferredChannelIds: readonly string[] = [],
   ): Promise<ResolvedNotificationChannel> {
-    const payload = await this.buildPayload({
-      channelType: type,
-      name: request.name ?? "default",
-      config: request.config ?? {},
-    });
-    const channels = await this.listAllChannels();
-    const existing = findReusableNotificationChannel(
-      channels,
+    return (await this.createResolver()).resolveChannel(
       type,
-      payload.config,
+      request,
       preferredChannelIds,
     );
-    if (existing) return { channel: existing, reused: true };
-    const destination =
-      notificationChannelDestination(type, payload.config) ??
-      JSON.stringify(payload.config);
-    const bytes = await crypto.subtle.digest(
-      "SHA-256",
-      new TextEncoder().encode(destination),
-    );
-    const suffix = Array.from(new Uint8Array(bytes))
-      .slice(0, 4)
-      .map((b) => b.toString(16).padStart(2, "0"))
-      .join("");
-    let name = request.name ?? `kadoa-${type.toLowerCase()}-${suffix}`;
-    if (channels.some((c) => c.channelType === type && c.name === name))
-      name = `${name.slice(0, 70)}-${suffix}`;
-    const channel = await this.createChannel(type, {
-      name,
-      config: payload.config,
-    });
-    return { channel, reused: channel.reused === true };
   }
 
   private async buildPayload(

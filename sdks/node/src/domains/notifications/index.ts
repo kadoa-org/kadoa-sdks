@@ -11,7 +11,10 @@ export {
   findReusableNotificationChannel,
   notificationChannelDestination,
 } from "./channel-identity";
-export type { ResolvedNotificationChannel } from "./notification-channels.service";
+export type {
+  NotificationChannelResolver,
+  ResolvedNotificationChannel,
+} from "./notification-channels.service";
 // Service classes
 export { NotificationChannelsService } from "./notification-channels.service";
 export { NotificationSettingsService } from "./notification-settings.service";
