@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.49.0](https://github.com/kadoa-org/kadoa-sdks/compare/node-sdk-v0.48.0...node-sdk-v0.49.0) (2026-11-11)
+
+
+### Features
+
+* **node-sdk:** share notification resolution and typed recipient edits (KAD-32318) ([#388](https://github.com/kadoa-org/kadoa-sdks/issues/388)) ([b1c35b1](https://github.com/kadoa-org/kadoa-sdks/commit/b1c35b1c1ff45dc421f28c57d7241fb8a759ef5a))
+
 ## [0.48.0](https://github.com/kadoa-org/kadoa-sdks/compare/node-sdk-v0.47.0...node-sdk-v0.48.0) (2026-10-16)
 
 
