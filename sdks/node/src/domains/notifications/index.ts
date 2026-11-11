@@ -3,6 +3,18 @@
  * Public boundary for notification functionality.
  */
 
+export type {
+  ComparableNotificationChannel,
+  NotificationDeliveryConfig,
+} from "./channel-identity";
+export {
+  findReusableNotificationChannel,
+  notificationChannelDestination,
+} from "./channel-identity";
+export type {
+  NotificationChannelResolver,
+  ResolvedNotificationChannel,
+} from "./notification-channels.service";
 // Service classes
 export { NotificationChannelsService } from "./notification-channels.service";
 export { NotificationSettingsService } from "./notification-settings.service";
@@ -28,6 +40,7 @@ export type {
   NotificationSettings,
   NotificationSettingsEventType,
   SlackChannelConfig,
+  UpdateSettingsRequest,
   WebhookChannelConfig,
   WebhookChannelConfigAuth,
   WebhookHttpMethod,

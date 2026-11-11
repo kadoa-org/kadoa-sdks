@@ -13,6 +13,7 @@ import {
   type SlackChannelConfig,
   type V5NotificationsChannelsGet200ResponseDataChannelsInner,
   type V5NotificationsChannelsGet200ResponseDataChannelsInnerConfig,
+  type V5NotificationsChannelsPost201ResponseDataChannel,
   type V5NotificationsChannelsPostRequest,
   type V5NotificationsChannelsPostRequestChannelTypeEnum,
   type V5NotificationsSettingsGet200ResponseDataSettingsInner,
@@ -87,7 +88,8 @@ export interface CreateChannelRequest
  * Note: Response types are simple DTOs without enum fields that need remapping.
  */
 export type NotificationChannel =
-  V5NotificationsChannelsGet200ResponseDataChannelsInner;
+  V5NotificationsChannelsGet200ResponseDataChannelsInner &
+    Pick<V5NotificationsChannelsPost201ResponseDataChannel, "reused">;
 
 /**
  * Notification channel configuration (union type for all channel configs).

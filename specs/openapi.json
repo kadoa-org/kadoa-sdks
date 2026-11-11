@@ -7763,7 +7763,7 @@
         }
       },
       "post": {
-        "summary": "Create a new notification channel",
+        "summary": "Create or reuse a notification channel for the same delivery configuration",
         "tags": [
           "Notifications"
         ],
@@ -7831,7 +7831,13 @@
                       "type": "object",
                       "properties": {
                         "channel": {
-                          "type": "object"
+                          "type": "object",
+                          "properties": {
+                            "reused": {
+                              "type": "boolean",
+                              "description": "True when an existing matching destination was returned instead of creating a channel."
+                            }
+                          }
                         }
                       }
                     },
@@ -9006,6 +9012,13 @@
                       "type": "string"
                     },
                     "description": "Array of channel IDs to link to this settings"
+                  },
+                  "expectedChannelIds": {
+                    "type": "array",
+                    "items": {
+                      "type": "string"
+                    },
+                    "description": "Optional optimistic concurrency precondition. The current channel IDs must match this set, otherwise the request returns 409. Send it when replacing recipients based on a previous read."
                   }
                 }
               }
